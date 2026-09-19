@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#080B10">
+
+    <WebView
+        android:id="@+id/webView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- ===== fullscreen player layer ===== -->
+    <FrameLayout
+        android:id="@+id/playerLayer"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#000000">
+
+        <androidx.media3.ui.PlayerView
+            android:id="@+id/playerView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:keepScreenOn="true" />
+
+        <!-- top gradient scrim -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="96dp"
+            android:background="@drawable/scrim_top" />
+
+        <LinearLayout
+            android:id="@+id/topBar"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:paddingTop="14dp">
+
+            <TextView
+                android:id="@+id/btnClose"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_circle_btn"
+                android:gravity="center"
+                android:text="✕"
+                android:textColor="#FFFFFF"
+                android:textSize="17sp"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <TextView
+                android:id="@+id/txtTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="12dp"
+                android:layout_marginEnd="12dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:shadowColor="#CC000000"
+                android:shadowRadius="6"
+                android:shadowDx="0"
+                android:shadowDy="1" />
+
+            <TextView
+                android:id="@+id/liveBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                android:background="@drawable/bg_retry_btn"
+                android:text="● LIVE"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:textSize="10sp" />
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/loading"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:layout_gravity="center"
+            android:indeterminateTint="#E63E46" />
+
+        <LinearLayout
+            android:id="@+id/errorBox"
+            android:visibility="gone"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_gravity="center"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="28dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="⚠"
+                android:textSize="40sp"
+                android:textColor="#E63E46" />
+
+            <TextView
+                android:id="@+id/txtError"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:gravity="center"
+                android:textColor="#C9D2DB"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/btnRetry"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/bg_retry_btn"
+                android:paddingStart="32dp"
+                android:paddingEnd="32dp"
+                android:paddingTop="13dp"
+                android:paddingBottom="13dp"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:textSize="14sp"
+                android:clickable="true"
+                android:focusable="true" />
+        </LinearLayout>
+    </FrameLayout>
+</FrameLayout>

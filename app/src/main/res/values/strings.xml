@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">KURDISTAN IPTV</string>
+    <string name="player_error">نەتوانرا ئەم کەناڵە بکرێتەوە. دەکرێت کەناڵەکە لەکارکەوتبێت یان ئینتەرنێتەکەت لاوازبێت.</string>
+    <string name="retry">هەوڵدانەوە</string>
+    <string name="live">● LIVE</string>
+</resources>
