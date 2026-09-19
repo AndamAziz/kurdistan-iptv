@@ -22,10 +22,18 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.exoplayer.DefaultLoadControl
+import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.PlayerView
 
 class MainActivity : ComponentActivity() {
+
+    /* Many IPTV / Xtream servers reject the default player user agent.
+       VLC's user agent is the one they are all configured to accept. */
+    private val UA = "VLC/3.0.20 LibVLC/3.0.20"
 
     private lateinit var webView: WebView
     private lateinit var playerLayer: View
@@ -43,7 +51,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // let video use the full screen on notched devices
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             window.attributes.layoutInDisplayCutoutMode =
                 WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
@@ -57,7 +64,7 @@ class MainActivity : ComponentActivity() {
         txtError = findViewById(R.id.txtError)
         txtTitle = findViewById(R.id.txtTitle)
 
-        findViewById<TextView>(R.id.txtError).text = getString(R.string.player_error)
+        txtError.text = getString(R.string.player_error)
         findViewById<TextView>(R.id.btnRetry).apply {
             text = getString(R.string.retry)
             setOnClickListener { currentUrl?.let { u -> showNativePlayer(u, currentTitle ?: "") } }
@@ -106,6 +113,39 @@ class MainActivity : ComponentActivity() {
 
     // ---------------- player ----------------
 
+    private fun buildPlayer(): ExoPlayer {
+        val http = DefaultHttpDataSource.Factory()
+            .setUserAgent(UA)
+            .setAllowCrossProtocolRedirects(true)   // http -> https redirects (Xtream servers)
+            .setConnectTimeoutMs(20000)
+            .setReadTimeoutMs(20000)
+            .setKeepPostFor302Redirects(true)
+
+        val renderers = DefaultRenderersFactory(this)
+            .setEnableDecoderFallback(true)         // try another decoder instead of failing
+
+        val loadControl = DefaultLoadControl.Builder()
+            .setBufferDurationsMs(25000, 60000, 2500, 5000)
+            .build()
+
+        return ExoPlayer.Builder(this, renderers)
+            .setMediaSourceFactory(DefaultMediaSourceFactory(this).setDataSourceFactory(http))
+            .setLoadControl(loadControl)
+            .build()
+    }
+
+    private fun mimeFor(url: String): String? {
+        val u = url.lowercase()
+        return when {
+            u.contains(".m3u8") -> MimeTypes.APPLICATION_M3U8
+            u.contains(".mpd") -> MimeTypes.APPLICATION_MPD
+            // only hint MP2T when the extension is not in the path, so ExoPlayer
+            // can still follow a redirect that lands on a different container
+            u.contains("extension=ts") -> MimeTypes.VIDEO_MP2T
+            else -> null
+        }
+    }
+
     private fun showNativePlayer(url: String, title: String) {
         currentUrl = url
         currentTitle = title
@@ -120,16 +160,12 @@ class MainActivity : ComponentActivity() {
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
         setFullscreen(true)
 
-        player = ExoPlayer.Builder(this).build().also { p ->
+        player = buildPlayer().also { p ->
             playerView.player = p
+
             val builder = MediaItem.Builder().setUri(url)
-            when {
-                url.contains(".m3u8", true) ->
-                    builder.setMimeType(MimeTypes.APPLICATION_M3U8)
-                url.matches(Regex(".*\\.(ts|m2ts)(?:[?#].*)?$", RegexOption.IGNORE_CASE)) ||
-                    url.contains("extension=ts", true) ->
-                    builder.setMimeType(MimeTypes.VIDEO_MP2T)
-            }
+            mimeFor(url)?.let { builder.setMimeType(it) }
+
             p.addListener(object : Player.Listener {
                 override fun onPlaybackStateChanged(state: Int) {
                     loading.visibility =
@@ -138,10 +174,11 @@ class MainActivity : ComponentActivity() {
 
                 override fun onPlayerError(error: PlaybackException) {
                     loading.visibility = View.GONE
-                    txtError.text = getString(R.string.player_error)
+                    txtError.text = getString(R.string.player_error) + "\n\n" + error.errorCodeName
                     errorBox.visibility = View.VISIBLE
                 }
             })
+
             p.setMediaItem(builder.build())
             p.prepare()
             p.playWhenReady = true
