@@ -139,7 +139,8 @@ class MainActivity : ComponentActivity() {
         return when {
             u.contains(".m3u8") -> MimeTypes.APPLICATION_M3U8
             u.contains(".mpd") -> MimeTypes.APPLICATION_MPD
-            u.contains(".ts") -> MimeTypes.VIDEO_MP2T
+            // only hint MP2T when explicitly specified in the extension parameter
+            u.contains("extension=ts") -> MimeTypes.VIDEO_MP2T
             else -> null
         }
     }
@@ -172,19 +173,6 @@ class MainActivity : ComponentActivity() {
                     loading.visibility =
                         if (state == Player.STATE_BUFFERING) View.VISIBLE else View.GONE
                 }
-
-                override fun onPlayerError(error: PlaybackException) {
-                    loading.visibility = View.GONE
-                    txtError.text = getString(R.string.player_error) + "\n\n" + error.errorCodeName
-                    errorBox.visibility = View.VISIBLE
-                }
-            })
-
-            p.setMediaItem(builder.build())
-            p.prepare()
-            p.playWhenReady = true
-        }
-    }
 
                 override fun onPlayerError(error: PlaybackException) {
                     loading.visibility = View.GONE
