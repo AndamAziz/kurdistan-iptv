@@ -137,11 +137,9 @@ class MainActivity : ComponentActivity() {
     private fun mimeFor(url: String): String? {
         val u = url.lowercase()
         return when {
-            u.contains(".m3u8") -> MimeTypes.APPLICATION_M3U8
+            u.contains(".m3u8") || u.contains("type=m3u8") -> MimeTypes.APPLICATION_M3U8
             u.contains(".mpd") -> MimeTypes.APPLICATION_MPD
-            // only hint MP2T when the extension is not in the path, so ExoPlayer
-            // can still follow a redirect that lands on a different container
-            u.contains("extension=ts") -> MimeTypes.VIDEO_MP2T
+            u.contains(".ts") || u.contains("extension=ts") || u.contains("/live/") -> MimeTypes.VIDEO_MP2T
             else -> null
         }
     }
@@ -164,13 +162,29 @@ class MainActivity : ComponentActivity() {
             playerView.player = p
 
             val builder = MediaItem.Builder().setUri(url)
-            mimeFor(url)?.let { builder.setMimeType(it) }
+            val mime = mimeFor(url)
+            if (mime != null) {
+                builder.setMimeType(mime)
+            }
 
             p.addListener(object : Player.Listener {
                 override fun onPlaybackStateChanged(state: Int) {
                     loading.visibility =
                         if (state == Player.STATE_BUFFERING) View.VISIBLE else View.GONE
                 }
+
+                override fun onPlayerError(error: PlaybackException) {
+                    loading.visibility = View.GONE
+                    txtError.text = getString(R.string.player_error) + "\n\n" + error.errorCodeName
+                    errorBox.visibility = View.VISIBLE
+                }
+            })
+
+            p.setMediaItem(builder.build())
+            p.prepare()
+            p.playWhenReady = true
+        }
+    }
 
                 override fun onPlayerError(error: PlaybackException) {
                     loading.visibility = View.GONE
