@@ -13,73 +13,139 @@ import android.webkit.WebViewClient
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
+
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+
 import androidx.media3.datasource.DefaultHttpDataSource
+
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
+
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
-import androidx.media3.ui.PlayerView
+
 import androidx.media3.extractor.DefaultExtractorsFactory
 import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory
-import androidx.media3.exoplayer.source.ProgressiveMediaSource
+
+import androidx.media3.ui.PlayerView
+
 
 class MainActivity : ComponentActivity() {
 
     /*
-     * VLC-style User-Agent.
-     * Some IPTV/Xtream servers reject the default Android player User-Agent.
+     * IPTV servers sometimes require a VLC-like User-Agent.
      */
-    private val UA = "VLC/3.0.20 LibVLC/3.0.20"
+    private val UA =
+        "VLC/3.0.20 LibVLC/3.0.20"
 
     private lateinit var webView: WebView
     private lateinit var playerLayer: View
     private lateinit var playerView: PlayerView
+
     private lateinit var loading: ProgressBar
     private lateinit var errorBox: LinearLayout
+
     private lateinit var txtError: TextView
     private lateinit var txtTitle: TextView
 
     private var player: ExoPlayer? = null
+
     private var currentUrl: String? = null
     private var currentTitle: String? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+
+    // ============================================================
+    // ACTIVITY
+    // ============================================================
+
+    override fun onCreate(
+        savedInstanceState: Bundle?
+    ) {
         super.onCreate(savedInstanceState)
 
-        setContentView(R.layout.activity_main)
+        setContentView(
+            R.layout.activity_main
+        )
 
-        // Allow content to use the display cutout area on Android 9+
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        /*
+         * Allow fullscreen content around display cutout
+         * on Android 9+.
+         */
+        if (
+            Build.VERSION.SDK_INT >=
+            Build.VERSION_CODES.P
+        ) {
             window.attributes.layoutInDisplayCutoutMode =
-                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                WindowManager.LayoutParams
+                    .LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
         }
 
-        webView = findViewById(R.id.webView)
-        playerLayer = findViewById(R.id.playerLayer)
-        playerView = findViewById(R.id.playerView)
-        loading = findViewById(R.id.loading)
-        errorBox = findViewById(R.id.errorBox)
-        txtError = findViewById(R.id.txtError)
-        txtTitle = findViewById(R.id.txtTitle)
 
-        // Default error message
-        txtError.text = getString(R.string.player_error)
+        // --------------------------------------------------------
+        // Find views
+        // --------------------------------------------------------
 
+        webView =
+            findViewById(R.id.webView)
+
+        playerLayer =
+            findViewById(R.id.playerLayer)
+
+        playerView =
+            findViewById(R.id.playerView)
+
+        loading =
+            findViewById(R.id.loading)
+
+        errorBox =
+            findViewById(R.id.errorBox)
+
+        txtError =
+            findViewById(R.id.txtError)
+
+        txtTitle =
+            findViewById(R.id.txtTitle)
+
+
+        // --------------------------------------------------------
+        // Error message
+        // --------------------------------------------------------
+
+        txtError.text =
+            getString(
+                R.string.player_error
+            )
+
+
+        // --------------------------------------------------------
         // Retry button
-        findViewById<TextView>(R.id.btnRetry).apply {
-            text = getString(R.string.retry)
+        // --------------------------------------------------------
+
+        findViewById<TextView>(
+            R.id.btnRetry
+        ).apply {
+
+            text =
+                getString(
+                    R.string.retry
+                )
 
             setOnClickListener {
-                currentUrl?.let { url ->
+
+                val url =
+                    currentUrl
+
+                if (url != null) {
+
                     showNativePlayer(
                         url,
                         currentTitle ?: ""
@@ -88,22 +154,51 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Close player button
-        findViewById<TextView>(R.id.btnClose).setOnClickListener {
+
+        // --------------------------------------------------------
+        // Close button
+        // --------------------------------------------------------
+
+        findViewById<TextView>(
+            R.id.btnClose
+        ).setOnClickListener {
+
             hideNativePlayer()
         }
 
-        // LIVE badge
-        findViewById<TextView>(R.id.liveBadge).text =
-            getString(R.string.live)
 
+        // --------------------------------------------------------
+        // LIVE badge
+        // --------------------------------------------------------
+
+        findViewById<TextView>(
+            R.id.liveBadge
+        ).text =
+            getString(
+                R.string.live
+            )
+
+
+        // --------------------------------------------------------
         // Configure WebView
+        // --------------------------------------------------------
+
         configureWebView()
 
-        // Load IPTV web interface
-        webView.loadUrl("file:///android_asset/index.html")
 
+        // --------------------------------------------------------
+        // Load website
+        // --------------------------------------------------------
+
+        webView.loadUrl(
+            "file:///android_asset/index.html"
+        )
+
+
+        // --------------------------------------------------------
         // Android back button
+        // --------------------------------------------------------
+
         onBackPressedDispatcher.addCallback(
             this,
             object : OnBackPressedCallback(true) {
@@ -111,18 +206,31 @@ class MainActivity : ComponentActivity() {
                 override fun handleOnBackPressed() {
 
                     when {
-                        // Player is open
-                        playerLayer.visibility == View.VISIBLE -> {
+
+                        /*
+                         * Player is currently open
+                         */
+                        playerLayer.visibility ==
+                                View.VISIBLE -> {
+
                             hideNativePlayer()
                         }
 
-                        // WebView has history
+
+                        /*
+                         * WebView has previous page
+                         */
                         webView.canGoBack() -> {
+
                             webView.goBack()
                         }
 
-                        // Exit application
+
+                        /*
+                         * Exit application
+                         */
                         else -> {
+
                             finish()
                         }
                     }
@@ -130,6 +238,7 @@ class MainActivity : ComponentActivity() {
             }
         )
     }
+
 
     // ============================================================
     // WEBVIEW
@@ -139,21 +248,32 @@ class MainActivity : ComponentActivity() {
 
         webView.settings.apply {
 
-            javaScriptEnabled = true
+            javaScriptEnabled =
+                true
 
-            domStorageEnabled = true
+            domStorageEnabled =
+                true
 
-            mediaPlaybackRequiresUserGesture = false
+            mediaPlaybackRequiresUserGesture =
+                false
 
+            /*
+             * IPTV URLs may be HTTP while the application
+             * itself can use HTTPS/file content.
+             */
             mixedContentMode =
                 WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
 
-            allowFileAccess = true
+            allowFileAccess =
+                true
 
-            allowContentAccess = true
+            allowContentAccess =
+                true
 
-            cacheMode = WebSettings.LOAD_DEFAULT
+            cacheMode =
+                WebSettings.LOAD_DEFAULT
         }
+
 
         webView.setBackgroundColor(
             0xFF080B10.toInt()
@@ -162,18 +282,33 @@ class MainActivity : ComponentActivity() {
         webView.overScrollMode =
             View.OVER_SCROLL_NEVER
 
-        WebView.setWebContentsDebuggingEnabled(false)
 
-        webView.webViewClient = WebViewClient()
+        WebView.setWebContentsDebuggingEnabled(
+            false
+        )
 
-        webView.webChromeClient = WebChromeClient()
 
-        // JavaScript -> Android bridge
+        webView.webViewClient =
+            WebViewClient()
+
+
+        webView.webChromeClient =
+            WebChromeClient()
+
+
+        /*
+         * JavaScript -> Android
+         *
+         * JavaScript can call:
+         *
+         * AndroidPlayer.playNative(url, title)
+         */
         webView.addJavascriptInterface(
             AndroidBridge(this),
             "AndroidPlayer"
         )
     }
+
 
     // ============================================================
     // JAVASCRIPT BRIDGE
@@ -188,7 +323,9 @@ class MainActivity : ComponentActivity() {
             url: String,
             title: String
         ) {
+
             runOnUiThread {
+
                 showNativePlayer(
                     url,
                     title
@@ -197,100 +334,168 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+
     // ============================================================
-    // EXOPLAYER
+    // BUILD EXOPLAYER
     // ============================================================
 
     private fun buildPlayer(): ExoPlayer {
 
-    val httpDataSource =
-        DefaultHttpDataSource.Factory()
-            .setUserAgent(UA)
-            .setAllowCrossProtocolRedirects(true)
-            .setConnectTimeoutMs(30_000)
-            .setReadTimeoutMs(30_000)
-            .setKeepPostFor302Redirects(true)
+        /*
+         * --------------------------------------------------------
+         * HTTP Data Source
+         * --------------------------------------------------------
+         */
 
-    /*
-     * Special MPEG-TS configuration.
-     *
-     * Some IPTV servers send TS streams without normal
-     * Access Unit Delimiters or use non-IDR I-frames.
-     */
-    val tsFlags =
-        DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS or
-        DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES
+        val httpDataSource =
+            DefaultHttpDataSource.Factory()
+                .setUserAgent(UA)
+                .setAllowCrossProtocolRedirects(true)
+                .setConnectTimeoutMs(30_000)
+                .setReadTimeoutMs(30_000)
+                .setKeepPostFor302Redirects(true)
 
-    val extractorsFactory =
-        DefaultExtractorsFactory()
-            .setTsExtractorFlags(tsFlags)
 
-    val mediaSourceFactory =
-        ProgressiveMediaSource.Factory(
-            httpDataSource,
-            extractorsFactory
-        )
+        /*
+         * --------------------------------------------------------
+         * MPEG-TS extractor configuration
+         * --------------------------------------------------------
+         *
+         * Some IPTV servers send MPEG-TS streams in a form
+         * that needs additional TS detection flags.
+         */
 
-    val renderersFactory =
-        DefaultRenderersFactory(this)
-            .setEnableDecoderFallback(true)
+        val tsFlags =
+            DefaultTsPayloadReaderFactory
+                .FLAG_DETECT_ACCESS_UNITS or
+            DefaultTsPayloadReaderFactory
+                .FLAG_ALLOW_NON_IDR_KEYFRAMES
 
-    val loadControl =
-        DefaultLoadControl.Builder()
-            .setBufferDurationsMs(
-                25_000,
-                60_000,
-                2_500,
-                5_000
-            )
-            .build()
 
-    return ExoPlayer.Builder(
-        this,
-        renderersFactory
-    )
-        .setMediaSourceFactory(mediaSourceFactory)
-        .setLoadControl(loadControl)
-        .build()
-}
+        val extractorsFactory =
+            DefaultExtractorsFactory()
+                .setTsExtractorFlags(
+                    tsFlags
+                )
+
+
+        /*
+         * --------------------------------------------------------
+         * Media Source Factory
+         * --------------------------------------------------------
+         *
+         * DefaultMediaSourceFactory allows Media3 to select
+         * the correct source type for:
+         *
+         * HLS     -> .m3u8
+         * DASH    -> .mpd
+         * MPEG-TS -> .ts
+         * MP4     -> .mp4
+         * etc.
+         */
+
+        val mediaSourceFactory =
+            DefaultMediaSourceFactory(this)
+                .setDataSourceFactory(
+                    httpDataSource
+                )
+                .setExtractorsFactory(
+                    extractorsFactory
+                )
+
+
+        /*
+         * --------------------------------------------------------
+         * Renderers
+         * --------------------------------------------------------
+         */
+
+        val renderersFactory =
+            DefaultRenderersFactory(this)
+                .setEnableDecoderFallback(
+                    true
+                )
+
+
+        /*
+         * --------------------------------------------------------
+         * Buffer configuration
+         * --------------------------------------------------------
+         */
+
+        val loadControl =
+            DefaultLoadControl.Builder()
+                .setBufferDurationsMs(
+                    25_000,
+                    60_000,
+                    2_500,
+                    5_000
+                )
+                .build()
+
+
+        /*
+         * --------------------------------------------------------
+         * Create ExoPlayer
+         * --------------------------------------------------------
+         */
 
         return ExoPlayer.Builder(
             this,
             renderersFactory
         )
             .setMediaSourceFactory(
-                DefaultMediaSourceFactory(this)
-                    .setDataSourceFactory(
-                        httpDataSource
-                    )
+                mediaSourceFactory
             )
-            .setLoadControl(loadControl)
+            .setLoadControl(
+                loadControl
+            )
             .build()
     }
 
+
     // ============================================================
-    // MIME TYPE DETECTION
+    // MIME TYPE
     // ============================================================
 
-    private fun mimeFor(url: String): String? {
+    private fun mimeFor(
+        url: String
+    ): String? {
 
-        val u = url.lowercase()
+        /*
+         * Remove query string before checking extension.
+         *
+         * Example:
+         *
+         * http://server/live/528.ts?token=123
+         */
+
+        val cleanUrl =
+            url
+                .substringBefore("?")
+                .substringBefore("#")
+                .lowercase()
+
 
         return when {
 
-            u.contains(".m3u8") ->
+            cleanUrl.endsWith(".m3u8") ->
                 MimeTypes.APPLICATION_M3U8
 
-            u.contains(".mpd") ->
+            cleanUrl.endsWith(".mpd") ->
                 MimeTypes.APPLICATION_MPD
 
-            u.contains(".ts") ->
+            cleanUrl.endsWith(".ts") ->
                 MimeTypes.VIDEO_MP2T
+
+            cleanUrl.endsWith(".mp4") ->
+                MimeTypes.VIDEO_MP4
 
             else ->
                 null
         }
     }
+
 
     // ============================================================
     // SHOW NATIVE PLAYER
@@ -301,159 +506,230 @@ class MainActivity : ComponentActivity() {
         title: String
     ) {
 
-        currentUrl = url
-        currentTitle = title
+        /*
+         * Save current channel
+         */
+        currentUrl =
+            url
 
-        // Release previous player
+        currentTitle =
+            title
+
+
+        /*
+         * Release old player
+         */
         player?.release()
+
         player = null
 
-        // Reset UI
-        errorBox.visibility = View.GONE
 
-        loading.visibility = View.VISIBLE
+        /*
+         * Reset UI
+         */
+        errorBox.visibility =
+            View.GONE
 
-        txtTitle.text = title
+        loading.visibility =
+            View.VISIBLE
 
-        // Show native player
-        playerLayer.visibility = View.VISIBLE
+        txtTitle.text =
+            title
 
-        // Hide WebView while playing
-        webView.visibility = View.GONE
 
-        // Landscape mode
+        /*
+         * Show player
+         */
+        playerLayer.visibility =
+            View.VISIBLE
+
+
+        /*
+         * Hide WebView
+         */
+        webView.visibility =
+            View.GONE
+
+
+        /*
+         * Landscape
+         */
         requestedOrientation =
-            ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+            ActivityInfo
+                .SCREEN_ORIENTATION_SENSOR_LANDSCAPE
 
-        // Fullscreen
+
+        /*
+         * Fullscreen
+         */
         setFullscreen(true)
 
-        // Create new player
-        player = buildPlayer()
+
+        /*
+         * Build player
+         */
+        player =
+            buildPlayer()
+
 
         player?.let { p ->
 
-            playerView.player = p
+            /*
+             * Connect PlayerView
+             */
+            playerView.player =
+                p
 
-            // Build MediaItem
+
+            /*
+             * Detect stream type
+             */
+            val mime =
+                mimeFor(url)
+
+
+            /*
+             * Build MediaItem
+             */
             val mediaItemBuilder =
                 MediaItem.Builder()
                     .setUri(url)
 
-            // Detect MIME type
-            val mimeType = mimeFor(url)
-
-            if (mimeType != null) {
-                mediaItemBuilder.setMimeType(mimeType)
-            }
 
             /*
-             * Player listener
+             * If URL tells us the MIME type,
+             * explicitly provide it.
              */
+            if (mime != null) {
+
+                mediaItemBuilder
+                    .setMimeType(mime)
+            }
+
+
+            val mediaItem =
+                mediaItemBuilder.build()
+
+
+            // ----------------------------------------------------
+            // Player listener
+            // ----------------------------------------------------
+
             p.addListener(
                 object : Player.Listener {
 
-                    private fun showNativePlayer(
-    url: String,
-    title: String
-) {
 
-    currentUrl = url
-    currentTitle = title
+                    override fun onPlaybackStateChanged(
+                        state: Int
+                    ) {
 
-    player?.release()
-    player = null
+                        when (state) {
 
-    errorBox.visibility = View.GONE
-    loading.visibility = View.VISIBLE
+                            /*
+                             * Stream is buffering
+                             */
+                            Player.STATE_BUFFERING -> {
 
-    txtTitle.text = title
+                                loading.visibility =
+                                    View.VISIBLE
+                            }
 
-    playerLayer.visibility = View.VISIBLE
-    webView.visibility = View.GONE
 
-    requestedOrientation =
-        ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                            /*
+                             * Stream is playing/ready
+                             */
+                            Player.STATE_READY -> {
 
-    setFullscreen(true)
+                                loading.visibility =
+                                    View.GONE
+                            }
 
-    player = buildPlayer()
 
-    player?.let { p ->
+                            /*
+                             * Stream ended
+                             */
+                            Player.STATE_ENDED -> {
 
-        playerView.player = p
-
-        val mediaItem =
-            MediaItem.Builder()
-                .setUri(url)
-                .setMimeType(MimeTypes.VIDEO_MP2T)
-                .build()
-
-        p.addListener(
-            object : Player.Listener {
-
-                override fun onPlaybackStateChanged(
-                    state: Int
-                ) {
-
-                    when (state) {
-
-                        Player.STATE_BUFFERING -> {
-                            loading.visibility = View.VISIBLE
-                        }
-
-                        Player.STATE_READY -> {
-                            loading.visibility = View.GONE
-                        }
-
-                        Player.STATE_ENDED -> {
-                            loading.visibility = View.GONE
+                                loading.visibility =
+                                    View.GONE
+                            }
                         }
                     }
+
+
+                    /*
+                     * Player error
+                     */
+                    override fun onPlayerError(
+                        error: PlaybackException
+                    ) {
+
+                        loading.visibility =
+                            View.GONE
+
+
+                        txtError.text =
+                            getString(
+                                R.string.player_error
+                            ) +
+                            "\n\n" +
+                            error.errorCodeName
+
+
+                        errorBox.visibility =
+                            View.VISIBLE
+                    }
                 }
+            )
 
-                override fun onPlayerError(
-                    error: PlaybackException
-                ) {
 
-                    loading.visibility = View.GONE
+            /*
+             * Set channel
+             */
+            p.setMediaItem(
+                mediaItem
+            )
 
-                    txtError.text =
-                        getString(
-                            R.string.player_error
-                        ) +
-                        "\n\n" +
-                        error.errorCodeName
 
-                    errorBox.visibility =
-                        View.VISIBLE
-                }
-            }
-        )
+            /*
+             * Prepare stream
+             */
+            p.prepare()
 
-        /*
-         * Explicitly tell Media3 that this is MPEG-TS.
-         */
-        p.setMediaItem(mediaItem)
 
-        p.prepare()
-
-        p.playWhenReady = true
+            /*
+             * Auto play
+             */
+            p.playWhenReady =
+                true
+        }
     }
-}
+
 
     // ============================================================
-    // HIDE PLAYER
+    // HIDE NATIVE PLAYER
     // ============================================================
 
     private fun hideNativePlayer() {
 
+        /*
+         * Release player
+         */
         player?.release()
 
         player = null
 
-        playerView.player = null
 
+        /*
+         * Disconnect PlayerView
+         */
+        playerView.player =
+            null
+
+
+        /*
+         * Hide player UI
+         */
         playerLayer.visibility =
             View.GONE
 
@@ -463,16 +739,28 @@ class MainActivity : ComponentActivity() {
         loading.visibility =
             View.GONE
 
+
+        /*
+         * Show WebView again
+         */
         webView.visibility =
             View.VISIBLE
 
-        // Back to portrait
-        requestedOrientation =
-            ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
-        // Exit fullscreen
+        /*
+         * Portrait
+         */
+        requestedOrientation =
+            ActivityInfo
+                .SCREEN_ORIENTATION_PORTRAIT
+
+
+        /*
+         * Exit fullscreen
+         */
         setFullscreen(false)
     }
+
 
     // ============================================================
     // FULLSCREEN
@@ -487,17 +775,23 @@ class MainActivity : ComponentActivity() {
             !on
         )
 
+
         val controller =
             WindowCompat.getInsetsController(
                 window,
                 window.decorView
             )
 
+
         if (on) {
 
+            /*
+             * Hide status/navigation bars
+             */
             controller.hide(
                 WindowInsetsCompat.Type.systemBars()
             )
+
 
             controller.systemBarsBehavior =
                 WindowInsetsControllerCompat
@@ -505,11 +799,15 @@ class MainActivity : ComponentActivity() {
 
         } else {
 
+            /*
+             * Show system bars
+             */
             controller.show(
                 WindowInsetsCompat.Type.systemBars()
             )
         }
     }
+
 
     // ============================================================
     // LIFECYCLE
@@ -520,33 +818,50 @@ class MainActivity : ComponentActivity() {
         super.onPause()
 
         /*
-         * Pause playback when app goes into background.
+         * Pause playback when application
+         * goes to background.
          */
-        player?.playWhenReady = false
+        player?.playWhenReady =
+            false
     }
+
 
     override fun onResume() {
 
         super.onResume()
 
         /*
-         * Resume playback when app returns.
+         * Resume player when application
+         * returns to foreground.
          */
-        if (playerLayer.visibility == View.VISIBLE) {
+        if (
+            playerLayer.visibility ==
+            View.VISIBLE
+        ) {
 
-            player?.playWhenReady = true
+            player?.playWhenReady =
+                true
 
             setFullscreen(true)
         }
     }
 
+
     override fun onDestroy() {
 
+        /*
+         * Release ExoPlayer
+         */
         player?.release()
 
         player = null
 
+
+        /*
+         * Destroy WebView
+         */
         webView.destroy()
+
 
         super.onDestroy()
     }
