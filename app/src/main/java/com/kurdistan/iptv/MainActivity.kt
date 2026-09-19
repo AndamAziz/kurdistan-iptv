@@ -28,6 +28,9 @@ import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.PlayerView
+import androidx.media3.extractor.DefaultExtractorsFactory
+import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory
+import androidx.media3.exoplayer.source.ProgressiveMediaSource
 
 class MainActivity : ComponentActivity() {
 
@@ -200,35 +203,56 @@ class MainActivity : ComponentActivity() {
 
     private fun buildPlayer(): ExoPlayer {
 
-        val httpDataSource =
-            DefaultHttpDataSource.Factory()
-                .setUserAgent(UA)
-                .setAllowCrossProtocolRedirects(true)
-                .setConnectTimeoutMs(20_000)
-                .setReadTimeoutMs(20_000)
-                .setKeepPostFor302Redirects(true)
+    val httpDataSource =
+        DefaultHttpDataSource.Factory()
+            .setUserAgent(UA)
+            .setAllowCrossProtocolRedirects(true)
+            .setConnectTimeoutMs(30_000)
+            .setReadTimeoutMs(30_000)
+            .setKeepPostFor302Redirects(true)
 
-        /*
-         * Decoder fallback:
-         * If the preferred hardware decoder fails,
-         * Media3 can try another decoder.
-         */
-        val renderersFactory =
-            DefaultRenderersFactory(this)
-                .setEnableDecoderFallback(true)
+    /*
+     * Special MPEG-TS configuration.
+     *
+     * Some IPTV servers send TS streams without normal
+     * Access Unit Delimiters or use non-IDR I-frames.
+     */
+    val tsFlags =
+        DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS or
+        DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES
 
-        /*
-         * Buffer configuration suitable for IPTV/live streams.
-         */
-        val loadControl =
-            DefaultLoadControl.Builder()
-                .setBufferDurationsMs(
-                    25_000, // min buffer
-                    60_000, // max buffer
-                    2_500,  // playback buffer
-                    5_000   // rebuffer
-                )
-                .build()
+    val extractorsFactory =
+        DefaultExtractorsFactory()
+            .setTsExtractorFlags(tsFlags)
+
+    val mediaSourceFactory =
+        ProgressiveMediaSource.Factory(
+            httpDataSource,
+            extractorsFactory
+        )
+
+    val renderersFactory =
+        DefaultRenderersFactory(this)
+            .setEnableDecoderFallback(true)
+
+    val loadControl =
+        DefaultLoadControl.Builder()
+            .setBufferDurationsMs(
+                25_000,
+                60_000,
+                2_500,
+                5_000
+            )
+            .build()
+
+    return ExoPlayer.Builder(
+        this,
+        renderersFactory
+    )
+        .setMediaSourceFactory(mediaSourceFactory)
+        .setLoadControl(loadControl)
+        .build()
+}
 
         return ExoPlayer.Builder(
             this,
@@ -329,59 +353,94 @@ class MainActivity : ComponentActivity() {
             p.addListener(
                 object : Player.Listener {
 
-                    override fun onPlaybackStateChanged(
-                        state: Int
-                    ) {
+                    private fun showNativePlayer(
+    url: String,
+    title: String
+) {
 
-                        loading.visibility =
-                            when (state) {
+    currentUrl = url
+    currentTitle = title
 
-                                Player.STATE_BUFFERING ->
-                                    View.VISIBLE
+    player?.release()
+    player = null
 
-                                Player.STATE_READY ->
-                                    View.GONE
+    errorBox.visibility = View.GONE
+    loading.visibility = View.VISIBLE
 
-                                Player.STATE_ENDED ->
-                                    View.GONE
+    txtTitle.text = title
 
-                                else ->
-                                    loading.visibility
-                            }
-                    }
+    playerLayer.visibility = View.VISIBLE
+    webView.visibility = View.GONE
 
-                    override fun onPlayerError(
-                        error: PlaybackException
-                    ) {
+    requestedOrientation =
+        ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
 
-                        loading.visibility =
-                            View.GONE
+    setFullscreen(true)
 
-                        txtError.text =
-                            getString(
-                                R.string.player_error
-                            ) +
-                            "\n\n" +
-                            error.errorCodeName
+    player = buildPlayer()
 
-                        errorBox.visibility =
-                            View.VISIBLE
+    player?.let { p ->
+
+        playerView.player = p
+
+        val mediaItem =
+            MediaItem.Builder()
+                .setUri(url)
+                .setMimeType(MimeTypes.VIDEO_MP2T)
+                .build()
+
+        p.addListener(
+            object : Player.Listener {
+
+                override fun onPlaybackStateChanged(
+                    state: Int
+                ) {
+
+                    when (state) {
+
+                        Player.STATE_BUFFERING -> {
+                            loading.visibility = View.VISIBLE
+                        }
+
+                        Player.STATE_READY -> {
+                            loading.visibility = View.GONE
+                        }
+
+                        Player.STATE_ENDED -> {
+                            loading.visibility = View.GONE
+                        }
                     }
                 }
-            )
 
-            // Set media
-            p.setMediaItem(
-                mediaItemBuilder.build()
-            )
+                override fun onPlayerError(
+                    error: PlaybackException
+                ) {
 
-            // Prepare
-            p.prepare()
+                    loading.visibility = View.GONE
 
-            // Start automatically
-            p.playWhenReady = true
-        }
+                    txtError.text =
+                        getString(
+                            R.string.player_error
+                        ) +
+                        "\n\n" +
+                        error.errorCodeName
+
+                    errorBox.visibility =
+                        View.VISIBLE
+                }
+            }
+        )
+
+        /*
+         * Explicitly tell Media3 that this is MPEG-TS.
+         */
+        p.setMediaItem(mediaItem)
+
+        p.prepare()
+
+        p.playWhenReady = true
     }
+}
 
     // ============================================================
     // HIDE PLAYER
