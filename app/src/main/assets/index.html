@@ -79,6 +79,17 @@ header{
   border-color:transparent;color:#fff;box-shadow:0 5px 16px rgba(230,62,70,.35);
 }
 
+/* sync pill */
+#sync{
+  position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + var(--safe-b));z-index:40;
+  display:none;align-items:center;gap:9px;padding:9px 16px;border-radius:999px;
+  background:rgba(18,25,36,.95);border:1px solid var(--line);font-size:12px;font-weight:700;
+  box-shadow:0 10px 30px rgba(0,0,0,.6);
+}
+#sync.on{display:flex}
+#sync .sp{width:13px;height:13px;border-radius:99px;border:2px solid var(--muted2);border-top-color:var(--accent2);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
 /* ---------- main ---------- */
 main{position:relative;z-index:1;padding:6px 14px calc(44px + var(--safe-b))}
 section{margin-top:22px}
@@ -104,11 +115,11 @@ section{margin-top:22px}
   background:linear-gradient(160deg,rgba(255,255,255,.07),transparent 46%);
 }
 .mono{
-  position:absolute;inset:0;display:grid;place-items:center;
+  position:absolute;inset:0;display:grid;place-items:center;direction:ltr;
   font-weight:900;font-size:clamp(15px,5.4vw,25px);letter-spacing:.5px;color:#fff;
   text-shadow:0 2px 10px rgba(0,0,0,.45);
 }
-.tile img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:17%;background:var(--surface)}
+.tile img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:14%;background:#0E141C}
 .dot{
   position:absolute;top:9px;inset-inline-start:9px;width:7px;height:7px;border-radius:99px;
   background:var(--live);box-shadow:0 0 0 3px rgba(47,212,110,.18);animation:pulse 2.1s infinite;
@@ -121,6 +132,13 @@ section{margin-top:22px}
 }
 .card:active .name{color:var(--text)}
 
+#moreWrap{display:none;text-align:center;padding:26px 0 6px}
+#moreBtn{
+  padding:13px 30px;border-radius:999px;border:1px solid var(--line);
+  background:var(--surface);color:var(--text);font-weight:800;font-size:13.5px;cursor:pointer;
+}
+#moreBtn:active{transform:scale(.95)}
+
 .empty{text-align:center;padding:70px 20px;color:var(--muted2)}
 .empty div:first-child{font-size:42px;margin-bottom:12px;opacity:.5}
 .empty p{margin:0;font-size:14px;font-weight:600}
@@ -132,7 +150,7 @@ section{margin-top:22px}
 .glogo{
   width:84px;height:84px;margin:0 auto 22px;border-radius:26px;display:grid;place-items:center;
   background:linear-gradient(145deg,var(--accent),var(--accent2));
-  box-shadow:0 18px 44px rgba(230,62,70,.4);font-size:36px;
+  box-shadow:0 18px 44px rgba(230,62,70,.4);
 }
 .gbox h1{margin:0 0 7px;font-size:22px;font-weight:800;letter-spacing:2px}
 .gbox h1 em{font-style:normal;color:var(--accent2)}
@@ -208,7 +226,7 @@ section{margin-top:22px}
   </div>
 
   <div class="searchbox" id="sbox">
-    <input id="search" oninput="render()" autocomplete="off">
+    <input id="search" autocomplete="off">
     <b><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg></b>
   </div>
 
@@ -216,6 +234,8 @@ section{margin-top:22px}
 </header>
 
 <main id="main"></main>
+
+<div id="sync"><span class="sp"></span><span id="syncText"></span></div>
 
 <div id="sheet">
   <div class="bd" onclick="closeSheet()"></div>
@@ -228,111 +248,190 @@ section{margin-top:22px}
 
 <script src="channels.js"></script>
 <script>
-/* ============ CONFIG ============ */
-var LOGO_BASE = "https://andam.uk/logos/";   /* put <slug>.png files here */
-var USE_REMOTE_LOGOS = true;                 /* set false to use monograms only */
+/* ==================== CONFIG ==================== */
+var PLAYLIST_URL = "https://raw.githubusercontent.com/AndamAziz/Andamiptv/refs/heads/main/playlist.m3u";
+var PIN_CODE     = "1015";
+var PAGE_SIZE    = 48;     /* how many channels load at a time */
+var CACHE_KEY    = "kiptv_pl_v1";
 
-var CH = window.CHANNELS || [];
-
-/* ============ i18n ============ */
+/* ==================== i18n ==================== */
 var T = {
   ku:{name:"کوردی سۆرانی",dir:"rtl",all:"هەموو",search:"گەڕان بۆ کەنال...",
       tag:"پەخشی ڕاستەوخۆ",ann:"بەخێربێیت بۆ KURDISTAN IPTV — پەخشی ڕاستەوخۆی کەناڵە کوردی و نێودەوڵەتییەکان",
       recent:"بەردەوامبە لە بینین",none:"هیچ کەناڵێک نەدۆزرایەوە",lang:"زمان",
       enter:"کۆدی چالاککردن داخڵ بکە",act:"چالاککردن",wrong:"کۆدەکە هەڵەیە",
-      cats:{KURDISTAN:"کوردی",MOVIES:"فلم و دراما",SPORT:"وەرزش",KIDS:"منداڵان",QURAN:"قورئان",ARABIC:"عەرەبی",EDUCATION:"پەروەردە",MUSIC:"موزیک",DOCUMENTARY:"بەڵگەنامەیی"}},
+      more:"زیاتر پیشان بدە",sync:"نوێکردنەوەی لیستی کەناڵەکان...",results:"ئەنجامی گەڕان"},
   kb:{name:"Kurdî Badînî",dir:"rtl",all:"هەمی",search:"گەڕیان بو کەنالان...",
       tag:"پەخشا ڕاستەڤخۆ",ann:"بخێرهاتی بو KURDISTAN IPTV — پەخشا ڕاستەڤخۆ یا کەنالێن کوردی و نێڤدەولەتی",
       recent:"بەردەوام بە ل تەماشەکرنێ",none:"چ کەنال نەهاتە دیتن",lang:"زمان",
       enter:"کودێ چالاککرنێ بنڤیسە",act:"چالاککرن",wrong:"کود شاشە",
-      cats:{KURDISTAN:"کوردی",MOVIES:"فیلم و دراما",SPORT:"وەرزش",KIDS:"زارۆک",QURAN:"قورئان",ARABIC:"عەرەبی",EDUCATION:"پەروەردە",MUSIC:"موزیک",DOCUMENTARY:"بەلگەنامەیی"}},
+      more:"پتر نیشان بدە",sync:"نوێکرنا لیستا کەنالان...",results:"ئەنجامێن گەڕیانێ"},
   en:{name:"English",dir:"ltr",all:"All",search:"Search channels...",
       tag:"LIVE STREAMING",ann:"Welcome to KURDISTAN IPTV — live Kurdish and international channels",
       recent:"Continue watching",none:"No channels found",lang:"Language",
       enter:"Enter your activation code",act:"Activate",wrong:"Wrong code",
-      cats:{KURDISTAN:"Kurdish",MOVIES:"Movies & Drama",SPORT:"Sports",KIDS:"Kids",QURAN:"Quran",ARABIC:"Arabic",EDUCATION:"Education",MUSIC:"Music",DOCUMENTARY:"Documentary"}},
+      more:"Show more",sync:"Updating channel list...",results:"Search results"},
   ar:{name:"العربية",dir:"rtl",all:"الكل",search:"ابحث عن قناة...",
       tag:"بث مباشر",ann:"مرحباً بك في KURDISTAN IPTV — بث مباشر للقنوات الكردية والعالمية",
       recent:"متابعة المشاهدة",none:"لا توجد قنوات",lang:"اللغة",
       enter:"أدخل رمز التفعيل",act:"تفعيل",wrong:"الرمز غير صحيح",
-      cats:{KURDISTAN:"كردي",MOVIES:"أفلام ودراما",SPORT:"رياضة",KIDS:"أطفال",QURAN:"قرآن",ARABIC:"عربي",EDUCATION:"تعليمي",MUSIC:"موسيقى",DOCUMENTARY:"وثائقي"}}
+      more:"عرض المزيد",sync:"جاري تحديث قائمة القنوات...",results:"نتائج البحث"}
 };
-
 var lang = localStorage.kiptv_lang || "ku";
-function t(){ return T[lang]; }
+function t(){ return T[lang] || T.ku; }
 
-/* ============ helpers ============ */
-var SKIP = {TV:1,HD:1,AND:1,THE:1,OF:1,"4K":1,FHD:1};
+/* ==================== helpers ==================== */
+var SKIP = {TV:1,HD:1,AND:1,THE:1,OF:1,"4K":1,FHD:1,SD:1};
 function initials(n){
-  var w = n.toUpperCase().split(/[\s_\-|\/()\[\]\.]+/).filter(Boolean);
+  var w = String(n).toUpperCase().split(/[\s_\-|\/()\[\]\.]+/).filter(Boolean);
   var k = w.filter(function(x){ return !SKIP[x] });
   if(!k.length) k = w;
+  if(!k.length) return "?";
   if(k.length === 1) return k[0].slice(0,3);
   if(/^[0-9]+$/.test(k[1])) return (k[0].charAt(0) + k[1]).slice(0,3);
   return k[0].charAt(0) + k[1].charAt(0);
 }
-var TRANS = {"Ç":"c","Ê":"e","Î":"i","Û":"u","Ş":"s","Ö":"o","Ü":"u","Á":"a","É":"e","Í":"i","Ó":"o","Ú":"u","Ñ":"n"};
 function hue(s){ var h=0; for(var i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))%360; return h; }
-function slug(n){
-  var u = n.toUpperCase().split("").map(function(ch){ return TRANS[ch] || ch }).join("");
-  return u.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;"); }
+function cleanGroup(g){
+  var s = String(g).replace(/^\s*\d+\s*[\.\-]\s*/,"");
+  var p = s.split(" - ");
+  return (p.length > 1 ? p[p.length-1] : s).trim() || "Other";
 }
-function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;"); }
 
-/* ============ state ============ */
-var f = "ALL";
-function recent(){ try{ return JSON.parse(localStorage.kiptv_recent||"[]") }catch(e){ return [] } }
+/* ==================== m3u parsing ==================== */
+function lastAttr(L, name){
+  var m = L.match(new RegExp(name + '="[^"]*"', "g"));
+  if(!m) return "";
+  var v = m[m.length-1];
+  return v.slice(name.length + 2, -1);
+}
+function parseM3U(txt){
+  var lines = txt.split(/\r?\n/), out = [], cur = null;
+  for(var i = 0; i < lines.length; i++){
+    var L = lines[i];
+    if(!L) continue;
+    if(L.charAt(0) === "#"){
+      if(L.slice(0,7) === "#EXTINF"){
+        var nm = L.slice(L.lastIndexOf(",") + 1).trim();
+        cur = nm ? { c:(lastAttr(L,"group-title") || "Other"), n:nm, u:"", l:lastAttr(L,"tvg-logo") } : null;
+      }
+    } else {
+      var u = L.trim();
+      if(u && cur){ cur.u = u; out.push(cur); cur = null; }
+    }
+  }
+  return out;
+}
+
+/* ==================== cache ==================== */
+function saveCache(list){
+  try{
+    localStorage.setItem(CACHE_KEY, JSON.stringify(list.map(function(c){ return [c.c,c.n,c.u,c.l] })));
+  }catch(e){ try{ localStorage.removeItem(CACHE_KEY) }catch(e2){} }
+}
+function loadCache(){
+  try{
+    var a = JSON.parse(localStorage.getItem(CACHE_KEY));
+    if(!a || !a.length) return null;
+    return a.map(function(x){ return {c:x[0],n:x[1],u:x[2],l:x[3]||""} });
+  }catch(e){ return null }
+}
+
+/* ==================== state ==================== */
+var CH = [], GROUPS = [], f = "", view = [], shown = 0;
+
+function buildGroups(){
+  var n = {};
+  for(var i = 0; i < CH.length; i++) n[CH[i].c] = (n[CH[i].c] || 0) + 1;
+  var g = Object.keys(n).sort(function(a,b){ return n[b] - n[a] });
+  /* Kurdish groups always come first */
+  var kur = g.filter(function(k){ return /kurd|كرد|کورد/i.test(k) });
+  GROUPS = kur.concat(g.filter(function(k){ return kur.indexOf(k) < 0 }));
+  if(!f || (f !== "ALL" && !n[f])) f = GROUPS.length ? GROUPS[0] : "ALL";
+}
+
+function recent(){ try{ return JSON.parse(localStorage.kiptv_recent || "[]") }catch(e){ return [] } }
 function pushRecent(name){
-  var r = recent().filter(function(x){return x!==name});
-  r.unshift(name); localStorage.kiptv_recent = JSON.stringify(r.slice(0,6));
+  var r = recent().filter(function(x){ return x !== name });
+  r.unshift(name);
+  try{ localStorage.kiptv_recent = JSON.stringify(r.slice(0,6)) }catch(e){}
 }
 
-/* ============ render ============ */
+/* ==================== render ==================== */
 function cardHTML(c){
-  var h = hue(c.n), ini = initials(c.n);
+  var h = hue(c.n);
   var bg = "linear-gradient(145deg,hsl("+h+",42%,34%),hsl("+((h+42)%360)+",48%,20%))";
-  var img = USE_REMOTE_LOGOS
-    ? '<img src="'+LOGO_BASE+slug(c.n)+'.png" loading="lazy" onerror="this.remove()" alt="">'
-    : '';
-  return '<div class="card" onclick=\'play('+JSON.stringify(c.u)+','+JSON.stringify(c.n)+')\'>'
+  var img = c.l ? '<img src="'+esc(c.l)+'" loading="lazy" onerror="this.remove()" alt="">' : '';
+  return '<div class="card" data-u="'+esc(c.u)+'" data-n="'+esc(c.n)+'">'
        +   '<div class="tile" style="background:'+bg+'">'
-       +     '<div class="mono">'+esc(ini)+'</div>'+img+'<span class="dot"></span>'
+       +     '<div class="mono">'+esc(initials(c.n))+'</div>'+img+'<span class="dot"></span>'
        +   '</div>'
        +   '<div class="name">'+esc(c.n)+'</div>'
        + '</div>';
 }
-function sectionHTML(title, list){
-  return '<section><div class="shead"><span class="bar"></span><h2>'+esc(title)+'</h2>'
-       + '<span class="cnt">'+list.length+'</span></div>'
-       + '<div class="grid">'+list.map(cardHTML).join("")+'</div></section>';
+
+function currentTitle(q){
+  if(q) return t().results;
+  if(f === "ALL") return t().all;
+  return cleanGroup(f);
 }
 
 function render(){
-  var q = (document.getElementById("search").value||"").trim().toLowerCase();
-  var list = CH.filter(function(c){
-    return (f==="ALL"||c.c===f) && (!q || c.n.toLowerCase().indexOf(q)>-1);
-  });
-  var out = "";
-  if(!q && f==="ALL"){
-    var rn = recent(), rc = [];
-    rn.forEach(function(n){ var m = CH.filter(function(c){return c.n===n})[0]; if(m) rc.push(m); });
-    if(rc.length) out += sectionHTML(t().recent, rc);
+  var q = (document.getElementById("search").value || "").trim().toLowerCase();
+  if(q){
+    view = CH.filter(function(c){ return c.n.toLowerCase().indexOf(q) > -1 });
+  }else{
+    view = (f === "ALL") ? CH : CH.filter(function(c){ return c.c === f });
   }
-  var groups = {};
-  list.forEach(function(c){ (groups[c.c] = groups[c.c]||[]).push(c) });
-  var order = ["KURDISTAN","MOVIES","SPORT","KIDS","QURAN","ARABIC","EDUCATION","MUSIC","DOCUMENTARY"];
-  order.forEach(function(k){ if(groups[k]) out += sectionHTML(t().cats[k]||k, groups[k]) });
-  if(!list.length) out = '<div class="empty"><div>&#128533;</div><p>'+t().none+'</p></div>';
-  document.getElementById("main").innerHTML = out;
+
+  var html = "";
+  if(!q){
+    var rn = recent(), rc = [];
+    for(var i = 0; i < rn.length; i++){
+      for(var j = 0; j < CH.length; j++){ if(CH[j].n === rn[i]){ rc.push(CH[j]); break } }
+    }
+    if(rc.length){
+      html += '<section><div class="shead"><span class="bar"></span><h2>'+esc(t().recent)+'</h2>'
+           +  '<span class="cnt">'+rc.length+'</span></div><div class="grid">'
+           +  rc.map(cardHTML).join("") + '</div></section>';
+    }
+  }
+
+  if(!view.length){
+    html += '<div class="empty"><div>&#128533;</div><p>'+esc(t().none)+'</p></div>';
+    document.getElementById("main").innerHTML = html;
+    return;
+  }
+
+  html += '<section><div class="shead"><span class="bar"></span><h2>'+esc(currentTitle(q))+'</h2>'
+       +  '<span class="cnt">'+view.length+'</span></div><div class="grid" id="grid"></div></section>'
+       +  '<div id="moreWrap"><button id="moreBtn" onclick="loadMore()"></button></div>';
+  document.getElementById("main").innerHTML = html;
+  document.getElementById("moreBtn").textContent = t().more;
+  shown = 0;
+  loadMore();
+  window.scrollTo(0,0);
+}
+
+function loadMore(){
+  var g = document.getElementById("grid");
+  if(!g) return;
+  var next = view.slice(shown, shown + PAGE_SIZE);
+  if(next.length){
+    g.insertAdjacentHTML("beforeend", next.map(cardHTML).join(""));
+    shown += next.length;
+  }
+  document.getElementById("moreWrap").style.display = (shown < view.length) ? "block" : "none";
 }
 
 function renderChips(){
-  var cats = ["ALL"].concat(["KURDISTAN","MOVIES","SPORT","KIDS","QURAN","ARABIC","EDUCATION","MUSIC","DOCUMENTARY"]
-    .filter(function(k){ return CH.some(function(c){return c.c===k}) }));
-  document.getElementById("chips").innerHTML = cats.map(function(k){
-    var label = k==="ALL" ? t().all : (t().cats[k]||k);
-    return '<button class="chip'+(f===k?" on":"")+'" onclick="f=\''+k+'\';renderChips();render()">'+label+'</button>';
-  }).join("");
+  var html = '<button class="chip'+(f==="ALL"?" on":"")+'" data-g="ALL">'+esc(t().all)+'</button>';
+  for(var i = 0; i < GROUPS.length; i++){
+    html += '<button class="chip'+(f===GROUPS[i]?" on":"")+'" data-g="'+esc(GROUPS[i])+'">'
+          + esc(cleanGroup(GROUPS[i])) + '</button>';
+  }
+  document.getElementById("chips").innerHTML = html;
 }
 
 function applyLang(){
@@ -345,20 +444,53 @@ function applyLang(){
   document.getElementById("gate-sub").textContent = d.enter;
   document.getElementById("gbtn").textContent = d.act;
   document.getElementById("sheetTitle").textContent = d.lang;
+  document.getElementById("syncText").textContent = d.sync;
   renderChips(); render();
 }
 
-/* ============ actions ============ */
+/* ==================== actions ==================== */
 function play(url,title){
   pushRecent(title);
   if(window.AndroidPlayer) AndroidPlayer.playNative(url,title);
   else window.open(url,"_blank");
 }
+document.getElementById("main").addEventListener("click", function(e){
+  var el = e.target;
+  while(el && el !== this && !el.getAttribute("data-u")) el = el.parentNode;
+  if(el && el.getAttribute("data-u")) play(el.getAttribute("data-u"), el.getAttribute("data-n"));
+});
+document.getElementById("chips").addEventListener("click", function(e){
+  var el = e.target;
+  while(el && el !== this && !el.getAttribute("data-g")) el = el.parentNode;
+  if(el && el.getAttribute("data-g")){
+    f = el.getAttribute("data-g");
+    document.getElementById("search").value = "";
+    renderChips(); render();
+  }
+});
+
+var stimer = null;
+document.getElementById("search").addEventListener("input", function(){
+  clearTimeout(stimer);
+  stimer = setTimeout(render, 220);
+});
+
+var ticking = false;
+window.addEventListener("scroll", function(){
+  if(ticking) return;
+  ticking = true;
+  setTimeout(function(){
+    ticking = false;
+    if(shown && shown < view.length &&
+       window.innerHeight + window.pageYOffset > document.body.offsetHeight - 900) loadMore();
+  }, 120);
+});
+
 function toggleSearch(){
   var b = document.getElementById("sbox");
   b.classList.toggle("on");
   if(b.classList.contains("on")) document.getElementById("search").focus();
-  else { document.getElementById("search").value=""; render(); }
+  else { document.getElementById("search").value = ""; render(); }
 }
 function openSheet(){
   document.getElementById("langs").innerHTML = Object.keys(T).map(function(k){
@@ -368,21 +500,20 @@ function openSheet(){
   document.getElementById("sheet").classList.add("on");
 }
 function closeSheet(){ document.getElementById("sheet").classList.remove("on") }
-function setLang(k){ lang=k; localStorage.kiptv_lang=k; closeSheet(); applyLang(); }
+function setLang(k){ lang = k; try{ localStorage.kiptv_lang = k }catch(e){} closeSheet(); applyLang(); }
 
-/* ============ activation ============ */
+/* ==================== activation ==================== */
 var PIN = "";
 function drawPins(){
   document.getElementById("pins").innerHTML = [0,1,2,3].map(function(i){
-    var cls = "pin" + (PIN[i]?" fill":"") + (i===PIN.length?" cur":"");
-    return '<div class="'+cls+'">'+(PIN[i]?"&#9679;":"")+'</div>';
+    return '<div class="pin'+(PIN[i]?" fill":"")+(i===PIN.length?" cur":"")+'">'+(PIN[i]?"&#9679;":"")+'</div>';
   }).join("");
 }
 function submitPin(){
-  if(PIN === "1015"){
-    localStorage.kiptv = "1";
+  if(PIN === PIN_CODE){
+    try{ localStorage.kiptv = "1" }catch(e){}
     document.getElementById("gate").classList.add("hide");
-  } else {
+  }else{
     document.getElementById("gmsg").textContent = t().wrong;
     document.querySelector(".pins").classList.add("shake");
     setTimeout(function(){
@@ -402,11 +533,36 @@ document.getElementById("pins").addEventListener("click", function(){
   document.getElementById("pininput").focus();
 });
 
-/* ============ boot ============ */
-if(localStorage.kiptv === "1") document.getElementById("gate").classList.add("hide");
-else setTimeout(function(){ document.getElementById("pininput").focus() }, 350);
-drawPins();
-applyLang();
+/* ==================== boot ==================== */
+function setData(list){
+  CH = list; buildGroups(); renderChips(); render();
+}
+
+function fetchPlaylist(){
+  if(!window.fetch) return;
+  document.getElementById("sync").classList.add("on");
+  fetch(PLAYLIST_URL, {cache:"no-cache"})
+    .then(function(r){ if(!r.ok) throw 0; return r.text() })
+    .then(function(txt){
+      var list = parseM3U(txt);
+      if(list.length > 5){ setData(list); saveCache(list); }
+    })
+    .catch(function(){})
+    .then(function(){ document.getElementById("sync").classList.remove("on") });
+}
+
+(function boot(){
+  if(localStorage.kiptv === "1") document.getElementById("gate").classList.add("hide");
+  else setTimeout(function(){ document.getElementById("pininput").focus() }, 350);
+  drawPins();
+
+  var cached = loadCache();
+  var fallback = (window.CHANNELS || []).map(function(c){ return {c:c.c,n:c.n,u:c.u,l:""} });
+  CH = (cached && cached.length) ? cached : fallback;
+  buildGroups();
+  applyLang();
+  fetchPlaylist();
+})();
 </script>
 </body>
 </html>
