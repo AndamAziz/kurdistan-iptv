@@ -137,9 +137,9 @@ class MainActivity : ComponentActivity() {
     private fun mimeFor(url: String): String? {
         val u = url.lowercase()
         return when {
-            u.contains(".m3u8") || u.contains("type=m3u8") -> MimeTypes.APPLICATION_M3U8
+            u.contains(".m3u8") -> MimeTypes.APPLICATION_M3U8
             u.contains(".mpd") -> MimeTypes.APPLICATION_MPD
-            u.contains(".ts") || u.contains("extension=ts") || u.contains("/live/") -> MimeTypes.VIDEO_MP2T
+            u.contains(".ts") -> MimeTypes.VIDEO_MP2T
             else -> null
         }
     }
