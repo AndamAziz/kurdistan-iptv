@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.pm.ActivityInfo
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import android.view.WindowManager
 import android.webkit.WebChromeClient
@@ -34,6 +36,9 @@ class MainActivity : ComponentActivity() {
     /* Many IPTV / Xtream servers only answer to VLC's user agent. */
     private val UA = "VLC/3.0.20 LibVLC/3.0.20"
 
+    private val MAX_RECONNECTS = 8
+    private val RECONNECT_DELAY_MS = 1200L
+
     private lateinit var webView: WebView
     private lateinit var playerLayer: View
     private lateinit var playerView: PlayerView
@@ -42,6 +47,8 @@ class MainActivity : ComponentActivity() {
     private lateinit var txtError: TextView
     private lateinit var txtTitle: TextView
 
+    private val handler = Handler(Looper.getMainLooper())
+
     private var player: ExoPlayer? = null
     private var currentUrl: String? = null
     private var currentTitle: String? = null
@@ -49,6 +56,10 @@ class MainActivity : ComponentActivity() {
     /** Container formats to try, in order, for the current channel. */
     private var plan: List<String?> = emptyList()
     private var step = 0
+
+    /** True once this channel has actually produced video at least once. */
+    private var hasPlayed = false
+    private var reconnects = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -160,10 +171,14 @@ class MainActivity : ComponentActivity() {
 
     /** Entry point: open a channel from scratch. */
     private fun openChannel(url: String, title: String) {
+        handler.removeCallbacksAndMessages(null)
+
         currentUrl = url
         currentTitle = title
         plan = planFor(url)
         step = 0
+        hasPlayed = false
+        reconnects = 0
 
         playerLayer.visibility = View.VISIBLE
         webView.visibility = View.GONE
@@ -172,6 +187,15 @@ class MainActivity : ComponentActivity() {
         txtTitle.text = title
 
         startAttempt()
+    }
+
+    /** Re-open the same stream with the same format - used for live windows that roll over. */
+    private fun reconnect() {
+        if (playerLayer.visibility != View.VISIBLE) return
+        reconnects++
+        loading.visibility = View.VISIBLE
+        handler.removeCallbacksAndMessages(null)
+        handler.postDelayed({ startAttempt() }, RECONNECT_DELAY_MS)
     }
 
     private fun startAttempt() {
@@ -189,20 +213,31 @@ class MainActivity : ComponentActivity() {
 
             p.addListener(object : Player.Listener {
                 override fun onPlaybackStateChanged(state: Int) {
-                    loading.visibility =
-                        if (state == Player.STATE_BUFFERING) View.VISIBLE else View.GONE
+                    when (state) {
+                        Player.STATE_BUFFERING -> loading.visibility = View.VISIBLE
+                        Player.STATE_READY -> {
+                            loading.visibility = View.GONE
+                            hasPlayed = true
+                            reconnects = 0          // stream is healthy again
+                        }
+                        Player.STATE_ENDED -> {
+                            // live servers often hand out a short window - fetch the next one
+                            if (reconnects < MAX_RECONNECTS) reconnect() else showError("ENDED")
+                        }
+                        else -> {}
+                    }
                 }
 
                 override fun onPlayerError(error: PlaybackException) {
-                    if (step < plan.size - 1) {
-                        // this container guess was wrong - try the next one
-                        step++
-                        playerView.post { startAttempt() }
-                    } else {
-                        loading.visibility = View.GONE
-                        txtError.text =
-                            getString(R.string.player_error) + "\n\n" + error.errorCodeName
-                        errorBox.visibility = View.VISIBLE
+                    when {
+                        // never played yet -> our container guess was wrong, try the next one
+                        !hasPlayed && step < plan.size - 1 -> {
+                            step++
+                            playerView.post { startAttempt() }
+                        }
+                        // it was playing -> keep the same format, just reconnect
+                        reconnects < MAX_RECONNECTS -> reconnect()
+                        else -> showError(error.errorCodeName)
                     }
                 }
             })
@@ -213,7 +248,14 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun showError(code: String) {
+        loading.visibility = View.GONE
+        txtError.text = getString(R.string.player_error) + "\n\n" + code
+        errorBox.visibility = View.VISIBLE
+    }
+
     private fun hideNativePlayer() {
+        handler.removeCallbacksAndMessages(null)
         player?.release()
         player = null
         playerView.player = null
@@ -255,6 +297,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        handler.removeCallbacksAndMessages(null)
         player?.release()
         player = null
         webView.destroy()
