@@ -747,7 +747,7 @@ function loadActive(force){
   if(cached && cached.length) setData(cached);
   else if(!CH.length) setData((window.CHANNELS || []).map(function(c){ return {c:c.c,n:c.n,u:c.u,l:""} }));
 
-    if(!url || !window.fetch) return;
+  if(!url || !window.fetch) return;
   showSync(t().sync + " · " + p.name, false);
 
   var job = (p.type === "xtream") ? loadXtream(p) :
@@ -770,22 +770,12 @@ function loadActive(force){
       saveCache(p.id, list);
       hideSync();
     })
-    })
-    .then(function(txt){
-      if(txt.indexOf("PROXY_ERROR") === 0) throw new Error(txt.slice(0,140));
-      var list = parseM3U(txt);
-      if(list.length < 1) throw new Error("EMPTY (" + txt.slice(0,80).replace(/\s+/g," ") + ")");
-      f = "";
-      setData(list);
-      saveCache(p.id, list);
-      hideSync();
-    })
-        .catch(function(e){
+    .catch(function(e){
       lastLoadError = (e && e.message) ? e.message : "network";
       showSync(t().loadFail + " · " + p.name, true);
     });
 }
-
+  
 /* ==================== boot ==================== */
 (function boot(){
   if(lsGet("kiptv","") === "1") $("gate").classList.add("hide");
