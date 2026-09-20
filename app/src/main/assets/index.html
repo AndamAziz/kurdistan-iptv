@@ -747,14 +747,36 @@ function play(url,title){
   if(window.AndroidPlayer) AndroidPlayer.playNative(url,title);
   else window.open(url,"_blank");
 }
+
+/* Hand the player a queue so its next / previous buttons work.
+   Only a window around the chosen item is sent, to keep it light. */
+function playQueue(arr, idx){
+  if(!arr || !arr.length) return;
+  var WIN = 150;
+  var from = Math.max(0, idx - WIN), to = Math.min(arr.length, idx + WIN);
+  var slice = arr.slice(from, to);
+  var pick = idx - from;
+  pushRecent(arr[idx].n);
+  if(window.AndroidPlayer && AndroidPlayer.playList){
+    AndroidPlayer.playList(JSON.stringify(slice.map(function(c){
+      return { n: c.n, u: c.u };
+    })), pick);
+  } else {
+    play(arr[idx].u, arr[idx].n);
+  }
+}
 $("main").addEventListener("click", function(e){
   var el = e.target;
   while(el && el !== this && !(el.getAttribute && (el.getAttribute("data-u") || el.getAttribute("data-sid"))))
     el = el.parentNode;
   if(!el || el === this) return;
   var sid = el.getAttribute("data-sid");
-  if(sid) openSeries(sid, el.getAttribute("data-n"));
-  else play(el.getAttribute("data-u"), el.getAttribute("data-n"));
+  if(sid){ openSeries(sid, el.getAttribute("data-n")); return }
+  var u = el.getAttribute("data-u");
+  var idx = -1;
+  for(var i = 0; i < view.length; i++) if(view[i].u === u){ idx = i; break }
+  if(idx > -1) playQueue(view, idx);
+  else play(u, el.getAttribute("data-n"));
 });
 $("chips").addEventListener("click", function(e){
   var el = e.target;
@@ -863,7 +885,13 @@ function pickSeason(k){
 $("dEps").addEventListener("click", function(e){
   var el = e.target;
   while(el && el !== this && !(el.getAttribute && el.getAttribute("data-u"))) el = el.parentNode;
-  if(el && el !== this) play(el.getAttribute("data-u"), el.getAttribute("data-n"));
+  if(!el || el === this) return;
+  var rows = this.getElementsByClassName("ep"), list = [], idx = 0;
+  for(var i = 0; i < rows.length; i++){
+    list.push({ n: rows[i].getAttribute("data-n"), u: rows[i].getAttribute("data-u") });
+    if(rows[i] === el) idx = i;
+  }
+  playQueue(list, idx);
 });
 function closeDetail(){ $("detail").classList.remove("on") }
 
