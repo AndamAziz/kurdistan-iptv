@@ -33,6 +33,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.PlayerView
 import org.json.JSONArray
+import org.json.JSONObject
 import java.io.ByteArrayInputStream
 import java.net.HttpURLConnection
 import java.net.URL
@@ -72,6 +73,14 @@ class MainActivity : ComponentActivity() {
     /** the queue the next / previous buttons walk through */
     private var urls: List<String> = emptyList()
     private var titles: List<String> = emptyList()
+
+    private var startAtMs = 0L
+    private val posTicker = object : Runnable {
+        override fun run() {
+            reportPosition()
+            handler.postDelayed(this, 5000)
+        }
+    }
 
     private var plan: List<String?> = emptyList()
     private var step = 0
@@ -222,12 +231,15 @@ class MainActivity : ComponentActivity() {
     inner class AndroidBridge(private val context: Context) {
         @android.webkit.JavascriptInterface
         fun playNative(url: String, title: String) {
-            runOnUiThread { openQueue(listOf(url), listOf(title), 0) }
+            runOnUiThread { openQueue(listOf(url), listOf(title), 0, 0L) }
         }
 
         /** json: [{"n":"name","u":"url"}, ...] - lets next / previous work */
         @android.webkit.JavascriptInterface
-        fun playList(json: String, index: Int) {
+        fun playList(json: String, index: Int) { playList(json, index, 0) }
+
+        @android.webkit.JavascriptInterface
+        fun playList(json: String, index: Int, startMs: Int) {
             try {
                 val arr = JSONArray(json)
                 val u = ArrayList<String>(arr.length())
@@ -239,7 +251,7 @@ class MainActivity : ComponentActivity() {
                 }
                 if (u.isEmpty()) return
                 val start = if (index in u.indices) index else 0
-                runOnUiThread { openQueue(u, n, start) }
+                runOnUiThread { openQueue(u, n, start, startMs.toLong()) }
             } catch (e: Exception) { /* ignore malformed input */ }
         }
     }
@@ -283,11 +295,12 @@ class MainActivity : ComponentActivity() {
     }
 
     /** Open a queue of streams; the next / previous buttons walk through it. */
-    private fun openQueue(u: List<String>, n: List<String>, index: Int) {
+    private fun openQueue(u: List<String>, n: List<String>, index: Int, startMs: Long) {
         handler.removeCallbacksAndMessages(null)
         urls = u
         titles = n
         reconnects = 0
+        startAtMs = startMs
 
         playerLayer.visibility = View.VISIBLE
         webView.visibility = View.GONE
@@ -295,6 +308,7 @@ class MainActivity : ComponentActivity() {
         setFullscreen(true)
 
         buildAndStart(index)
+        handler.postDelayed(posTicker, 5000)
     }
 
     private fun buildAndStart(index: Int) {
@@ -321,6 +335,7 @@ class MainActivity : ComponentActivity() {
 
             p.addListener(object : Player.Listener {
                 override fun onMediaItemTransition(item: MediaItem?, reason: Int) {
+                    reportPosition()
                     val i = p.currentMediaItemIndex
                     step = 0
                     hasPlayed = false
@@ -371,7 +386,8 @@ class MainActivity : ComponentActivity() {
                 }
             })
 
-            p.setMediaItems(items, index, 0L)
+            p.setMediaItems(items, index, if (startAtMs > 0) startAtMs else 0L)
+            startAtMs = 0L
             p.prepare()
             p.playWhenReady = true
         }
@@ -390,16 +406,23 @@ class MainActivity : ComponentActivity() {
         if (playerLayer.visibility != View.VISIBLE) return
         reconnects++
         loading.visibility = View.VISIBLE
+        /* a film keeps its place across a hiccup; a live stream goes back to the edge */
+        val i0 = player?.currentMediaItemIndex ?: 0
+        val keep = if (isVod(urls.getOrNull(i0) ?: "")) (player?.currentPosition ?: 0L) else 0L
         handler.removeCallbacksAndMessages(null)
         handler.postDelayed({
-            val i = player?.currentMediaItemIndex ?: 0
+            val i = player?.currentMediaItemIndex ?: i0
             player?.let { p ->
                 try {
-                    p.seekTo(i, 0L)
+                    p.seekTo(i, keep)
                     p.prepare()
                     p.playWhenReady = true
-                } catch (e: Exception) { buildAndStart(i) }
+                } catch (e: Exception) {
+                    startAtMs = keep
+                    buildAndStart(i)
+                }
             }
+            handler.postDelayed(posTicker, 5000)
         }, RECONNECT_DELAY_MS)
     }
 
@@ -409,7 +432,21 @@ class MainActivity : ComponentActivity() {
         errorBox.visibility = View.VISIBLE
     }
 
+    private fun reportPosition() {
+        val p = player ?: return
+        val i = p.currentMediaItemIndex
+        val link = urls.getOrNull(i) ?: return
+        if (!isVod(link)) return
+        val pos = p.currentPosition
+        val dur = p.duration
+        if (pos < 5000 || dur <= 0) return
+        val js = "window.savePos&&savePos(" + JSONObject.quote(link) + "," + pos + "," + dur + ")"
+        webView.evaluateJavascript(js, null)
+    }
+
     private fun hideNativePlayer() {
+        reportPosition()
+        webView.evaluateJavascript("window.refreshHome&&refreshHome()", null)
         handler.removeCallbacksAndMessages(null)
         player?.release()
         player = null
@@ -441,6 +478,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onPause() {
         super.onPause()
+        reportPosition()
         player?.playWhenReady = false
     }
 
@@ -449,6 +487,7 @@ class MainActivity : ComponentActivity() {
         if (playerLayer.visibility == View.VISIBLE) {
             player?.playWhenReady = true
             setFullscreen(true)
+            handler.postDelayed(posTicker, 5000)
         }
     }
 
