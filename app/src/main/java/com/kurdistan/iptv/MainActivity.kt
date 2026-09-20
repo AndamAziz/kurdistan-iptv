@@ -32,13 +32,14 @@ import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.PlayerView
+import org.json.JSONArray
 import java.io.ByteArrayInputStream
 import java.net.HttpURLConnection
 import java.net.URL
 
 class MainActivity : ComponentActivity() {
 
-        /* Many IPTV / Xtream servers only answer to VLC's user agent... */
+    /* Many IPTV / Xtream servers only answer to VLC's user agent... */
     private val UA = "VLC/3.0.20 LibVLC/3.0.20"
 
     /* ...but a panel behind Cloudflare blocks it, so fall back to a browser. */
@@ -62,9 +63,15 @@ class MainActivity : ComponentActivity() {
 
     private val handler = Handler(Looper.getMainLooper())
 
+    private lateinit var topBar: View
+
     private var player: ExoPlayer? = null
     private var currentUrl: String? = null
     private var currentTitle: String? = null
+
+    /** the queue the next / previous buttons walk through */
+    private var urls: List<String> = emptyList()
+    private var titles: List<String> = emptyList()
 
     private var plan: List<String?> = emptyList()
     private var step = 0
@@ -87,14 +94,25 @@ class MainActivity : ComponentActivity() {
         errorBox = findViewById(R.id.errorBox)
         txtError = findViewById(R.id.txtError)
         txtTitle = findViewById(R.id.txtTitle)
+        topBar = findViewById(R.id.topBar)
 
         txtError.text = getString(R.string.player_error)
         findViewById<TextView>(R.id.btnRetry).apply {
             text = getString(R.string.retry)
-            setOnClickListener { currentUrl?.let { u -> openChannel(u, currentTitle ?: "") } }
+            setOnClickListener {
+                val i = player?.currentMediaItemIndex ?: 0
+                if (urls.isNotEmpty()) buildAndStart(i)
+            }
         }
         findViewById<TextView>(R.id.btnClose).setOnClickListener { hideNativePlayer() }
         findViewById<TextView>(R.id.liveBadge).text = getString(R.string.live)
+
+        playerView.controllerShowTimeoutMs = 3500
+        playerView.setControllerVisibilityListener(
+            PlayerView.ControllerVisibilityListener { visibility ->
+                topBar.visibility = visibility
+            }
+        )
 
         configureWebView()
         webView.loadUrl("file:///android_asset/index.html")
@@ -164,7 +182,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-        /**
+    /**
      * Some panels only answer to VLC, others sit behind Cloudflare which blocks it.
      * Try VLC first and retry as a browser when the first answer is a refusal.
      */
@@ -204,7 +222,25 @@ class MainActivity : ComponentActivity() {
     inner class AndroidBridge(private val context: Context) {
         @android.webkit.JavascriptInterface
         fun playNative(url: String, title: String) {
-            runOnUiThread { openChannel(url, title) }
+            runOnUiThread { openQueue(listOf(url), listOf(title), 0) }
+        }
+
+        /** json: [{"n":"name","u":"url"}, ...] - lets next / previous work */
+        @android.webkit.JavascriptInterface
+        fun playList(json: String, index: Int) {
+            try {
+                val arr = JSONArray(json)
+                val u = ArrayList<String>(arr.length())
+                val n = ArrayList<String>(arr.length())
+                for (i in 0 until arr.length()) {
+                    val o = arr.getJSONObject(i)
+                    u.add(o.optString("u"))
+                    n.add(o.optString("n"))
+                }
+                if (u.isEmpty()) return
+                val start = if (index in u.indices) index else 0
+                runOnUiThread { openQueue(u, n, start) }
+            } catch (e: Exception) { /* ignore malformed input */ }
         }
     }
 
@@ -241,46 +277,60 @@ class MainActivity : ComponentActivity() {
             .build()
     }
 
-    private fun openChannel(url: String, title: String) {
+    private fun isVod(url: String): Boolean {
+        val u = url.lowercase()
+        return u.contains("/movie/") || u.contains("/series/")
+    }
+
+    /** Open a queue of streams; the next / previous buttons walk through it. */
+    private fun openQueue(u: List<String>, n: List<String>, index: Int) {
         handler.removeCallbacksAndMessages(null)
-        currentUrl = url
-        currentTitle = title
-        plan = planFor(url)
-        step = 0
-        hasPlayed = false
+        urls = u
+        titles = n
         reconnects = 0
 
         playerLayer.visibility = View.VISIBLE
         webView.visibility = View.GONE
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
         setFullscreen(true)
-        txtTitle.text = title
 
-        startAttempt()
+        buildAndStart(index)
     }
 
-    private fun reconnect() {
-        if (playerLayer.visibility != View.VISIBLE) return
-        reconnects++
-        loading.visibility = View.VISIBLE
-        handler.removeCallbacksAndMessages(null)
-        handler.postDelayed({ startAttempt() }, RECONNECT_DELAY_MS)
-    }
-
-    private fun startAttempt() {
-        val url = currentUrl ?: return
-
+    private fun buildAndStart(index: Int) {
         player?.release()
         errorBox.visibility = View.GONE
         loading.visibility = View.VISIBLE
 
+        step = 0
+        hasPlayed = false
+        currentUrl = urls.getOrNull(index)
+        currentTitle = titles.getOrNull(index)
+        plan = planFor(currentUrl ?: "")
+        applyItemChrome(index)
+
+        val items = urls.mapIndexed { i, link ->
+            val b = MediaItem.Builder().setUri(link)
+            if (i == index) plan.getOrNull(0)?.let { b.setMimeType(it) }
+            else planFor(link).getOrNull(0)?.let { b.setMimeType(it) }
+            b.build()
+        }
+
         player = buildPlayer().also { p ->
             playerView.player = p
 
-            val builder = MediaItem.Builder().setUri(url)
-            plan.getOrNull(step)?.let { builder.setMimeType(it) }
-
             p.addListener(object : Player.Listener {
+                override fun onMediaItemTransition(item: MediaItem?, reason: Int) {
+                    val i = p.currentMediaItemIndex
+                    step = 0
+                    hasPlayed = false
+                    reconnects = 0
+                    currentUrl = urls.getOrNull(i)
+                    currentTitle = titles.getOrNull(i)
+                    plan = planFor(currentUrl ?: "")
+                    applyItemChrome(i)
+                }
+
                 override fun onPlaybackStateChanged(state: Int) {
                     when (state) {
                         Player.STATE_BUFFERING -> loading.visibility = View.VISIBLE
@@ -289,17 +339,31 @@ class MainActivity : ComponentActivity() {
                             hasPlayed = true
                             reconnects = 0
                         }
-                        Player.STATE_ENDED ->
-                            if (reconnects < MAX_RECONNECTS) reconnect() else showError("ENDED")
+                        Player.STATE_ENDED -> {
+                            val live = !isVod(currentUrl ?: "")
+                            if (live && reconnects < MAX_RECONNECTS) reconnect()
+                            else if (p.hasNextMediaItem()) p.seekToNextMediaItem()
+                            else showError("ENDED")
+                        }
                         else -> {}
                     }
                 }
 
                 override fun onPlayerError(error: PlaybackException) {
+                    val i = p.currentMediaItemIndex
                     when {
+                        // the container guess was wrong - try the next one for this item
                         !hasPlayed && step < plan.size - 1 -> {
                             step++
-                            playerView.post { startAttempt() }
+                            val b = MediaItem.Builder().setUri(urls.getOrNull(i) ?: "")
+                            plan.getOrNull(step)?.let { b.setMimeType(it) }
+                            playerView.post {
+                                try {
+                                    p.replaceMediaItem(i, b.build())
+                                    p.prepare()
+                                    p.playWhenReady = true
+                                } catch (e: Exception) { showError(error.errorCodeName) }
+                            }
                         }
                         reconnects < MAX_RECONNECTS -> reconnect()
                         else -> showError(error.errorCodeName)
@@ -307,10 +371,36 @@ class MainActivity : ComponentActivity() {
                 }
             })
 
-            p.setMediaItem(builder.build())
+            p.setMediaItems(items, index, 0L)
             p.prepare()
             p.playWhenReady = true
         }
+        topBar.visibility = View.VISIBLE
+        playerView.showController()
+    }
+
+    /** Title and LIVE badge for whichever item is on screen. */
+    private fun applyItemChrome(index: Int) {
+        txtTitle.text = titles.getOrNull(index) ?: ""
+        findViewById<TextView>(R.id.liveBadge).visibility =
+            if (isVod(urls.getOrNull(index) ?: "")) View.GONE else View.VISIBLE
+    }
+
+    private fun reconnect() {
+        if (playerLayer.visibility != View.VISIBLE) return
+        reconnects++
+        loading.visibility = View.VISIBLE
+        handler.removeCallbacksAndMessages(null)
+        handler.postDelayed({
+            val i = player?.currentMediaItemIndex ?: 0
+            player?.let { p ->
+                try {
+                    p.seekTo(i, 0L)
+                    p.prepare()
+                    p.playWhenReady = true
+                } catch (e: Exception) { buildAndStart(i) }
+            }
+        }, RECONNECT_DELAY_MS)
     }
 
     private fun showError(code: String) {
@@ -328,6 +418,7 @@ class MainActivity : ComponentActivity() {
         playerLayer.visibility = View.GONE
         errorBox.visibility = View.GONE
         loading.visibility = View.GONE
+        topBar.visibility = View.VISIBLE
         webView.visibility = View.VISIBLE
 
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
