@@ -675,12 +675,21 @@ $("pininput").addEventListener("input", function(e){
 $("pins").addEventListener("click", function(){ $("pininput").focus() });
 
 /* ==================== loading ==================== */
+var lastLoadError = "";
+
+/* Inside the app, downloads go through native code (no CORS limits).
+   In a plain browser the URL is used directly. */
+function viaApp(u){
+  return window.AndroidPlayer ? "https://kiptv.local/p?u=" + encodeURIComponent(u) : u;
+}
+
 function setData(list){ CH = list; buildGroups(); renderChips(); render() }
 function showSync(text, isErr){
   var el = $("sync");
   $("syncText").textContent = text;
   el.className = "on" + (isErr ? " err" : "");
-  if(isErr) setTimeout(function(){ el.className = "" }, 4000);
+  el.onclick = isErr ? function(){ window.alert(lastLoadError || "-") } : null;
+  if(isErr) setTimeout(function(){ el.className = "" }, 7000);
 }
 function hideSync(){ $("sync").className = "" }
 
@@ -694,17 +703,26 @@ function loadActive(force){
 
   if(!url || !window.fetch) return;
   showSync(t().sync + " · " + p.name, false);
-  fetch(url, {cache:"no-cache"})
-    .then(function(r){ if(!r.ok) throw 0; return r.text() })
+  fetch(viaApp(url))
+    .then(function(r){
+      return r.text().then(function(txt){
+        if(!r.ok) throw new Error("HTTP " + r.status + " " + txt.slice(0,120));
+        return txt;
+      });
+    })
     .then(function(txt){
+      if(txt.indexOf("PROXY_ERROR") === 0) throw new Error(txt.slice(0,140));
       var list = parseM3U(txt);
-      if(list.length < 1) throw 0;
+      if(list.length < 1) throw new Error("EMPTY (" + txt.slice(0,80).replace(/\s+/g," ") + ")");
       f = "";
       setData(list);
       saveCache(p.id, list);
       hideSync();
     })
-    .catch(function(){ showSync(t().loadFail + " · " + p.name, true) });
+    .catch(function(e){
+      lastLoadError = (e && e.message) ? e.message : "network";
+      showSync(t().loadFail + " · " + p.name, true);
+    });
 }
 
 /* ==================== boot ==================== */
