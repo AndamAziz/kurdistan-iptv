@@ -35,6 +35,9 @@ import androidx.media3.ui.PlayerView
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.ByteArrayInputStream
+import java.net.CookieHandler
+import java.net.CookieManager
+import java.net.CookiePolicy
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -89,7 +92,7 @@ class MainActivity : ComponentActivity() {
     private var startAtMs = 0L
     private val posTicker = object : Runnable {
         override fun run() {
-            reportPosition()
+            try { reportPosition() } catch (e: Exception) { /* never crash on a tick */ }
             handler.postDelayed(this, 5000)
         }
     }
@@ -99,6 +102,11 @@ class MainActivity : ComponentActivity() {
     private var step = 0
     private var hasPlayed = false
     private var reconnects = 0
+    /** the address the stream really lives at, once we have followed it */
+    private var probed = false
+    private var resolvedUrl: String? = null
+    /** set when we have given up: stops every retry loop dead */
+    private var dead = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -122,8 +130,10 @@ class MainActivity : ComponentActivity() {
         findViewById<TextView>(R.id.btnRetry).apply {
             text = getString(R.string.retry)
             setOnClickListener {
-                val i = player?.currentMediaItemIndex ?: 0
-                if (urls.isNotEmpty()) buildAndStart(i)
+                val i = try { player?.currentMediaItemIndex ?: 0 } catch (e: Exception) { 0 }
+                if (urls.isNotEmpty()) {
+                    try { buildAndStart(i) } catch (e: Exception) { showError("RETRY_FAILED") }
+                }
             }
         }
         findViewById<TextView>(R.id.btnClose).setOnClickListener { hideNativePlayer() }
@@ -135,6 +145,15 @@ class MainActivity : ComponentActivity() {
                 topBar.visibility = visibility
             }
         )
+
+        /* Some panels set a session cookie on the first request and reject
+           every segment that comes back without it. VLC keeps cookies; the
+           player does not, unless we give the JVM somewhere to put them. */
+        if (CookieHandler.getDefault() == null) {
+            CookieHandler.setDefault(
+                CookieManager().apply { setCookiePolicy(CookiePolicy.ACCEPT_ORIGINAL_SERVER) }
+            )
+        }
 
         configureWebView()
         webView.loadUrl("file:///android_asset/index.html")
@@ -333,20 +352,94 @@ class MainActivity : ComponentActivity() {
             .build()
     }
 
-    /** For the error screen: which containers were actually attempted. */
-    private fun triedSoFar(): String {
-        val names = (0..step).mapNotNull { plan.getOrNull(it) }
-            .map { m ->
-                when (m) {
-                    MimeTypes.APPLICATION_M3U8 -> "HLS"
-                    MimeTypes.APPLICATION_MPD -> "DASH"
-                    MimeTypes.VIDEO_MP2T -> "TS"
-                    else -> "?"
+    /** Follow the address by hand the way VLC does - every redirect, keeping
+     *  cookies - and look at the first bytes that actually come back. Returns
+     *  the address the stream really lives at and what it turned out to be. */
+    private fun resolveStream(url: String, ua: String, ref: String?): Pair<String, String?>? {
+        var target = url
+        var hop = 0
+        try {
+            while (hop++ < 8) {
+                val c = URL(target).openConnection() as HttpURLConnection
+                c.instanceFollowRedirects = false          /* we follow them ourselves */
+                c.connectTimeout = 9000
+                c.readTimeout = 9000
+                c.setRequestProperty("User-Agent", ua)
+                c.setRequestProperty("Accept", "*/*")
+                c.setRequestProperty("Connection", "close")
+                ref?.let { c.setRequestProperty("Referer", it) }
+
+                val code = c.responseCode
+                if (code in 300..399) {
+                    val loc = c.getHeaderField("Location")
+                    c.disconnect()
+                    if (loc.isNullOrBlank()) return null
+                    target = URL(URL(target), loc).toString()   /* relative or absolute */
+                    continue
                 }
+                if (code !in 200..299) { c.disconnect(); return null }
+
+                val ctype = (c.contentType ?: "").lowercase()
+                val head = ByteArray(2048)
+                var got = 0
+                try {
+                    c.inputStream.use { ins ->
+                        while (got < head.size) {
+                            val r = ins.read(head, got, head.size - got)
+                            if (r <= 0) break
+                            got += r
+                        }
+                    }
+                } catch (e: Exception) { /* enough is enough */ }
+                c.disconnect()
+
+                val text = if (got > 0) String(head, 0, got, Charsets.ISO_8859_1) else ""
+                val mime = when {
+                    text.startsWith("#EXTM3U") || text.contains("#EXT-X-") ->
+                        MimeTypes.APPLICATION_M3U8
+                    text.contains("<MPD") -> MimeTypes.APPLICATION_MPD
+                    got > 0 && head[0] == 0x47.toByte() -> MimeTypes.VIDEO_MP2T
+                    ctype.contains("mpegurl") -> MimeTypes.APPLICATION_M3U8
+                    ctype.contains("dash+xml") -> MimeTypes.APPLICATION_MPD
+                    ctype.contains("mp2t") -> MimeTypes.VIDEO_MP2T
+                    else -> null
+                }
+                return Pair(target, mime)
             }
-        val auto = (0..step).any { it < plan.size && plan[it] == null }
-        val all = (if (auto) listOf("AUTO") else emptyList()) + names
-        return "tried " + all.joinToString("/")
+        } catch (e: Exception) { /* fall through */ }
+        return null
+    }
+
+    /** Last resort: the address lied, so go and find the real one. */
+    private fun resolveAndRetry(index: Int, fallbackCode: String) {
+        val link = urls.getOrNull(index)
+        if (link == null) { showError(fallbackCode); return }
+        val ua = curUa ?: UA
+        val ref = curRef
+        loading.visibility = View.VISIBLE
+        errorBox.visibility = View.GONE
+
+        Thread {
+            val found = resolveStream(link, ua, ref)
+            runOnUiThread {
+                if (dead || playerLayer.visibility != View.VISIBLE) return@runOnUiThread
+                if (found == null) { showError(fallbackCode); return@runOnUiThread }
+
+                val (realUrl, mime) = found
+                resolvedUrl = realUrl
+                step = 0
+                reconnects = 0
+                plan = listOf(mime) + ORDER.filter { it != mime }
+                val b = MediaItem.Builder().setUri(realUrl)
+                mime?.let { b.setMimeType(it) }
+                try {
+                    val p = player ?: return@runOnUiThread
+                    p.replaceMediaItem(index, b.build())
+                    p.prepare()
+                    p.playWhenReady = true
+                } catch (e: Exception) { showError(fallbackCode) }
+            }
+        }.start()
     }
 
     private fun isVod(url: String): Boolean {
@@ -388,6 +481,9 @@ class MainActivity : ComponentActivity() {
 
         step = 0
         hasPlayed = false
+        probed = false
+        resolvedUrl = null
+        dead = false
         lastIndex = index
         currentUrl = urls.getOrNull(index)
         currentTitle = titles.getOrNull(index)
@@ -413,6 +509,9 @@ class MainActivity : ComponentActivity() {
                        reports a transition - that must not restart the fallback */
                     if (i == lastIndex) return
                     lastIndex = i
+                    probed = false
+                    resolvedUrl = null
+                    dead = false
                     reportPosition()
                     step = 0
                     hasPlayed = false
@@ -442,6 +541,7 @@ class MainActivity : ComponentActivity() {
                             reconnects = 0
                         }
                         Player.STATE_ENDED -> {
+                            if (dead) return
                             val live = !isVod(currentUrl ?: "")
                             if (live && reconnects < MAX_RECONNECTS) reconnect()
                             else if (p.hasNextMediaItem()) p.seekToNextMediaItem()
@@ -452,14 +552,17 @@ class MainActivity : ComponentActivity() {
                 }
 
                 override fun onPlayerError(error: PlaybackException) {
+                    if (dead) return
                     val i = p.currentMediaItemIndex
                     when {
                         // the container guess was wrong - try the next one for this item
                         !hasPlayed && step < plan.size - 1 -> {
                             step++
-                            val b = MediaItem.Builder().setUri(urls.getOrNull(i) ?: "")
+                            val link = resolvedUrl ?: urls.getOrNull(i) ?: ""
+                            val b = MediaItem.Builder().setUri(link)
                             plan.getOrNull(step)?.let { b.setMimeType(it) }
                             playerView.post {
+                                if (dead) return@post
                                 try {
                                     p.replaceMediaItem(i, b.build())
                                     p.prepare()
@@ -467,8 +570,13 @@ class MainActivity : ComponentActivity() {
                                 } catch (e: Exception) { showError(error.errorCodeName) }
                             }
                         }
+                        // every container failed: the address is not what it says
+                        !hasPlayed && !probed -> {
+                            probed = true
+                            resolveAndRetry(i, error.errorCodeName)
+                        }
                         reconnects < MAX_RECONNECTS -> reconnect()
-                        else -> showError(error.errorCodeName + "  \u00b7  " + triedSoFar())
+                        else -> showError(error.errorCodeName)
                     }
                 }
             })
@@ -490,36 +598,50 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun reconnect() {
-        if (playerLayer.visibility != View.VISIBLE) return
+        if (dead || playerLayer.visibility != View.VISIBLE) return
         reconnects++
         loading.visibility = View.VISIBLE
         /* a film keeps its place across a hiccup; a live stream goes back to the edge */
-        val i0 = player?.currentMediaItemIndex ?: 0
-        val keep = if (isVod(urls.getOrNull(i0) ?: "")) (player?.currentPosition ?: 0L) else 0L
+        val i0 = try { player?.currentMediaItemIndex ?: 0 } catch (e: Exception) { 0 }
+        val keep = try {
+            if (isVod(urls.getOrNull(i0) ?: "")) (player?.currentPosition ?: 0L) else 0L
+        } catch (e: Exception) { 0L }
+
         handler.removeCallbacksAndMessages(null)
         handler.postDelayed({
-            val i = player?.currentMediaItemIndex ?: i0
-            player?.let { p ->
-                try {
-                    p.seekTo(i, keep)
+            if (dead || playerLayer.visibility != View.VISIBLE) return@postDelayed
+            try {
+                val p = player
+                if (p == null) {
+                    startAtMs = keep
+                    buildAndStart(i0)
+                } else {
+                    p.seekTo(p.currentMediaItemIndex, keep)
                     p.prepare()
                     p.playWhenReady = true
-                } catch (e: Exception) {
-                    startAtMs = keep
-                    buildAndStart(i)
                 }
+            } catch (e: Exception) {
+                try {
+                    startAtMs = keep
+                    buildAndStart(i0)
+                } catch (e2: Exception) { showError("RETRY_FAILED") }
             }
+            handler.removeCallbacks(posTicker)
             handler.postDelayed(posTicker, 5000)
         }, RECONNECT_DELAY_MS)
     }
 
     private fun showError(code: String) {
+        dead = true                       /* no more retries until the user asks */
+        handler.removeCallbacks(posTicker)
+        try { player?.playWhenReady = false } catch (e: Exception) {}
         loading.visibility = View.GONE
         txtError.text = getString(R.string.player_error) + "\n\n" + code
         errorBox.visibility = View.VISIBLE
     }
 
     private fun reportPosition() {
+        if (playerLayer.visibility != View.VISIBLE) return
         val p = player ?: return
         val i = p.currentMediaItemIndex
         val link = urls.getOrNull(i) ?: return
