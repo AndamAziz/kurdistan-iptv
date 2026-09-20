@@ -110,6 +110,58 @@ section{margin-top:22px}
 .empty div:first-child{font-size:42px;margin-bottom:12px;opacity:.5}
 .empty p{margin:0;font-size:14px;font-weight:600}
 
+/* ---------- bottom nav ---------- */
+#nav{
+  position:fixed;inset-inline:0;bottom:0;z-index:30;display:none;
+  background:rgba(8,11,16,.94);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-top:1px solid var(--line);padding:6px 8px calc(6px + var(--safe-b));
+}
+#nav.on{display:flex}
+#nav button{
+  flex:1;background:none;border:0;color:var(--muted2);cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:4px;padding:7px 0;
+  font-size:11px;font-weight:800;transition:.18s;
+}
+#nav button.on{color:var(--accent2)}
+#nav svg{display:block}
+body.hasnav main{padding-bottom:calc(96px + var(--safe-b))}
+
+/* ---------- poster cards (movies / series) ---------- */
+.grid.posters{grid-template-columns:repeat(3,1fr);gap:12px}
+@media(min-width:520px){.grid.posters{grid-template-columns:repeat(4,1fr)}}
+@media(min-width:760px){.grid.posters{grid-template-columns:repeat(6,1fr)}}
+.poster{position:relative;aspect-ratio:2/3;border-radius:var(--r-md);overflow:hidden;
+  background:var(--surface);border:1px solid var(--line);box-shadow:0 10px 24px rgba(0,0,0,.45)}
+.poster img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.poster .mono{font-size:clamp(13px,4.4vw,20px);padding:6px;text-align:center;line-height:1.2}
+.poster .rt{position:absolute;top:7px;inset-inline-end:7px;background:rgba(0,0,0,.72);
+  border-radius:7px;padding:2px 7px;font-size:10.5px;font-weight:800;color:#FFD466}
+
+/* ---------- series detail ---------- */
+#detail{position:fixed;inset:0;z-index:70;background:var(--bg);overflow-y:auto;display:none}
+#detail.on{display:block}
+.dhero{position:relative;padding:calc(16px + var(--safe-t)) 16px 16px;display:flex;gap:14px;
+  background:linear-gradient(180deg,rgba(230,62,70,.16),transparent)}
+.dhero .pw{width:104px;flex:none;aspect-ratio:2/3;border-radius:var(--r-md);overflow:hidden;
+  background:var(--surface);border:1px solid var(--line)}
+.dhero .pw img{width:100%;height:100%;object-fit:cover}
+.dhero h2{margin:0 0 6px;font-size:18px;font-weight:800;line-height:1.3}
+.dhero .meta{font-size:11.5px;color:var(--muted2);font-weight:700;margin-bottom:8px}
+.dhero p{margin:0;font-size:12.5px;color:var(--muted);line-height:1.6;
+  display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
+#dclose{position:absolute;top:calc(12px + var(--safe-t));inset-inline-end:14px;width:36px;height:36px;
+  border-radius:12px;border:1px solid var(--line);background:rgba(8,11,16,.8);color:#fff;
+  display:grid;place-items:center;font-size:17px;cursor:pointer;z-index:2}
+.dbody{padding:4px 16px calc(28px + var(--safe-b))}
+.ep{display:flex;align-items:center;gap:12px;padding:13px;border-radius:var(--r-md);
+  background:var(--surface);border:1px solid var(--line);margin-bottom:9px;cursor:pointer}
+.ep .no{width:34px;height:34px;flex:none;border-radius:10px;display:grid;place-items:center;
+  background:var(--surface2);font-weight:800;font-size:13px;color:var(--accent2)}
+.ep .tx{flex:1;min-width:0}
+.ep .tx b{display:block;font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ep .tx s{display:block;text-decoration:none;font-size:11px;color:var(--muted2);margin-top:3px}
+.ep:active{transform:scale(.98)}
+
 /* ---------- activation ---------- */
 #gate{position:fixed;inset:0;z-index:90;background:var(--bg);display:grid;place-items:center;padding:24px}
 #gate.hide{display:none}
@@ -214,6 +266,26 @@ section{margin-top:22px}
 
 <div id="sync"><span class="sp"></span><span id="syncText"></span></div>
 
+<nav id="nav">
+  <button data-s="live" onclick="setSection('live')"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="8" width="19" height="12.5" rx="2.6"/><path d="M8 3.5l4 4.2 4-4.2"/></svg><span id="navLive"></span></button>
+  <button data-s="movies" onclick="setSection('movies')"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.4"/><path d="M8 4v16M16 4v16M3 12h18"/></svg><span id="navMovies"></span></button>
+  <button data-s="series" onclick="setSection('series')"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="14" rx="2.4"/><path d="M7 3l3 3M17 3l-3 3"/></svg><span id="navSeries"></span></button>
+</nav>
+
+<div id="detail">
+  <button id="dclose" onclick="closeDetail()">&#10005;</button>
+  <div class="dhero">
+    <div class="pw"><img id="dImg" alt=""></div>
+    <div style="flex:1;min-width:0">
+      <h2 id="dName"></h2>
+      <div class="meta" id="dMeta"></div>
+      <p id="dPlot"></p>
+    </div>
+  </div>
+  <div class="chips" id="dSeasons" style="padding:0 16px 4px"></div>
+  <div class="dbody" id="dEps"></div>
+</div>
+
 <div id="sheet">
   <div class="bd" onclick="closeSheet()"></div>
   <div class="pn">
@@ -243,6 +315,8 @@ var PAGE_SIZE = 48;
 /* ==================== i18n ==================== */
 var T = {
   ku:{name:"کوردی سۆرانی",dir:"rtl",all:"هەموو",search:"گەڕان بۆ کەنال...",
+      live:"کەناڵ",movies:"فیلم",series:"زنجیرە",seasonN:"وەرزی",episodeN:"ئیپسۆد",
+      noVod:"هیچ فیلمێک نییە",noSer:"هیچ زنجیرەیەک نییە",onlyXtream:"تەنها بۆ لیستی Xtream",
       tag:"پەخشی ڕاستەوخۆ",ann:"بەخێربێیت بۆ KURDISTAN IPTV — پەخشی ڕاستەوخۆی کەناڵە کوردی و نێودەوڵەتییەکان",
       recent:"بەردەوامبە لە بینین",none:"هیچ کەناڵێک نەدۆزرایەوە",lang:"زمان",
       enter:"کۆدی چالاککردن داخڵ بکە",act:"چالاککردن",wrong:"کۆدەکە هەڵەیە",
@@ -258,6 +332,8 @@ var T = {
       loadFail:"نەتوانرا لیستەکە دابەزێنرێت",channels:"کەناڵ",
       confirmDel:"ئەم لیستە بسڕێتەوە؟"},
   kb:{name:"Kurdî Badînî",dir:"rtl",all:"هەمی",search:"گەڕیان بو کەنالان...",
+      live:"کەنال",movies:"فیلم",series:"زنجیرە",seasonN:"وەرز",episodeN:"ئیپسود",
+      noVod:"چ فیلم نینن",noSer:"چ زنجیرە نینن",onlyXtream:"تنێ بو لیستا Xtream",
       tag:"پەخشا ڕاستەڤخۆ",ann:"بخێرهاتی بو KURDISTAN IPTV — پەخشا ڕاستەڤخۆ یا کەنالێن کوردی و نێڤدەولەتی",
       recent:"بەردەوام بە ل تەماشەکرنێ",none:"چ کەنال نەهاتە دیتن",lang:"زمان",
       enter:"کودێ چالاککرنێ بنڤیسە",act:"چالاککرن",wrong:"کود شاشە",
@@ -273,6 +349,8 @@ var T = {
       loadFail:"نەشیا لیست هاتە دابەزاندن",channels:"کەنال",
       confirmDel:"ئەڤ لیست بێتە ژێبرن؟"},
   en:{name:"English",dir:"ltr",all:"All",search:"Search channels...",
+      live:"Live TV",movies:"Movies",series:"Series",seasonN:"Season",episodeN:"Episode",
+      noVod:"No movies here",noSer:"No series here",onlyXtream:"Xtream playlists only",
       tag:"LIVE STREAMING",ann:"Welcome to KURDISTAN IPTV — live Kurdish and international channels",
       recent:"Continue watching",none:"No channels found",lang:"Language",
       enter:"Enter your activation code",act:"Activate",wrong:"Wrong code",
@@ -288,6 +366,8 @@ var T = {
       loadFail:"Could not load this playlist",channels:"channels",
       confirmDel:"Delete this playlist?"},
   ar:{name:"العربية",dir:"rtl",all:"الكل",search:"ابحث عن قناة...",
+      live:"القنوات",movies:"أفلام",series:"مسلسلات",seasonN:"الموسم",episodeN:"حلقة",
+      noVod:"لا توجد أفلام",noSer:"لا توجد مسلسلات",onlyXtream:"لقوائم Xtream فقط",
       tag:"بث مباشر",ann:"مرحباً بك في KURDISTAN IPTV — بث مباشر للقنوات الكردية والعالمية",
       recent:"متابعة المشاهدة",none:"لا توجد قنوات",lang:"اللغة",
       enter:"أدخل رمز التفعيل",act:"تفعيل",wrong:"الرمز غير صحيح",
@@ -430,8 +510,8 @@ function loadXtream(p){
     });
   });
 }
-  
-  /* ==================== cache (one slot, for the active list) ==================== */
+
+/* ==================== cache (one slot, for the active list) ==================== */
 function saveCache(id, list){
   try{
     localStorage.setItem("kiptv_cache_owner", id);
@@ -449,12 +529,124 @@ function loadCache(id){
   }catch(e){ return null }
 }
 
+/* ==================== sections: live / movies / series ==================== */
+var SECTION = "live";
+var DATA = { live: [], movies: [], series: [] };   /* per-section channel arrays */
+var LOADED = { live: false, movies: false, series: false };
+var SERIES_CACHE = {};
+
+function isXtream(){ return activeList().type === "xtream" }
+
+function xtBase(p){
+  var d = String(p.domain||"").replace(/\/+$/,"");
+  return d + "/player_api.php?username=" + encodeURIComponent(p.user)
+           + "&password=" + encodeURIComponent(p.pass);
+}
+function xtCreds(p){ return encodeURIComponent(p.user) + "/" + encodeURIComponent(p.pass) }
+
+/* movies ------------------------------------------------------------ */
+function loadVod(p){
+  var d = String(p.domain||"").replace(/\/+$/,""), base = xtBase(p), cr = xtCreds(p);
+  return xtGet(base, "get_vod_categories").then(function(cats){
+    var map = {};
+    if(Object.prototype.toString.call(cats) === "[object Array]")
+      cats.forEach(function(c){ map[String(c.category_id)] = c.category_name || "Other" });
+    return xtGet(base, "get_vod_streams").then(function(list){
+      if(Object.prototype.toString.call(list) !== "[object Array]") return [];
+      var out = [];
+      for(var i = 0; i < list.length; i++){
+        var v = list[i];
+        if(!v || !v.stream_id) continue;
+        out.push({
+          c: map[String(v.category_id)] || "Other",
+          n: v.name || ("#" + v.stream_id),
+          u: d + "/movie/" + cr + "/" + v.stream_id + "." + (v.container_extension || "mp4"),
+          l: v.stream_icon || v.cover || "",
+          r: v.rating || ""
+        });
+      }
+      return out;
+    });
+  });
+}
+
+/* series ------------------------------------------------------------ */
+function loadSeries(p){
+  var base = xtBase(p);
+  return xtGet(base, "get_series_categories").then(function(cats){
+    var map = {};
+    if(Object.prototype.toString.call(cats) === "[object Array]")
+      cats.forEach(function(c){ map[String(c.category_id)] = c.category_name || "Other" });
+    return xtGet(base, "get_series").then(function(list){
+      if(Object.prototype.toString.call(list) !== "[object Array]") return [];
+      var out = [];
+      for(var i = 0; i < list.length; i++){
+        var v = list[i];
+        if(!v || !v.series_id) continue;
+        out.push({
+          c: map[String(v.category_id)] || "Other",
+          n: v.name || ("#" + v.series_id),
+          u: "",                       /* series open a detail page, not a stream */
+          l: v.cover || "",
+          r: v.rating || "",
+          sid: v.series_id,
+          plot: v.plot || ""
+        });
+      }
+      return out;
+    });
+  });
+}
+
+function loadSection(name){
+  if(LOADED[name] || name === "live") return Promise.resolve();
+  var p = activeList();
+  if(p.type !== "xtream"){ LOADED[name] = true; return Promise.resolve() }
+  showSync(t().sync + " · " + (name === "movies" ? t().movies : t().series), false);
+  return (name === "movies" ? loadVod(p) : loadSeries(p))
+    .then(function(list){
+      DATA[name] = list || [];
+      LOADED[name] = true;
+      hideSync();
+    })
+    .catch(function(e){
+      lastLoadError = (e && e.message) ? e.message : "network";
+      LOADED[name] = true;
+      showSync(t().loadFail, true);
+    });
+}
+
+function setSection(name){
+  SECTION = name;
+  f = "";
+  document.getElementById("search").value = "";
+  drawNav();
+  loadSection(name).then(function(){ buildGroups(); renderChips(); render() });
+}
+
+function drawNav(){
+  var d = t(), x = isXtream();
+  $("navLive").textContent = d.live;
+  $("navMovies").textContent = d.movies;
+  $("navSeries").textContent = d.series;
+  var btns = document.querySelectorAll("#nav button");
+  for(var i = 0; i < btns.length; i++){
+    var sName = btns[i].getAttribute("data-s");
+    btns[i].className = (SECTION === sName ? "on" : "");
+    btns[i].style.display = (sName !== "live" && !x) ? "none" : "";
+  }
+  $("nav").className = "on";
+  document.body.className = "hasnav";
+}
+
 /* ==================== state ==================== */
 var CH = [], GROUPS = [], f = "", view = [], shown = 0;
 
+function items(){ return SECTION === "live" ? CH : (DATA[SECTION] || []) }
+
 function buildGroups(){
-  var n = {};
-  for(var i = 0; i < CH.length; i++) n[CH[i].c] = (n[CH[i].c] || 0) + 1;
+  var src = items(), n = {};
+  for(var i = 0; i < src.length; i++) n[src[i].c] = (n[src[i].c] || 0) + 1;
   var g = Object.keys(n).sort(function(a,b){ return n[b] - n[a] });
   var kur = g.filter(function(k){ return /kurd|كرد|کورد/i.test(k) });
   GROUPS = kur.concat(g.filter(function(k){ return kur.indexOf(k) < 0 }));
@@ -472,9 +664,18 @@ function cardHTML(c){
   var h = hue(c.n);
   var bg = "linear-gradient(145deg,hsl("+h+",42%,34%),hsl("+((h+42)%360)+",48%,20%))";
   var img = c.l ? '<img src="'+esc(c.l)+'" loading="lazy" onerror="this.remove()" alt="">' : '';
-  return '<div class="card" data-u="'+esc(c.u)+'" data-n="'+esc(c.n)+'">'
-       +   '<div class="tile" style="background:'+bg+'">'
-       +     '<div class="mono">'+esc(initials(c.n))+'</div>'+img+'<span class="dot"></span>'
+
+  if(SECTION === "live"){
+    return '<div class="card" data-u="'+esc(c.u)+'" data-n="'+esc(c.n)+'">'
+         +   '<div class="tile" style="background:'+bg+'">'
+         +     '<div class="mono">'+esc(initials(c.n))+'</div>'+img+'<span class="dot"></span>'
+         +   '</div><div class="name">'+esc(c.n)+'</div></div>';
+  }
+  var rating = c.r ? '<span class="rt">&#9733; '+esc(String(c.r).slice(0,3))+'</span>' : '';
+  var attrs = c.sid ? ' data-sid="'+esc(c.sid)+'"' : ' data-u="'+esc(c.u)+'"';
+  return '<div class="card"'+attrs+' data-n="'+esc(c.n)+'">'
+       +   '<div class="poster" style="background:'+bg+'">'
+       +     '<div class="mono">'+esc(c.n)+'</div>'+img+rating
        +   '</div><div class="name">'+esc(c.n)+'</div></div>';
 }
 function currentTitle(q){
@@ -484,14 +685,16 @@ function currentTitle(q){
 }
 function render(){
   var q = ($("search").value || "").trim().toLowerCase();
-  view = q ? CH.filter(function(c){ return c.n.toLowerCase().indexOf(q) > -1 })
-           : (f === "ALL" ? CH : CH.filter(function(c){ return c.c === f }));
+  var src = items();
+  view = q ? src.filter(function(c){ return c.n.toLowerCase().indexOf(q) > -1 })
+           : (f === "ALL" ? src : src.filter(function(c){ return c.c === f }));
 
+  var gcls = SECTION === "live" ? "grid" : "grid posters";
   var html = "";
-  if(!q){
+  if(!q && SECTION === "live"){
     var rn = recent(), rc = [];
     for(var i = 0; i < rn.length; i++)
-      for(var j = 0; j < CH.length; j++) if(CH[j].n === rn[i]){ rc.push(CH[j]); break }
+      for(var j = 0; j < src.length; j++) if(src[j].n === rn[i]){ rc.push(src[j]); break }
     if(rc.length){
       html += '<section><div class="shead"><span class="bar"></span><h2>'+esc(t().recent)+'</h2>'
            +  '<span class="cnt">'+rc.length+'</span></div><div class="grid">'
@@ -499,11 +702,13 @@ function render(){
     }
   }
   if(!view.length){
-    $("main").innerHTML = html + '<div class="empty"><div>&#128533;</div><p>'+esc(t().none)+'</p></div>';
+    var msg = SECTION === "movies" ? t().noVod : (SECTION === "series" ? t().noSer : t().none);
+    if(!isXtream() && SECTION !== "live") msg = t().onlyXtream;
+    $("main").innerHTML = html + '<div class="empty"><div>&#128533;</div><p>'+esc(msg)+'</p></div>';
     return;
   }
   html += '<section><div class="shead"><span class="bar"></span><h2>'+esc(currentTitle(q))+'</h2>'
-       +  '<span class="cnt">'+view.length+'</span></div><div class="grid" id="grid"></div></section>'
+       +  '<span class="cnt">'+view.length+'</span></div><div class="'+gcls+'" id="grid"></div></section>'
        +  '<div id="moreWrap"><button id="moreBtn" onclick="loadMore()"></button></div>';
   $("main").innerHTML = html;
   $("moreBtn").textContent = t().more;
@@ -544,8 +749,12 @@ function play(url,title){
 }
 $("main").addEventListener("click", function(e){
   var el = e.target;
-  while(el && el !== this && !el.getAttribute("data-u")) el = el.parentNode;
-  if(el && el.getAttribute("data-u")) play(el.getAttribute("data-u"), el.getAttribute("data-n"));
+  while(el && el !== this && !(el.getAttribute && (el.getAttribute("data-u") || el.getAttribute("data-sid"))))
+    el = el.parentNode;
+  if(!el || el === this) return;
+  var sid = el.getAttribute("data-sid");
+  if(sid) openSeries(sid, el.getAttribute("data-n"));
+  else play(el.getAttribute("data-u"), el.getAttribute("data-n"));
 });
 $("chips").addEventListener("click", function(e){
   var el = e.target;
@@ -575,6 +784,88 @@ function toggleSearch(){
   if(b.classList.contains("on")) $("search").focus();
   else { $("search").value = ""; render() }
 }
+
+/* ==================== series detail ==================== */
+var curSeries = null, curSeason = null;
+
+function openSeries(sid, name){
+  var p = activeList();
+  if(p.type !== "xtream") return;
+  $("detail").classList.add("on");
+  $("dName").textContent = name || "";
+  $("dMeta").textContent = "";
+  $("dPlot").textContent = "";
+  $("dSeasons").innerHTML = "";
+  $("dEps").innerHTML = '<div class="empty"><p>…</p></div>';
+  $("dImg").removeAttribute("src");
+
+  var done = function(info){
+    curSeries = info;
+    var i = info.info || {};
+    $("dName").textContent = i.name || name || "";
+    if(i.cover) $("dImg").src = i.cover;
+    var bits = [];
+    if(i.releaseDate || i.releasedate) bits.push(String(i.releaseDate || i.releasedate).slice(0,4));
+    if(i.genre) bits.push(i.genre);
+    if(i.rating) bits.push("\u2605 " + i.rating);
+    $("dMeta").textContent = bits.join("  ·  ");
+    $("dPlot").textContent = i.plot || "";
+    var seasons = [];
+    for(var k in info.episodes) if(info.episodes.hasOwnProperty(k)) seasons.push(k);
+    seasons.sort(function(a,b){ return (parseInt(a,10)||0) - (parseInt(b,10)||0) });
+    if(!seasons.length){ $("dEps").innerHTML = '<div class="empty"><p>-</p></div>'; return }
+    curSeason = seasons[0];
+    $("dSeasons").innerHTML = seasons.map(function(k){
+      return '<button class="chip" data-se="'+esc(k)+'" onclick="pickSeason(\''+esc(k)+'\')">'
+           + esc(t().seasonN + " " + k) + '</button>';
+    }).join("");
+    pickSeason(curSeason);
+  };
+
+  if(SERIES_CACHE[sid]) { done(SERIES_CACHE[sid]); return }
+  xtGet(xtBase(p), "get_series_info&series_id=" + encodeURIComponent(sid))
+    .then(function(info){
+      if(!info || !info.episodes) throw new Error("NO EPISODES");
+      SERIES_CACHE[sid] = info;
+      done(info);
+    })
+    .catch(function(e){
+      lastLoadError = (e && e.message) ? e.message : "network";
+      $("dEps").innerHTML = '<div class="empty"><div>&#128533;</div><p>'+esc(t().loadFail)+'</p></div>';
+    });
+}
+
+function pickSeason(k){
+  if(!curSeries) return;
+  curSeason = k;
+  var chips = $("dSeasons").getElementsByTagName("button");
+  for(var i = 0; i < chips.length; i++)
+    chips[i].className = "chip" + (chips[i].getAttribute("data-se") === k ? " on" : "");
+
+  var p = activeList();
+  var d = String(p.domain||"").replace(/\/+$/,""), cr = xtCreds(p);
+  var eps = curSeries.episodes[k] || [];
+  $("dEps").innerHTML = eps.map(function(e, idx){
+    var ext = e.container_extension || "mp4";
+    var url = d + "/series/" + cr + "/" + e.id + "." + ext;
+    var inf = e.info || {};
+    var sub = [];
+    if(inf.duration) sub.push(inf.duration);
+    if(inf.release_date) sub.push(String(inf.release_date).slice(0,10));
+    return '<div class="ep" data-u="'+esc(url)+'" data-n="'+esc((curSeries.info && curSeries.info.name ? curSeries.info.name + " · " : "") + (e.title || (t().episodeN + " " + (idx+1))))+'">'
+         +   '<span class="no">'+(e.episode_num || (idx+1))+'</span>'
+         +   '<span class="tx"><b>'+esc(e.title || (t().episodeN + " " + (idx+1)))+'</b>'
+         +   (sub.length ? '<s>'+esc(sub.join("  ·  "))+'</s>' : '')+'</span>'
+         + '</div>';
+  }).join("") || '<div class="empty"><p>-</p></div>';
+}
+
+$("dEps").addEventListener("click", function(e){
+  var el = e.target;
+  while(el && el !== this && !(el.getAttribute && el.getAttribute("data-u"))) el = el.parentNode;
+  if(el && el !== this) play(el.getAttribute("data-u"), el.getAttribute("data-n"));
+});
+function closeDetail(){ $("detail").classList.remove("on") }
 
 /* ==================== sheet ==================== */
 var sheetStack = [];
@@ -733,15 +1024,21 @@ function viaApp(u){
 function setData(list){ CH = list; buildGroups(); renderChips(); render() }
 function showSync(text, isErr){
   var el = $("sync");
-  $("syncText").textContent = text + (isErr ? "  ⓘ" : "");
+  $("syncText").textContent = text;
   el.className = "on" + (isErr ? " err" : "");
-  el.onclick = isErr ? function(){ window.alert(lastLoadError || "-"); el.className = "" } : null;
+  el.onclick = isErr ? function(){ window.alert(lastLoadError || "-") } : null;
+  if(isErr) setTimeout(function(){ el.className = "" }, 7000);
 }
 function hideSync(){ $("sync").className = "" }
 
 function loadActive(force){
   var p = activeList(), url = listUrl(p);
   $("tagline").textContent = p.name;
+  SECTION = "live";
+  DATA = { live: [], movies: [], series: [] };
+  LOADED = { live: false, movies: false, series: false };
+  SERIES_CACHE = {};
+  drawNav();
 
   var cached = force ? null : loadCache(p.id);
   if(cached && cached.length) setData(cached);
@@ -775,12 +1072,13 @@ function loadActive(force){
       showSync(t().loadFail + " · " + p.name, true);
     });
 }
-  
+
 /* ==================== boot ==================== */
 (function boot(){
   if(lsGet("kiptv","") === "1") $("gate").classList.add("hide");
   else setTimeout(function(){ $("pininput").focus() }, 350);
   drawPins();
+  drawNav();
   applyLang();
   loadActive(false);
 })();
