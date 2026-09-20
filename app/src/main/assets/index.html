@@ -1007,7 +1007,7 @@ function render(){
 function loadMore(){
   var g = $("grid"); if(!g) return;
   var next = view.slice(shown, shown + PAGE_SIZE);
-  if(next.length){ g.insertAdjacentHTML("beforeend", next.map(cardHTML).join("")); shown += next.length }
+  if(next.length){ g.insertAdjacentHTML("beforeend", next.map(function(c){ return cardHTML(c); }).join("")); shown += next.length }
   $("moreWrap").style.display = (shown < view.length) ? "block" : "none";
 }
 function renderChips(){
