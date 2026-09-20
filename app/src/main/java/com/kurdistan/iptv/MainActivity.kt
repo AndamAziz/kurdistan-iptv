@@ -32,6 +32,7 @@ import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.PlayerView
+import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.NextRenderersFactory
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.ByteArrayInputStream
@@ -340,7 +341,12 @@ class MainActivity : ComponentActivity() {
 
         curRef?.let { http.setDefaultRequestProperties(mapOf("Referer" to it)) }
 
-        val renderers = DefaultRenderersFactory(this).setEnableDecoderFallback(true)
+        /* FFmpeg audio decoders (AC3, EAC3, DTS, TrueHD ...) as a fallback:
+           the phone's own decoder is tried first, FFmpeg only takes over when
+           the phone cannot play that audio format. */
+        val renderers = NextRenderersFactory(this)
+            .setEnableDecoderFallback(true)
+            .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)
 
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(25000, 60000, 2500, 5000)
