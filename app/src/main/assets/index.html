@@ -516,6 +516,24 @@ function lastAttr(L, name){
   var v = m[m.length-1];
   return v.slice(name.length + 2, -1);
 }
+/* The tool that built some of these playlists replaced the comma inside
+   "(KHTML, like Gecko)" with a whole group-title attribute, which cuts the
+   user agent in half. Drop every group-title but the last - the last one is
+   the real attribute, the earlier ones are the damage. */
+function repairLine(L){
+  var m = L.match(/group-title="[^"]*"/g);
+  if(!m || m.length < 2) return L;
+  for(var i = 0; i < m.length - 1; i++) L = L.replace(m[i], "");
+  return L;
+}
+
+function firstAttr(L, name){
+  var m = L.match(new RegExp(name + '="[^"]*"'));
+  if(!m) return "";
+  return m[0].slice(name.length + 2, -1).replace(/\s*,\s*/g, ", ")
+             .replace(/\s{2,}/g, " ").trim();
+}
+
 function parseM3U(txt){
   var lines = txt.split(/\r?\n/), out = [], cur = null;
   for(var i = 0; i < lines.length; i++){
@@ -523,12 +541,45 @@ function parseM3U(txt){
     if(!L) continue;
     if(L.charAt(0) === "#"){
       if(L.slice(0,7) === "#EXTINF"){
+        L = repairLine(L);
         var nm = L.slice(L.lastIndexOf(",") + 1).trim();
-        cur = nm ? { c:(lastAttr(L,"group-title") || "Other"), n:nm, u:"", l:lastAttr(L,"tvg-logo") } : null;
+        if(nm){
+          cur = { c:(lastAttr(L,"group-title") || "Other"), n:nm, u:"",
+                  l:lastAttr(L,"tvg-logo") };
+          /* some channels only answer to their own agent / referrer */
+          var ua = firstAttr(L, "http-user-agent") || firstAttr(L, "user-agent");
+          var rf = firstAttr(L, "http-referrer") || firstAttr(L, "http-referer");
+          if(ua) cur.ua = ua;
+          if(rf) cur.rf = rf;
+        } else cur = null;
+      }
+      /* VLC-style options on their own line, above the URL */
+      else if(L.slice(0,11) === "#EXTVLCOPT:" && cur){
+        var kv = L.slice(11), eq = kv.indexOf("=");
+        if(eq > 0){
+          var k = kv.slice(0, eq).toLowerCase().trim(), v = kv.slice(eq + 1).trim();
+          if(k === "http-user-agent") cur.ua = v;
+          else if(k === "http-referrer" || k === "http-referer") cur.rf = v;
+        }
       }
     } else {
       var u = L.trim();
-      if(u && cur){ cur.u = u; out.push(cur); cur = null }
+      if(u && cur){
+        /* pipe form: ...m3u8|User-Agent=Foo&Referer=Bar */
+        var bar = u.indexOf("|");
+        if(bar > 0){
+          var tail = u.slice(bar + 1);
+          u = u.slice(0, bar);
+          tail.split("&").forEach(function(pair){
+            var e = pair.indexOf("=");
+            if(e < 1) return;
+            var k = pair.slice(0, e).toLowerCase(), v = decodeURIComponent(pair.slice(e + 1));
+            if(k === "user-agent") cur.ua = v;
+            else if(k === "referer" || k === "referrer") cur.rf = v;
+          });
+        }
+        cur.u = u; out.push(cur); cur = null;
+      }
     }
   }
   return out;
@@ -1020,7 +1071,10 @@ function playQueue(arr, idx){
   var startMs = (sp && sp.p > 10000 && sp.p < sp.d * 0.95) ? sp.p : 0;
   if(window.AndroidPlayer && AndroidPlayer.playList){
     AndroidPlayer.playList(JSON.stringify(slice.map(function(c){
-      return { n: c.n, u: c.u };
+      var o = { n: c.n, u: c.u };
+      if(c.ua) o.ua = c.ua;            /* channel's own user agent */
+      if(c.rf) o.rf = c.rf;            /* channel's own referrer */
+      return o;
     })), pick, startMs);
   } else {
     play(arr[idx].u, arr[idx].n);
