@@ -37,7 +37,6 @@ import org.json.JSONObject
 import java.io.ByteArrayInputStream
 import java.net.HttpURLConnection
 import java.net.URL
-import java.util.concurrent.Executors
 
 class MainActivity : ComponentActivity() {
 
@@ -82,15 +81,10 @@ class MainActivity : ComponentActivity() {
     /** some channels only answer to their own agent / referrer */
     private var uas: List<String?> = emptyList()
     private var refs: List<String?> = emptyList()
-    private var sn: List<Boolean> = emptyList()
     private var curUa: String? = null
     private var curRef: String? = null
     private var builtUa: String? = null
     private var builtRef: String? = null
-
-    /** what the first bytes of a stream turned out to be, per url */
-    private val sniffed = HashMap<String, String?>()
-    private val io = Executors.newSingleThreadExecutor()
 
     private var startAtMs = 0L
     private val posTicker = object : Runnable {
@@ -101,6 +95,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private var plan: List<String?> = emptyList()
+    private var lastIndex = -1
     private var step = 0
     private var hasPlayed = false
     private var reconnects = 0
@@ -250,7 +245,7 @@ class MainActivity : ComponentActivity() {
         @android.webkit.JavascriptInterface
         fun playNative(url: String, title: String) {
             runOnUiThread {
-                openQueue(listOf(url), listOf(title), listOf(null), listOf(null), listOf(false), 0, 0L)
+                openQueue(listOf(url), listOf(title), listOf(null), listOf(null), 0, 0L)
             }
         }
 
@@ -266,18 +261,16 @@ class MainActivity : ComponentActivity() {
                 val n = ArrayList<String>(arr.length())
                 val a = ArrayList<String?>(arr.length())
                 val r = ArrayList<String?>(arr.length())
-                val q = ArrayList<Boolean>(arr.length())
                 for (i in 0 until arr.length()) {
                     val o = arr.getJSONObject(i)
                     u.add(o.optString("u"))
                     n.add(o.optString("n"))
                     a.add(o.optString("ua").ifBlank { null })
                     r.add(o.optString("rf").ifBlank { null })
-                    q.add(o.optInt("sn", 0) == 1)
                 }
                 if (u.isEmpty()) return
                 val start = if (index in u.indices) index else 0
-                runOnUiThread { openQueue(u, n, a, r, q, start, startMs.toLong()) }
+                runOnUiThread { openQueue(u, n, a, r, start, startMs.toLong()) }
             } catch (e: Exception) { /* ignore malformed input */ }
         }
     }
@@ -305,55 +298,8 @@ class MainActivity : ComponentActivity() {
     /** Best guess first, then EVERY other container - so a stream that is not
      *  what its address claims still ends up playing. */
     private fun planFor(url: String): List<String?> {
-        val best = if (sniffed.containsKey(url)) sniffed[url] else guessFor(url)
+        val best = guessFor(url)
         return listOf(best) + ORDER.filter { it != best }
-    }
-
-    /** The page says when a look-ahead is safe: never on an Xtream panel,
-     *  which may allow a single connection at a time. A plain .m3u8 or .mpd
-     *  needs no look-ahead either. */
-    private fun needsSniff(url: String, allowed: Boolean): Boolean {
-        if (!allowed) return false
-        val path = url.lowercase().substringBefore('?')
-        if (path.contains(".m3u8") || path.contains(".mpd")) return false
-        return true
-    }
-
-    /** Read the first bytes of a stream and say what it actually is.
-     *  Runs off the main thread; null means "let the extractors decide". */
-    private fun sniffMime(url: String, ua: String?, ref: String?): String? {
-        return try {
-            val c = URL(url).openConnection() as HttpURLConnection
-            c.instanceFollowRedirects = true
-            c.connectTimeout = 6000
-            c.readTimeout = 6000
-            c.setRequestProperty("User-Agent", ua ?: UA)
-            ref?.let { c.setRequestProperty("Referer", it) }
-            c.setRequestProperty("Range", "bytes=0-1023")
-            val head = ByteArray(1024)
-            var got = 0
-            c.inputStream.use { ins ->
-                while (got < head.size) {
-                    val r = ins.read(head, got, head.size - got)
-                    if (r <= 0) break
-                    got += r
-                }
-            }
-            /* a redirect may have landed us on a file with a telling name */
-            val landed = c.url.toString().lowercase().substringBefore('?')
-            c.disconnect()
-            if (got <= 0) return null
-
-            val text = String(head, 0, got, Charsets.ISO_8859_1)
-            when {
-                text.startsWith("#EXTM3U") || text.contains("#EXT-X-") -> MimeTypes.APPLICATION_M3U8
-                text.contains("<MPD") -> MimeTypes.APPLICATION_MPD
-                head[0] == 0x47.toByte() -> MimeTypes.VIDEO_MP2T
-                landed.endsWith(".m3u8") -> MimeTypes.APPLICATION_M3U8
-                landed.endsWith(".mpd") -> MimeTypes.APPLICATION_MPD
-                else -> null
-            }
-        } catch (e: Exception) { null }
     }
 
     // ---------------- player ----------------
@@ -387,6 +333,22 @@ class MainActivity : ComponentActivity() {
             .build()
     }
 
+    /** For the error screen: which containers were actually attempted. */
+    private fun triedSoFar(): String {
+        val names = (0..step).mapNotNull { plan.getOrNull(it) }
+            .map { m ->
+                when (m) {
+                    MimeTypes.APPLICATION_M3U8 -> "HLS"
+                    MimeTypes.APPLICATION_MPD -> "DASH"
+                    MimeTypes.VIDEO_MP2T -> "TS"
+                    else -> "?"
+                }
+            }
+        val auto = (0..step).any { it < plan.size && plan[it] == null }
+        val all = (if (auto) listOf("AUTO") else emptyList()) + names
+        return "tried " + all.joinToString("/")
+    }
+
     private fun isVod(url: String): Boolean {
         val u = url.lowercase()
         return u.contains("/movie/") || u.contains("/series/")
@@ -395,7 +357,7 @@ class MainActivity : ComponentActivity() {
     /** Open a queue of streams; the next / previous buttons walk through it. */
     private fun openQueue(
         u: List<String>, n: List<String>,
-        a: List<String?>, r: List<String?>, q: List<Boolean>,
+        a: List<String?>, r: List<String?>,
         index: Int, startMs: Long
     ) {
         handler.removeCallbacksAndMessages(null)
@@ -403,7 +365,6 @@ class MainActivity : ComponentActivity() {
         titles = n
         uas = a
         refs = r
-        sn = q
         reconnects = 0
         startAtMs = startMs
         curUa = a.getOrNull(index)
@@ -416,25 +377,6 @@ class MainActivity : ComponentActivity() {
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
         setFullscreen(true)
 
-        /* Look at the first bytes before choosing a container, so a .ts that is
-           really a playlist (and the reverse) plays first time, with no error
-           flashing on screen. If the look-up fails we just guess as before. */
-        val link = u.getOrNull(index)
-        if (link != null && needsSniff(link, sn.getOrNull(index) == true) &&
-            !sniffed.containsKey(link)) {
-            val ua = curUa; val rf = curRef
-            io.execute {
-                val m = sniffMime(link, ua, rf)
-                runOnUiThread {
-                    if (playerLayer.visibility != View.VISIBLE) return@runOnUiThread
-                    if (m != null) sniffed[link] = m
-                    buildAndStart(index)
-                    handler.postDelayed(posTicker, 5000)
-                }
-            }
-            return
-        }
-
         buildAndStart(index)
         handler.postDelayed(posTicker, 5000)
     }
@@ -446,6 +388,7 @@ class MainActivity : ComponentActivity() {
 
         step = 0
         hasPlayed = false
+        lastIndex = index
         currentUrl = urls.getOrNull(index)
         currentTitle = titles.getOrNull(index)
         curUa = uas.getOrNull(index)
@@ -465,8 +408,12 @@ class MainActivity : ComponentActivity() {
 
             p.addListener(object : Player.Listener {
                 override fun onMediaItemTransition(item: MediaItem?, reason: Int) {
-                    reportPosition()
                     val i = p.currentMediaItemIndex
+                    /* swapping the container of the item we are already on also
+                       reports a transition - that must not restart the fallback */
+                    if (i == lastIndex) return
+                    lastIndex = i
+                    reportPosition()
                     step = 0
                     hasPlayed = false
                     reconnects = 0
@@ -521,7 +468,7 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                         reconnects < MAX_RECONNECTS -> reconnect()
-                        else -> showError(error.errorCodeName)
+                        else -> showError(error.errorCodeName + "  \u00b7  " + triedSoFar())
                     }
                 }
             })
@@ -627,12 +574,12 @@ class MainActivity : ComponentActivity() {
         if (playerLayer.visibility == View.VISIBLE) {
             player?.playWhenReady = true
             setFullscreen(true)
+            handler.removeCallbacks(posTicker)      /* never stack two tickers */
             handler.postDelayed(posTicker, 5000)
         }
     }
 
     override fun onDestroy() {
-        io.shutdownNow()
         handler.removeCallbacksAndMessages(null)
         player?.release()
         player = null
