@@ -38,8 +38,12 @@ import java.net.URL
 
 class MainActivity : ComponentActivity() {
 
-    /* Many IPTV / Xtream servers only answer to VLC's user agent. */
+        /* Many IPTV / Xtream servers only answer to VLC's user agent... */
     private val UA = "VLC/3.0.20 LibVLC/3.0.20"
+
+    /* ...but a panel behind Cloudflare blocks it, so fall back to a browser. */
+    private val BROWSER_UA = "Mozilla/5.0 (Linux; Android 13; SM-S918B) AppleWebKit/537.36 " +
+        "(KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
 
     /* Fake host used by the page to route downloads through native code,
        which is not subject to the WebView's CORS rules. */
@@ -142,7 +146,7 @@ class MainActivity : ComponentActivity() {
                     )
                 }
                 return try {
-                    val conn = openFollowingRedirects(target)
+                    val conn = fetchAllowingCloudflare(target)
                     val code = conn.responseCode
                     val body = if (code in 200..299) conn.inputStream else conn.errorStream
                     WebResourceResponse(
@@ -160,8 +164,20 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+        /**
+     * Some panels only answer to VLC, others sit behind Cloudflare which blocks it.
+     * Try VLC first and retry as a browser when the first answer is a refusal.
+     */
+    private fun fetchAllowingCloudflare(target: String): HttpURLConnection {
+        val first = openFollowingRedirects(target, UA)
+        val code = first.responseCode
+        if (code != 403 && code != 406 && code != 503) return first
+        first.disconnect()
+        return openFollowingRedirects(target, BROWSER_UA)
+    }
+
     /** HttpURLConnection will not follow http -> https redirects, so do it by hand. */
-    private fun openFollowingRedirects(startUrl: String): HttpURLConnection {
+    private fun openFollowingRedirects(startUrl: String, ua: String): HttpURLConnection {
         var url = startUrl
         var hops = 0
         while (true) {
@@ -169,8 +185,9 @@ class MainActivity : ComponentActivity() {
             c.instanceFollowRedirects = false
             c.connectTimeout = 30000
             c.readTimeout = 40000
-            c.setRequestProperty("User-Agent", UA)
+            c.setRequestProperty("User-Agent", ua)
             c.setRequestProperty("Accept", "*/*")
+            c.setRequestProperty("Accept-Language", "en-US,en;q=0.9")
             val code = c.responseCode
             if (code in 300..399 && hops < 5) {
                 val next = c.getHeaderField("Location")
