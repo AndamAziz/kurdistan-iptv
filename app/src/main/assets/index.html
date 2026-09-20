@@ -352,9 +352,8 @@ function activeList(){
 function listUrl(p){
   if(p.type === "xtream"){
     var d = String(p.domain||"").replace(/\/+$/,"");
-    return d + "/get.php?username=" + encodeURIComponent(p.user)
-             + "&password=" + encodeURIComponent(p.pass)
-             + "&type=m3u_plus&output=ts";
+    return d + "/player_api.php?username=" + encodeURIComponent(p.user)
+             + "&password=" + encodeURIComponent(p.pass);
   }
   return p.url || "";
 }
@@ -384,7 +383,55 @@ function parseM3U(txt){
   return out;
 }
 
-/* ==================== cache (one slot, for the active list) ==================== */
+/* ==================== xtream api ====================
+   Proper panels answer player_api.php even when get.php is filtered,
+   and it gives categories and logos in one go. */
+function xtGet(base, action){
+  return fetch(viaApp(base + "&action=" + action))
+    .then(function(r){
+      return r.text().then(function(txt){
+        if(!r.ok) throw new Error("HTTP " + r.status + " " + txt.slice(0,110));
+        if(txt.indexOf("PROXY_ERROR") === 0) throw new Error(txt.slice(0,140));
+        var j;
+        try{ j = JSON.parse(txt) }
+        catch(e){ throw new Error("NOT JSON (" + txt.slice(0,70).replace(/\s+/g," ") + ")") }
+        return j;
+      });
+    });
+}
+function loadXtream(p){
+  var d = String(p.domain||"").replace(/\/+$/,"");
+  var base = d + "/player_api.php?username=" + encodeURIComponent(p.user)
+                + "&password=" + encodeURIComponent(p.pass);
+  var live = encodeURIComponent(p.user) + "/" + encodeURIComponent(p.pass);
+
+  return xtGet(base, "get_live_categories").then(function(cats){
+    if(cats && cats.user_info && String(cats.user_info.auth) === "0")
+      throw new Error("LOGIN REJECTED");
+    var map = {};
+    if(Object.prototype.toString.call(cats) === "[object Array]")
+      cats.forEach(function(c){ map[String(c.category_id)] = c.category_name || "Other" });
+
+    return xtGet(base, "get_live_streams").then(function(list){
+      if(Object.prototype.toString.call(list) !== "[object Array]")
+        throw new Error("NO CHANNELS");
+      var out = [];
+      for(var i = 0; i < list.length; i++){
+        var s = list[i];
+        if(!s || !s.stream_id) continue;
+        out.push({
+          c: map[String(s.category_id)] || "Other",
+          n: s.name || ("#" + s.stream_id),
+          u: d + "/live/" + live + "/" + s.stream_id + ".ts",
+          l: s.stream_icon || ""
+        });
+      }
+      return out;
+    });
+  });
+}
+  
+  /* ==================== cache (one slot, for the active list) ==================== */
 function saveCache(id, list){
   try{
     localStorage.setItem("kiptv_cache_owner", id);
@@ -700,14 +747,29 @@ function loadActive(force){
   if(cached && cached.length) setData(cached);
   else if(!CH.length) setData((window.CHANNELS || []).map(function(c){ return {c:c.c,n:c.n,u:c.u,l:""} }));
 
-  if(!url || !window.fetch) return;
+    if(!url || !window.fetch) return;
   showSync(t().sync + " · " + p.name, false);
-  fetch(viaApp(url))
-    .then(function(r){
-      return r.text().then(function(txt){
-        if(!r.ok) throw new Error("HTTP " + r.status + " " + txt.slice(0,120));
-        return txt;
+
+  var job = (p.type === "xtream") ? loadXtream(p) :
+    fetch(viaApp(url))
+      .then(function(r){
+        return r.text().then(function(txt){
+          if(!r.ok) throw new Error("HTTP " + r.status + " " + txt.slice(0,120));
+          if(txt.indexOf("PROXY_ERROR") === 0) throw new Error(txt.slice(0,140));
+          var list = parseM3U(txt);
+          if(list.length < 1) throw new Error("EMPTY (" + txt.slice(0,80).replace(/\s+/g," ") + ")");
+          return list;
+        });
       });
+
+  job
+    .then(function(list){
+      if(!list || !list.length) throw new Error("NO CHANNELS");
+      f = "";
+      setData(list);
+      saveCache(p.id, list);
+      hideSync();
+    })
     })
     .then(function(txt){
       if(txt.indexOf("PROXY_ERROR") === 0) throw new Error(txt.slice(0,140));
