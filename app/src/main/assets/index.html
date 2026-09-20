@@ -15,28 +15,18 @@
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{overscroll-behavior:none}
-body{
-  margin:0;background:var(--bg);color:var(--text);
-  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
-  -webkit-font-smoothing:antialiased;
-}
-body::before{
-  content:"";position:fixed;inset:0 0 auto;height:340px;z-index:0;pointer-events:none;
-  background:radial-gradient(120% 100% at 50% 0%,rgba(230,62,70,.16),transparent 62%);
-}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:340px;z-index:0;pointer-events:none;
+  background:radial-gradient(120% 100% at 50% 0%,rgba(230,62,70,.16),transparent 62%)}
 
 /* ---------- header ---------- */
-header{
-  position:sticky;top:0;z-index:20;padding:calc(10px + var(--safe-t)) 14px 10px;
+header{position:sticky;top:0;z-index:20;padding:calc(10px + var(--safe-t)) 14px 10px;
   background:rgba(8,11,16,.82);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
-  border-bottom:1px solid var(--line);
-}
+  border-bottom:1px solid var(--line)}
 .top{display:flex;align-items:center;gap:10px}
-.iconbtn{
-  width:44px;height:44px;flex:none;display:grid;place-items:center;
-  border-radius:14px;border:1px solid var(--line);background:var(--surface);
-  color:var(--text);font-size:19px;cursor:pointer;transition:.18s;
-}
+.iconbtn{width:44px;height:44px;flex:none;display:grid;place-items:center;border-radius:14px;
+  border:1px solid var(--line);background:var(--surface);color:var(--text);cursor:pointer;transition:.18s}
 .iconbtn:active{transform:scale(.92);background:var(--surface2)}
 .iconbtn svg{display:block}
 .brand{flex:1;text-align:center;line-height:1;user-select:none}
@@ -44,57 +34,49 @@ header{
 .brand .w2{font-size:20px;font-weight:800;letter-spacing:4px;
   background:linear-gradient(100deg,var(--accent),var(--accent2));
   -webkit-background-clip:text;background-clip:text;color:transparent}
-.brand small{display:block;margin-top:5px;font-size:9px;letter-spacing:3.5px;color:var(--muted2);font-weight:700}
+.brand small{display:block;margin-top:5px;font-size:9px;letter-spacing:2.5px;color:var(--muted2);
+  font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-.ann{
-  margin-top:11px;display:flex;align-items:center;gap:9px;
+.ann{margin-top:11px;display:flex;align-items:center;gap:9px;
   background:linear-gradient(90deg,rgba(230,62,70,.14),rgba(230,62,70,.04));
-  border:1px solid rgba(230,62,70,.28);border-radius:var(--r-sm);
-  padding:8px 11px;font-size:12px;overflow:hidden;
-}
+  border:1px solid rgba(230,62,70,.28);border-radius:var(--r-sm);padding:8px 11px;font-size:12px;overflow:hidden}
 .ann i{font-style:normal;flex:none;display:flex}
 .ann-wrap{flex:1;overflow:hidden;white-space:nowrap}
-.ann-wrap span{display:inline-block;white-space:nowrap;animation:marq 26s linear infinite;animation-delay:-13s;color:#F4C9C9;font-weight:600}
+.ann-wrap span{display:inline-block;white-space:nowrap;animation:marq 26s linear infinite;
+  animation-delay:-13s;color:#F4C9C9;font-weight:600}
 @keyframes marq{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
 
 .searchbox{display:none;margin-top:10px;position:relative}
 .searchbox.on{display:block}
-.searchbox input{
-  width:100%;padding:13px 42px 13px 14px;background:var(--surface);
-  border:1px solid var(--line);border-radius:var(--r-sm);color:var(--text);font-size:15px;outline:none;
-}
+.searchbox input{width:100%;padding:13px 42px 13px 14px;background:var(--surface);
+  border:1px solid var(--line);border-radius:var(--r-sm);color:var(--text);font-size:15px;outline:none}
 .searchbox input:focus{border-color:rgba(230,62,70,.55)}
 .searchbox b{position:absolute;inset-inline-end:14px;top:50%;transform:translateY(-50%);color:var(--muted2);display:flex}
 
 .chips{display:flex;gap:8px;overflow-x:auto;padding-top:11px;scrollbar-width:none;-ms-overflow-style:none}
 .chips::-webkit-scrollbar{display:none}
-.chip{
-  white-space:nowrap;border:1px solid var(--line);background:var(--surface);
-  color:var(--muted);border-radius:999px;padding:8px 15px;font-size:13px;font-weight:700;
-  cursor:pointer;transition:.18s;flex:none;
-}
+.chip{white-space:nowrap;border:1px solid var(--line);background:var(--surface);color:var(--muted);
+  border-radius:999px;padding:8px 15px;font-size:13px;font-weight:700;cursor:pointer;transition:.18s;flex:none}
 .chip:active{transform:scale(.94)}
-.chip.on{
-  background:linear-gradient(100deg,var(--accent),var(--accent2));
-  border-color:transparent;color:#fff;box-shadow:0 5px 16px rgba(230,62,70,.35);
-}
+.chip.on{background:linear-gradient(100deg,var(--accent),var(--accent2));border-color:transparent;
+  color:#fff;box-shadow:0 5px 16px rgba(230,62,70,.35)}
 
-/* sync pill */
-#sync{
-  position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + var(--safe-b));z-index:40;
+#sync{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + var(--safe-b));z-index:40;
   display:none;align-items:center;gap:9px;padding:9px 16px;border-radius:999px;
   background:rgba(18,25,36,.95);border:1px solid var(--line);font-size:12px;font-weight:700;
-  box-shadow:0 10px 30px rgba(0,0,0,.6);
-}
+  box-shadow:0 10px 30px rgba(0,0,0,.6);max-width:88vw}
 #sync.on{display:flex}
-#sync .sp{width:13px;height:13px;border-radius:99px;border:2px solid var(--muted2);border-top-color:var(--accent2);animation:spin .8s linear infinite}
+#sync .sp{width:13px;height:13px;flex:none;border-radius:99px;border:2px solid var(--muted2);
+  border-top-color:var(--accent2);animation:spin .8s linear infinite}
+#sync.err .sp{display:none}
+#sync.err{border-color:rgba(230,62,70,.5);color:#FF9B9B}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ---------- main ---------- */
 main{position:relative;z-index:1;padding:6px 14px calc(44px + var(--safe-b))}
 section{margin-top:22px}
 .shead{display:flex;align-items:center;gap:10px;margin-bottom:13px}
-.shead h2{margin:0;font-size:17px;font-weight:800;letter-spacing:.2px}
+.shead h2{margin:0;font-size:17px;font-weight:800}
 .shead .bar{width:4px;height:19px;border-radius:99px;background:linear-gradient(var(--accent),var(--accent2));flex:none}
 .shead .cnt{margin-inline-start:auto;font-size:11px;font-weight:700;color:var(--muted2);
   background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 10px}
@@ -105,38 +87,23 @@ section{margin-top:22px}
 
 .card{cursor:pointer;transition:transform .16s}
 .card:active{transform:scale(.94)}
-.tile{
-  position:relative;aspect-ratio:1;border-radius:var(--r-lg);overflow:hidden;
-  background:var(--surface);border:1px solid var(--line);
-  box-shadow:0 10px 24px rgba(0,0,0,.45);
-}
-.tile::after{
-  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
-  background:linear-gradient(160deg,rgba(255,255,255,.07),transparent 46%);
-}
-.mono{
-  position:absolute;inset:0;display:grid;place-items:center;direction:ltr;
-  font-weight:900;font-size:clamp(15px,5.4vw,25px);letter-spacing:.5px;color:#fff;
-  text-shadow:0 2px 10px rgba(0,0,0,.45);
-}
+.tile{position:relative;aspect-ratio:1;border-radius:var(--r-lg);overflow:hidden;background:var(--surface);
+  border:1px solid var(--line);box-shadow:0 10px 24px rgba(0,0,0,.45)}
+.tile::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(160deg,rgba(255,255,255,.07),transparent 46%)}
+.mono{position:absolute;inset:0;display:grid;place-items:center;direction:ltr;font-weight:900;
+  font-size:clamp(15px,5.4vw,25px);letter-spacing:.5px;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.45)}
 .tile img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:14%;background:#0E141C}
-.dot{
-  position:absolute;top:9px;inset-inline-start:9px;width:7px;height:7px;border-radius:99px;
-  background:var(--live);box-shadow:0 0 0 3px rgba(47,212,110,.18);animation:pulse 2.1s infinite;
-}
+.dot{position:absolute;top:9px;inset-inline-start:9px;width:7px;height:7px;border-radius:99px;
+  background:var(--live);box-shadow:0 0 0 3px rgba(47,212,110,.18);animation:pulse 2.1s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
-.name{
-  font-size:11.5px;font-weight:700;color:var(--muted);text-align:center;
-  padding:9px 2px 0;line-height:1.35;min-height:41px;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
-}
+.name{font-size:11.5px;font-weight:700;color:var(--muted);text-align:center;padding:9px 2px 0;
+  line-height:1.35;min-height:41px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .card:active .name{color:var(--text)}
 
 #moreWrap{display:none;text-align:center;padding:26px 0 6px}
-#moreBtn{
-  padding:13px 30px;border-radius:999px;border:1px solid var(--line);
-  background:var(--surface);color:var(--text);font-weight:800;font-size:13.5px;cursor:pointer;
-}
+#moreBtn{padding:13px 30px;border-radius:999px;border:1px solid var(--line);background:var(--surface);
+  color:var(--text);font-weight:800;font-size:13.5px;cursor:pointer}
 #moreBtn:active{transform:scale(.95)}
 
 .empty{text-align:center;padding:70px 20px;color:var(--muted2)}
@@ -147,30 +114,21 @@ section{margin-top:22px}
 #gate{position:fixed;inset:0;z-index:90;background:var(--bg);display:grid;place-items:center;padding:24px}
 #gate.hide{display:none}
 .gbox{width:min(400px,100%);text-align:center}
-.glogo{
-  width:84px;height:84px;margin:0 auto 22px;border-radius:26px;display:grid;place-items:center;
-  background:linear-gradient(145deg,var(--accent),var(--accent2));
-  box-shadow:0 18px 44px rgba(230,62,70,.4);
-}
+.glogo{width:84px;height:84px;margin:0 auto 22px;border-radius:26px;display:grid;place-items:center;
+  background:linear-gradient(145deg,var(--accent),var(--accent2));box-shadow:0 18px 44px rgba(230,62,70,.4)}
 .gbox h1{margin:0 0 7px;font-size:22px;font-weight:800;letter-spacing:2px}
 .gbox h1 em{font-style:normal;color:var(--accent2)}
 .gbox p{margin:0 0 26px;color:var(--muted);font-size:13.5px}
 .pins{display:flex;gap:11px;justify-content:center;direction:ltr}
-.pin{
-  width:56px;height:64px;border-radius:var(--r-md);background:var(--surface);
-  border:1.5px solid var(--line);display:grid;place-items:center;
-  font-size:26px;font-weight:800;transition:.2s;
-}
+.pin{width:56px;height:64px;border-radius:var(--r-md);background:var(--surface);border:1.5px solid var(--line);
+  display:grid;place-items:center;font-size:26px;font-weight:800;transition:.2s}
 .pin.fill{border-color:var(--accent);background:var(--surface2)}
 .pin.cur{border-color:var(--accent2);box-shadow:0 0 0 4px rgba(230,62,70,.14)}
 #pininput{position:absolute;opacity:0;pointer-events:none;height:0;width:0}
 .gmsg{height:26px;padding-top:15px;color:#FF7B7B;font-size:13px;font-weight:700}
-.gbtn{
-  width:100%;margin-top:6px;padding:15px;border:0;border-radius:var(--r-md);
-  background:linear-gradient(100deg,var(--accent),var(--accent2));
-  color:#fff;font-weight:800;font-size:15px;cursor:pointer;
-  box-shadow:0 12px 28px rgba(230,62,70,.32);
-}
+.gbtn{width:100%;margin-top:6px;padding:15px;border:0;border-radius:var(--r-md);
+  background:linear-gradient(100deg,var(--accent),var(--accent2));color:#fff;font-weight:800;font-size:15px;
+  cursor:pointer;box-shadow:0 12px 28px rgba(230,62,70,.32)}
 .gbtn:active{transform:scale(.97)}
 .shake{animation:shake .4s}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-9px)}75%{transform:translateX(9px)}}
@@ -179,21 +137,40 @@ section{margin-top:22px}
 #sheet{position:fixed;inset:0;z-index:80;display:none}
 #sheet.on{display:block}
 #sheet .bd{position:absolute;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(3px)}
-#sheet .pn{
-  position:absolute;inset-inline:0;bottom:0;background:var(--bg2);
+#sheet .pn{position:absolute;inset-inline:0;bottom:0;max-height:88vh;overflow-y:auto;background:var(--bg2);
   border-radius:26px 26px 0 0;border-top:1px solid var(--line);
-  padding:10px 16px calc(24px + var(--safe-b));animation:up .28s cubic-bezier(.2,.9,.3,1);
-}
+  padding:10px 16px calc(24px + var(--safe-b));animation:up .28s cubic-bezier(.2,.9,.3,1)}
 @keyframes up{from{transform:translateY(100%)}to{transform:translateY(0)}}
-#sheet .grab{width:42px;height:4px;border-radius:99px;background:var(--line);margin:4px auto 16px}
-#sheet h3{margin:0 0 14px;font-size:15px;font-weight:800}
-.lang{
-  display:flex;align-items:center;gap:12px;padding:14px;border-radius:var(--r-md);
-  background:var(--surface);border:1px solid var(--line);margin-bottom:9px;cursor:pointer;font-weight:700;font-size:14px;
-}
-.lang.on{border-color:var(--accent);background:var(--surface2)}
-.lang .tick{margin-inline-start:auto;color:var(--accent2);font-size:17px;opacity:0}
-.lang.on .tick{opacity:1}
+#sheet .grab{width:42px;height:4px;border-radius:99px;background:var(--line);margin:4px auto 14px}
+.sh{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.sh h3{margin:0;font-size:16px;font-weight:800;flex:1}
+.shback{width:34px;height:34px;flex:none;display:grid;place-items:center;border-radius:11px;
+  border:1px solid var(--line);background:var(--surface);color:var(--text);cursor:pointer}
+
+.row{display:flex;align-items:center;gap:12px;padding:14px;border-radius:var(--r-md);background:var(--surface);
+  border:1px solid var(--line);margin-bottom:9px;cursor:pointer;font-weight:700;font-size:14px}
+.row.on{border-color:var(--accent);background:var(--surface2)}
+.row .ic{flex:none;display:flex;color:var(--muted)}
+.row .tx{flex:1;min-width:0}
+.row .tx b{display:block;font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .tx s{display:block;text-decoration:none;font-size:11.5px;font-weight:600;color:var(--muted2);
+  margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;direction:ltr;text-align:start}
+.row .tick{flex:none;color:var(--accent2);font-size:17px;opacity:0}
+.row.on .tick{opacity:1}
+.row .del{flex:none;padding:6px 10px;border-radius:9px;border:1px solid var(--line);
+  color:#FF8A8A;font-size:11px;font-weight:800;background:transparent}
+
+.addbtn{width:100%;margin-top:6px;padding:14px;border:1px dashed var(--line);border-radius:var(--r-md);
+  background:transparent;color:var(--accent2);font-weight:800;font-size:14px;cursor:pointer}
+.addbtn:active{transform:scale(.98)}
+
+.fld{margin-bottom:12px}
+.fld label{display:block;font-size:11.5px;font-weight:800;color:var(--muted2);margin-bottom:6px}
+.fld input{width:100%;padding:13px 14px;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r-sm);color:var(--text);font-size:15px;outline:none;direction:ltr;text-align:start}
+.fld input:focus{border-color:rgba(230,62,70,.55)}
+.hint{font-size:11.5px;color:var(--muted2);line-height:1.6;margin:2px 0 14px}
+.formErr{color:#FF8A8A;font-size:12.5px;font-weight:700;min-height:20px;margin-bottom:6px}
 </style>
 </head>
 <body>
@@ -217,7 +194,7 @@ section{margin-top:22px}
       <span class="w1">KURDISTAN</span> <span class="w2">IPTV</span>
       <small id="tagline"></small>
     </div>
-    <button class="iconbtn" onclick="openSheet()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.6 3 2.6 15 0 18M12 3c-2.6 3-2.6 15 0 18"/></svg></button>
+    <button class="iconbtn" onclick="openSheet('menu')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   </div>
 
   <div class="ann">
@@ -241,18 +218,27 @@ section{margin-top:22px}
   <div class="bd" onclick="closeSheet()"></div>
   <div class="pn">
     <div class="grab"></div>
-    <h3 id="sheetTitle"></h3>
-    <div id="langs"></div>
+    <div class="sh">
+      <button class="shback" id="shBack" onclick="sheetBack()" style="display:none">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+      <h3 id="sheetTitle"></h3>
+    </div>
+    <div id="sheetBody"></div>
   </div>
 </div>
 
 <script src="channels.js"></script>
 <script>
 /* ==================== CONFIG ==================== */
-var PLAYLIST_URL = "https://raw.githubusercontent.com/AndamAziz/Andamiptv/refs/heads/main/playlist.m3u";
-var PIN_CODE     = "1015";
-var PAGE_SIZE    = 48;     /* how many channels load at a time */
-var CACHE_KEY    = "kiptv_pl_v1";
+var DEFAULT_PLAYLIST = {
+  id: "andam",
+  name: "ANDAM IPTV",
+  type: "m3u",
+  url: "https://raw.githubusercontent.com/AndamAziz/Andamiptv/refs/heads/main/playlist.m3u"
+};
+var PIN_CODE  = "1015";
+var PAGE_SIZE = 48;
 
 /* ==================== i18n ==================== */
 var T = {
@@ -260,27 +246,73 @@ var T = {
       tag:"پەخشی ڕاستەوخۆ",ann:"بەخێربێیت بۆ KURDISTAN IPTV — پەخشی ڕاستەوخۆی کەناڵە کوردی و نێودەوڵەتییەکان",
       recent:"بەردەوامبە لە بینین",none:"هیچ کەناڵێک نەدۆزرایەوە",lang:"زمان",
       enter:"کۆدی چالاککردن داخڵ بکە",act:"چالاککردن",wrong:"کۆدەکە هەڵەیە",
-      more:"زیاتر پیشان بدە",sync:"نوێکردنەوەی لیستی کەناڵەکان...",results:"ئەنجامی گەڕان"},
+      more:"زیاتر پیشان بدە",sync:"نوێکردنەوە",results:"ئەنجامی گەڕان",
+      menu:"ڕێکخستن",lists:"لیستەکانم",addList:"زیادکردنی لیست",
+      chooseType:"جۆری لیستەکە هەڵبژێرە",
+      xtream:"Xtream (پێشنیارکراو)",xtreamSub:"دۆمەین + ناو + وشەی نهێنی",
+      m3uUrl:"M3U بە لینک",m3uUrlSub:"لینکی ڕاستەوخۆی فایلی M3U",
+      fName:"ناوی لیست",fUrl:"لینکی M3U",fDomain:"دۆمەین",fUser:"ناوی بەکارهێنەر",fPass:"وشەی نهێنی",
+      save:"پاشەکەوت",del:"سڕینەوە",
+      errName:"ناو پێویستە",errUrl:"لینک پێویستە و دەبێت بە http دەست پێبکات",
+      errDomain:"دۆمەین پێویستە",errUser:"ناو و وشەی نهێنی پێویستن",
+      loadFail:"نەتوانرا لیستەکە دابەزێنرێت",channels:"کەناڵ",
+      confirmDel:"ئەم لیستە بسڕێتەوە؟"},
   kb:{name:"Kurdî Badînî",dir:"rtl",all:"هەمی",search:"گەڕیان بو کەنالان...",
       tag:"پەخشا ڕاستەڤخۆ",ann:"بخێرهاتی بو KURDISTAN IPTV — پەخشا ڕاستەڤخۆ یا کەنالێن کوردی و نێڤدەولەتی",
       recent:"بەردەوام بە ل تەماشەکرنێ",none:"چ کەنال نەهاتە دیتن",lang:"زمان",
       enter:"کودێ چالاککرنێ بنڤیسە",act:"چالاککرن",wrong:"کود شاشە",
-      more:"پتر نیشان بدە",sync:"نوێکرنا لیستا کەنالان...",results:"ئەنجامێن گەڕیانێ"},
+      more:"پتر نیشان بدە",sync:"نوێکرن",results:"ئەنجامێن گەڕیانێ",
+      menu:"ڕێکخستن",lists:"لیستێن من",addList:"زێدەکرنا لیستێ",
+      chooseType:"جورێ لیستێ هەلبژێرە",
+      xtream:"Xtream (پێشنیارکری)",xtreamSub:"دومەین + ناڤ + پەیڤا نهێنی",
+      m3uUrl:"M3U ب لینک",m3uUrlSub:"لینکێ ڕاستەڤخۆ یێ فایلا M3U",
+      fName:"ناڤێ لیستێ",fUrl:"لینکێ M3U",fDomain:"دومەین",fUser:"ناڤێ بکارهێنەری",fPass:"پەیڤا نهێنی",
+      save:"پاشەکەفتن",del:"ژێبرن",
+      errName:"ناڤ پێدڤییە",errUrl:"لینک پێدڤییە و دڤێت ب http دەست پێ بکەت",
+      errDomain:"دومەین پێدڤییە",errUser:"ناڤ و پەیڤا نهێنی پێدڤینە",
+      loadFail:"نەشیا لیست هاتە دابەزاندن",channels:"کەنال",
+      confirmDel:"ئەڤ لیست بێتە ژێبرن؟"},
   en:{name:"English",dir:"ltr",all:"All",search:"Search channels...",
       tag:"LIVE STREAMING",ann:"Welcome to KURDISTAN IPTV — live Kurdish and international channels",
       recent:"Continue watching",none:"No channels found",lang:"Language",
       enter:"Enter your activation code",act:"Activate",wrong:"Wrong code",
-      more:"Show more",sync:"Updating channel list...",results:"Search results"},
+      more:"Show more",sync:"Updating",results:"Search results",
+      menu:"Settings",lists:"My playlists",addList:"Add playlist",
+      chooseType:"Choose playlist type",
+      xtream:"Xtream (recommended)",xtreamSub:"Domain + username + password",
+      m3uUrl:"M3U by URL",m3uUrlSub:"Direct link to an M3U file",
+      fName:"Playlist name",fUrl:"M3U URL",fDomain:"Domain",fUser:"Username",fPass:"Password",
+      save:"Save",del:"Delete",
+      errName:"Name is required",errUrl:"A URL starting with http is required",
+      errDomain:"Domain is required",errUser:"Username and password are required",
+      loadFail:"Could not load this playlist",channels:"channels",
+      confirmDel:"Delete this playlist?"},
   ar:{name:"العربية",dir:"rtl",all:"الكل",search:"ابحث عن قناة...",
       tag:"بث مباشر",ann:"مرحباً بك في KURDISTAN IPTV — بث مباشر للقنوات الكردية والعالمية",
       recent:"متابعة المشاهدة",none:"لا توجد قنوات",lang:"اللغة",
       enter:"أدخل رمز التفعيل",act:"تفعيل",wrong:"الرمز غير صحيح",
-      more:"عرض المزيد",sync:"جاري تحديث قائمة القنوات...",results:"نتائج البحث"}
+      more:"عرض المزيد",sync:"تحديث",results:"نتائج البحث",
+      menu:"الإعدادات",lists:"قوائمي",addList:"إضافة قائمة",
+      chooseType:"اختر نوع القائمة",
+      xtream:"Xtream (موصى به)",xtreamSub:"النطاق + اسم المستخدم + كلمة السر",
+      m3uUrl:"M3U برابط",m3uUrlSub:"رابط مباشر لملف M3U",
+      fName:"اسم القائمة",fUrl:"رابط M3U",fDomain:"النطاق",fUser:"اسم المستخدم",fPass:"كلمة السر",
+      save:"حفظ",del:"حذف",
+      errName:"الاسم مطلوب",errUrl:"مطلوب رابط يبدأ بـ http",
+      errDomain:"النطاق مطلوب",errUser:"اسم المستخدم وكلمة السر مطلوبان",
+      loadFail:"تعذر تحميل هذه القائمة",channels:"قناة",
+      confirmDel:"حذف هذه القائمة؟"}
 };
 var lang = localStorage.kiptv_lang || "ku";
 function t(){ return T[lang] || T.ku; }
 
-/* ==================== helpers ==================== */
+/* ==================== small helpers ==================== */
+function $(id){ return document.getElementById(id) }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+  .replace(/"/g,"&quot;").replace(/'/g,"&#39;") }
+function lsGet(k,d){ try{ var v=localStorage.getItem(k); return v===null?d:v }catch(e){ return d } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v) }catch(e){} }
+
 var SKIP = {TV:1,HD:1,AND:1,THE:1,OF:1,"4K":1,FHD:1,SD:1};
 function initials(n){
   var w = String(n).toUpperCase().split(/[\s_\-|\/()\[\]\.]+/).filter(Boolean);
@@ -291,12 +323,40 @@ function initials(n){
   if(/^[0-9]+$/.test(k[1])) return (k[0].charAt(0) + k[1]).slice(0,3);
   return k[0].charAt(0) + k[1].charAt(0);
 }
-function hue(s){ var h=0; for(var i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))%360; return h; }
-function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;"); }
+function hue(s){ var h=0; for(var i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))%360; return h }
 function cleanGroup(g){
   var s = String(g).replace(/^\s*\d+\s*[\.\-]\s*/,"");
   var p = s.split(" - ");
   return (p.length > 1 ? p[p.length-1] : s).trim() || "Other";
+}
+
+/* ==================== playlists ==================== */
+function getLists(){
+  var raw = lsGet("kiptv_lists", null);
+  var arr = null;
+  if(raw){ try{ arr = JSON.parse(raw) }catch(e){ arr = null } }
+  if(!arr || !arr.length) arr = [DEFAULT_PLAYLIST];
+  if(!arr.some(function(p){ return p.id === DEFAULT_PLAYLIST.id })) arr.unshift(DEFAULT_PLAYLIST);
+  return arr;
+}
+function saveLists(a){ lsSet("kiptv_lists", JSON.stringify(a)) }
+function activeId(){
+  var id = lsGet("kiptv_active", DEFAULT_PLAYLIST.id);
+  return getLists().some(function(p){ return p.id === id }) ? id : DEFAULT_PLAYLIST.id;
+}
+function activeList(){
+  var id = activeId(), a = getLists();
+  for(var i=0;i<a.length;i++) if(a[i].id === id) return a[i];
+  return a[0];
+}
+function listUrl(p){
+  if(p.type === "xtream"){
+    var d = String(p.domain||"").replace(/\/+$/,"");
+    return d + "/get.php?username=" + encodeURIComponent(p.user)
+             + "&password=" + encodeURIComponent(p.pass)
+             + "&type=m3u_plus&output=ts";
+  }
+  return p.url || "";
 }
 
 /* ==================== m3u parsing ==================== */
@@ -318,21 +378,25 @@ function parseM3U(txt){
       }
     } else {
       var u = L.trim();
-      if(u && cur){ cur.u = u; out.push(cur); cur = null; }
+      if(u && cur){ cur.u = u; out.push(cur); cur = null }
     }
   }
   return out;
 }
 
-/* ==================== cache ==================== */
-function saveCache(list){
+/* ==================== cache (one slot, for the active list) ==================== */
+function saveCache(id, list){
   try{
-    localStorage.setItem(CACHE_KEY, JSON.stringify(list.map(function(c){ return [c.c,c.n,c.u,c.l] })));
-  }catch(e){ try{ localStorage.removeItem(CACHE_KEY) }catch(e2){} }
+    localStorage.setItem("kiptv_cache_owner", id);
+    localStorage.setItem("kiptv_cache", JSON.stringify(list.map(function(c){ return [c.c,c.n,c.u,c.l] })));
+  }catch(e){
+    try{ localStorage.removeItem("kiptv_cache"); localStorage.removeItem("kiptv_cache_owner") }catch(e2){}
+  }
 }
-function loadCache(){
+function loadCache(id){
   try{
-    var a = JSON.parse(localStorage.getItem(CACHE_KEY));
+    if(localStorage.getItem("kiptv_cache_owner") !== id) return null;
+    var a = JSON.parse(localStorage.getItem("kiptv_cache"));
     if(!a || !a.length) return null;
     return a.map(function(x){ return {c:x[0],n:x[1],u:x[2],l:x[3]||""} });
   }catch(e){ return null }
@@ -345,17 +409,15 @@ function buildGroups(){
   var n = {};
   for(var i = 0; i < CH.length; i++) n[CH[i].c] = (n[CH[i].c] || 0) + 1;
   var g = Object.keys(n).sort(function(a,b){ return n[b] - n[a] });
-  /* Kurdish groups always come first */
   var kur = g.filter(function(k){ return /kurd|كرد|کورد/i.test(k) });
   GROUPS = kur.concat(g.filter(function(k){ return kur.indexOf(k) < 0 }));
   if(!f || (f !== "ALL" && !n[f])) f = GROUPS.length ? GROUPS[0] : "ALL";
 }
-
 function recent(){ try{ return JSON.parse(localStorage.kiptv_recent || "[]") }catch(e){ return [] } }
 function pushRecent(name){
   var r = recent().filter(function(x){ return x !== name });
   r.unshift(name);
-  try{ localStorage.kiptv_recent = JSON.stringify(r.slice(0,6)) }catch(e){}
+  lsSet("kiptv_recent", JSON.stringify(r.slice(0,6)));
 }
 
 /* ==================== render ==================== */
@@ -366,85 +428,64 @@ function cardHTML(c){
   return '<div class="card" data-u="'+esc(c.u)+'" data-n="'+esc(c.n)+'">'
        +   '<div class="tile" style="background:'+bg+'">'
        +     '<div class="mono">'+esc(initials(c.n))+'</div>'+img+'<span class="dot"></span>'
-       +   '</div>'
-       +   '<div class="name">'+esc(c.n)+'</div>'
-       + '</div>';
+       +   '</div><div class="name">'+esc(c.n)+'</div></div>';
 }
-
 function currentTitle(q){
   if(q) return t().results;
   if(f === "ALL") return t().all;
   return cleanGroup(f);
 }
-
 function render(){
-  var q = (document.getElementById("search").value || "").trim().toLowerCase();
-  if(q){
-    view = CH.filter(function(c){ return c.n.toLowerCase().indexOf(q) > -1 });
-  }else{
-    view = (f === "ALL") ? CH : CH.filter(function(c){ return c.c === f });
-  }
+  var q = ($("search").value || "").trim().toLowerCase();
+  view = q ? CH.filter(function(c){ return c.n.toLowerCase().indexOf(q) > -1 })
+           : (f === "ALL" ? CH : CH.filter(function(c){ return c.c === f }));
 
   var html = "";
   if(!q){
     var rn = recent(), rc = [];
-    for(var i = 0; i < rn.length; i++){
-      for(var j = 0; j < CH.length; j++){ if(CH[j].n === rn[i]){ rc.push(CH[j]); break } }
-    }
+    for(var i = 0; i < rn.length; i++)
+      for(var j = 0; j < CH.length; j++) if(CH[j].n === rn[i]){ rc.push(CH[j]); break }
     if(rc.length){
       html += '<section><div class="shead"><span class="bar"></span><h2>'+esc(t().recent)+'</h2>'
            +  '<span class="cnt">'+rc.length+'</span></div><div class="grid">'
            +  rc.map(cardHTML).join("") + '</div></section>';
     }
   }
-
   if(!view.length){
-    html += '<div class="empty"><div>&#128533;</div><p>'+esc(t().none)+'</p></div>';
-    document.getElementById("main").innerHTML = html;
+    $("main").innerHTML = html + '<div class="empty"><div>&#128533;</div><p>'+esc(t().none)+'</p></div>';
     return;
   }
-
   html += '<section><div class="shead"><span class="bar"></span><h2>'+esc(currentTitle(q))+'</h2>'
        +  '<span class="cnt">'+view.length+'</span></div><div class="grid" id="grid"></div></section>'
        +  '<div id="moreWrap"><button id="moreBtn" onclick="loadMore()"></button></div>';
-  document.getElementById("main").innerHTML = html;
-  document.getElementById("moreBtn").textContent = t().more;
+  $("main").innerHTML = html;
+  $("moreBtn").textContent = t().more;
   shown = 0;
   loadMore();
   window.scrollTo(0,0);
 }
-
 function loadMore(){
-  var g = document.getElementById("grid");
-  if(!g) return;
+  var g = $("grid"); if(!g) return;
   var next = view.slice(shown, shown + PAGE_SIZE);
-  if(next.length){
-    g.insertAdjacentHTML("beforeend", next.map(cardHTML).join(""));
-    shown += next.length;
-  }
-  document.getElementById("moreWrap").style.display = (shown < view.length) ? "block" : "none";
+  if(next.length){ g.insertAdjacentHTML("beforeend", next.map(cardHTML).join("")); shown += next.length }
+  $("moreWrap").style.display = (shown < view.length) ? "block" : "none";
 }
-
 function renderChips(){
   var html = '<button class="chip'+(f==="ALL"?" on":"")+'" data-g="ALL">'+esc(t().all)+'</button>';
-  for(var i = 0; i < GROUPS.length; i++){
+  for(var i = 0; i < GROUPS.length; i++)
     html += '<button class="chip'+(f===GROUPS[i]?" on":"")+'" data-g="'+esc(GROUPS[i])+'">'
           + esc(cleanGroup(GROUPS[i])) + '</button>';
-  }
-  document.getElementById("chips").innerHTML = html;
+  $("chips").innerHTML = html;
 }
-
 function applyLang(){
   var d = t();
   document.documentElement.lang = lang;
   document.documentElement.dir = d.dir;
-  document.getElementById("tagline").textContent = d.tag;
-  document.getElementById("annText").textContent = d.ann;
-  document.getElementById("search").placeholder = d.search;
-  document.getElementById("gate-sub").textContent = d.enter;
-  document.getElementById("gbtn").textContent = d.act;
-  document.getElementById("sheetTitle").textContent = d.lang;
-  document.getElementById("syncText").textContent = d.sync;
+  $("tagline").textContent = activeList().name;
+  $("annText").textContent = d.ann;
+  $("search").placeholder = d.search;
+  $("gate-sub").textContent = d.enter;
+  $("gbtn").textContent = d.act;
   renderChips(); render();
 }
 
@@ -454,26 +495,22 @@ function play(url,title){
   if(window.AndroidPlayer) AndroidPlayer.playNative(url,title);
   else window.open(url,"_blank");
 }
-document.getElementById("main").addEventListener("click", function(e){
+$("main").addEventListener("click", function(e){
   var el = e.target;
   while(el && el !== this && !el.getAttribute("data-u")) el = el.parentNode;
   if(el && el.getAttribute("data-u")) play(el.getAttribute("data-u"), el.getAttribute("data-n"));
 });
-document.getElementById("chips").addEventListener("click", function(e){
+$("chips").addEventListener("click", function(e){
   var el = e.target;
   while(el && el !== this && !el.getAttribute("data-g")) el = el.parentNode;
   if(el && el.getAttribute("data-g")){
     f = el.getAttribute("data-g");
-    document.getElementById("search").value = "";
+    $("search").value = "";
     renderChips(); render();
   }
 });
-
 var stimer = null;
-document.getElementById("search").addEventListener("input", function(){
-  clearTimeout(stimer);
-  stimer = setTimeout(render, 220);
-});
+$("search").addEventListener("input", function(){ clearTimeout(stimer); stimer = setTimeout(render, 220) });
 
 var ticking = false;
 window.addEventListener("scroll", function(){
@@ -485,83 +522,198 @@ window.addEventListener("scroll", function(){
        window.innerHeight + window.pageYOffset > document.body.offsetHeight - 900) loadMore();
   }, 120);
 });
-
 function toggleSearch(){
-  var b = document.getElementById("sbox");
+  var b = $("sbox");
   b.classList.toggle("on");
-  if(b.classList.contains("on")) document.getElementById("search").focus();
-  else { document.getElementById("search").value = ""; render(); }
+  if(b.classList.contains("on")) $("search").focus();
+  else { $("search").value = ""; render() }
 }
-function openSheet(){
-  document.getElementById("langs").innerHTML = Object.keys(T).map(function(k){
-    return '<div class="lang'+(lang===k?" on":"")+'" onclick="setLang(\''+k+'\')">'
-         + '<span>'+T[k].name+'</span><span class="tick">&#10003;</span></div>';
-  }).join("");
-  document.getElementById("sheet").classList.add("on");
+
+/* ==================== sheet ==================== */
+var sheetStack = [];
+var ICON = {
+  list:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>',
+  globe:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.6 3 2.6 15 0 18M12 3c-2.6 3-2.6 15 0 18"/></svg>',
+  tv:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="8" width="19" height="12.5" rx="2.6"/><path d="M8 3.5l4 4.2 4-4.2"/></svg>',
+  key:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="8" cy="12" r="4"/><path d="M12 12h9M18 12v3"/></svg>',
+  link:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a4 4 0 006 .5l2-2a4 4 0 10-5.6-5.6l-1 1"/><path d="M14 11a4 4 0 00-6-.5l-2 2A4 4 0 109.6 18l1-1"/></svg>'
+};
+function openSheet(view){ sheetStack = [view]; drawSheet(); $("sheet").classList.add("on") }
+function pushSheet(view){ sheetStack.push(view); drawSheet() }
+function sheetBack(){ sheetStack.pop(); if(!sheetStack.length) closeSheet(); else drawSheet() }
+function closeSheet(){ $("sheet").classList.remove("on"); sheetStack = [] }
+
+function drawSheet(){
+  var v = sheetStack[sheetStack.length-1] || "menu";
+  $("shBack").style.display = sheetStack.length > 1 ? "grid" : "none";
+  var d = t(), body = "", title = "";
+
+  if(v === "menu"){
+    title = d.menu;
+    var a = activeList();
+    body = '<div class="row" onclick="pushSheet(\'lists\')">'
+         +   '<span class="ic">'+ICON.tv+'</span>'
+         +   '<span class="tx"><b>'+esc(d.lists)+'</b><s>'+esc(a.name)+' · '+CH.length+' '+esc(d.channels)+'</s></span>'
+         + '</div>'
+         + '<div class="row" onclick="pushSheet(\'lang\')">'
+         +   '<span class="ic">'+ICON.globe+'</span>'
+         +   '<span class="tx"><b>'+esc(d.lang)+'</b><s>'+esc(T[lang].name)+'</s></span>'
+         + '</div>';
+  }
+  else if(v === "lang"){
+    title = d.lang;
+    body = Object.keys(T).map(function(k){
+      return '<div class="row'+(lang===k?" on":"")+'" onclick="setLang(\''+k+'\')">'
+           + '<span class="tx"><b>'+T[k].name+'</b></span><span class="tick">&#10003;</span></div>';
+    }).join("");
+  }
+  else if(v === "lists"){
+    title = d.lists;
+    var cur = activeId();
+    body = getLists().map(function(p){
+      var sub = p.type === "xtream" ? (p.domain||"") : (p.url||"");
+      return '<div class="row'+(p.id===cur?" on":"")+'">'
+           +   '<span class="tx" onclick="useList(\''+p.id+'\')"><b>'+esc(p.name)+'</b><s>'+esc(sub)+'</s></span>'
+           +   (p.id === DEFAULT_PLAYLIST.id ? '' :
+               '<button class="del" onclick="delList(\''+p.id+'\')">'+esc(d.del)+'</button>')
+           +   '<span class="tick">&#10003;</span>'
+           + '</div>';
+    }).join("");
+    body += '<button class="addbtn" onclick="pushSheet(\'type\')">+ '+esc(d.addList)+'</button>';
+  }
+  else if(v === "type"){
+    title = d.chooseType;
+    body = '<div class="row" onclick="pushSheet(\'form_xtream\')">'
+         +   '<span class="ic">'+ICON.key+'</span>'
+         +   '<span class="tx"><b>'+esc(d.xtream)+'</b><s>'+esc(d.xtreamSub)+'</s></span></div>'
+         + '<div class="row" onclick="pushSheet(\'form_m3u\')">'
+         +   '<span class="ic">'+ICON.link+'</span>'
+         +   '<span class="tx"><b>'+esc(d.m3uUrl)+'</b><s>'+esc(d.m3uUrlSub)+'</s></span></div>';
+  }
+  else if(v === "form_xtream"){
+    title = d.xtream;
+    body = fld("pl_name", d.fName, "My provider")
+         + fld("pl_domain", d.fDomain, "http://example.com:8080")
+         + fld("pl_user", d.fUser, "")
+         + fld("pl_pass", d.fPass, "")
+         + '<div class="hint">http://dns:port — /get.php ـی بۆ زیاد مەکە</div>'
+         + '<div class="formErr" id="formErr"></div>'
+         + '<button class="gbtn" onclick="saveForm(\'xtream\')">'+esc(d.save)+'</button>';
+  }
+  else if(v === "form_m3u"){
+    title = d.m3uUrl;
+    body = fld("pl_name", d.fName, "My playlist")
+         + fld("pl_url", d.fUrl, "http://example.com/playlist.m3u")
+         + '<div class="formErr" id="formErr"></div>'
+         + '<button class="gbtn" onclick="saveForm(\'m3u\')">'+esc(d.save)+'</button>';
+  }
+  $("sheetTitle").textContent = title;
+  $("sheetBody").innerHTML = body;
 }
-function closeSheet(){ document.getElementById("sheet").classList.remove("on") }
-function setLang(k){ lang = k; try{ localStorage.kiptv_lang = k }catch(e){} closeSheet(); applyLang(); }
+function fld(id,label,ph){
+  return '<div class="fld"><label>'+esc(label)+'</label>'
+       + '<input id="'+id+'" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="'+esc(ph)+'"></div>';
+}
+function setLang(k){ lang = k; lsSet("kiptv_lang", k); closeSheet(); applyLang() }
+
+function saveForm(type){
+  var d = t(), err = $("formErr");
+  var name = ($("pl_name").value || "").trim();
+  if(!name){ err.textContent = d.errName; return }
+  var p = { id: "p" + Date.now(), name: name, type: type };
+  if(type === "m3u"){
+    var url = ($("pl_url").value || "").trim();
+    if(!/^https?:\/\//i.test(url)){ err.textContent = d.errUrl; return }
+    p.url = url;
+  } else {
+    var dom = ($("pl_domain").value || "").trim();
+    var u = ($("pl_user").value || "").trim();
+    var pw = ($("pl_pass").value || "").trim();
+    if(!/^https?:\/\//i.test(dom)){ err.textContent = d.errDomain; return }
+    if(!u || !pw){ err.textContent = d.errUser; return }
+    p.domain = dom.replace(/\/+$/,""); p.user = u; p.pass = pw;
+  }
+  var a = getLists(); a.push(p); saveLists(a);
+  lsSet("kiptv_active", p.id);
+  closeSheet();
+  loadActive(true);
+}
+function useList(id){ lsSet("kiptv_active", id); closeSheet(); loadActive(true) }
+function delList(id){
+  if(!window.confirm(t().confirmDel)) return;
+  var a = getLists().filter(function(p){ return p.id !== id });
+  saveLists(a);
+  if(activeId() === id){ lsSet("kiptv_active", DEFAULT_PLAYLIST.id); closeSheet(); loadActive(true); }
+  else drawSheet();
+}
 
 /* ==================== activation ==================== */
 var PIN = "";
 function drawPins(){
-  document.getElementById("pins").innerHTML = [0,1,2,3].map(function(i){
+  $("pins").innerHTML = [0,1,2,3].map(function(i){
     return '<div class="pin'+(PIN[i]?" fill":"")+(i===PIN.length?" cur":"")+'">'+(PIN[i]?"&#9679;":"")+'</div>';
   }).join("");
 }
 function submitPin(){
-  if(PIN === PIN_CODE){
-    try{ localStorage.kiptv = "1" }catch(e){}
-    document.getElementById("gate").classList.add("hide");
-  }else{
-    document.getElementById("gmsg").textContent = t().wrong;
+  if(PIN === PIN_CODE){ lsSet("kiptv","1"); $("gate").classList.add("hide") }
+  else {
+    $("gmsg").textContent = t().wrong;
     document.querySelector(".pins").classList.add("shake");
     setTimeout(function(){
       document.querySelector(".pins").classList.remove("shake");
-      PIN = ""; document.getElementById("pininput").value = ""; drawPins();
+      PIN = ""; $("pininput").value = ""; drawPins();
     }, 420);
   }
 }
-document.getElementById("pininput").addEventListener("input", function(e){
+$("pininput").addEventListener("input", function(e){
   PIN = e.target.value.replace(/\D/g,"").slice(0,4);
   e.target.value = PIN;
-  document.getElementById("gmsg").textContent = "";
+  $("gmsg").textContent = "";
   drawPins();
   if(PIN.length === 4) setTimeout(submitPin, 180);
 });
-document.getElementById("pins").addEventListener("click", function(){
-  document.getElementById("pininput").focus();
-});
+$("pins").addEventListener("click", function(){ $("pininput").focus() });
 
-/* ==================== boot ==================== */
-function setData(list){
-  CH = list; buildGroups(); renderChips(); render();
+/* ==================== loading ==================== */
+function setData(list){ CH = list; buildGroups(); renderChips(); render() }
+function showSync(text, isErr){
+  var el = $("sync");
+  $("syncText").textContent = text;
+  el.className = "on" + (isErr ? " err" : "");
+  if(isErr) setTimeout(function(){ el.className = "" }, 4000);
 }
+function hideSync(){ $("sync").className = "" }
 
-function fetchPlaylist(){
-  if(!window.fetch) return;
-  document.getElementById("sync").classList.add("on");
-  fetch(PLAYLIST_URL, {cache:"no-cache"})
+function loadActive(force){
+  var p = activeList(), url = listUrl(p);
+  $("tagline").textContent = p.name;
+
+  var cached = force ? null : loadCache(p.id);
+  if(cached && cached.length) setData(cached);
+  else if(!CH.length) setData((window.CHANNELS || []).map(function(c){ return {c:c.c,n:c.n,u:c.u,l:""} }));
+
+  if(!url || !window.fetch) return;
+  showSync(t().sync + " · " + p.name, false);
+  fetch(url, {cache:"no-cache"})
     .then(function(r){ if(!r.ok) throw 0; return r.text() })
     .then(function(txt){
       var list = parseM3U(txt);
-      if(list.length > 5){ setData(list); saveCache(list); }
+      if(list.length < 1) throw 0;
+      f = "";
+      setData(list);
+      saveCache(p.id, list);
+      hideSync();
     })
-    .catch(function(){})
-    .then(function(){ document.getElementById("sync").classList.remove("on") });
+    .catch(function(){ showSync(t().loadFail + " · " + p.name, true) });
 }
 
+/* ==================== boot ==================== */
 (function boot(){
-  if(localStorage.kiptv === "1") document.getElementById("gate").classList.add("hide");
-  else setTimeout(function(){ document.getElementById("pininput").focus() }, 350);
+  if(lsGet("kiptv","") === "1") $("gate").classList.add("hide");
+  else setTimeout(function(){ $("pininput").focus() }, 350);
   drawPins();
-
-  var cached = loadCache();
-  var fallback = (window.CHANNELS || []).map(function(c){ return {c:c.c,n:c.n,u:c.u,l:""} });
-  CH = (cached && cached.length) ? cached : fallback;
-  buildGroups();
   applyLang();
-  fetchPlaylist();
+  loadActive(false);
 })();
 </script>
 </body>
