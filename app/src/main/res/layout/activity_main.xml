@@ -23,21 +23,17 @@
             android:layout_height="match_parent"
             android:keepScreenOn="true" />
 
-        <!-- top gradient scrim -->
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="96dp"
-            android:background="@drawable/scrim_top" />
-
-        <LinearLayout
+                <LinearLayout
             android:id="@+id/topBar"
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@drawable/scrim_top"
             android:paddingStart="14dp"
             android:paddingEnd="14dp"
-            android:paddingTop="14dp">
+            android:paddingTop="14dp"
+            android:paddingBottom="26dp">
 
             <TextView
                 android:id="@+id/btnClose"
