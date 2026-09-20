@@ -111,11 +111,21 @@ section{margin-top:22px}
 .empty p{margin:0;font-size:14px;font-weight:600}
 
 /* ---------- home: hero + horizontal rows ---------- */
-.hero{
-  position:relative;margin:4px 0 6px;border-radius:var(--r-lg);overflow:hidden;
-  aspect-ratio:16/9;background:var(--surface);border:1px solid var(--line);cursor:pointer;
-  box-shadow:0 16px 40px rgba(0,0,0,.55);
+.heroWrap{position:relative;margin:4px 0 6px}
+.heroBox{
+  position:relative;border-radius:var(--r-lg);overflow:hidden;aspect-ratio:16/9;
+  background:var(--surface);border:1px solid var(--line);
+  box-shadow:0 16px 40px rgba(0,0,0,.55);touch-action:pan-y;
 }
+.hero{
+  position:absolute;inset:0;cursor:pointer;opacity:0;visibility:hidden;
+  transform:scale(1.04);transition:opacity .6s ease,transform 6s linear,visibility .6s;
+}
+.hero.on{opacity:1;visibility:visible;transform:scale(1)}
+.heroDots{display:flex;justify-content:center;gap:6px;margin-top:9px}
+.heroDots i{width:6px;height:6px;border-radius:99px;background:rgba(255,255,255,.22);
+  transition:width .3s ease,background .3s ease;cursor:pointer}
+.heroDots i.on{width:20px;background:var(--accent)}
 .hero .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.55}
 .hero .mono{font-size:clamp(26px,9vw,54px);opacity:.28}
 .hero .sc{position:absolute;inset:0;background:linear-gradient(0deg,rgba(6,8,12,.94) 6%,rgba(6,8,12,.35) 55%,transparent)}
@@ -808,28 +818,95 @@ function cardHTML(c, forceSquare){
        +   '</div><div class="name">'+esc(c.n)+'</div></div>';
 }
 /* ---------- home: hero + horizontal rows ---------- */
-function heroPick(){
+/* Up to HERO_N items for the banner, spread across different groups so the
+   same category does not fill it. Picture first, then anything. */
+var HERO_N = 6, HERO_MS = 6000;
+
+function heroPicks(){
   var pool = (DATA.movies && DATA.movies.length) ? DATA.movies
            : (DATA.series && DATA.series.length) ? DATA.series : CH;
+  if(!pool.length) return [];
   var withArt = pool.filter(function(c){ return c.l });
-  var src = withArt.length ? withArt : pool;
-  if(!src.length) return null;
-  var day = Math.floor(Date.now() / 3600000);      /* changes every hour */
-  return src[day % src.length];
+  var src = withArt.length >= HERO_N ? withArt : pool;
+
+  /* start somewhere new each hour so the banner is not always the same */
+  var start = Math.floor(Date.now() / 3600000) % src.length;
+  var out = [], usedGroup = {}, seen = {};
+
+  for(var pass = 0; pass < 2 && out.length < HERO_N; pass++)
+    for(var i = 0; i < src.length && out.length < HERO_N; i++){
+      var c = src[(start + i) % src.length];
+      if(seen[c.u]) continue;
+      if(pass === 0 && usedGroup[c.c]) continue;   /* one per group first */
+      seen[c.u] = 1; usedGroup[c.c] = 1; out.push(c);
+    }
+  return out;
 }
 
-function heroHTML(c){
-  if(!c) return "";
+function slideHTML(c, first){
   var h = hue(c.n);
   var bg = "linear-gradient(145deg,hsl("+h+",42%,30%),hsl("+((h+42)%360)+",48%,16%))";
   var img = c.l ? '<img class="bg" src="'+esc(c.l)+'" onerror="this.remove()" alt="">' : '';
   var attrs = c.sid ? ' data-sid="'+esc(c.sid)+'"' : ' data-u="'+esc(c.u)+'"';
-  return '<div class="hero"'+attrs+' data-n="'+esc(c.n)+'" style="background:'+bg+'">'
+  var sub = [];
+  if(c.r) sub.push("★ " + String(c.r).slice(0,3));
+  if(c.c) sub.push(cleanGroup(c.c));
+  return '<div class="hero'+(first ? " on" : "")+'"'+attrs+' data-n="'+esc(c.n)+'" style="background:'+bg+'">'
        +   img + '<div class="mono">'+esc(initials(c.n))+'</div><div class="sc"></div>'
-       +   '<div class="in"><div class="kick">'+esc(t().featured)+'</div>'
+       +   '<div class="in"><div class="kick">'+esc(sub.length ? sub.join("  ·  ") : t().featured)+'</div>'
        +     '<h1>'+esc(c.n)+'</h1>'
        +     '<span class="go">&#9654;&#65038; '+esc(t().playNow)+'</span></div>'
        + '</div>';
+}
+
+function heroHTML(list){
+  if(!list || !list.length) return "";
+  var slides = list.map(function(c, i){ return slideHTML(c, i === 0) }).join("");
+  var dots = list.length < 2 ? "" :
+    '<div class="heroDots" id="heroDots">'
+    + list.map(function(c, i){ return '<i'+(i ? "" : ' class="on"')+' data-hd="'+i+'"></i>' }).join("")
+    + '</div>';
+  return '<div class="heroWrap"><div class="heroBox" id="heroBox">'+slides+'</div>'+dots+'</div>';
+}
+
+/* ---------- the banner's own little engine ---------- */
+var heroI = 0, heroTimer = null, heroHold = null;
+
+function heroStop(){
+  if(heroTimer){ clearInterval(heroTimer); heroTimer = null }
+  if(heroHold){ clearTimeout(heroHold); heroHold = null }
+}
+
+function heroGo(i){
+  var box = $("heroBox"); if(!box) return;
+  var s = box.getElementsByClassName("hero");
+  if(s.length < 2) return;
+  heroI = (i + s.length) % s.length;
+  for(var k = 0; k < s.length; k++) s[k].className = "hero" + (k === heroI ? " on" : "");
+  var d = $("heroDots");
+  if(d){
+    var dd = d.getElementsByTagName("i");
+    for(var j = 0; j < dd.length; j++) dd[j].className = (j === heroI ? "on" : "");
+  }
+}
+
+/* the user touched it - stop rotating, pick up again after a pause */
+function heroPause(){
+  heroStop();
+  heroHold = setTimeout(heroStart, HERO_MS * 2);
+}
+
+function heroStart(){
+  heroStop();
+  var box = $("heroBox");
+  if(!box || box.getElementsByClassName("hero").length < 2) return;
+  heroI = 0;
+  heroTimer = setInterval(function(){
+    if(!$("heroBox")){ heroStop(); return }         /* the view changed */
+    if(document.hidden) return;                      /* app in the background */
+    if($("detail").classList.contains("on")) return; /* a detail page is open */
+    heroGo(heroI + 1);
+  }, HERO_MS);
 }
 
 function rowHTML(title, list, square){
@@ -843,7 +920,7 @@ function rowHTML(title, list, square){
 
 function homeHTML(){
   var square = SECTION === "live";
-  var html = heroHTML(heroPick());
+  var html = heroHTML(heroPicks());
 
   var cont = continueList();
   if(cont.length) html += rowHTML(t().recent, cont, false);
@@ -867,9 +944,11 @@ function render(){
            : (f === "ALL" ? src : src.filter(function(c){ return c.c === f }));
 
   /* the home view: a hero and horizontal rows */
+  heroStop();
   if(!q && f === "ALL" && src.length){
     $("main").innerHTML = homeHTML();
     shown = 0;
+    heroStart();
     window.scrollTo(0,0);
     return;
   }
@@ -947,7 +1026,39 @@ function playQueue(arr, idx){
     play(arr[idx].u, arr[idx].n);
   }
 }
+/* tap a dot to jump to that banner */
 $("main").addEventListener("click", function(e){
+  var hd = e.target.getAttribute && e.target.getAttribute("data-hd");
+  if(hd !== null && hd !== undefined && hd !== ""){
+    heroGo(parseInt(hd, 10)); heroPause(); e.stopPropagation();
+  }
+}, true);
+
+/* swipe the banner left or right */
+(function(){
+  var x0 = null, y0 = null;
+  $("main").addEventListener("touchstart", function(e){
+    var el = e.target;
+    while(el && el !== this && !(el.id === "heroBox")) el = el.parentNode;
+    if(!el || el === this){ x0 = null; return }
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY;
+  }, { passive:true });
+
+  $("main").addEventListener("touchend", function(e){
+    if(x0 === null) return;
+    var dx = e.changedTouches[0].clientX - x0;
+    var dy = e.changedTouches[0].clientY - y0;
+    x0 = null;
+    if(Math.abs(dx) < 45 || Math.abs(dx) < Math.abs(dy)) return;   /* a scroll, not a swipe */
+    var back = (t().dir === "rtl") ? (dx < 0) : (dx > 0);
+    heroGo(heroI + (back ? -1 : 1));
+    heroPause();
+    e.preventDefault();
+  });
+})();
+
+$("main").addEventListener("click", function(e){
+  if(e.target.getAttribute && e.target.getAttribute("data-hd") !== null) return;
   var go = e.target.getAttribute && e.target.getAttribute("data-go");
   if(go){
     for(var k = 0; k < GROUPS.length; k++) if(cleanGroup(GROUPS[k]) === go){ f = GROUPS[k]; break }
