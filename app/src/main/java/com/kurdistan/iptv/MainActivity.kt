@@ -27,6 +27,7 @@ import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.extractor.DefaultExtractorsFactory
 import androidx.media3.ui.PlayerView
 
 class MainActivity : ComponentActivity() {
@@ -124,21 +125,30 @@ class MainActivity : ComponentActivity() {
             .setBufferDurationsMs(25000, 60000, 2500, 5000)
             .build()
 
+        // دابینکردنی هەموو جۆرە extractorـەکان بۆ ئەوەی ڕێگری لە خطای پارس کردن بگرێت
+        val extractorsFactory = DefaultExtractorsFactory()
+            .setConstantBitrateSeekingEnabled(true)
+
+        val mediaSourceFactory = DefaultMediaSourceFactory(this, extractorsFactory)
+            .setDataSourceFactory(http)
+
         return ExoPlayer.Builder(this, renderers)
-            .setMediaSourceFactory(DefaultMediaSourceFactory(this).setDataSourceFactory(http))
+            .setMediaSourceFactory(mediaSourceFactory)
             .setLoadControl(loadControl)
             .build()
     }
 
-    private fun mimeFor(url: String): String {
+    private fun getMimeType(url: String): String? {
         val u = url.lowercase()
         return when {
             u.contains(".m3u8") || u.contains("type=m3u8") -> MimeTypes.APPLICATION_M3U8
             u.contains(".mpd") -> MimeTypes.APPLICATION_MPD
             u.contains(".mp4") -> MimeTypes.VIDEO_MP4
             u.contains(".mkv") -> MimeTypes.VIDEO_MATROSKA
-            // پیش‌فرض امن برای تمامی لینک‌های زنده و آی‌پی‌تی‌وی جهت جلوگیری از خطای کانتینر
-            else -> MimeTypes.VIDEO_MP2T
+            u.contains(".mp3") -> MimeTypes.AUDIO_MPEG
+            u.contains(".aac") -> MimeTypes.AUDIO_AAC
+            u.contains(".ts") || u.contains("extension=ts") -> MimeTypes.VIDEO_MP2T
+            else -> null // ڕێگە بە ExoPlayer دەدات خۆی بە شێوازی خودکار کانتینەرەکە بدۆزێتەوە
         }
     }
 
@@ -159,9 +169,11 @@ class MainActivity : ComponentActivity() {
         player = buildPlayer().also { p ->
             playerView.player = p
 
-            val builder = MediaItem.Builder()
-                .setUri(url)
-                .setMimeType(mimeFor(url))
+            val builder = MediaItem.Builder().setUri(url)
+            val mime = getMimeType(url)
+            if (mime != null) {
+                builder.setMimeType(mime)
+            }
 
             p.addListener(object : Player.Listener {
                 override fun onPlaybackStateChanged(state: Int) {
