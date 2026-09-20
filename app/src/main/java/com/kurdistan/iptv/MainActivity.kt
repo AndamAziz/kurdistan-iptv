@@ -27,7 +27,6 @@ import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.datasource.DefaultHttpDataSource
-import androidx.media3.datasource.ResolvingDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
@@ -83,8 +82,11 @@ class MainActivity : ComponentActivity() {
     /** some channels only answer to their own agent / referrer */
     private var uas: List<String?> = emptyList()
     private var refs: List<String?> = emptyList()
+    private var sn: List<Boolean> = emptyList()
     private var curUa: String? = null
     private var curRef: String? = null
+    private var builtUa: String? = null
+    private var builtRef: String? = null
 
     /** what the first bytes of a stream turned out to be, per url */
     private val sniffed = HashMap<String, String?>()
@@ -247,7 +249,9 @@ class MainActivity : ComponentActivity() {
     inner class AndroidBridge(private val context: Context) {
         @android.webkit.JavascriptInterface
         fun playNative(url: String, title: String) {
-            runOnUiThread { openQueue(listOf(url), listOf(title), listOf(null), listOf(null), 0, 0L) }
+            runOnUiThread {
+                openQueue(listOf(url), listOf(title), listOf(null), listOf(null), listOf(false), 0, 0L)
+            }
         }
 
         /** json: [{"n":..,"u":..,"ua"?:..,"rf"?:..}, ...] - lets next / previous work */
@@ -262,55 +266,55 @@ class MainActivity : ComponentActivity() {
                 val n = ArrayList<String>(arr.length())
                 val a = ArrayList<String?>(arr.length())
                 val r = ArrayList<String?>(arr.length())
+                val q = ArrayList<Boolean>(arr.length())
                 for (i in 0 until arr.length()) {
                     val o = arr.getJSONObject(i)
                     u.add(o.optString("u"))
                     n.add(o.optString("n"))
                     a.add(o.optString("ua").ifBlank { null })
                     r.add(o.optString("rf").ifBlank { null })
+                    q.add(o.optInt("sn", 0) == 1)
                 }
                 if (u.isEmpty()) return
                 val start = if (index in u.indices) index else 0
-                runOnUiThread { openQueue(u, n, a, r, start, startMs.toLong()) }
+                runOnUiThread { openQueue(u, n, a, r, q, start, startMs.toLong()) }
             } catch (e: Exception) { /* ignore malformed input */ }
         }
     }
 
     // ---------------- format plan ----------------
 
-    /** Every container we might be handed, best guess first, the rest as fallback. */
-    private fun planFor(url: String): List<String?> {
+    /** What this address looks like. null means "let the extractors decide",
+     *  which is what an ordinary .ts or .mkv wants. */
+    private fun guessFor(url: String): String? {
         val full = url.lowercase()
         val path = full.substringBefore('?')
-
-        /* if we already learnt what this stream is, that answer wins */
-        if (sniffed.containsKey(url)) {
-            val hit = sniffed[url]
-            return listOf(hit) + ORDER.filter { it != hit }
-        }
-
         return when {
-            path.contains(".mpd") -> listOf(MimeTypes.APPLICATION_MPD, null, MimeTypes.APPLICATION_M3U8)
-            path.contains(".m3u8") || path.endsWith(".m3u") ->
-                listOf(MimeTypes.APPLICATION_M3U8, null, MimeTypes.VIDEO_MP2T)
+            path.contains(".mpd") -> MimeTypes.APPLICATION_MPD
+            path.contains(".m3u8") || path.endsWith(".m3u") -> MimeTypes.APPLICATION_M3U8
+            /* .ts, .mkv, .mp4, .avi ... the extractors read these themselves */
+            path.endsWith(".ts") || full.contains("extension=ts") -> null
             path.endsWith(".mp4") || path.endsWith(".mkv") || path.endsWith(".avi") ||
-            path.endsWith(".webm") || path.endsWith(".flv") || path.endsWith(".mov") ->
-                listOf(null, MimeTypes.APPLICATION_M3U8)
-            /* a .ts that is really an HLS playlist is common, so keep both */
-            path.endsWith(".ts") || full.contains("extension=ts") ->
-                listOf(null, MimeTypes.APPLICATION_M3U8, MimeTypes.VIDEO_MP2T)
-            /* no extension: a short link that redirects, almost always HLS */
-            else -> listOf(MimeTypes.APPLICATION_M3U8, null, MimeTypes.VIDEO_MP2T)
+            path.endsWith(".webm") || path.endsWith(".flv") || path.endsWith(".mov") -> null
+            /* no extension: usually a short link that redirects to a playlist */
+            path.matches(Regex(".*\\.[a-z0-9]{2,5}$")) -> null
+            else -> MimeTypes.APPLICATION_M3U8
         }
     }
 
-    /** Xtream links and plain .m3u8 / .mpd need no look-ahead, and some panels
-     *  allow a single connection at a time - never spend it on one. */
-    private fun needsSniff(url: String): Boolean {
-        val full = url.lowercase()
-        if (full.contains("/live/") || full.contains("/movie/") || full.contains("/series/"))
-            return false
-        val path = full.substringBefore('?')
+    /** Best guess first, then EVERY other container - so a stream that is not
+     *  what its address claims still ends up playing. */
+    private fun planFor(url: String): List<String?> {
+        val best = if (sniffed.containsKey(url)) sniffed[url] else guessFor(url)
+        return listOf(best) + ORDER.filter { it != best }
+    }
+
+    /** The page says when a look-ahead is safe: never on an Xtream panel,
+     *  which may allow a single connection at a time. A plain .m3u8 or .mpd
+     *  needs no look-ahead either. */
+    private fun needsSniff(url: String, allowed: Boolean): Boolean {
+        if (!allowed) return false
+        val path = url.lowercase().substringBefore('?')
         if (path.contains(".m3u8") || path.contains(".mpd")) return false
         return true
     }
@@ -355,23 +359,21 @@ class MainActivity : ComponentActivity() {
     // ---------------- player ----------------
 
     private fun buildPlayer(): ExoPlayer {
-        /* The agent goes in the default properties, NOT setUserAgent: media3
-           applies setUserAgent last, which would overwrite a channel's own. */
+        /* A channel that brings its own agent uses it; everything else keeps
+           the VLC agent exactly as before. The player is rebuilt whenever the
+           agent or referrer changes, so nothing sits between the stream and
+           the data source for an ordinary channel. */
+        builtUa = curUa
+        builtRef = curRef
+
         val http = DefaultHttpDataSource.Factory()
-            .setDefaultRequestProperties(mapOf("User-Agent" to UA))
+            .setUserAgent(curUa ?: UA)
             .setAllowCrossProtocolRedirects(true)
             .setConnectTimeoutMs(20000)
             .setReadTimeoutMs(20000)
             .setKeepPostFor302Redirects(true)
 
-        /* A channel that needs its own agent or referrer gets it on every
-           request it makes - the playlist and each segment alike. */
-        val source = ResolvingDataSource.Factory(http) { spec ->
-            val h = HashMap<String, String>()
-            curUa?.let { h["User-Agent"] = it }
-            curRef?.let { h["Referer"] = it }
-            if (h.isEmpty()) spec else spec.withAdditionalHeaders(h)
-        }
+        curRef?.let { http.setDefaultRequestProperties(mapOf("Referer" to it)) }
 
         val renderers = DefaultRenderersFactory(this).setEnableDecoderFallback(true)
 
@@ -380,7 +382,7 @@ class MainActivity : ComponentActivity() {
             .build()
 
         return ExoPlayer.Builder(this, renderers)
-            .setMediaSourceFactory(DefaultMediaSourceFactory(this).setDataSourceFactory(source))
+            .setMediaSourceFactory(DefaultMediaSourceFactory(this).setDataSourceFactory(http))
             .setLoadControl(loadControl)
             .build()
     }
@@ -393,7 +395,7 @@ class MainActivity : ComponentActivity() {
     /** Open a queue of streams; the next / previous buttons walk through it. */
     private fun openQueue(
         u: List<String>, n: List<String>,
-        a: List<String?>, r: List<String?>,
+        a: List<String?>, r: List<String?>, q: List<Boolean>,
         index: Int, startMs: Long
     ) {
         handler.removeCallbacksAndMessages(null)
@@ -401,6 +403,7 @@ class MainActivity : ComponentActivity() {
         titles = n
         uas = a
         refs = r
+        sn = q
         reconnects = 0
         startAtMs = startMs
         curUa = a.getOrNull(index)
@@ -417,7 +420,8 @@ class MainActivity : ComponentActivity() {
            really a playlist (and the reverse) plays first time, with no error
            flashing on screen. If the look-up fails we just guess as before. */
         val link = u.getOrNull(index)
-        if (link != null && needsSniff(link) && !sniffed.containsKey(link)) {
+        if (link != null && needsSniff(link, sn.getOrNull(index) == true) &&
+            !sniffed.containsKey(link)) {
             val ua = curUa; val rf = curRef
             io.execute {
                 val m = sniffMime(link, ua, rf)
@@ -472,6 +476,14 @@ class MainActivity : ComponentActivity() {
                     curRef = refs.getOrNull(i)
                     plan = planFor(currentUrl ?: "")
                     applyItemChrome(i)
+                    /* this channel wants a different agent - the data source
+                       carries it, so start it over with one that matches */
+                    if (curUa != builtUa || curRef != builtRef) {
+                        playerView.post {
+                            if (playerLayer.visibility == View.VISIBLE && urls.isNotEmpty())
+                                buildAndStart(i)
+                        }
+                    }
                 }
 
                 override fun onPlaybackStateChanged(state: Int) {
@@ -479,8 +491,6 @@ class MainActivity : ComponentActivity() {
                         Player.STATE_BUFFERING -> loading.visibility = View.VISIBLE
                         Player.STATE_READY -> {
                             loading.visibility = View.GONE
-                            /* remember what worked, so opening it again is instant */
-                            if (!hasPlayed) currentUrl?.let { sniffed[it] = plan.getOrNull(step) }
                             hasPlayed = true
                             reconnects = 0
                         }
