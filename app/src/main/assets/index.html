@@ -130,7 +130,8 @@ section{margin-top:22px}
 .hero .mono{font-size:clamp(26px,9vw,54px);opacity:.28}
 .hero .sc{position:absolute;inset:0;background:linear-gradient(0deg,rgba(6,8,12,.94) 6%,rgba(6,8,12,.35) 55%,transparent)}
 .hero .in{position:absolute;inset-inline:0;bottom:0;padding:16px}
-.hero .kick{font-size:10px;font-weight:800;letter-spacing:2.5px;color:var(--accent2);margin-bottom:6px}
+.hero .kick{font-size:10px;font-weight:800;letter-spacing:2.5px;color:var(--accent2);margin-bottom:6px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hero h1{margin:0 0 12px;font-size:clamp(19px,5.6vw,28px);font-weight:800;line-height:1.2;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .hero .go{display:inline-flex;align-items:center;gap:8px;padding:11px 24px;border-radius:999px;
@@ -396,25 +397,6 @@ var T = {
       errDomain:"دۆمەین پێویستە",errUser:"ناو و وشەی نهێنی پێویستن",
       loadFail:"نەتوانرا لیستەکە دابەزێنرێت",channels:"کەناڵ",
       confirmDel:"ئەم لیستە بسڕێتەوە؟"},
-  kb:{name:"Kurdî Badînî",dir:"rtl",all:"هەمی",search:"گەڕیان بو کەنالان...",
-      featured:"پێشنیارکری",playNow:"تەماشەکرن",resume:"بەردەوامبوون",seeAll:"هەمی",
-      fromStart:"ژ دەستپێکێ",left:"%s مایە",director:"دەرهێنەر",cast:"لێستکڤان",
-      live:"کەنال",movies:"فیلم",series:"زنجیرە",seasonN:"وەرز",episodeN:"ئیپسود",
-      noVod:"چ فیلم نینن",noSer:"چ زنجیرە نینن",onlyXtream:"تنێ بو لیستا Xtream",
-      tag:"پەخشا ڕاستەڤخۆ",ann:"بخێرهاتی بو KURDISTAN IPTV — پەخشا ڕاستەڤخۆ یا کەنالێن کوردی و نێڤدەولەتی",
-      recent:"بەردەوام بە ل تەماشەکرنێ",none:"چ کەنال نەهاتە دیتن",lang:"زمان",
-      enter:"کودێ چالاککرنێ بنڤیسە",act:"چالاککرن",wrong:"کود شاشە",
-      more:"پتر نیشان بدە",sync:"نوێکرن",results:"ئەنجامێن گەڕیانێ",
-      menu:"ڕێکخستن",lists:"لیستێن من",addList:"زێدەکرنا لیستێ",
-      chooseType:"جورێ لیستێ هەلبژێرە",
-      xtream:"Xtream (پێشنیارکری)",xtreamSub:"دومەین + ناڤ + پەیڤا نهێنی",
-      m3uUrl:"M3U ب لینک",m3uUrlSub:"لینکێ ڕاستەڤخۆ یێ فایلا M3U",
-      fName:"ناڤێ لیستێ",fUrl:"لینکێ M3U",fDomain:"دومەین",fUser:"ناڤێ بکارهێنەری",fPass:"پەیڤا نهێنی",
-      save:"پاشەکەفتن",del:"ژێبرن",
-      errName:"ناڤ پێدڤییە",errUrl:"لینک پێدڤییە و دڤێت ب http دەست پێ بکەت",
-      errDomain:"دومەین پێدڤییە",errUser:"ناڤ و پەیڤا نهێنی پێدڤینە",
-      loadFail:"نەشیا لیست هاتە دابەزاندن",channels:"کەنال",
-      confirmDel:"ئەڤ لیست بێتە ژێبرن؟"},
   en:{name:"English",dir:"ltr",all:"All",search:"Search channels...",
       featured:"FEATURED",playNow:"Play",resume:"Resume",seeAll:"See all",
       fromStart:"From start",left:"%s left",director:"Director",cast:"Cast",
@@ -454,7 +436,8 @@ var T = {
       loadFail:"تعذر تحميل هذه القائمة",channels:"قناة",
       confirmDel:"حذف هذه القائمة؟"}
 };
-var lang = localStorage.kiptv_lang || "ku";
+var LANG_ORDER = ["en", "ku", "ar"];
+var lang = localStorage.kiptv_lang || "en";
 function t(){ return T[lang] || T.ku; }
 
 /* ==================== small helpers ==================== */
@@ -475,10 +458,10 @@ function initials(n){
   return k[0].charAt(0) + k[1].charAt(0);
 }
 function hue(s){ var h=0; for(var i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))%360; return h }
+/* The provider's own category name, exactly as it sends it - only the
+   surrounding whitespace goes. */
 function cleanGroup(g){
-  var s = String(g).replace(/^\s*\d+\s*[\.\-]\s*/,"");
-  var p = s.split(" - ");
-  return (p.length > 1 ? p[p.length-1] : s).trim() || "Other";
+  return String(g == null ? "" : g).trim() || "Other";
 }
 
 /* ==================== playlists ==================== */
@@ -1043,6 +1026,7 @@ function applyLang(){
   $("search").placeholder = d.search;
   $("gate-sub").textContent = d.enter;
   $("gbtn").textContent = d.act;
+  drawNav();                       /* the bottom bar speaks the new language too */
   renderChips(); render();
 }
 
@@ -1061,6 +1045,7 @@ function playQueue(arr, idx){
   var from = Math.max(0, idx - WIN), to = Math.min(arr.length, idx + WIN);
   var slice = arr.slice(from, to);
   var pick = idx - from;
+  var xt = isXtream();               /* a panel may allow one connection only */
   pushRecent(arr[idx].n);
   /* keep enough about a film / episode that "Continue watching"
      can show it again on the next cold start */
@@ -1074,6 +1059,7 @@ function playQueue(arr, idx){
       var o = { n: c.n, u: c.u };
       if(c.ua) o.ua = c.ua;            /* channel's own user agent */
       if(c.rf) o.rf = c.rf;            /* channel's own referrer */
+      if(!xt) o.sn = 1;                /* safe to read the first bytes first */
       return o;
     })), pick, startMs);
   } else {
@@ -1374,7 +1360,7 @@ function drawSheet(){
   }
   else if(v === "lang"){
     title = d.lang;
-    body = Object.keys(T).map(function(k){
+    body = LANG_ORDER.filter(function(k){ return T[k] }).map(function(k){
       return '<div class="row'+(lang===k?" on":"")+'" onclick="setLang(\''+k+'\')">'
            + '<span class="tx"><b>'+T[k].name+'</b></span><span class="tick">&#10003;</span></div>';
     }).join("");
