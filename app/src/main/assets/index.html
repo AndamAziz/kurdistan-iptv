@@ -1045,7 +1045,6 @@ function playQueue(arr, idx){
   var from = Math.max(0, idx - WIN), to = Math.min(arr.length, idx + WIN);
   var slice = arr.slice(from, to);
   var pick = idx - from;
-  var xt = isXtream();               /* a panel may allow one connection only */
   pushRecent(arr[idx].n);
   /* keep enough about a film / episode that "Continue watching"
      can show it again on the next cold start */
@@ -1059,7 +1058,6 @@ function playQueue(arr, idx){
       var o = { n: c.n, u: c.u };
       if(c.ua) o.ua = c.ua;            /* channel's own user agent */
       if(c.rf) o.rf = c.rf;            /* channel's own referrer */
-      if(!xt) o.sn = 1;                /* safe to read the first bytes first */
       return o;
     })), pick, startMs);
   } else {
