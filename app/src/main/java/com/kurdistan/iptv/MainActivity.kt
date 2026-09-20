@@ -27,11 +27,11 @@ import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
-import androidx.media3.extractor.DefaultExtractorsFactory
 import androidx.media3.ui.PlayerView
 
 class MainActivity : ComponentActivity() {
 
+    /* Many IPTV / Xtream servers only answer to VLC's user agent. */
     private val UA = "VLC/3.0.20 LibVLC/3.0.20"
 
     private lateinit var webView: WebView
@@ -45,6 +45,10 @@ class MainActivity : ComponentActivity() {
     private var player: ExoPlayer? = null
     private var currentUrl: String? = null
     private var currentTitle: String? = null
+
+    /** Container formats to try, in order, for the current channel. */
+    private var plan: List<String?> = emptyList()
+    private var step = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,7 +70,9 @@ class MainActivity : ComponentActivity() {
         txtError.text = getString(R.string.player_error)
         findViewById<TextView>(R.id.btnRetry).apply {
             text = getString(R.string.retry)
-            setOnClickListener { currentUrl?.let { u -> showNativePlayer(u, currentTitle ?: "") } }
+            setOnClickListener {
+                currentUrl?.let { u -> openChannel(u, currentTitle ?: "") }
+            }
         }
         findViewById<TextView>(R.id.btnClose).setOnClickListener { hideNativePlayer() }
         findViewById<TextView>(R.id.liveBadge).text = getString(R.string.live)
@@ -106,9 +112,30 @@ class MainActivity : ComponentActivity() {
     inner class AndroidBridge(private val context: Context) {
         @android.webkit.JavascriptInterface
         fun playNative(url: String, title: String) {
-            runOnUiThread { showNativePlayer(url, title) }
+            runOnUiThread { openChannel(url, title) }
         }
     }
+
+    // ---------------- format plan ----------------
+
+    /**
+     * Xtream servers happily redirect a ".ts" link to an HLS playlist and vice versa,
+     * so the file extension is only a hint. Try the most likely container first and
+     * fall back to the others automatically.
+     */
+    private fun planFor(url: String): List<String?> {
+        val u = url.lowercase()
+        return when {
+            u.contains(".mpd") ->
+                listOf(MimeTypes.APPLICATION_MPD, null)
+            u.contains(".m3u8") ->
+                listOf(MimeTypes.APPLICATION_M3U8, null, MimeTypes.VIDEO_MP2T)
+            else ->
+                listOf(null, MimeTypes.APPLICATION_M3U8, MimeTypes.VIDEO_MP2T)
+        }
+    }
+
+    // ---------------- player ----------------
 
     private fun buildPlayer(): ExoPlayer {
         val http = DefaultHttpDataSource.Factory()
@@ -125,55 +152,40 @@ class MainActivity : ComponentActivity() {
             .setBufferDurationsMs(25000, 60000, 2500, 5000)
             .build()
 
-        // دابینکردنی هەموو جۆرە extractorـەکان بۆ ئەوەی ڕێگری لە خطای پارس کردن بگرێت
-        val extractorsFactory = DefaultExtractorsFactory()
-            .setConstantBitrateSeekingEnabled(true)
-
-        val mediaSourceFactory = DefaultMediaSourceFactory(this, extractorsFactory)
-            .setDataSourceFactory(http)
-
         return ExoPlayer.Builder(this, renderers)
-            .setMediaSourceFactory(mediaSourceFactory)
+            .setMediaSourceFactory(DefaultMediaSourceFactory(this).setDataSourceFactory(http))
             .setLoadControl(loadControl)
             .build()
     }
 
-    private fun getMimeType(url: String): String? {
-        val u = url.lowercase()
-        return when {
-            u.contains(".m3u8") || u.contains("type=m3u8") -> MimeTypes.APPLICATION_M3U8
-            u.contains(".mpd") -> MimeTypes.APPLICATION_MPD
-            u.contains(".mp4") -> MimeTypes.VIDEO_MP4
-            u.contains(".mkv") -> MimeTypes.VIDEO_MATROSKA
-            u.contains(".mp3") -> MimeTypes.AUDIO_MPEG
-            u.contains(".aac") -> MimeTypes.AUDIO_AAC
-            u.contains(".ts") || u.contains("extension=ts") -> MimeTypes.VIDEO_MP2T
-            else -> null // ڕێگە بە ExoPlayer دەدات خۆی بە شێوازی خودکار کانتینەرەکە بدۆزێتەوە
-        }
-    }
-
-    private fun showNativePlayer(url: String, title: String) {
+    /** Entry point: open a channel from scratch. */
+    private fun openChannel(url: String, title: String) {
         currentUrl = url
         currentTitle = title
-
-        player?.release()
-        errorBox.visibility = View.GONE
-        loading.visibility = View.VISIBLE
-        txtTitle.text = title
+        plan = planFor(url)
+        step = 0
 
         playerLayer.visibility = View.VISIBLE
         webView.visibility = View.GONE
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
         setFullscreen(true)
+        txtTitle.text = title
+
+        startAttempt()
+    }
+
+    private fun startAttempt() {
+        val url = currentUrl ?: return
+
+        player?.release()
+        errorBox.visibility = View.GONE
+        loading.visibility = View.VISIBLE
 
         player = buildPlayer().also { p ->
             playerView.player = p
 
             val builder = MediaItem.Builder().setUri(url)
-            val mime = getMimeType(url)
-            if (mime != null) {
-                builder.setMimeType(mime)
-            }
+            plan.getOrNull(step)?.let { builder.setMimeType(it) }
 
             p.addListener(object : Player.Listener {
                 override fun onPlaybackStateChanged(state: Int) {
@@ -182,9 +194,16 @@ class MainActivity : ComponentActivity() {
                 }
 
                 override fun onPlayerError(error: PlaybackException) {
-                    loading.visibility = View.GONE
-                    txtError.text = getString(R.string.player_error) + "\n\n" + error.errorCodeName
-                    errorBox.visibility = View.VISIBLE
+                    if (step < plan.size - 1) {
+                        // this container guess was wrong - try the next one
+                        step++
+                        playerView.post { startAttempt() }
+                    } else {
+                        loading.visibility = View.GONE
+                        txtError.text =
+                            getString(R.string.player_error) + "\n\n" + error.errorCodeName
+                        errorBox.visibility = View.VISIBLE
+                    }
                 }
             })
 
@@ -219,6 +238,8 @@ class MainActivity : ComponentActivity() {
             controller.show(WindowInsetsCompat.Type.systemBars())
         }
     }
+
+    // ---------------- lifecycle ----------------
 
     override fun onPause() {
         super.onPause()
