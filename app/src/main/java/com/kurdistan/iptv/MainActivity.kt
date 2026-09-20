@@ -9,6 +9,8 @@ import android.os.Looper
 import android.view.View
 import android.view.WindowManager
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -30,11 +32,18 @@ import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.PlayerView
+import java.io.ByteArrayInputStream
+import java.net.HttpURLConnection
+import java.net.URL
 
 class MainActivity : ComponentActivity() {
 
     /* Many IPTV / Xtream servers only answer to VLC's user agent. */
     private val UA = "VLC/3.0.20 LibVLC/3.0.20"
+
+    /* Fake host used by the page to route downloads through native code,
+       which is not subject to the WebView's CORS rules. */
+    private val PROXY_HOST = "kiptv.local"
 
     private val MAX_RECONNECTS = 8
     private val RECONNECT_DELAY_MS = 1200L
@@ -53,11 +62,8 @@ class MainActivity : ComponentActivity() {
     private var currentUrl: String? = null
     private var currentTitle: String? = null
 
-    /** Container formats to try, in order, for the current channel. */
     private var plan: List<String?> = emptyList()
     private var step = 0
-
-    /** True once this channel has actually produced video at least once. */
     private var hasPlayed = false
     private var reconnects = 0
 
@@ -81,9 +87,7 @@ class MainActivity : ComponentActivity() {
         txtError.text = getString(R.string.player_error)
         findViewById<TextView>(R.id.btnRetry).apply {
             text = getString(R.string.retry)
-            setOnClickListener {
-                currentUrl?.let { u -> openChannel(u, currentTitle ?: "") }
-            }
+            setOnClickListener { currentUrl?.let { u -> openChannel(u, currentTitle ?: "") } }
         }
         findViewById<TextView>(R.id.btnClose).setOnClickListener { hideNativePlayer() }
         findViewById<TextView>(R.id.liveBadge).text = getString(R.string.live)
@@ -102,6 +106,8 @@ class MainActivity : ComponentActivity() {
         })
     }
 
+    // ---------------- webview + native download proxy ----------------
+
     private fun configureWebView() {
         webView.settings.apply {
             javaScriptEnabled = true
@@ -115,9 +121,67 @@ class MainActivity : ComponentActivity() {
         webView.setBackgroundColor(0xFF080B10.toInt())
         webView.overScrollMode = View.OVER_SCROLL_NEVER
         WebView.setWebContentsDebuggingEnabled(false)
-        webView.webViewClient = WebViewClient()
         webView.webChromeClient = WebChromeClient()
         webView.addJavascriptInterface(AndroidBridge(this), "AndroidPlayer")
+
+        webView.webViewClient = object : WebViewClient() {
+            override fun shouldInterceptRequest(
+                view: WebView, request: WebResourceRequest
+            ): WebResourceResponse? {
+                if (request.url.host != PROXY_HOST) return null
+                val target = request.url.getQueryParameter("u") ?: return null
+                val cors = hashMapOf(
+                    "Access-Control-Allow-Origin" to "*",
+                    "Access-Control-Allow-Headers" to "*",
+                    "Access-Control-Allow-Methods" to "GET,OPTIONS",
+                    "Cache-Control" to "no-store"
+                )
+                if (request.method.equals("OPTIONS", true)) {
+                    return WebResourceResponse(
+                        "text/plain", "utf-8", 200, "OK", cors, ByteArrayInputStream(ByteArray(0))
+                    )
+                }
+                return try {
+                    val conn = openFollowingRedirects(target)
+                    val code = conn.responseCode
+                    val body = if (code in 200..299) conn.inputStream else conn.errorStream
+                    WebResourceResponse(
+                        "text/plain", "utf-8", code, if (code in 200..299) "OK" else "ERR",
+                        cors, body ?: ByteArrayInputStream(ByteArray(0))
+                    )
+                } catch (e: Exception) {
+                    WebResourceResponse(
+                        "text/plain", "utf-8", 599, "ERR", cors,
+                        ByteArrayInputStream(("PROXY_ERROR " + e.javaClass.simpleName + ": " + e.message)
+                            .toByteArray(Charsets.UTF_8))
+                    )
+                }
+            }
+        }
+    }
+
+    /** HttpURLConnection will not follow http -> https redirects, so do it by hand. */
+    private fun openFollowingRedirects(startUrl: String): HttpURLConnection {
+        var url = startUrl
+        var hops = 0
+        while (true) {
+            val c = URL(url).openConnection() as HttpURLConnection
+            c.instanceFollowRedirects = false
+            c.connectTimeout = 30000
+            c.readTimeout = 40000
+            c.setRequestProperty("User-Agent", UA)
+            c.setRequestProperty("Accept", "*/*")
+            val code = c.responseCode
+            if (code in 300..399 && hops < 5) {
+                val next = c.getHeaderField("Location")
+                c.disconnect()
+                if (next.isNullOrBlank()) return URL(url).openConnection() as HttpURLConnection
+                url = URL(URL(url), next).toString()
+                hops++
+                continue
+            }
+            return c
+        }
     }
 
     inner class AndroidBridge(private val context: Context) {
@@ -129,20 +193,12 @@ class MainActivity : ComponentActivity() {
 
     // ---------------- format plan ----------------
 
-    /**
-     * Xtream servers happily redirect a ".ts" link to an HLS playlist and vice versa,
-     * so the file extension is only a hint. Try the most likely container first and
-     * fall back to the others automatically.
-     */
     private fun planFor(url: String): List<String?> {
         val u = url.lowercase()
         return when {
-            u.contains(".mpd") ->
-                listOf(MimeTypes.APPLICATION_MPD, null)
-            u.contains(".m3u8") ->
-                listOf(MimeTypes.APPLICATION_M3U8, null, MimeTypes.VIDEO_MP2T)
-            else ->
-                listOf(null, MimeTypes.APPLICATION_M3U8, MimeTypes.VIDEO_MP2T)
+            u.contains(".mpd") -> listOf(MimeTypes.APPLICATION_MPD, null)
+            u.contains(".m3u8") -> listOf(MimeTypes.APPLICATION_M3U8, null, MimeTypes.VIDEO_MP2T)
+            else -> listOf(null, MimeTypes.APPLICATION_M3U8, MimeTypes.VIDEO_MP2T)
         }
     }
 
@@ -156,8 +212,7 @@ class MainActivity : ComponentActivity() {
             .setReadTimeoutMs(20000)
             .setKeepPostFor302Redirects(true)
 
-        val renderers = DefaultRenderersFactory(this)
-            .setEnableDecoderFallback(true)
+        val renderers = DefaultRenderersFactory(this).setEnableDecoderFallback(true)
 
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(25000, 60000, 2500, 5000)
@@ -169,10 +224,8 @@ class MainActivity : ComponentActivity() {
             .build()
     }
 
-    /** Entry point: open a channel from scratch. */
     private fun openChannel(url: String, title: String) {
         handler.removeCallbacksAndMessages(null)
-
         currentUrl = url
         currentTitle = title
         plan = planFor(url)
@@ -189,7 +242,6 @@ class MainActivity : ComponentActivity() {
         startAttempt()
     }
 
-    /** Re-open the same stream with the same format - used for live windows that roll over. */
     private fun reconnect() {
         if (playerLayer.visibility != View.VISIBLE) return
         reconnects++
@@ -218,24 +270,20 @@ class MainActivity : ComponentActivity() {
                         Player.STATE_READY -> {
                             loading.visibility = View.GONE
                             hasPlayed = true
-                            reconnects = 0          // stream is healthy again
+                            reconnects = 0
                         }
-                        Player.STATE_ENDED -> {
-                            // live servers often hand out a short window - fetch the next one
+                        Player.STATE_ENDED ->
                             if (reconnects < MAX_RECONNECTS) reconnect() else showError("ENDED")
-                        }
                         else -> {}
                     }
                 }
 
                 override fun onPlayerError(error: PlaybackException) {
                     when {
-                        // never played yet -> our container guess was wrong, try the next one
                         !hasPlayed && step < plan.size - 1 -> {
                             step++
                             playerView.post { startAttempt() }
                         }
-                        // it was playing -> keep the same format, just reconnect
                         reconnects < MAX_RECONNECTS -> reconnect()
                         else -> showError(error.errorCodeName)
                     }
