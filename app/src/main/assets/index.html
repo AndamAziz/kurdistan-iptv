@@ -110,6 +110,59 @@ section{margin-top:22px}
 .empty div:first-child{font-size:42px;margin-bottom:12px;opacity:.5}
 .empty p{margin:0;font-size:14px;font-weight:600}
 
+/* ---------- home: hero + horizontal rows ---------- */
+.hero{
+  position:relative;margin:4px 0 6px;border-radius:var(--r-lg);overflow:hidden;
+  aspect-ratio:16/9;background:var(--surface);border:1px solid var(--line);cursor:pointer;
+  box-shadow:0 16px 40px rgba(0,0,0,.55);
+}
+.hero .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.55}
+.hero .mono{font-size:clamp(26px,9vw,54px);opacity:.28}
+.hero .sc{position:absolute;inset:0;background:linear-gradient(0deg,rgba(6,8,12,.94) 6%,rgba(6,8,12,.35) 55%,transparent)}
+.hero .in{position:absolute;inset-inline:0;bottom:0;padding:16px}
+.hero .kick{font-size:10px;font-weight:800;letter-spacing:2.5px;color:var(--accent2);margin-bottom:6px}
+.hero h1{margin:0 0 12px;font-size:clamp(19px,5.6vw,28px);font-weight:800;line-height:1.2;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.hero .go{display:inline-flex;align-items:center;gap:8px;padding:11px 24px;border-radius:999px;
+  background:#fff;color:#0A0E14;font-weight:800;font-size:14px}
+
+.hrow{margin-top:20px}
+.rhead{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+.rhead h3{margin:0;font-size:14.5px;font-weight:800;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rhead .bar{width:3px;height:15px;border-radius:99px;background:linear-gradient(var(--accent),var(--accent2));flex:none}
+.rhead .all{font-size:11.5px;font-weight:800;color:var(--muted2);flex:none;cursor:pointer}
+.strip{display:flex;gap:11px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;
+  padding-bottom:2px;scroll-snap-type:x proximity}
+.strip::-webkit-scrollbar{display:none}
+.strip .card{flex:none;width:106px;scroll-snap-align:start}
+.strip.big .card{width:118px}
+
+/* progress on a card */
+.pg{position:absolute;inset-inline:0;bottom:0;height:3px;background:rgba(255,255,255,.22)}
+.pg i{display:block;height:100%;background:var(--accent2)}
+
+/* ---------- movie detail extras ---------- */
+.dact{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:12px}
+.dact .dplay,.dact .dghost{margin-top:0}
+.dghost{display:inline-flex;align-items:center;gap:7px;padding:11px 20px;border-radius:999px;
+  border:1px solid var(--line);background:var(--surface);color:var(--txt);
+  font-size:13px;font-weight:800;cursor:pointer;font-family:inherit}
+.dghost:active{transform:scale(.97)}
+.dbar{margin-top:16px}
+.dbar .tr{height:4px;border-radius:99px;background:rgba(255,255,255,.14);overflow:hidden}
+.dbar .tr i{display:block;height:100%;border-radius:99px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.dbar .lb{display:flex;justify-content:space-between;margin-top:7px;
+  font-size:11px;font-weight:700;color:var(--muted2)}
+.dfacts{margin-top:20px;display:grid;gap:10px}
+.dfacts div{display:flex;gap:10px;font-size:12.5px;line-height:1.5}
+.dfacts b{flex:none;width:74px;color:var(--muted2);font-weight:800}
+.dfacts span{color:var(--muted);min-width:0}
+.dplay{display:inline-flex;align-items:center;gap:8px;margin-top:12px;padding:12px 26px;border-radius:999px;
+  border:0;background:linear-gradient(100deg,var(--accent),var(--accent2));color:#fff;
+  font-weight:800;font-size:14.5px;cursor:pointer;box-shadow:0 10px 24px rgba(230,62,70,.34)}
+.dplay:active{transform:scale(.97)}
+
 /* ---------- bottom nav ---------- */
 #nav{
   position:fixed;inset-inline:0;bottom:0;z-index:30;display:none;
@@ -315,6 +368,8 @@ var PAGE_SIZE = 48;
 /* ==================== i18n ==================== */
 var T = {
   ku:{name:"کوردی سۆرانی",dir:"rtl",all:"هەموو",search:"گەڕان بۆ کەنال...",
+      featured:"پێشنیارکراو",playNow:"بینین",resume:"بەردەوامبوون",seeAll:"هەمووی",
+      fromStart:"لە سەرەتاوە",left:"%s ماوە",director:"دەرهێنەر",cast:"ئەکتەران",
       live:"کەناڵ",movies:"فیلم",series:"زنجیرە",seasonN:"وەرزی",episodeN:"ئیپسۆد",
       noVod:"هیچ فیلمێک نییە",noSer:"هیچ زنجیرەیەک نییە",onlyXtream:"تەنها بۆ لیستی Xtream",
       tag:"پەخشی ڕاستەوخۆ",ann:"بەخێربێیت بۆ KURDISTAN IPTV — پەخشی ڕاستەوخۆی کەناڵە کوردی و نێودەوڵەتییەکان",
@@ -332,6 +387,8 @@ var T = {
       loadFail:"نەتوانرا لیستەکە دابەزێنرێت",channels:"کەناڵ",
       confirmDel:"ئەم لیستە بسڕێتەوە؟"},
   kb:{name:"Kurdî Badînî",dir:"rtl",all:"هەمی",search:"گەڕیان بو کەنالان...",
+      featured:"پێشنیارکری",playNow:"تەماشەکرن",resume:"بەردەوامبوون",seeAll:"هەمی",
+      fromStart:"ژ دەستپێکێ",left:"%s مایە",director:"دەرهێنەر",cast:"لێستکڤان",
       live:"کەنال",movies:"فیلم",series:"زنجیرە",seasonN:"وەرز",episodeN:"ئیپسود",
       noVod:"چ فیلم نینن",noSer:"چ زنجیرە نینن",onlyXtream:"تنێ بو لیستا Xtream",
       tag:"پەخشا ڕاستەڤخۆ",ann:"بخێرهاتی بو KURDISTAN IPTV — پەخشا ڕاستەڤخۆ یا کەنالێن کوردی و نێڤدەولەتی",
@@ -349,6 +406,8 @@ var T = {
       loadFail:"نەشیا لیست هاتە دابەزاندن",channels:"کەنال",
       confirmDel:"ئەڤ لیست بێتە ژێبرن؟"},
   en:{name:"English",dir:"ltr",all:"All",search:"Search channels...",
+      featured:"FEATURED",playNow:"Play",resume:"Resume",seeAll:"See all",
+      fromStart:"From start",left:"%s left",director:"Director",cast:"Cast",
       live:"Live TV",movies:"Movies",series:"Series",seasonN:"Season",episodeN:"Episode",
       noVod:"No movies here",noSer:"No series here",onlyXtream:"Xtream playlists only",
       tag:"LIVE STREAMING",ann:"Welcome to KURDISTAN IPTV — live Kurdish and international channels",
@@ -366,6 +425,8 @@ var T = {
       loadFail:"Could not load this playlist",channels:"channels",
       confirmDel:"Delete this playlist?"},
   ar:{name:"العربية",dir:"rtl",all:"الكل",search:"ابحث عن قناة...",
+      featured:"مميّز",playNow:"تشغيل",resume:"متابعة",seeAll:"الكل",
+      fromStart:"من البداية",left:"باقٍ %s",director:"المخرج",cast:"الأبطال",
       live:"القنوات",movies:"أفلام",series:"مسلسلات",seasonN:"الموسم",episodeN:"حلقة",
       noVod:"لا توجد أفلام",noSer:"لا توجد مسلسلات",onlyXtream:"لقوائم Xtream فقط",
       tag:"بث مباشر",ann:"مرحباً بك في KURDISTAN IPTV — بث مباشر للقنوات الكردية والعالمية",
@@ -650,7 +711,7 @@ function buildGroups(){
   var g = Object.keys(n).sort(function(a,b){ return n[b] - n[a] });
   var kur = g.filter(function(k){ return /kurd|كرد|کورد/i.test(k) });
   GROUPS = kur.concat(g.filter(function(k){ return kur.indexOf(k) < 0 }));
-  if(!f || (f !== "ALL" && !n[f])) f = GROUPS.length ? GROUPS[0] : "ALL";
+  if(!f || (f !== "ALL" && !n[f])) f = "ALL";
 }
 function recent(){ try{ return JSON.parse(localStorage.kiptv_recent || "[]") }catch(e){ return [] } }
 function pushRecent(name){
@@ -659,25 +720,141 @@ function pushRecent(name){
   lsSet("kiptv_recent", JSON.stringify(r.slice(0,6)));
 }
 
+/* ==================== resume positions ==================== */
+function allPos(){ try{ return JSON.parse(localStorage.kiptv_pos || "{}") }catch(e){ return {} } }
+function getPos(u){ var a = allPos()[u]; return a || null }
+/* called from the player every few seconds */
+function savePos(u, p, d){
+  if(!u || !d || d < 60000) return;
+  var m = allPos();
+  if(p > d * 0.95) delete m[u];                 /* finished - forget it */
+  else m[u] = { p: Math.round(p), d: Math.round(d), t: Date.now() };
+  var keys = Object.keys(m);
+  if(keys.length > 200){
+    keys.sort(function(a,b){ return (m[b].t||0) - (m[a].t||0) });
+    var trimmed = {};
+    for(var i = 0; i < 200; i++) trimmed[keys[i]] = m[keys[i]];
+    m = trimmed;
+  }
+  lsSet("kiptv_pos", JSON.stringify(m));
+}
+window.savePos = savePos;
+
+/* the player closed - redraw so "Continue watching" and the
+   resume labels show where we actually stopped */
+function refreshHome(){
+  try{
+    if($("detail").classList.contains("on")){
+      if(curMovie) movieBody(curMovie.u, curMovie.n, null);
+      else if(curSeason) pickSeason(curSeason);
+    }
+    if(!($("search").value || "").trim() && f === "ALL") render();
+  }catch(e){}
+}
+window.refreshHome = refreshHome;
+
+/* every watched item we can still find, newest first */
+function continueList(){
+  var m = allPos(), out = [];
+  var pools = [DATA.movies || [], DATA.series || [], CH];
+  var byUrl = {};
+  for(var i = 0; i < pools.length; i++)
+    for(var j = 0; j < pools[i].length; j++) byUrl[pools[i][j].u] = pools[i][j];
+  var eps = lsGet("kiptv_eps", null);
+  if(eps){ try{ JSON.parse(eps).forEach(function(e){ byUrl[e.u] = e }) }catch(e){} }
+
+  Object.keys(m).forEach(function(u){
+    var it = byUrl[u];
+    if(it) out.push({ c:it.c, n:it.n, u:u, l:it.l, r:it.r, pct: m[u].p / m[u].d, t: m[u].t });
+  });
+  out.sort(function(a,b){ return (b.t||0) - (a.t||0) });
+  return out.slice(0, 18);
+}
+
+/* remember episodes so they can appear in Continue watching later */
+function rememberEpisodes(list){
+  try{
+    var old = JSON.parse(lsGet("kiptv_eps","[]"));
+    var seen = {}, all = list.concat(old), keep = [];
+    for(var i = 0; i < all.length && keep.length < 120; i++)
+      if(!seen[all[i].u]){ seen[all[i].u] = 1; keep.push(all[i]) }
+    lsSet("kiptv_eps", JSON.stringify(keep));
+  }catch(e){}
+}
+
 /* ==================== render ==================== */
-function cardHTML(c){
+function cardHTML(c, forceSquare){
+  var square = (forceSquare !== undefined) ? forceSquare : (SECTION === "live");
   var h = hue(c.n);
   var bg = "linear-gradient(145deg,hsl("+h+",42%,34%),hsl("+((h+42)%360)+",48%,20%))";
   var img = c.l ? '<img src="'+esc(c.l)+'" loading="lazy" onerror="this.remove()" alt="">' : '';
 
-  if(SECTION === "live"){
+  var pgv = c.pct;
+  if(pgv === undefined){ var sp = getPos(c.u); pgv = sp ? sp.p / sp.d : 0 }
+  var pg = (pgv > 0.01 && pgv < 0.97)
+    ? '<span class="pg"><i style="width:'+Math.round(pgv*100)+'%"></i></span>' : '';
+
+  if(square){
     return '<div class="card" data-u="'+esc(c.u)+'" data-n="'+esc(c.n)+'">'
          +   '<div class="tile" style="background:'+bg+'">'
-         +     '<div class="mono">'+esc(initials(c.n))+'</div>'+img+'<span class="dot"></span>'
+         +     '<div class="mono">'+esc(initials(c.n))+'</div>'+img+'<span class="dot"></span>'+pg
          +   '</div><div class="name">'+esc(c.n)+'</div></div>';
   }
   var rating = c.r ? '<span class="rt">&#9733; '+esc(String(c.r).slice(0,3))+'</span>' : '';
   var attrs = c.sid ? ' data-sid="'+esc(c.sid)+'"' : ' data-u="'+esc(c.u)+'"';
   return '<div class="card"'+attrs+' data-n="'+esc(c.n)+'">'
        +   '<div class="poster" style="background:'+bg+'">'
-       +     '<div class="mono">'+esc(c.n)+'</div>'+img+rating
+       +     '<div class="mono">'+esc(c.n)+'</div>'+img+rating+pg
        +   '</div><div class="name">'+esc(c.n)+'</div></div>';
 }
+/* ---------- home: hero + horizontal rows ---------- */
+function heroPick(){
+  var pool = (DATA.movies && DATA.movies.length) ? DATA.movies
+           : (DATA.series && DATA.series.length) ? DATA.series : CH;
+  var withArt = pool.filter(function(c){ return c.l });
+  var src = withArt.length ? withArt : pool;
+  if(!src.length) return null;
+  var day = Math.floor(Date.now() / 3600000);      /* changes every hour */
+  return src[day % src.length];
+}
+
+function heroHTML(c){
+  if(!c) return "";
+  var h = hue(c.n);
+  var bg = "linear-gradient(145deg,hsl("+h+",42%,30%),hsl("+((h+42)%360)+",48%,16%))";
+  var img = c.l ? '<img class="bg" src="'+esc(c.l)+'" onerror="this.remove()" alt="">' : '';
+  var attrs = c.sid ? ' data-sid="'+esc(c.sid)+'"' : ' data-u="'+esc(c.u)+'"';
+  return '<div class="hero"'+attrs+' data-n="'+esc(c.n)+'" style="background:'+bg+'">'
+       +   img + '<div class="mono">'+esc(initials(c.n))+'</div><div class="sc"></div>'
+       +   '<div class="in"><div class="kick">'+esc(t().featured)+'</div>'
+       +     '<h1>'+esc(c.n)+'</h1>'
+       +     '<span class="go">&#9654;&#65038; '+esc(t().playNow)+'</span></div>'
+       + '</div>';
+}
+
+function rowHTML(title, list, square){
+  if(!list || !list.length) return "";
+  return '<div class="hrow"><div class="rhead"><span class="bar"></span><h3>'+esc(title)+'</h3>'
+       + '<span class="all" data-go="'+esc(title)+'">'+esc(t().seeAll)+' &#8250;</span></div>'
+       + '<div class="strip'+(square ? "" : " big")+'">'
+       + list.slice(0,16).map(function(c){ return cardHTML(c, square) }).join("")
+       + '</div></div>';
+}
+
+function homeHTML(){
+  var square = SECTION === "live";
+  var html = heroHTML(heroPick());
+
+  var cont = continueList();
+  if(cont.length) html += rowHTML(t().recent, cont, false);
+
+  var src = items(), byGroup = {};
+  for(var i = 0; i < src.length; i++) (byGroup[src[i].c] = byGroup[src[i].c] || []).push(src[i]);
+  for(var g = 0; g < GROUPS.length && g < 12; g++)
+    html += rowHTML(cleanGroup(GROUPS[g]), byGroup[GROUPS[g]], square);
+  return html;
+}
+
 function currentTitle(q){
   if(q) return t().results;
   if(f === "ALL") return t().all;
@@ -689,18 +866,16 @@ function render(){
   view = q ? src.filter(function(c){ return c.n.toLowerCase().indexOf(q) > -1 })
            : (f === "ALL" ? src : src.filter(function(c){ return c.c === f }));
 
+  /* the home view: a hero and horizontal rows */
+  if(!q && f === "ALL" && src.length){
+    $("main").innerHTML = homeHTML();
+    shown = 0;
+    window.scrollTo(0,0);
+    return;
+  }
+
   var gcls = SECTION === "live" ? "grid" : "grid posters";
   var html = "";
-  if(!q && SECTION === "live"){
-    var rn = recent(), rc = [];
-    for(var i = 0; i < rn.length; i++)
-      for(var j = 0; j < src.length; j++) if(src[j].n === rn[i]){ rc.push(src[j]); break }
-    if(rc.length){
-      html += '<section><div class="shead"><span class="bar"></span><h2>'+esc(t().recent)+'</h2>'
-           +  '<span class="cnt">'+rc.length+'</span></div><div class="grid">'
-           +  rc.map(cardHTML).join("") + '</div></section>';
-    }
-  }
   if(!view.length){
     var msg = SECTION === "movies" ? t().noVod : (SECTION === "series" ? t().noSer : t().none);
     if(!isXtream() && SECTION !== "live") msg = t().onlyXtream;
@@ -757,26 +932,39 @@ function playQueue(arr, idx){
   var slice = arr.slice(from, to);
   var pick = idx - from;
   pushRecent(arr[idx].n);
+  /* keep enough about a film / episode that "Continue watching"
+     can show it again on the next cold start */
+  if(/\/movie\/|\/series\//.test(arr[idx].u || ""))
+    rememberEpisodes([{ c:arr[idx].c || "", n:arr[idx].n, u:arr[idx].u,
+                        l:arr[idx].l || "", r:arr[idx].r || "" }]);
+  var sp = getPos(arr[idx].u);
+  var startMs = (sp && sp.p > 10000 && sp.p < sp.d * 0.95) ? sp.p : 0;
   if(window.AndroidPlayer && AndroidPlayer.playList){
     AndroidPlayer.playList(JSON.stringify(slice.map(function(c){
       return { n: c.n, u: c.u };
-    })), pick);
+    })), pick, startMs);
   } else {
     play(arr[idx].u, arr[idx].n);
   }
 }
 $("main").addEventListener("click", function(e){
+  var go = e.target.getAttribute && e.target.getAttribute("data-go");
+  if(go){
+    for(var k = 0; k < GROUPS.length; k++) if(cleanGroup(GROUPS[k]) === go){ f = GROUPS[k]; break }
+    renderChips(); render(); return;
+  }
   var el = e.target;
   while(el && el !== this && !(el.getAttribute && (el.getAttribute("data-u") || el.getAttribute("data-sid"))))
     el = el.parentNode;
   if(!el || el === this) return;
   var sid = el.getAttribute("data-sid");
   if(sid){ openSeries(sid, el.getAttribute("data-n")); return }
-  var u = el.getAttribute("data-u");
+  var u = el.getAttribute("data-u"), nm = el.getAttribute("data-n");
+  if(u.indexOf("/movie/") > -1){ openMovie(u, nm); return }
   var idx = -1;
   for(var i = 0; i < view.length; i++) if(view[i].u === u){ idx = i; break }
   if(idx > -1) playQueue(view, idx);
-  else play(u, el.getAttribute("data-n"));
+  else play(u, nm);
 });
 $("chips").addEventListener("click", function(e){
   var el = e.target;
@@ -808,11 +996,12 @@ function toggleSearch(){
 }
 
 /* ==================== series detail ==================== */
-var curSeries = null, curSeason = null;
+var curSeries = null, curSeason = null, curMovie = null;
 
 function openSeries(sid, name){
   var p = activeList();
   if(p.type !== "xtream") return;
+  curMovie = null;
   $("detail").classList.add("on");
   $("dName").textContent = name || "";
   $("dMeta").textContent = "";
@@ -857,6 +1046,93 @@ function openSeries(sid, name){
     });
 }
 
+/* ---------- movie detail ---------- */
+function fmtTime(ms){
+  var t = Math.round(ms / 1000), h = Math.floor(t/3600), m = Math.floor((t%3600)/60);
+  return (h ? h + "h " : "") + m + "m";
+}
+/* the buttons, the resume bar and the extra facts of a film.
+   Called twice: once from what we already know, once the panel answers. */
+function movieBody(url, name, i){
+  var d = t(), sp = getPos(url), html = '<div class="dact">';
+  html += '<button class="dplay" data-play="'+esc(url)+'" data-n="'+esc(name||"")+'">&#9654;&#65038; '
+       +  esc(sp ? (d.resume + "  ·  " + fmtTime(sp.p)) : d.playNow) + '</button>';
+  if(sp) html += '<button class="dghost" data-play="'+esc(url)+'" data-n="'+esc(name||"")
+              +  '" data-fresh="1">&#8634; ' + esc(d.fromStart) + '</button>';
+  html += '</div>';
+
+  if(sp){
+    var pct = Math.min(100, Math.round(sp.p / sp.d * 100));
+    html += '<div class="dbar"><div class="tr"><i style="width:'+pct+'%"></i></div>'
+         +  '<div class="lb"><span>'+esc(fmtTime(sp.p))+'</span>'
+         +  '<span>'+esc(d.left.replace("%s", fmtTime(sp.d - sp.p)))+'</span></div></div>';
+  }
+
+  i = i || {};
+  var facts = "";
+  if(i.director) facts += '<div><b>'+esc(d.director)+'</b><span>'+esc(i.director)+'</span></div>';
+  if(i.cast)     facts += '<div><b>'+esc(d.cast)+'</b><span>'+esc(i.cast)+'</span></div>';
+  if(facts) html += '<div class="dfacts">'+facts+'</div>';
+
+  $("dEps").innerHTML = html;
+}
+
+function openMovie(url, name){
+  var item = null, src = DATA.movies || [];
+  for(var i = 0; i < src.length; i++) if(src[i].u === url){ item = src[i]; break }
+  curMovie = { c:(item && item.c) || "", n:name || (item && item.n) || "",
+               u:url, l:(item && item.l) || "", r:(item && item.r) || "" };
+  curSeries = null; curSeason = null;
+
+  $("detail").classList.add("on");
+  $("dSeasons").innerHTML = "";
+  $("dEps").innerHTML = "";
+  $("dName").textContent = name || "";
+  $("dMeta").textContent = "";
+  $("dPlot").textContent = "";
+  $("dImg").removeAttribute("src");
+  if(item && item.l) $("dImg").src = item.l;
+
+  movieBody(url, name, null);
+
+  var bits = [];
+  if(item && item.r) bits.push("\u2605 " + item.r);
+  if(item && item.c) bits.push(cleanGroup(item.c));
+  $("dMeta").textContent = bits.join("  ·  ");
+
+  /* the panel knows more about it - ask, but the page already works without it */
+  var id = (url.split("/").pop() || "").split(".")[0];
+  var p = activeList();
+  if(p.type !== "xtream" || !id) return;
+  xtGet(xtBase(p), "get_vod_info&vod_id=" + encodeURIComponent(id))
+    .then(function(r){
+      var i = (r && r.info) || {};
+      if(i.movie_image && !$("dImg").getAttribute("src")) $("dImg").src = i.movie_image;
+      if(curMovie && curMovie.u === url && !curMovie.l && i.movie_image) curMovie.l = i.movie_image;
+      var b = [];
+      if(i.releasedate || i.releaseDate) b.push(String(i.releasedate || i.releaseDate).slice(0,4));
+      if(i.genre) b.push(i.genre);
+      if(i.duration) b.push(i.duration);
+      if(i.rating) b.push("\u2605 " + i.rating);
+      if(b.length) $("dMeta").textContent = b.join("  ·  ");
+      if(i.plot) $("dPlot").textContent = i.plot;
+      if($("detail").classList.contains("on")) movieBody(url, name, i);
+    })
+    .catch(function(){});
+}
+
+$("dEps").addEventListener("click", function(e){
+  var el = e.target;
+  while(el && el !== this && !(el.getAttribute && el.getAttribute("data-play"))) el = el.parentNode;
+  if(!el || el === this) return;
+  var pu = el.getAttribute("data-play");
+  if(el.getAttribute("data-fresh")){          /* play it from the beginning */
+    var m = allPos(); delete m[pu]; lsSet("kiptv_pos", JSON.stringify(m));
+  }
+  playQueue([(curMovie && curMovie.u === pu) ? curMovie
+             : { n: el.getAttribute("data-n"), u: pu }], 0);
+});
+
 function pickSeason(k){
   if(!curSeries) return;
   curSeason = k;
@@ -867,6 +1143,7 @@ function pickSeason(k){
   var p = activeList();
   var d = String(p.domain||"").replace(/\/+$/,""), cr = xtCreds(p);
   var eps = curSeries.episodes[k] || [];
+  var memo = [];
   $("dEps").innerHTML = eps.map(function(e, idx){
     var ext = e.container_extension || "mp4";
     var url = d + "/series/" + cr + "/" + e.id + "." + ext;
@@ -874,12 +1151,16 @@ function pickSeason(k){
     var sub = [];
     if(inf.duration) sub.push(inf.duration);
     if(inf.release_date) sub.push(String(inf.release_date).slice(0,10));
+    var sp = getPos(url);
+    if(sp) sub.unshift(t().resume + " " + fmtTime(sp.p));
+    memo.push({ c:"SERIES", n:(curSeries.info && curSeries.info.name ? curSeries.info.name + " · " : "") + (e.title || ""), u:url, l:(curSeries.info && curSeries.info.cover) || "" });
     return '<div class="ep" data-u="'+esc(url)+'" data-n="'+esc((curSeries.info && curSeries.info.name ? curSeries.info.name + " · " : "") + (e.title || (t().episodeN + " " + (idx+1))))+'">'
          +   '<span class="no">'+(e.episode_num || (idx+1))+'</span>'
          +   '<span class="tx"><b>'+esc(e.title || (t().episodeN + " " + (idx+1)))+'</b>'
          +   (sub.length ? '<s>'+esc(sub.join("  ·  "))+'</s>' : '')+'</span>'
          + '</div>';
   }).join("") || '<div class="empty"><p>-</p></div>';
+  rememberEpisodes(memo);
 }
 
 $("dEps").addEventListener("click", function(e){
