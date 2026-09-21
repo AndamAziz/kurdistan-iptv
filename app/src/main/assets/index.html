@@ -287,6 +287,28 @@ body.hasnav main{padding-bottom:calc(96px + var(--safe-b))}
 .fld input:focus{border-color:rgba(230,62,70,.55)}
 .hint{font-size:11.5px;color:var(--muted2);line-height:1.6;margin:2px 0 14px}
 .formErr{color:#FF8A8A;font-size:12.5px;font-weight:700;min-height:20px;margin-bottom:6px}
+
+/* ---------- settings page (a tab of its own; the bottom bar stays on top) ---------- */
+#settings{position:fixed;inset:0;z-index:25;background:var(--bg);overflow-y:auto;display:none;
+  padding:calc(16px + var(--safe-t)) 16px calc(100px + var(--safe-b))}
+#settings.on{display:block}
+.st-h{display:flex;align-items:center;gap:12px;margin:6px 0 4px}
+.st-h h1{margin:0;font-size:23px;font-weight:800;flex:1}
+.st-g{display:flex;align-items:center;gap:9px;margin:24px 0 11px;font-size:12px;font-weight:800;
+  letter-spacing:1px;color:var(--muted2)}
+.st-g .bar{width:3px;height:14px;border-radius:99px;background:linear-gradient(var(--accent),var(--accent2));flex:none}
+.row .tx s.nat{direction:inherit}
+.row .acts{display:flex;gap:6px;flex:none}
+.mini{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;border:1px solid var(--line);
+  background:transparent;color:var(--muted);cursor:pointer;padding:0}
+.mini:active{transform:scale(.92);background:var(--surface2)}
+.mini.red{color:#FF8A8A}
+.badge{flex:none;font-size:10px;font-weight:800;letter-spacing:.6px;padding:4px 8px;border-radius:7px;
+  background:var(--surface2);color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:9px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:13px 6px;text-align:center}
+.stat b{display:block;font-size:18px;font-weight:800;direction:ltr}
+.stat s{display:block;text-decoration:none;font-size:11px;color:var(--muted2);font-weight:700;margin-top:4px}
 </style>
 </head>
 <body>
@@ -310,7 +332,7 @@ body.hasnav main{padding-bottom:calc(96px + var(--safe-b))}
       <span class="w1">KURDISTAN</span> <span class="w2">IPTV</span>
       <small id="tagline"></small>
     </div>
-    <button class="iconbtn" onclick="openSheet('menu')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    <button class="iconbtn" onclick="openSettings()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   </div>
 
   <div class="ann">
@@ -328,12 +350,15 @@ body.hasnav main{padding-bottom:calc(96px + var(--safe-b))}
 
 <main id="main"></main>
 
+<div id="settings"><div id="setBody"></div></div>
+
 <div id="sync"><span class="sp"></span><span id="syncText"></span></div>
 
 <nav id="nav">
-  <button data-s="live" onclick="setSection('live')"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="8" width="19" height="12.5" rx="2.6"/><path d="M8 3.5l4 4.2 4-4.2"/></svg><span id="navLive"></span></button>
-  <button data-s="movies" onclick="setSection('movies')"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.4"/><path d="M8 4v16M16 4v16M3 12h18"/></svg><span id="navMovies"></span></button>
-  <button data-s="series" onclick="setSection('series')"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="14" rx="2.4"/><path d="M7 3l3 3M17 3l-3 3"/></svg><span id="navSeries"></span></button>
+  <button data-s="live" onclick="navTap('live')"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="8" width="19" height="12.5" rx="2.6"/><path d="M8 3.5l4 4.2 4-4.2"/></svg><span id="navLive"></span></button>
+  <button data-s="movies" onclick="navTap('movies')"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.4"/><path d="M8 4v16M16 4v16M3 12h18"/></svg><span id="navMovies"></span></button>
+  <button data-s="series" onclick="navTap('series')"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="14" rx="2.4"/><path d="M7 3l3 3M17 3l-3 3"/></svg><span id="navSeries"></span></button>
+  <button data-s="settings" onclick="navTap('settings')"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg><span id="navSettings"></span></button>
 </nav>
 
 <div id="detail">
@@ -396,7 +421,13 @@ var T = {
       errName:"ناو پێویستە",errUrl:"لینک پێویستە و دەبێت بە http دەست پێبکات",
       errDomain:"دۆمەین پێویستە",errUser:"ناو و وشەی نهێنی پێویستن",
       loadFail:"نەتوانرا لیستەکە دابەزێنرێت",channels:"کەناڵ",
-      confirmDel:"ئەم لیستە بسڕێتەوە؟"},
+      confirmDel:"ئەم لیستە بسڕێتەوە؟",
+      general:"گشتی",storage:"بیرگە",about:"دەربارە",builtIn:"بنەڕەتی",
+      editList:"دەستکاریکردنی لیست",refresh:"ئێستا لیستەکە نوێ بکەرەوە",
+      lastUpd:"دوایین نوێکردنەوە",notYet:"هێشتا نا",
+      clearCache:"سڕینەوەی کاش",cacheSub:"کۆپی پاشەکەوتکراوی لیست · %s",
+      confirmClear:"کاشەکە بسڕدرێتەوە و لیستەکە دووبارە دابەزێنرێتەوە؟",
+      version:"وەشان",plType:"جۆری لیست"},
   en:{name:"English",dir:"ltr",all:"All",search:"Search channels...",
       featured:"FEATURED",playNow:"Play",resume:"Resume",seeAll:"See all",
       fromStart:"From start",left:"%s left",director:"Director",cast:"Cast",
@@ -415,7 +446,13 @@ var T = {
       errName:"Name is required",errUrl:"A URL starting with http is required",
       errDomain:"Domain is required",errUser:"Username and password are required",
       loadFail:"Could not load this playlist",channels:"channels",
-      confirmDel:"Delete this playlist?"},
+      confirmDel:"Delete this playlist?",
+      general:"General",storage:"Storage",about:"About",builtIn:"BUILT-IN",
+      editList:"Edit playlist",refresh:"Update playlist now",
+      lastUpd:"Last updated",notYet:"Not yet",
+      clearCache:"Clear cache",cacheSub:"Saved copy of the playlist · %s",
+      confirmClear:"Clear the cache and download the playlist again?",
+      version:"Version",plType:"Playlist type"},
   ar:{name:"العربية",dir:"rtl",all:"الكل",search:"ابحث عن قناة...",
       featured:"مميّز",playNow:"تشغيل",resume:"متابعة",seeAll:"الكل",
       fromStart:"من البداية",left:"باقٍ %s",director:"المخرج",cast:"الأبطال",
@@ -434,7 +471,13 @@ var T = {
       errName:"الاسم مطلوب",errUrl:"مطلوب رابط يبدأ بـ http",
       errDomain:"النطاق مطلوب",errUser:"اسم المستخدم وكلمة السر مطلوبان",
       loadFail:"تعذر تحميل هذه القائمة",channels:"قناة",
-      confirmDel:"حذف هذه القائمة؟"}
+      confirmDel:"حذف هذه القائمة؟",
+      general:"عام",storage:"التخزين",about:"حول التطبيق",builtIn:"افتراضية",
+      editList:"تعديل القائمة",refresh:"تحديث القائمة الآن",
+      lastUpd:"آخر تحديث",notYet:"ليس بعد",
+      clearCache:"مسح الذاكرة المؤقتة",cacheSub:"النسخة المحفوظة من القائمة · %s",
+      confirmClear:"مسح الذاكرة المؤقتة وتحميل القائمة من جديد؟",
+      version:"الإصدار",plType:"نوع القائمة"}
 };
 var LANG_ORDER = ["en", "ku", "ar"];
 var lang = localStorage.kiptv_lang || "en";
@@ -730,18 +773,29 @@ function setSection(name){
 }
 
 function drawNav(){
-  var d = t(), x = isXtream();
+  var d = t(), x = isXtream(), setOn = settingsOn();
   $("navLive").textContent = d.live;
   $("navMovies").textContent = d.movies;
   $("navSeries").textContent = d.series;
+  $("navSettings").textContent = d.menu;
   var btns = document.querySelectorAll("#nav button");
   for(var i = 0; i < btns.length; i++){
     var sName = btns[i].getAttribute("data-s");
-    btns[i].className = (SECTION === sName ? "on" : "");
+    if(sName === "settings"){ btns[i].className = setOn ? "on" : ""; continue }
+    btns[i].className = (!setOn && SECTION === sName ? "on" : "");
     btns[i].style.display = (sName !== "live" && !x) ? "none" : "";
   }
   $("nav").className = "on";
   document.body.className = "hasnav";
+}
+
+/* a tap on the bottom bar: the settings tab opens its page, the others
+   close it (if it is open) and behave exactly as before */
+function navTap(name){
+  if(name === "settings"){ openSettings(); return }
+  var wasOpen = settingsOn();
+  if(wasOpen) closeSettings();
+  if(!wasOpen || name !== SECTION) setSection(name);
 }
 
 /* ==================== state ==================== */
@@ -1028,6 +1082,7 @@ function applyLang(){
   $("gbtn").textContent = d.act;
   drawNav();                       /* the bottom bar speaks the new language too */
   renderChips(); render();
+  refreshSettings();               /* ...and so does the settings tab */
 }
 
 /* ==================== actions ==================== */
@@ -1151,6 +1206,7 @@ function openSeries(sid, name){
   var p = activeList();
   if(p.type !== "xtream") return;
   curMovie = null;
+  if(!$("detail").classList.contains("on")) layerOpen("detail");   /* phone Back closes it */
   $("detail").classList.add("on");
   $("dName").textContent = name || "";
   $("dMeta").textContent = "";
@@ -1233,6 +1289,7 @@ function openMovie(url, name){
                u:url, l:(item && item.l) || "", r:(item && item.r) || "" };
   curSeries = null; curSeason = null;
 
+  if(!$("detail").classList.contains("on")) layerOpen("detail");   /* phone Back closes it */
   $("detail").classList.add("on");
   $("dSeasons").innerHTML = "";
   $("dEps").innerHTML = "";
@@ -1323,7 +1380,7 @@ $("dEps").addEventListener("click", function(e){
   }
   playQueue(list, idx);
 });
-function closeDetail(){ $("detail").classList.remove("on") }
+function closeDetail(){ layerClose("detail") }
 
 /* ==================== sheet ==================== */
 var sheetStack = [];
@@ -1332,12 +1389,26 @@ var ICON = {
   globe:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.6 3 2.6 15 0 18M12 3c-2.6 3-2.6 15 0 18"/></svg>',
   tv:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="8" width="19" height="12.5" rx="2.6"/><path d="M8 3.5l4 4.2 4-4.2"/></svg>',
   key:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="8" cy="12" r="4"/><path d="M12 12h9M18 12v3"/></svg>',
-  link:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a4 4 0 006 .5l2-2a4 4 0 10-5.6-5.6l-1 1"/><path d="M14 11a4 4 0 00-6-.5l-2 2A4 4 0 109.6 18l1-1"/></svg>'
+  link:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a4 4 0 006 .5l2-2a4 4 0 10-5.6-5.6l-1 1"/><path d="M14 11a4 4 0 00-6-.5l-2 2A4 4 0 109.6 18l1-1"/></svg>',
+  edit:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>',
+  trash:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>',
+  refresh:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 11-2.6-6.4"/><path d="M21 3v6h-6"/></svg>',
+  disk:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><ellipse cx="12" cy="5.5" rx="8" ry="3"/><path d="M4 5.5v13c0 1.7 3.6 3 8 3s8-1.3 8-3v-13"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>',
+  info:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 16.5v-5M12 8h.01"/></svg>'
 };
-function openSheet(view){ sheetStack = [view]; drawSheet(); $("sheet").classList.add("on") }
-function pushSheet(view){ sheetStack.push(view); drawSheet() }
-function sheetBack(){ sheetStack.pop(); if(!sheetStack.length) closeSheet(); else drawSheet() }
-function closeSheet(){ $("sheet").classList.remove("on"); sheetStack = [] }
+/* every sheet level is one step for the phone's Back button */
+function openSheet(view){
+  if($("sheet").classList.contains("on") && sheetStack.length){ pushSheet(view); return }
+  sheetStack = [view]; drawSheet(); $("sheet").classList.add("on"); layerOpen("sheet");
+}
+function pushSheet(view){ sheetStack.push(view); drawSheet(); layerOpen("sheet") }
+function sheetBack(){ layerBack(1) }
+function closeSheet(){
+  var n = 0;
+  while(n < LAYERS.length && LAYERS[LAYERS.length - 1 - n] === "sheet") n++;
+  if(n) layerBack(n);
+  else { $("sheet").classList.remove("on"); sheetStack = [] }
+}
 
 function drawSheet(){
   var v = sheetStack[sheetStack.length-1] || "menu";
@@ -1403,8 +1474,23 @@ function drawSheet(){
          + '<div class="formErr" id="formErr"></div>'
          + '<button class="gbtn" onclick="saveForm(\'m3u\')">'+esc(d.save)+'</button>';
   }
+  else if(v === "edit"){
+    title = d.editList;
+    var ep = findList(EDIT_ID);
+    if(ep && ep.type === "xtream")
+      body = fld("pl_name", d.fName, "My provider")
+           + fld("pl_domain", d.fDomain, "http://example.com:8080")
+           + fld("pl_user", d.fUser, "")
+           + fld("pl_pass", d.fPass, "");
+    else
+      body = fld("pl_name", d.fName, "My playlist")
+           + fld("pl_url", d.fUrl, "http://example.com/playlist.m3u");
+    body += '<div class="formErr" id="formErr"></div>'
+         +  '<button class="gbtn" onclick="saveEdit()">'+esc(d.save)+'</button>';
+  }
   $("sheetTitle").textContent = title;
   $("sheetBody").innerHTML = body;
+  if(v === "edit") fillEdit();
 }
 function fld(id,label,ph){
   return '<div class="fld"><label>'+esc(label)+'</label>'
@@ -1441,6 +1527,211 @@ function delList(id){
   saveLists(a);
   if(activeId() === id){ lsSet("kiptv_active", DEFAULT_PLAYLIST.id); closeSheet(); loadActive(true); }
   else drawSheet();
+}
+
+/* ==================== layers: the phone's Back button ====================
+   Every page that opens over the main view (a film or series, the settings
+   tab, each sheet level) leaves one step in the page history. MainActivity
+   already does webView.goBack() while webView.canGoBack() is true, so Back
+   now closes the top page instead of leaving the app. With nothing open the
+   history is empty and Back leaves the app exactly as before. */
+var LAYERS = [];
+
+function layerOpen(name){
+  LAYERS.push(name);
+  try{ history.pushState({ k: LAYERS.length }, "") }catch(e){}
+}
+/* close the top n layers, the same way Back does */
+function layerBack(n){
+  n = Math.min(n || 1, LAYERS.length);
+  if(n < 1) return;
+  try{ history.go(-n) }catch(e){ layerUnwind(LAYERS.length - n) }
+}
+/* close one named layer and anything that is open above it */
+function layerClose(name){
+  var i = LAYERS.lastIndexOf(name);
+  if(i > -1) layerBack(LAYERS.length - i);
+  else layerHide(name);
+}
+function layerUnwind(depth){
+  while(LAYERS.length > depth) layerHide(LAYERS.pop());
+}
+function layerHide(name){
+  if(name === "detail") $("detail").classList.remove("on");
+  else if(name === "settings"){ $("settings").classList.remove("on"); drawNav() }
+  else if(name === "sheet"){
+    sheetStack.pop();
+    if(!sheetStack.length) $("sheet").classList.remove("on");
+    else drawSheet();
+  }
+}
+window.addEventListener("popstate", function(e){
+  layerUnwind((e.state && e.state.k) || 0);
+});
+
+/* ==================== settings tab ==================== */
+var APP_VERSION = "1.0";
+var EDIT_ID = null;
+
+function settingsOn(){ var s = $("settings"); return !!(s && s.classList.contains("on")) }
+function refreshSettings(){ if(settingsOn()) drawSettings() }
+
+function openSettings(){
+  if(settingsOn()){ $("settings").scrollTop = 0; return }
+  layerOpen("settings");
+  $("settings").classList.add("on");
+  drawSettings();
+  $("settings").scrollTop = 0;
+  drawNav();
+}
+function closeSettings(){ layerClose("settings") }
+
+function findList(id){
+  var a = getLists();
+  for(var i = 0; i < a.length; i++) if(a[i].id === id) return a[i];
+  return null;
+}
+
+/* when each playlist was last downloaded */
+function updTimes(){ try{ return JSON.parse(lsGet("kiptv_upd", "{}")) || {} }catch(e){ return {} } }
+function markUpdated(id){ var m = updTimes(); m[id] = Date.now(); lsSet("kiptv_upd", JSON.stringify(m)) }
+function fmtWhen(ts){
+  if(!ts) return t().notYet;
+  var d = new Date(ts), now = new Date();
+  function two(n){ return (n < 10 ? "0" : "") + n }
+  var hm = two(d.getHours()) + ":" + two(d.getMinutes());
+  if(d.toDateString() === now.toDateString()) return hm;
+  return d.getFullYear() + "-" + two(d.getMonth() + 1) + "-" + two(d.getDate()) + " " + hm;
+}
+function cacheSize(){
+  var n = 0;
+  try{ n = (localStorage.getItem("kiptv_cache") || "").length * 2 }catch(e){}
+  /* ⁦ ... ⁩ keeps "7.1 MB" in that order inside Kurdish / Arabic text */
+  var s = n === 0 ? "0 KB" : n < 1048576 ? Math.max(1, Math.round(n / 1024)) + " KB"
+                                         : (n / 1048576).toFixed(1) + " MB";
+  return "⁦" + s + "⁩";
+}
+
+function setRow(icon, title, sub, onclick, natural){
+  return '<div class="row" onclick="'+onclick+'">'
+       +   '<span class="ic">'+icon+'</span>'
+       +   '<span class="tx"><b>'+esc(title)+'</b>'
+       +     (sub ? '<s'+(natural ? ' class="nat"' : '')+'>'+esc(sub)+'</s>' : '')+'</span>'
+       + '</div>';
+}
+function setGroup(title){ return '<div class="st-g"><span class="bar"></span>'+esc(title)+'</div>' }
+
+function drawSettings(){
+  var d = t(), cur = activeId(), act = activeList(), upd = updTimes();
+  var h = '<div class="st-h"><h1>'+esc(d.menu)+'</h1></div>';
+
+  /* playlists: tap to switch, pencil to edit, bin to delete */
+  h += setGroup(d.lists);
+  h += getLists().map(function(p){
+    var sub = p.type === "xtream" ? (p.domain || "") : (p.url || "");
+    var own = p.id !== DEFAULT_PLAYLIST.id;
+    return '<div class="row'+(p.id === cur ? " on" : "")+'" onclick="pickList(\''+esc(p.id)+'\')">'
+         +   '<span class="ic">'+(p.type === "xtream" ? ICON.key : ICON.link)+'</span>'
+         +   '<span class="tx"><b>'+esc(p.name)+'</b><s>'+esc(sub)+'</s></span>'
+         +   (own
+              ? '<span class="acts">'
+              +   '<button class="mini" onclick="event.stopPropagation();editList(\''+esc(p.id)+'\')">'+ICON.edit+'</button>'
+              +   '<button class="mini red" onclick="event.stopPropagation();removeList(\''+esc(p.id)+'\')">'+ICON.trash+'</button>'
+              + '</span>'
+              : '<span class="badge">'+esc(d.builtIn)+'</span>')
+         +   '<span class="tick">&#10003;</span>'
+         + '</div>';
+  }).join("");
+  h += setRow(ICON.refresh, d.refresh, d.lastUpd + ": " + fmtWhen(upd[cur]), "refreshList()", true);
+  h += '<button class="addbtn" onclick="openSheet(\'type\')">+ '+esc(d.addList)+'</button>';
+
+  /* general */
+  h += setGroup(d.general);
+  h += setRow(ICON.globe, d.lang, T[lang].name, "openSheet('lang')", true);
+
+  /* storage */
+  h += setGroup(d.storage);
+  h += setRow(ICON.disk, d.clearCache, d.cacheSub.replace("%s", cacheSize()), "clearCache()", true);
+
+  /* about */
+  h += setGroup(d.about);
+  var nMov = (act.type === "xtream" && LOADED.movies) ? DATA.movies.length : "–";
+  var nSer = (act.type === "xtream" && LOADED.series) ? DATA.series.length : "–";
+  h += '<div class="stats">'
+     +   '<div class="stat"><b>'+CH.length+'</b><s>'+esc(d.live)+'</s></div>'
+     +   '<div class="stat"><b>'+nMov+'</b><s>'+esc(d.movies)+'</s></div>'
+     +   '<div class="stat"><b>'+nSer+'</b><s>'+esc(d.series)+'</s></div>'
+     + '</div>';
+  h += setRow(ICON.tv, "KURDISTAN IPTV", d.version + " " + APP_VERSION, "", true);
+  h += setRow(ICON.info, d.plType, act.name + " · " + (act.type === "xtream" ? "Xtream Codes" : "M3U"), "", true);
+
+  $("setBody").innerHTML = h;
+}
+
+/* tapping the playlist that is already active does nothing -
+   use "Update playlist now" to download it again */
+function pickList(id){ if(id !== activeId()) useList(id) }
+
+function refreshList(){ loadActive(true) }
+
+function clearCache(){
+  if(!window.confirm(t().confirmClear)) return;
+  try{ localStorage.removeItem("kiptv_cache"); localStorage.removeItem("kiptv_cache_owner") }catch(e){}
+  loadActive(true);
+}
+
+function removeList(id){
+  if(id === DEFAULT_PLAYLIST.id) return;
+  if(!window.confirm(t().confirmDel)) return;
+  saveLists(getLists().filter(function(p){ return p.id !== id }));
+  if(activeId() === id || lsGet("kiptv_active", "") === id){
+    lsSet("kiptv_active", DEFAULT_PLAYLIST.id);
+    loadActive(true);
+  }
+  refreshSettings();
+}
+
+function editList(id){
+  if(id === DEFAULT_PLAYLIST.id || !findList(id)) return;
+  EDIT_ID = id;
+  openSheet("edit");
+}
+function fillEdit(){
+  var p = findList(EDIT_ID); if(!p) return;
+  $("pl_name").value = p.name || "";
+  if(p.type === "xtream"){
+    $("pl_domain").value = p.domain || "";
+    $("pl_user").value = p.user || "";
+    $("pl_pass").value = p.pass || "";
+  } else $("pl_url").value = p.url || "";
+}
+function saveEdit(){
+  var d = t(), err = $("formErr"), a = getLists(), at = -1;
+  for(var i = 0; i < a.length; i++) if(a[i].id === EDIT_ID) at = i;
+  if(at < 0 || EDIT_ID === DEFAULT_PLAYLIST.id){ closeSheet(); return }
+  var old = a[at];
+  var name = ($("pl_name").value || "").trim();
+  if(!name){ err.textContent = d.errName; return }
+  var p = { id: old.id, name: name, type: old.type };
+  if(old.type === "m3u"){
+    var url = ($("pl_url").value || "").trim();
+    if(!/^https?:\/\//i.test(url)){ err.textContent = d.errUrl; return }
+    p.url = url;
+  } else {
+    var dom = ($("pl_domain").value || "").trim();
+    var u = ($("pl_user").value || "").trim();
+    var pw = ($("pl_pass").value || "").trim();
+    if(!/^https?:\/\//i.test(dom)){ err.textContent = d.errDomain; return }
+    if(!u || !pw){ err.textContent = d.errUser; return }
+    p.domain = dom.replace(/\/+$/,""); p.user = u; p.pass = pw;
+  }
+  var changed = JSON.stringify(listUrl(old)) !== JSON.stringify(listUrl(p));
+  a[at] = p;
+  saveLists(a);
+  closeSheet();
+  /* new address for the active playlist: download it again */
+  if(changed && activeId() === p.id) loadActive(true);
+  else { $("tagline").textContent = activeList().name; refreshSettings() }
 }
 
 /* ==================== activation ==================== */
@@ -1497,6 +1788,7 @@ function loadActive(force){
   LOADED = { live: false, movies: false, series: false };
   SERIES_CACHE = {};
   drawNav();
+  refreshSettings();
 
   var cached = force ? null : loadCache(p.id);
   if(cached && cached.length) setData(cached);
@@ -1524,6 +1816,8 @@ function loadActive(force){
       setData(list);
       saveCache(p.id, list);
       hideSync();
+      markUpdated(p.id);
+      refreshSettings();
     })
     .catch(function(e){
       lastLoadError = (e && e.message) ? e.message : "network";
