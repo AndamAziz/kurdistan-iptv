@@ -351,6 +351,30 @@ body.hasnav main{padding-bottom:calc(96px + var(--safe-b))}
   color:var(--muted2);display:grid;place-items:center;padding:0;cursor:pointer;font-size:14px}
 .hi .x:active{transform:scale(.9)}
 
+/* ---------- TV remote / keyboard: a clear ring on whatever is selected ---------- */
+html.kbd :focus{outline:none}
+html.kbd .card:focus .tile,html.kbd .card:focus .poster{box-shadow:0 0 0 3px #fff,0 0 0 7px var(--accent)}
+html.kbd .card:focus .name{color:#fff}
+html.kbd button:focus,html.kbd input:focus,html.kbd .row:focus,html.kbd .ep:focus,html.kbd .hi:focus,
+html.kbd .all:focus,html.kbd #pins:focus{outline:3px solid #fff;outline-offset:2px}
+html.kbd .chip:focus{outline:3px solid #fff;outline-offset:2px}
+html.kbd .hero.on:focus{outline:4px solid #fff;outline-offset:-4px}
+/* with a remote, a new banner picture can take the highlight at once */
+html.kbd .hero.on{transition:opacity .6s ease,transform 6s linear}
+html.kbd #nav button:focus{outline-offset:-3px;border-radius:12px}
+/* on a TV the tab bar sits at the top, where Up always reaches it */
+html.tv body{padding-top:54px}
+html.tv #nav{top:0;bottom:auto;height:54px;align-items:stretch;border-top:0;border-bottom:1px solid var(--line);
+  padding:4px 10px;background:var(--bg)}
+html.tv #nav button{flex-direction:row;justify-content:center;gap:9px;padding:9px 0;font-size:13px}
+html.tv header{top:54px}
+html.tv body.hasnav main{padding-bottom:40px}
+html.tv #favs{padding-top:calc(72px + var(--safe-t))}
+html.tv .heroBox{aspect-ratio:auto;height:min(46vh,300px)}
+/* room for the ring inside the sideways rows */
+html.kbd .strip{padding:8px 8px 10px;margin:-8px -8px -8px}
+html.kbd .card,html.kbd .row,html.kbd .ep,html.kbd .hi,html.kbd button{scroll-margin-top:170px;scroll-margin-bottom:96px}
+
 /* ---------- search results ---------- */
 .srch .schips{padding-top:4px}
 .srch section{margin-top:18px}
@@ -2378,6 +2402,222 @@ $("favs").addEventListener("click", function(e){
   }
   histPlay(parseInt(el.getAttribute("data-hi"), 10));
 });
+
+/* ==================== TV remote / keyboard ====================
+   The arrows move a highlight to the nearest item in that direction, OK
+   (Enter) opens it, holding OK on a card adds / removes it as a favourite,
+   and Back closes the top page as on a phone. Only the page on top is
+   searched, so the highlight never slips behind an open page. Nothing
+   here runs for touches: a phone behaves exactly as before. */
+var TV = false;
+try{ TV = !!(window.AndroidPlayer && AndroidPlayer.isTv && AndroidPlayer.isTv()) }catch(e){}
+var NAV_SEL = 'button, input, .card, .row, .ep, .hi, .hero.on, #pins';
+var tvMem = {};                    /* last highlighted item, per page */
+var okDown = 0, okTimer = null, okFired = false;
+
+function kbdOn(){ document.documentElement.classList.add("kbd") }
+function kbdOff(){ document.documentElement.classList.remove("kbd") }
+
+/* the page on top: a sheet, the film page, settings, favourites or the main page */
+function navRoots(){
+  if(!$("gate").classList.contains("hide")) return [$("gate")];
+  for(var i = LAYERS.length - 1; i >= 0; i--){
+    var n = LAYERS[i];
+    if(n === "sheet") return [$("sheet")];
+    if(n === "detail") return [$("detail")];
+    if(n === "settings") return [$("settings")];
+    if(n === "favs") return [$("favs"), $("nav")];
+  }
+  return [document.querySelector("header"), $("main"), $("nav")];
+}
+function navKey(){ var r = navRoots()[0]; return r.id || r.tagName }
+
+function navShown(el){
+  if(!el.getClientRects().length) return false;
+  var r = el.getBoundingClientRect();
+  if(r.width < 2 || r.height < 2) return false;
+  if(el.classList.contains("card")) return true;
+  var cs = getComputedStyle(el);
+  return cs.visibility !== "hidden" && cs.opacity !== "0" && !el.disabled;
+}
+function navItems(){
+  var out = [];
+  navRoots().forEach(function(root){
+    if(!root) return;
+    var list = root.querySelectorAll(NAV_SEL);
+    for(var i = 0; i < list.length; i++) if(navShown(list[i])) out.push(list[i]);
+  });
+  return out;
+}
+/* which area of the page an item belongs to (header / list / tab bar ...) */
+function navArea(el){
+  var roots = navRoots();
+  for(var i = 0; i < roots.length; i++) if(roots[i] && roots[i].contains(el)) return roots[i];
+  return null;
+}
+/* Stay inside the same area first: the list scrolls under the pinned header,
+   so Up must reach the banner before the header, not jump over it. Only when
+   nothing is left that way does the highlight step into the next area. */
+function navNext(from, dir, items){
+  var area = navArea(from);
+  var same = items.filter(function(el){ return navArea(el) === area });
+  var hit = navPick(from, dir, same);
+  if(hit) return hit;
+  var others = items.filter(function(el){ return navArea(el) !== area });
+  hit = navPick(from, dir, others);
+  if(!hit) return null;
+  /* entering the list again: go back to where the highlight was in it */
+  var target = navArea(hit), m = tvMem[navKey() + ":" + (target && target.id)];
+  if(m && m.isConnected && items.indexOf(m) > -1 && navArea(m) === target){
+    var r = m.getBoundingClientRect();
+    if(r.bottom > 0 && r.top < window.innerHeight) return m;
+  }
+  return hit;
+}
+
+/* The part of an item that can be seen: the list scrolls under the pinned
+   header (and, on a TV, under the tab bar at the top). A hidden part must not
+   count, or Up would think the header is "inside" the banner. */
+function navRect(el){
+  var r = el.getBoundingClientRect(), top = 0, bottom = window.innerHeight;
+  var area = navArea(el), nav = $("nav"), hdr = document.querySelector("header");
+  var tvNav = document.documentElement.classList.contains("tv") && nav.classList.contains("on");
+  if(area === $("main")){
+    top = hdr.getBoundingClientRect().bottom;
+    if(!tvNav && nav.classList.contains("on")) bottom = nav.getBoundingClientRect().top;
+  } else if(area === $("favs")){
+    if(tvNav) top = nav.getBoundingClientRect().bottom;
+    else if(nav.classList.contains("on")) bottom = nav.getBoundingClientRect().top;
+  }
+  var t = Math.max(r.top, top), b = Math.min(r.bottom, bottom);
+  if(b - t < 8) return r;                     /* out of view: use where it really is */
+  return { left: r.left, right: r.right, top: t, bottom: b, width: r.width, height: b - t };
+}
+
+/* nearest item in a direction: straight lines first, then the closest */
+function navPick(from, dir, items){
+  var a = navRect(from);
+  var ax = a.left + a.width / 2, ay = a.top + a.height / 2;
+  var best = null, bestScore = Infinity;
+  for(var i = 0; i < items.length; i++){
+    var el = items[i];
+    if(el === from || el.contains(from)) continue;
+    var b = navRect(el);
+    var bx = b.left + b.width / 2, by = b.top + b.height / 2, main, cross, ov;
+    if(dir === "left" || dir === "right"){
+      if(dir === "right" ? (bx <= ax + 1 || b.right <= a.right) : (bx >= ax - 1 || b.left >= a.left)) continue;
+      main = dir === "right" ? Math.max(0, b.left - a.right) : Math.max(0, a.left - b.right);
+      ov = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+      cross = ov > 0 ? 0 : Math.abs(by - ay);
+      if(ov <= 0 && cross > Math.max(a.height, b.height) * 1.5) continue;   /* another row */
+    } else {
+      if(dir === "down" ? (by <= ay + 1 || b.bottom <= a.bottom) : (by >= ay - 1 || b.top >= a.top)) continue;
+      main = dir === "down" ? Math.max(0, b.top - a.bottom) : Math.max(0, a.top - b.bottom);
+      ov = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+      cross = Math.abs(bx - ax) * (ov > 0 ? 0.25 : 1);
+    }
+    var score = main + cross * 2;
+    if(score < bestScore){ bestScore = score; best = el }
+  }
+  return best;
+}
+
+/* where to start: what was highlighted here before, else the first thing in view */
+function navStart(items){
+  var m = tvMem[navKey()];
+  if(m && m.isConnected && items.indexOf(m) > -1) return m;
+  var vh = window.innerHeight;
+  for(var i = 0; i < items.length; i++){
+    var r = items[i].getBoundingClientRect();
+    if(r.bottom > 0 && r.top < vh && !items[i].closest("header")) return items[i];
+  }
+  return items[0] || null;
+}
+
+function navFocus(el){
+  if(!el) return;
+  /* the banner holds still while it is highlighted, and turns again after */
+  var was = document.activeElement;
+  if(el.classList.contains("hero")) heroStop();
+  else if(was && was.classList && was.classList.contains("hero")) heroPause();
+  if(!/^(BUTTON|INPUT|A|SELECT|TEXTAREA)$/.test(el.tagName) && !el.hasAttribute("tabindex"))
+    el.setAttribute("tabindex", "-1");
+  try{ el.focus({ preventScroll: true }) }catch(e){ el.focus() }
+  try{ el.scrollIntoView({ block: "nearest", inline: "nearest" }) }catch(e){}
+  tvMem[navKey()] = el;
+  var area = navArea(el);
+  if(area) tvMem[navKey() + ":" + area.id] = el;
+}
+
+/* after a page closes, the highlight returns to where it was */
+function navRestore(){
+  if(!document.documentElement.classList.contains("kbd")) return;
+  var ae = document.activeElement;
+  if(ae && ae.tagName === "INPUT") return;              /* someone is typing (search, code) */
+  var items = navItems();
+  if(ae && ae !== document.body && items.indexOf(ae) > -1) return;
+  navFocus(navStart(items));
+}
+
+document.addEventListener("keydown", function(e){
+  var dir = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right" }[e.key];
+  var ae = document.activeElement;
+  var typing = ae && ae.tagName === "INPUT";
+  if(dir){
+    if(typing && (dir === "left" || dir === "right") && ae.value) return;   /* move inside the text */
+    kbdOn();
+    var items = navItems();
+    var cur = (ae && ae !== document.body && items.indexOf(ae) > -1) ? ae : null;
+    var onHero = cur && cur.classList.contains("hero") && (dir === "left" || dir === "right");
+    var next = onHero ? null : (cur ? navNext(cur, dir, items) : navStart(items));
+    /* on the banner, left / right turn its pictures */
+    if(onHero){
+      var back = (t().dir === "rtl") ? (dir === "right") : (dir === "left");
+      heroGo(heroI + (back ? -1 : 1)); heroStop();
+      setTimeout(function(){ var on = document.querySelector("#heroBox .hero.on"); if(on) navFocus(on) }, 0);
+    } else if(next) navFocus(next);
+    e.preventDefault();
+    return;
+  }
+  if(e.key === "Enter" || e.keyCode === 13 || e.keyCode === 23){
+    if(!ae || ae === document.body || typing || ae.tagName === "BUTTON") return;   /* buttons do it themselves */
+    e.preventDefault();
+    if(e.repeat) return;
+    /* the banner: open the picture that is showing now */
+    if(ae.classList.contains("hero")){ (document.querySelector("#heroBox .hero.on") || ae).click(); return }
+    if(ae.classList.contains("card")){
+      /* hold OK on a card = favourite, a short press = open */
+      okFired = false;
+      clearTimeout(okTimer);
+      okTimer = setTimeout(function(){ okTimer = null; okFired = true; longPress(ae) }, FAV_MS + 50);
+      return;
+    }
+    ae.click();
+  }
+}, true);
+
+document.addEventListener("keyup", function(e){
+  if(!(e.key === "Enter" || e.keyCode === 13 || e.keyCode === 23)) return;
+  var ae = document.activeElement;
+  if(!ae || !ae.classList || !ae.classList.contains("card")) return;
+  if(okTimer){ clearTimeout(okTimer); okTimer = null; if(!okFired) ae.click() }
+  okFired = false;
+  e.preventDefault();
+}, true);
+
+/* a finger on the screen hides the ring again (phones) */
+document.addEventListener("touchstart", function(){ if(!TV) kbdOff() }, { passive: true });
+
+/* after Back closes a page, and after the lists are drawn, keep a highlight on screen */
+window.addEventListener("popstate", function(){ setTimeout(navRestore, 0) });
+try{
+  new MutationObserver(function(){
+    var ae = document.activeElement;
+    if(document.documentElement.classList.contains("kbd") && (!ae || ae === document.body))
+      setTimeout(navRestore, 0);
+  }).observe($("main"), { childList: true });
+}catch(e){}
+if(TV){ document.documentElement.classList.add("tv"); kbdOn() }
 
 /* ==================== activation ==================== */
 var PIN = "";
