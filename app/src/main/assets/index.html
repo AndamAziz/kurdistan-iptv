@@ -288,10 +288,46 @@ body.hasnav main{padding-bottom:calc(96px + var(--safe-b))}
 .hint{font-size:11.5px;color:var(--muted2);line-height:1.6;margin:2px 0 14px}
 .formErr{color:#FF8A8A;font-size:12.5px;font-weight:700;min-height:20px;margin-bottom:6px}
 
-/* ---------- settings page (a tab of its own; the bottom bar stays on top) ---------- */
-#settings{position:fixed;inset:0;z-index:25;background:var(--bg);overflow-y:auto;display:none;
-  padding:calc(16px + var(--safe-t)) 16px calc(100px + var(--safe-b))}
+/* ---------- settings page (opened from the ☰ button, covers the bottom bar) ---------- */
+#settings{position:fixed;inset:0;z-index:60;background:var(--bg);overflow-y:auto;display:none;
+  padding:calc(16px + var(--safe-t)) 16px calc(30px + var(--safe-b))}
 #settings.on{display:block}
+
+/* ---------- favourites tab (the bottom bar stays on top) ---------- */
+#favs{position:fixed;inset:0;z-index:25;background:var(--bg);overflow-y:auto;display:none;
+  padding:calc(16px + var(--safe-t)) 14px calc(100px + var(--safe-b))}
+#favs.on{display:block}
+#favs section{margin-top:18px}
+#favs .chips{padding-top:14px}
+#favs .card.fav .tile::before,#favs .card.fav .poster::before{display:none}
+.fempty{text-align:center;padding:90px 26px 20px;color:var(--muted2)}
+.fempty svg{opacity:.45;margin-bottom:14px}
+.fempty b{display:block;font-size:16px;font-weight:800;color:var(--muted);margin-bottom:8px}
+.fempty p{margin:0;font-size:13px;font-weight:600;line-height:1.7}
+
+/* a favourite card carries a small star */
+.card{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.card.fav .tile::before,.card.fav .poster::before{content:"\2605";position:absolute;z-index:3;top:6px;
+  width:22px;height:22px;border-radius:99px;display:grid;place-items:center;font-size:12px;line-height:1;
+  color:#FFD466;background:rgba(0,0,0,.66)}
+.card.fav .tile::before{inset-inline-end:6px}
+.card.fav .poster::before{inset-inline-start:6px}
+.card.pop{animation:pop .32s ease}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(.9)}100%{transform:scale(1)}}
+
+/* star next to ✕ on the film / series page */
+#dfav{position:absolute;top:calc(12px + var(--safe-t));inset-inline-end:58px;width:36px;height:36px;
+  border-radius:12px;border:1px solid var(--line);background:rgba(8,11,16,.8);color:#fff;
+  display:grid;place-items:center;cursor:pointer;z-index:2;padding:0}
+#dfav.on{color:#FFD466;border-color:rgba(255,212,102,.45)}
+#dfav:active{transform:scale(.92)}
+.dhero h2{padding-inline-end:88px}
+
+#toast{position:fixed;left:50%;transform:translate(-50%,12px);bottom:calc(84px + var(--safe-b));z-index:95;
+  padding:10px 18px;border-radius:999px;background:rgba(18,25,36,.97);border:1px solid var(--line);
+  font-size:13px;font-weight:800;box-shadow:0 10px 30px rgba(0,0,0,.6);width:max-content;max-width:88vw;text-align:center;
+  opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+#toast.on{opacity:1;transform:translate(-50%,0)}
 .st-h{display:flex;align-items:center;gap:12px;margin:6px 0 4px}
 .st-h h1{margin:0;font-size:23px;font-weight:800;flex:1}
 .st-g{display:flex;align-items:center;gap:9px;margin:24px 0 11px;font-size:12px;font-weight:800;
@@ -350,7 +386,9 @@ body.hasnav main{padding-bottom:calc(96px + var(--safe-b))}
 
 <main id="main"></main>
 
+<div id="favs"><div id="favBody"></div></div>
 <div id="settings"><div id="setBody"></div></div>
+<div id="toast"></div>
 
 <div id="sync"><span class="sp"></span><span id="syncText"></span></div>
 
@@ -358,11 +396,12 @@ body.hasnav main{padding-bottom:calc(96px + var(--safe-b))}
   <button data-s="live" onclick="navTap('live')"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="8" width="19" height="12.5" rx="2.6"/><path d="M8 3.5l4 4.2 4-4.2"/></svg><span id="navLive"></span></button>
   <button data-s="movies" onclick="navTap('movies')"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.4"/><path d="M8 4v16M16 4v16M3 12h18"/></svg><span id="navMovies"></span></button>
   <button data-s="series" onclick="navTap('series')"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="14" rx="2.4"/><path d="M7 3l3 3M17 3l-3 3"/></svg><span id="navSeries"></span></button>
-  <button data-s="settings" onclick="navTap('settings')"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg><span id="navSettings"></span></button>
+  <button data-s="favs" onclick="navTap('favs')"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg><span id="navFavs"></span></button>
 </nav>
 
 <div id="detail">
   <button id="dclose" onclick="closeDetail()">&#10005;</button>
+  <button id="dfav" onclick="toggleDetailFav()"></button>
   <div class="dhero">
     <div class="pw"><img id="dImg" alt=""></div>
     <div style="flex:1;min-width:0">
@@ -427,7 +466,9 @@ var T = {
       lastUpd:"دوایین نوێکردنەوە",notYet:"هێشتا نا",
       clearCache:"سڕینەوەی کاش",cacheSub:"کۆپی پاشەکەوتکراوی لیست · %s",
       confirmClear:"کاشەکە بسڕدرێتەوە و لیستەکە دووبارە دابەزێنرێتەوە؟",
-      version:"وەشان",plType:"جۆری لیست"},
+      version:"وەشان",plType:"جۆری لیست",
+      favs:"دڵخوازەکان",navFavs:"دڵخواز",favAdded:"زیادکرا بۆ دڵخوازەکان ⭐",favRemoved:"لابرا لە دڵخوازەکان",
+      favEmpty:"هێشتا هیچ دڵخوازێکت نییە",favHint:"پەنجە لەسەر هەر کەناڵ، فیلم یان زنجیرەیەک ڕابگرە تا لێرە زیاد بێت. بۆ لابردنیش هەمان کار بکە."},
   en:{name:"English",dir:"ltr",all:"All",search:"Search channels...",
       featured:"FEATURED",playNow:"Play",resume:"Resume",seeAll:"See all",
       fromStart:"From start",left:"%s left",director:"Director",cast:"Cast",
@@ -452,7 +493,9 @@ var T = {
       lastUpd:"Last updated",notYet:"Not yet",
       clearCache:"Clear cache",cacheSub:"Saved copy of the playlist · %s",
       confirmClear:"Clear the cache and download the playlist again?",
-      version:"Version",plType:"Playlist type"},
+      version:"Version",plType:"Playlist type",
+      favs:"Favorites",navFavs:"Favorites",favAdded:"Added to favorites ⭐",favRemoved:"Removed from favorites",
+      favEmpty:"No favorites yet",favHint:"Press and hold any channel, movie or series to add it here. Do the same to remove it."},
   ar:{name:"العربية",dir:"rtl",all:"الكل",search:"ابحث عن قناة...",
       featured:"مميّز",playNow:"تشغيل",resume:"متابعة",seeAll:"الكل",
       fromStart:"من البداية",left:"باقٍ %s",director:"المخرج",cast:"الأبطال",
@@ -477,7 +520,9 @@ var T = {
       lastUpd:"آخر تحديث",notYet:"ليس بعد",
       clearCache:"مسح الذاكرة المؤقتة",cacheSub:"النسخة المحفوظة من القائمة · %s",
       confirmClear:"مسح الذاكرة المؤقتة وتحميل القائمة من جديد؟",
-      version:"الإصدار",plType:"نوع القائمة"}
+      version:"الإصدار",plType:"نوع القائمة",
+      favs:"المفضلة",navFavs:"المفضلة",favAdded:"أضيفت إلى المفضلة ⭐",favRemoved:"أزيلت من المفضلة",
+      favEmpty:"لا توجد مفضلة بعد",favHint:"اضغط مطولاً على أي قناة أو فيلم أو مسلسل لإضافته هنا، وكرر ذلك لإزالته."}
 };
 var LANG_ORDER = ["en", "ku", "ar"];
 var lang = localStorage.kiptv_lang || "en";
@@ -773,28 +818,28 @@ function setSection(name){
 }
 
 function drawNav(){
-  var d = t(), x = isXtream(), setOn = settingsOn();
+  var d = t(), x = isXtream(), favOn = favsOn();
   $("navLive").textContent = d.live;
   $("navMovies").textContent = d.movies;
   $("navSeries").textContent = d.series;
-  $("navSettings").textContent = d.menu;
+  $("navFavs").textContent = d.navFavs;
   var btns = document.querySelectorAll("#nav button");
   for(var i = 0; i < btns.length; i++){
     var sName = btns[i].getAttribute("data-s");
-    if(sName === "settings"){ btns[i].className = setOn ? "on" : ""; continue }
-    btns[i].className = (!setOn && SECTION === sName ? "on" : "");
+    if(sName === "favs"){ btns[i].className = favOn ? "on" : ""; continue }
+    btns[i].className = (!favOn && SECTION === sName ? "on" : "");
     btns[i].style.display = (sName !== "live" && !x) ? "none" : "";
   }
   $("nav").className = "on";
   document.body.className = "hasnav";
 }
 
-/* a tap on the bottom bar: the settings tab opens its page, the others
+/* a tap on the bottom bar: the favourites tab opens its page, the others
    close it (if it is open) and behave exactly as before */
 function navTap(name){
-  if(name === "settings"){ openSettings(); return }
-  var wasOpen = settingsOn();
-  if(wasOpen) closeSettings();
+  if(name === "favs"){ openFavs(); return }
+  var wasOpen = favsOn();
+  if(wasOpen) closeFavs();
   if(!wasOpen || name !== SECTION) setSection(name);
 }
 
@@ -893,14 +938,14 @@ function cardHTML(c, forceSquare){
     ? '<span class="pg"><i style="width:'+Math.round(pgv*100)+'%"></i></span>' : '';
 
   if(square){
-    return '<div class="card" data-u="'+esc(c.u)+'" data-n="'+esc(c.n)+'">'
+    return '<div class="card'+(isFav(c) ? " fav" : "")+'" data-u="'+esc(c.u)+'" data-n="'+esc(c.n)+'">'
          +   '<div class="tile" style="background:'+bg+'">'
          +     '<div class="mono">'+esc(initials(c.n))+'</div>'+img+'<span class="dot"></span>'+pg
          +   '</div><div class="name">'+esc(c.n)+'</div></div>';
   }
   var rating = c.r ? '<span class="rt">&#9733; '+esc(String(c.r).slice(0,3))+'</span>' : '';
   var attrs = c.sid ? ' data-sid="'+esc(c.sid)+'"' : ' data-u="'+esc(c.u)+'"';
-  return '<div class="card"'+attrs+' data-n="'+esc(c.n)+'">'
+  return '<div class="card'+(isFav(c) ? " fav" : "")+'"'+attrs+' data-n="'+esc(c.n)+'">'
        +   '<div class="poster" style="background:'+bg+'">'
        +     '<div class="mono">'+esc(c.n)+'</div>'+img+rating+pg
        +   '</div><div class="name">'+esc(c.n)+'</div></div>';
@@ -1082,7 +1127,8 @@ function applyLang(){
   $("gbtn").textContent = d.act;
   drawNav();                       /* the bottom bar speaks the new language too */
   renderChips(); render();
-  refreshSettings();               /* ...and so does the settings tab */
+  refreshSettings();               /* ...and so does the settings page */
+  refreshFavs();
 }
 
 /* ==================== actions ==================== */
@@ -1206,6 +1252,7 @@ function openSeries(sid, name){
   var p = activeList();
   if(p.type !== "xtream") return;
   curMovie = null;
+  detailFav("series", sid, name);
   if(!$("detail").classList.contains("on")) layerOpen("detail");   /* phone Back closes it */
   $("detail").classList.add("on");
   $("dName").textContent = name || "";
@@ -1288,6 +1335,7 @@ function openMovie(url, name){
   curMovie = { c:(item && item.c) || "", n:name || (item && item.n) || "",
                u:url, l:(item && item.l) || "", r:(item && item.r) || "" };
   curSeries = null; curSeason = null;
+  detailFav("movie");
 
   if(!$("detail").classList.contains("on")) layerOpen("detail");   /* phone Back closes it */
   $("detail").classList.add("on");
@@ -1559,6 +1607,7 @@ function layerUnwind(depth){
 function layerHide(name){
   if(name === "detail") $("detail").classList.remove("on");
   else if(name === "settings"){ $("settings").classList.remove("on"); drawNav() }
+  else if(name === "favs"){ $("favs").classList.remove("on"); drawNav() }
   else if(name === "sheet"){
     sheetStack.pop();
     if(!sheetStack.length) $("sheet").classList.remove("on");
@@ -1569,7 +1618,7 @@ window.addEventListener("popstate", function(e){
   layerUnwind((e.state && e.state.k) || 0);
 });
 
-/* ==================== settings tab ==================== */
+/* ==================== settings page ==================== */
 var APP_VERSION = "1.0";
 var EDIT_ID = null;
 
@@ -1623,7 +1672,8 @@ function setGroup(title){ return '<div class="st-g"><span class="bar"></span>'+e
 
 function drawSettings(){
   var d = t(), cur = activeId(), act = activeList(), upd = updTimes();
-  var h = '<div class="st-h"><h1>'+esc(d.menu)+'</h1></div>';
+  var h = '<div class="st-h"><h1>'+esc(d.menu)+'</h1>'
+        + '<button class="iconbtn" onclick="closeSettings()">&#10005;</button></div>';
 
   /* playlists: tap to switch, pencil to edit, bin to delete */
   h += setGroup(d.lists);
@@ -1684,6 +1734,7 @@ function removeList(id){
   if(id === DEFAULT_PLAYLIST.id) return;
   if(!window.confirm(t().confirmDel)) return;
   saveLists(getLists().filter(function(p){ return p.id !== id }));
+  favDropList(id);                         /* its favourites go with it */
   if(activeId() === id || lsGet("kiptv_active", "") === id){
     lsSet("kiptv_active", DEFAULT_PLAYLIST.id);
     loadActive(true);
@@ -1733,6 +1784,260 @@ function saveEdit(){
   if(changed && activeId() === p.id) loadActive(true);
   else { $("tagline").textContent = activeList().name; refreshSettings() }
 }
+
+/* ==================== favourites ====================
+   Kept per playlist in kiptv_favs = { listId: [ {k,t,n,u|sid,l,c,r,ua,rf,at} ] }.
+   A long press on any card adds it or takes it away; the Favourites tab
+   shows them. Nothing here touches how a stream is played - a favourite
+   is handed to exactly the same playQueue / openMovie / openSeries. */
+var FAV_MS = 550;                 /* how long to hold a card */
+var favIdx = null, favIdxOwner = null;
+var FAVF = "all";                 /* type filter on the favourites page */
+var DFAV = null;                  /* what the film / series page is showing */
+
+function favStore(){ try{ return JSON.parse(lsGet("kiptv_favs", "{}")) || {} }catch(e){ return {} } }
+function favList(){ return (favStore()[activeId()] || []).slice() }
+function favSave(list){
+  var s = favStore(); s[activeId()] = list;
+  lsSet("kiptv_favs", JSON.stringify(s));
+  favIdx = null;
+}
+function favDropList(id){ var s = favStore(); if(s[id]){ delete s[id]; lsSet("kiptv_favs", JSON.stringify(s)) } favIdx = null }
+function favKey(c){ return c.sid ? "s:" + c.sid : "u:" + (c.u || "") }
+/* live / movie / series - an episode on its own is not a favourite */
+function favType(c){
+  if(c.sid) return "series";
+  var u = c.u || "";
+  if(!u) return "";
+  if(/\/movie\//.test(u)) return "movie";
+  if(/\/series\//.test(u)) return "";
+  return "live";
+}
+function isFav(c){
+  var owner = lsGet("kiptv_active", "");
+  if(!favIdx || favIdxOwner !== owner){
+    favIdx = {}; favIdxOwner = owner;
+    favList().forEach(function(f){ favIdx[f.k] = 1 });
+  }
+  return !!favIdx[favKey(c)];
+}
+function favFind(k){ var a = favList(); for(var i = 0; i < a.length; i++) if(a[i].k === k) return a[i]; return null }
+
+/* returns true when added, false when removed, null when it cannot be a favourite */
+function toggleFav(c){
+  var ty = favType(c); if(!ty) return null;
+  var list = favList(), k = favKey(c);
+  for(var i = 0; i < list.length; i++) if(list[i].k === k){
+    list.splice(i, 1); favSave(list); showToast(t().favRemoved); return false;
+  }
+  var o = { k: k, t: ty, n: c.n || "", l: c.l || "", c: c.c || "", at: Date.now() };
+  if(c.u) o.u = c.u;
+  if(c.sid) o.sid = c.sid;
+  if(c.r) o.r = c.r;
+  if(c.ua) o.ua = c.ua;
+  if(c.rf) o.rf = c.rf;
+  list.push(o); favSave(list); showToast(t().favAdded);
+  return true;
+}
+
+/* the full item behind a card on screen */
+function itemForCard(el){
+  var sid = el.getAttribute("data-sid"), u = el.getAttribute("data-u"), n = el.getAttribute("data-n") || "";
+  if(sid){
+    var s = DATA.series || [];
+    for(var i = 0; i < s.length; i++) if(String(s[i].sid) === sid) return s[i];
+    return favFind("s:" + sid) || { sid: sid, n: n };
+  }
+  if(!u) return null;
+  var pools = [view || [], CH, DATA.movies || []];
+  for(var p = 0; p < pools.length; p++)
+    for(var j = 0; j < pools[p].length; j++) if(pools[p][j].u === u) return pools[p][j];
+  return favFind("u:" + u) || { u: u, n: n };
+}
+/* every copy of this card on screen gets (or loses) its star */
+function markCards(c, on){
+  var cards = document.querySelectorAll(".card"), sid = c.sid ? String(c.sid) : null;
+  for(var i = 0; i < cards.length; i++){
+    var hit = sid ? cards[i].getAttribute("data-sid") === sid
+                  : (c.u && cards[i].getAttribute("data-u") === c.u);
+    if(hit) cards[i].classList.toggle("fav", on);
+  }
+}
+
+var toastT = null;
+function showToast(msg){
+  var el = $("toast");
+  el.textContent = msg;
+  el.className = "on";
+  clearTimeout(toastT);
+  toastT = setTimeout(function(){ el.className = "" }, 1800);
+}
+
+function longPress(card){
+  var it = itemForCard(card); if(!it) return;
+  var on = toggleFav(it);
+  if(on === null) return;
+  markCards(it, on);
+  card.classList.remove("pop"); void card.offsetWidth; card.classList.add("pop");
+  if(favsOn()) drawFavs();
+  drawDetailFav();
+}
+
+/* hold a card for FAV_MS without moving: add / remove it.
+   The tap that ends a long press does not also play the card. */
+(function(){
+  var timer = null, x0 = 0, y0 = 0, fired = false, swallowUntil = 0;
+  function cardOf(el){
+    while(el && el.nodeType === 1){
+      if(el.classList.contains("card")) return el;
+      el = el.parentNode;
+    }
+    return null;
+  }
+  function cancel(){ if(timer){ clearTimeout(timer); timer = null } }
+  function start(e){
+    cancel(); fired = false;
+    var card = cardOf(e.target); if(!card || !e.touches || e.touches.length > 1) return;
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY;
+    timer = setTimeout(function(){ timer = null; fired = true; longPress(card) }, FAV_MS);
+  }
+  function move(e){
+    if(!timer || !e.touches) return;
+    var p = e.touches[0];
+    if(Math.abs(p.clientX - x0) > 10 || Math.abs(p.clientY - y0) > 10) cancel();   /* a scroll */
+  }
+  function end(e){
+    cancel();
+    if(fired){ fired = false; swallowUntil = Date.now() + 450; if(e.cancelable) e.preventDefault() }
+  }
+  [$("main"), $("favs")].forEach(function(box){
+    box.addEventListener("touchstart", start, { passive: true });
+    box.addEventListener("touchmove", move, { passive: true });
+    box.addEventListener("touchend", end, false);
+    box.addEventListener("touchcancel", cancel, { passive: true });
+    box.addEventListener("contextmenu", function(e){ if(cardOf(e.target)) e.preventDefault() });
+    box.addEventListener("click", function(e){
+      if(Date.now() < swallowUntil){ swallowUntil = 0; e.stopPropagation(); e.preventDefault() }
+    }, true);
+  });
+})();
+
+/* ---------- the star on the film / series page ---------- */
+function detailFav(kind, sid, name){
+  if(kind === "series"){
+    var it = null, s = DATA.series || [];
+    for(var i = 0; i < s.length; i++) if(String(s[i].sid) === String(sid)){ it = s[i]; break }
+    if(!it) it = favFind("s:" + sid);
+    DFAV = { sid: sid, n: (it && it.n) || name || "", l: (it && it.l) || "",
+             c: (it && it.c) || "", r: (it && it.r) || "" };
+  } else DFAV = "movie";
+  drawDetailFav();
+}
+function detailItem(){
+  if(DFAV === "movie") return curMovie;
+  var sc = DFAV && SERIES_CACHE[DFAV.sid];
+  if(DFAV && !DFAV.l && sc && sc.info && sc.info.cover) DFAV.l = sc.info.cover;
+  return DFAV;
+}
+var STAR_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="%f" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg>';
+function drawDetailFav(){
+  var b = $("dfav"); if(!b) return;
+  var it = detailItem(), on = !!(it && isFav(it));
+  b.className = on ? "on" : "";
+  b.innerHTML = STAR_SVG.replace("%f", on ? "currentColor" : "none");
+}
+function toggleDetailFav(){
+  var it = detailItem(); if(!it) return;
+  var on = toggleFav(it);
+  if(on === null) return;
+  markCards(it, on);
+  drawDetailFav();
+  if(favsOn()) drawFavs();
+}
+
+/* ---------- the favourites tab ---------- */
+function favsOn(){ var f = $("favs"); return !!(f && f.classList.contains("on")) }
+function refreshFavs(){ if(favsOn()) drawFavs() }
+function openFavs(){
+  if(favsOn()){ $("favs").scrollTop = 0; return }
+  layerOpen("favs");
+  $("favs").classList.add("on");
+  drawFavs();
+  $("favs").scrollTop = 0;
+  drawNav();
+}
+function closeFavs(){ layerClose("favs") }
+
+var FAV_VIEW = [];                /* the live favourites on screen, for next / previous */
+function drawFavs(){
+  var d = t(), all = favList();
+  var byType = { live: [], movie: [], series: [] };
+  all.forEach(function(f){ if(byType[f.t]) byType[f.t].push(f) });
+  var types = ["live", "movie", "series"].filter(function(k){ return byType[k].length });
+  if(types.indexOf(FAVF) < 0) FAVF = "all";
+
+  var h = '<div class="st-h"><h1>'+esc(d.favs)+'</h1>'
+        + '<button class="iconbtn" onclick="openSettings()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>';
+
+  if(!all.length){
+    $("favBody").innerHTML = h + '<div class="fempty">'
+      + STAR_SVG.replace("%f", "none").replace('width="18" height="18"', 'width="54" height="54"')
+      + '<b>'+esc(d.favEmpty)+'</b><p>'+esc(d.favHint)+'</p></div>';
+    FAV_VIEW = [];
+    return;
+  }
+
+  var names = { live: d.live, movie: d.movies, series: d.series };
+  if(types.length > 1){
+    h += '<div class="chips" id="favChips">'
+       + '<button class="chip'+(FAVF === "all" ? " on" : "")+'" data-ft="all">'+esc(d.all)+' · '+all.length+'</button>'
+       + types.map(function(k){
+           return '<button class="chip'+(FAVF === k ? " on" : "")+'" data-ft="'+k+'">'+esc(names[k])+' · '+byType[k].length+'</button>';
+         }).join("")
+       + '</div>';
+  }
+
+  /* live favourites use the channel as it is in the list right now, so a
+     channel that needs its own agent / referrer gets the current one */
+  var fresh = {};
+  if(byType.live.length) for(var i = 0; i < CH.length; i++) fresh[CH[i].u] = CH[i];
+  FAV_VIEW = byType.live.map(function(f){ return fresh[f.u] || f });
+
+  types.forEach(function(k){
+    if(FAVF !== "all" && FAVF !== k) return;
+    var list = k === "live" ? FAV_VIEW : byType[k];
+    h += '<section><div class="shead"><span class="bar"></span><h2>'+esc(names[k])+'</h2>'
+       + '<span class="cnt">'+list.length+'</span></div>'
+       + '<div class="'+(k === "live" ? "grid" : "grid posters")+'">'
+       + list.map(function(c){ return cardHTML(c, k === "live") }).join("")
+       + '</div></section>';
+  });
+  $("favBody").innerHTML = h;
+}
+
+$("favs").addEventListener("click", function(e){
+  var el = e.target;
+  var ft = el.getAttribute && el.getAttribute("data-ft");
+  if(!ft && el.parentNode && el.parentNode.getAttribute) ft = el.parentNode.getAttribute("data-ft");
+  if(ft){ FAVF = ft; drawFavs(); return }
+
+  while(el && el !== this && !(el.getAttribute && (el.getAttribute("data-u") || el.getAttribute("data-sid"))))
+    el = el.parentNode;
+  if(!el || el === this) return;
+  var sid = el.getAttribute("data-sid"), nm = el.getAttribute("data-n");
+  if(sid){ openSeries(sid, nm); return }
+  var u = el.getAttribute("data-u");
+  if(u.indexOf("/movie/") > -1){
+    var f = favFind("u:" + u) || {};
+    openMovie(u, nm);
+    /* the film list may not be loaded yet - use the poster we kept */
+    if(f.l && !$("dImg").getAttribute("src")) $("dImg").src = f.l;
+    if(curMovie && curMovie.u === u){ if(!curMovie.l) curMovie.l = f.l || ""; if(!curMovie.c) curMovie.c = f.c || "" }
+    return;
+  }
+  for(var i = 0; i < FAV_VIEW.length; i++) if(FAV_VIEW[i].u === u){ playQueue(FAV_VIEW, i); return }
+  play(u, nm);
+});
 
 /* ==================== activation ==================== */
 var PIN = "";
@@ -1789,6 +2094,7 @@ function loadActive(force){
   SERIES_CACHE = {};
   drawNav();
   refreshSettings();
+  refreshFavs();
 
   var cached = force ? null : loadCache(p.id);
   if(cached && cached.length) setData(cached);
