@@ -5,12 +5,16 @@ import android.content.pm.ActivityInfo
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
+import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.webkit.WebChromeClient
@@ -57,6 +61,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.util.Locale
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 class MainActivity : ComponentActivity() {
 
@@ -148,6 +153,13 @@ class MainActivity : ComponentActivity() {
     /** the app's language, sent by the page (en / ku / ar) */
     @Volatile private var uiLang = "en"
     private val SUB_SCALES = floatArrayOf(0.8f, 1f, 1.3f, 1.6f)
+
+    /* ---- swipe up / down: left half = brightness, right half = volume ---- */
+    private lateinit var swipe: SwipeGesture
+    private var swipeStartBright = 0.5f
+    private var swipeStartVol = 0
+    /** the brightness picked in the player this session (-1 = the phone's own) */
+    private var playerBrightness = -1f
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -524,6 +536,7 @@ class MainActivity : ComponentActivity() {
         loading.visibility = View.VISIBLE
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
         setFullscreen(true)
+        if (playerBrightness >= 0f) setWindowBrightness(playerBrightness)
 
         buildAndStart(index)
         handler.postDelayed(posTicker, 5000)
@@ -856,6 +869,8 @@ class MainActivity : ComponentActivity() {
         btnTracks.setOnClickListener { openPanel() }
         applySubScale()
 
+        swipe = SwipeGesture(ViewConfiguration.get(this).scaledTouchSlop.toFloat(), dp(48).toFloat())
+
         aspectIdx = prefs().getInt("aspect", 0).coerceIn(0, ASPECT_NAMES.size - 1)
         applyAspect(false)
 
@@ -972,6 +987,7 @@ class MainActivity : ComponentActivity() {
 
     /** the player closed: leave everything unlocked for next time */
     private fun resetLock() {
+        setWindowBrightness(WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE)
         closePanel()
         locked = false
         lockOverlay.visibility = View.GONE
@@ -1317,6 +1333,89 @@ class MainActivity : ComponentActivity() {
         } catch (e: Exception) { /* keep the player's defaults */ }
     }
 
+    // ---------------- swipe: brightness (left) / volume (right) ----------------
+
+    /** Only while the player is on screen, unlocked, with the ⚙ panel closed.
+     *  Taps, the seek bar and the buttons get every touch exactly as before;
+     *  only once a finger clearly moves up or down does the swipe take over. */
+    private fun swipeAllowed(): Boolean =
+        ::swipe.isInitialized && ::playerLayer.isInitialized && ::panel.isInitialized &&
+            playerLayer.visibility == View.VISIBLE && !locked && !panelOn()
+
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        if (!swipeAllowed()) {
+            if (::swipe.isInitialized && ev.actionMasked == MotionEvent.ACTION_DOWN) swipe.end()
+            return super.dispatchTouchEvent(ev)
+        }
+        val act = ev.actionMasked
+        if (act == MotionEvent.ACTION_DOWN) {
+            val d = window.decorView
+            swipe.down(ev.x, ev.y, d.width.toFloat(), d.height.toFloat())
+            return super.dispatchTouchEvent(ev)
+        }
+        if (swipe.kind == SwipeGesture.NONE) {
+            if (act == MotionEvent.ACTION_MOVE && swipe.move(ev.x, ev.y, ev.pointerCount)) {
+                startSwipe()
+                /* the player underneath must not also take this as a tap */
+                val c = MotionEvent.obtain(ev)
+                c.action = MotionEvent.ACTION_CANCEL
+                super.dispatchTouchEvent(c)
+                c.recycle()
+                return true
+            }
+            if (act == MotionEvent.ACTION_UP || act == MotionEvent.ACTION_CANCEL) swipe.end()
+            return super.dispatchTouchEvent(ev)
+        }
+        /* a swipe is running: it keeps the rest of this touch to itself */
+        when (act) {
+            MotionEvent.ACTION_MOVE -> updateSwipe(ev.y)
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> swipe.end()
+        }
+        return true
+    }
+
+    private fun audio(): AudioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+
+    private fun systemBrightness(): Float =
+        (try { Settings.System.getInt(contentResolver, Settings.System.SCREEN_BRIGHTNESS, 128) / 255f }
+         catch (e: Exception) { 0.5f }).coerceIn(0.01f, 1f)
+
+    private fun setWindowBrightness(v: Float) {
+        try {
+            val lp = window.attributes
+            lp.screenBrightness = v
+            window.attributes = lp
+        } catch (e: Exception) { /* brightness is a nicety, never a crash */ }
+    }
+
+    private fun startSwipe() {
+        if (swipe.kind == SwipeGesture.BRIGHTNESS) {
+            val cur = try { window.attributes.screenBrightness } catch (e: Exception) { -1f }
+            swipeStartBright = if (cur >= 0f) cur else systemBrightness()
+        } else {
+            swipeStartVol = try { audio().getStreamVolume(AudioManager.STREAM_MUSIC) } catch (e: Exception) { 0 }
+        }
+    }
+
+    private fun updateSwipe(y: Float) {
+        val p = swipe.progress(y)
+        if (swipe.kind == SwipeGesture.BRIGHTNESS) {
+            val v = (swipeStartBright + p).coerceIn(0.01f, 1f)
+            playerBrightness = v
+            setWindowBrightness(v)
+            showHint("☀︎  " + (v * 100).roundToInt() + "%")
+        } else {
+            try {
+                val am = audio()
+                val max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+                if (max <= 0) return
+                val v = (swipeStartVol + p * max).roundToInt().coerceIn(0, max)
+                am.setStreamVolume(AudioManager.STREAM_MUSIC, v, 0)
+                showHint((if (v == 0) "🔇" else "🔊") + "  " + (v * 100 / max) + "%")
+            } catch (e: Exception) { /* volume is a nicety, never a crash */ }
+        }
+    }
+
     // ---------------- lifecycle ----------------
 
     override fun onPause() {
@@ -1341,5 +1440,62 @@ class MainActivity : ComponentActivity() {
         player = null
         webView.destroy()
         super.onDestroy()
+    }
+}
+
+/**
+ * Decides whether a touch is an up / down swipe, and on which half of the
+ * screen. No Android types in here, so it can be checked on its own.
+ *  - a touch that starts in the top or bottom edge strip is left alone
+ *    (that is where the phone's own swipes live)
+ *  - a clear sideways move first (the seek bar) is left alone
+ *  - two fingers are left alone
+ */
+class SwipeGesture(private val slopPx: Float, private val edgePx: Float) {
+    companion object {
+        const val NONE = 0
+        const val BRIGHTNESS = 1
+        const val VOLUME = 2
+    }
+
+    var kind = NONE
+        private set
+    private var side = NONE
+    private var x0 = 0f
+    private var y0 = 0f
+    private var h = 1f
+    private var tracking = false
+
+    fun down(x: Float, y: Float, width: Float, height: Float) {
+        kind = NONE
+        x0 = x
+        y0 = y
+        h = if (height > 0f) height else 1f
+        side = if (x < width / 2f) BRIGHTNESS else VOLUME
+        tracking = height > 0f && y > edgePx && y < height - edgePx
+    }
+
+    /** true at the moment the swipe starts */
+    fun move(x: Float, y: Float, pointers: Int): Boolean {
+        if (!tracking || kind != NONE) return false
+        if (pointers > 1) { tracking = false; return false }
+        val dx = x - x0
+        val dy = y - y0
+        if (abs(dy) > slopPx && abs(dy) > abs(dx) * 1.5f) {
+            kind = side
+            y0 = y                       /* measure from here, so nothing jumps */
+            return true
+        }
+        if (abs(dx) > slopPx * 2f) tracking = false
+        return false
+    }
+
+    /** distance travelled since the swipe started, as a share of 3/4 of the
+     *  screen height; up is positive */
+    fun progress(y: Float): Float = (y0 - y) / (h * 0.75f)
+
+    fun end() {
+        kind = NONE
+        tracking = false
     }
 }
