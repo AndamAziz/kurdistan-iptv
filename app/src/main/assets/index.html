@@ -323,6 +323,34 @@ body.hasnav main{padding-bottom:calc(96px + var(--safe-b))}
 #dfav:active{transform:scale(.92)}
 .dhero h2{padding-inline-end:88px}
 
+/* ---------- favourites | history switch + history rows ---------- */
+.seg{display:flex;gap:8px;margin:16px 0 2px}
+.seg button{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:11px 8px;
+  border-radius:var(--r-sm);border:1px solid var(--line);background:var(--surface);color:var(--muted);
+  font-size:13.5px;font-weight:800;cursor:pointer;font-family:inherit}
+.seg button.on{background:linear-gradient(100deg,var(--accent),var(--accent2));border-color:transparent;color:#fff;
+  box-shadow:0 5px 16px rgba(230,62,70,.3)}
+.seg button:active{transform:scale(.97)}
+.hday{display:flex;align-items:center;gap:9px;margin:22px 0 10px;font-size:12.5px;font-weight:800;color:var(--muted2)}
+.hday .bar{width:3px;height:14px;border-radius:99px;background:linear-gradient(var(--accent),var(--accent2));flex:none}
+.hi{display:flex;align-items:center;gap:12px;padding:10px;border-radius:var(--r-md);background:var(--surface);
+  border:1px solid var(--line);margin-bottom:8px;cursor:pointer}
+.hi:active{transform:scale(.985)}
+.hi .th{position:relative;flex:none;width:54px;height:54px;border-radius:13px;overflow:hidden;display:grid;
+  place-items:center;direction:ltr;font-weight:900;font-size:14px;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.4)}
+.hi .th.pt{width:44px;height:64px;border-radius:10px;font-size:11px}
+.hi .th img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:12%;background:#0E141C}
+.hi .th.pt img{object-fit:cover;padding:0}
+.hi .tx{flex:1;min-width:0}
+.hi .tx b{display:block;font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hi .tx s{display:block;text-decoration:none;font-size:11.5px;font-weight:700;color:var(--muted2);margin-top:4px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hi .tr{height:3px;border-radius:99px;background:rgba(255,255,255,.14);margin-top:8px;overflow:hidden}
+.hi .tr i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.hi .x{flex:none;width:32px;height:32px;border-radius:10px;border:1px solid var(--line);background:transparent;
+  color:var(--muted2);display:grid;place-items:center;padding:0;cursor:pointer;font-size:14px}
+.hi .x:active{transform:scale(.9)}
+
 /* ---------- search results ---------- */
 .srch .schips{padding-top:4px}
 .srch section{margin-top:18px}
@@ -482,7 +510,10 @@ var T = {
       favs:"دڵخوازەکان",navFavs:"دڵخواز",favAdded:"زیادکرا بۆ دڵخوازەکان ⭐",favRemoved:"لابرا لە دڵخوازەکان",
       favEmpty:"هێشتا هیچ دڵخوازێکت نییە",favHint:"پەنجە لەسەر هەر کەناڵ، فیلم یان زنجیرەیەک ڕابگرە تا لێرە زیاد بێت. بۆ لابردنیش هەمان کار بکە.",
       searchAll:"گەڕان بۆ کەناڵ، فیلم، زنجیرە...",noResults:"هیچ شتێک بۆ «%s» نەدۆزرایەوە",
-      srchLoading:"لە فیلم و زنجیرەکانیش دەگەڕێت…"},
+      srchLoading:"لە فیلم و زنجیرەکانیش دەگەڕێت…",
+      history:"مێژوو",histTitle:"مێژووی بینین",histEmpty:"هێشتا هیچت نەبینیوە",
+      histHint:"ئەو کەناڵ، فیلم و ئیپسۆدانەی دەیانبینیت لێرە دەردەکەون.",today:"ئەمڕۆ",yesterday:"دوێنێ",
+      clearHist:"سڕینەوەی هەموو مێژوو",confirmClearHist:"هەموو مێژووی بینین بسڕێتەوە؟",episode:"ئیپسۆد",movie:"فیلم",liveOne:"کەناڵ"},
   en:{name:"English",dir:"ltr",all:"All",search:"Search channels...",
       featured:"FEATURED",playNow:"Play",resume:"Resume",seeAll:"See all",
       fromStart:"From start",left:"%s left",director:"Director",cast:"Cast",
@@ -511,7 +542,10 @@ var T = {
       favs:"Favorites",navFavs:"Favorites",favAdded:"Added to favorites ⭐",favRemoved:"Removed from favorites",
       favEmpty:"No favorites yet",favHint:"Press and hold any channel, movie or series to add it here. Do the same to remove it.",
       searchAll:"Search channels, movies, series...",noResults:"Nothing found for “%s”",
-      srchLoading:"Searching movies and series too…"},
+      srchLoading:"Searching movies and series too…",
+      history:"History",histTitle:"Watch history",histEmpty:"Nothing watched yet",
+      histHint:"Channels, movies and episodes you play will appear here.",today:"Today",yesterday:"Yesterday",
+      clearHist:"Clear all history",confirmClearHist:"Clear the whole watch history?",episode:"Episode",movie:"Movie",liveOne:"Live"},
   ar:{name:"العربية",dir:"rtl",all:"الكل",search:"ابحث عن قناة...",
       featured:"مميّز",playNow:"تشغيل",resume:"متابعة",seeAll:"الكل",
       fromStart:"من البداية",left:"باقٍ %s",director:"المخرج",cast:"الأبطال",
@@ -540,7 +574,10 @@ var T = {
       favs:"المفضلة",navFavs:"المفضلة",favAdded:"أضيفت إلى المفضلة ⭐",favRemoved:"أزيلت من المفضلة",
       favEmpty:"لا توجد مفضلة بعد",favHint:"اضغط مطولاً على أي قناة أو فيلم أو مسلسل لإضافته هنا، وكرر ذلك لإزالته.",
       searchAll:"ابحث عن قناة، فيلم، مسلسل...",noResults:"لا توجد نتائج لـ «%s»",
-      srchLoading:"جارٍ البحث في الأفلام والمسلسلات أيضاً…"}
+      srchLoading:"جارٍ البحث في الأفلام والمسلسلات أيضاً…",
+      history:"السجل",histTitle:"سجل المشاهدة",histEmpty:"لم تشاهد شيئاً بعد",
+      histHint:"القنوات والأفلام والحلقات التي تشاهدها ستظهر هنا.",today:"اليوم",yesterday:"أمس",
+      clearHist:"مسح السجل بالكامل",confirmClearHist:"مسح سجل المشاهدة بالكامل؟",episode:"حلقة",movie:"فيلم",liveOne:"مباشر"}
 };
 var LANG_ORDER = ["en", "ku", "ar"];
 var lang = localStorage.kiptv_lang || "en";
@@ -911,6 +948,7 @@ function refreshHome(){
       else if(curSeason) pickSeason(curSeason);
     }
     if(!($("search").value || "").trim() && f === "ALL") render();
+    refreshFavs();                 /* history shows where you stopped */
   }catch(e){}
 }
 window.refreshHome = refreshHome;
@@ -1155,6 +1193,7 @@ function applyLang(){
 /* ==================== actions ==================== */
 function play(url,title){
   pushRecent(title);
+  histAdd({ u: url, n: title });   /* watch history */
   if(window.AndroidPlayer) AndroidPlayer.playNative(url,title);
   else window.open(url,"_blank");
 }
@@ -1168,6 +1207,7 @@ function playQueue(arr, idx){
   var slice = arr.slice(from, to);
   var pick = idx - from;
   pushRecent(arr[idx].n);
+  histAdd(arr[idx]);               /* watch history */
   /* keep enough about a film / episode that "Continue watching"
      can show it again on the next cold start */
   if(/\/movie\/|\/series\//.test(arr[idx].u || ""))
@@ -1891,6 +1931,7 @@ function removeList(id){
   if(!window.confirm(t().confirmDel)) return;
   saveLists(getLists().filter(function(p){ return p.id !== id }));
   favDropList(id);                         /* its favourites go with it */
+  histDropList(id);                        /* ...and its history */
   if(activeId() === id || lsGet("kiptv_active", "") === id){
     lsSet("kiptv_active", DEFAULT_PLAYLIST.id);
     loadActive(true);
@@ -2132,8 +2173,10 @@ function drawFavs(){
   var types = ["live", "movie", "series"].filter(function(k){ return byType[k].length });
   if(types.indexOf(FAVF) < 0) FAVF = "all";
 
-  var h = '<div class="st-h"><h1>'+esc(d.favs)+'</h1>'
-        + '<button class="iconbtn" onclick="openSettings()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>';
+  var h = '<div class="st-h"><h1>'+esc(FAVMODE === "hist" ? d.histTitle : d.favs)+'</h1>'
+        + '<button class="iconbtn" onclick="openSettings()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>'
+        + segHTML();
+  if(FAVMODE === "hist"){ $("favBody").innerHTML = h + histHTML(); FAV_VIEW = []; return }
 
   if(!all.length){
     $("favBody").innerHTML = h + '<div class="fempty">'
@@ -2193,6 +2236,145 @@ $("favs").addEventListener("click", function(e){
   }
   for(var i = 0; i < FAV_VIEW.length; i++) if(FAV_VIEW[i].u === u){ playQueue(FAV_VIEW, i); return }
   play(u, nm);
+});
+
+/* ==================== watch history ====================
+   Every channel, film and episode you start from the app is written here,
+   newest first, per playlist, in kiptv_hist = { listId: [ {u,t,n,l,c,ua,rf,sid,at} ] }.
+   (Channels reached with next / previous inside the player are not seen
+   by the page, so they are not listed.) Replaying goes through the same
+   playQueue / openMovie as everywhere else. */
+var HIST_MAX = 100;
+var FAVMODE = "fav";              /* fav | hist - which half of the tab is shown */
+var HIST_VIEW = [];
+
+function histStore(){ try{ return JSON.parse(lsGet("kiptv_hist", "{}")) || {} }catch(e){ return {} } }
+function histList(){ return (histStore()[activeId()] || []).slice() }
+function histSave(list){ var s = histStore(); s[activeId()] = list; lsSet("kiptv_hist", JSON.stringify(s)) }
+function histDropList(id){ var s = histStore(); if(s[id]){ delete s[id]; lsSet("kiptv_hist", JSON.stringify(s)) } }
+
+function histFindItem(u){
+  var pools = [CH, DATA.movies || []];
+  for(var p = 0; p < pools.length; p++)
+    for(var i = 0; i < pools[p].length; i++) if(pools[p][i].u === u) return pools[p][i];
+  return null;
+}
+function histAdd(c){
+  try{
+    if(!c || !c.u) return;
+    var u = c.u;
+    var ty = /\/movie\//.test(u) ? "movie" : /\/series\//.test(u) ? "episode" : "live";
+    var full = (c.l && c.c) ? c : (histFindItem(u) || c);
+    var o = { u: u, t: ty, n: c.n || full.n || "", l: c.l || full.l || "", c: c.c || full.c || "", at: Date.now() };
+    if(ty === "episode"){
+      if(!o.l && curSeries && curSeries.info) o.l = curSeries.info.cover || "";
+      if(DFAV && DFAV !== "movie" && DFAV.sid) o.sid = DFAV.sid;
+    }
+    var ua = c.ua || full.ua, rf = c.rf || full.rf;
+    if(ua) o.ua = ua;
+    if(rf) o.rf = rf;
+    var list = histList().filter(function(x){ return x.u !== u });
+    list.unshift(o);
+    histSave(list.slice(0, HIST_MAX));
+  }catch(e){}
+}
+
+function segHTML(){
+  var d = t();
+  return '<div class="seg">'
+       + '<button data-fm="fav" class="'+(FAVMODE === "fav" ? "on" : "")+'">&#9733; '+esc(d.navFavs)+'</button>'
+       + '<button data-fm="hist" class="'+(FAVMODE === "hist" ? "on" : "")+'">&#128339;&#65038; '+esc(d.history)+'</button>'
+       + '</div>';
+}
+
+function dayLabel(ts){
+  var d = new Date(ts), now = new Date(), y = new Date(now.getTime() - 86400000);
+  if(d.toDateString() === now.toDateString()) return t().today;
+  if(d.toDateString() === y.toDateString()) return t().yesterday;
+  function two(n){ return (n < 10 ? "0" : "") + n }
+  return d.getFullYear() + "-" + two(d.getMonth() + 1) + "-" + two(d.getDate());
+}
+function clockOf(ts){
+  var d = new Date(ts);
+  function two(n){ return (n < 10 ? "0" : "") + n }
+  return two(d.getHours()) + ":" + two(d.getMinutes());
+}
+
+function histHTML(){
+  var d = t(), list = histList();
+  HIST_VIEW = list;
+  if(!list.length)
+    return '<div class="fempty"><div style="font-size:50px;opacity:.4;margin-bottom:10px">&#128339;&#65038;</div>'
+         + '<b>'+esc(d.histEmpty)+'</b><p>'+esc(d.histHint)+'</p></div>';
+  var kinds = { live: d.liveOne, movie: d.movie, episode: d.episode };
+  var h = "", lastDay = "";
+  list.forEach(function(x, i){
+    var day = dayLabel(x.at);
+    if(day !== lastDay){ h += '<div class="hday"><span class="bar"></span>'+esc(day)+'</div>'; lastDay = day }
+    var hu = hue(x.n || "?");
+    var bg = "linear-gradient(145deg,hsl("+hu+",42%,34%),hsl("+((hu+42)%360)+",48%,20%))";
+    var poster = x.t !== "live";
+    var img = x.l ? '<img src="'+esc(x.l)+'" loading="lazy" onerror="this.remove()" alt="">' : '';
+    var sub = [kinds[x.t] || "", clockOf(x.at)];
+    var bar = "";
+    if(poster){
+      var sp = getPos(x.u);
+      if(sp && sp.d){
+        sub.push(d.left.replace("%s", fmtTime(sp.d - sp.p)));
+        bar = '<div class="tr"><i style="width:'+Math.min(100, Math.round(sp.p / sp.d * 100))+'%"></i></div>';
+      }
+    }
+    h += '<div class="hi" data-hi="'+i+'">'
+       +   '<span class="th'+(poster ? " pt" : "")+'" style="background:'+bg+'">'+esc(initials(x.n || "?"))+img+'</span>'
+       +   '<span class="tx"><b>'+esc(x.n)+'</b><s>'+esc(sub.filter(Boolean).join("  ·  "))+'</s>'+bar+'</span>'
+       +   '<button class="x" data-hx="'+i+'">&#10005;</button>'
+       + '</div>';
+  });
+  h += '<button class="addbtn" data-hclear="1" style="margin-top:14px;color:#FF8A8A">'+esc(d.clearHist)+'</button>';
+  return h;
+}
+
+function histPlay(i){
+  var x = HIST_VIEW[i]; if(!x) return;
+  if(x.t === "movie"){
+    openMovie(x.u, x.n);
+    if(x.l && !$("dImg").getAttribute("src")) $("dImg").src = x.l;
+    if(curMovie && curMovie.u === x.u){ if(!curMovie.l) curMovie.l = x.l || ""; if(!curMovie.c) curMovie.c = x.c || "" }
+    return;
+  }
+  if(x.t === "episode"){ playQueue([{ n: x.n, u: x.u, l: x.l, c: x.c }], 0); return }
+  /* live: the channels in the history are the next / previous queue, each
+     as it is in the list right now (fresh user agent / referrer) */
+  var fresh = {};
+  for(var k = 0; k < CH.length; k++) fresh[CH[k].u] = CH[k];
+  var q = [], at = 0;
+  HIST_VIEW.forEach(function(h, j){
+    if(h.t !== "live") return;
+    if(j === i) at = q.length;
+    q.push(fresh[h.u] || h);
+  });
+  playQueue(q, at);
+}
+
+$("favs").addEventListener("click", function(e){
+  var el = e.target;
+  while(el && el !== this && !(el.getAttribute &&
+        (el.getAttribute("data-fm") || el.getAttribute("data-hx") || el.getAttribute("data-hi") || el.getAttribute("data-hclear"))))
+    el = el.parentNode;
+  if(!el || el === this) return;
+  var fm = el.getAttribute("data-fm");
+  if(fm){ FAVMODE = fm; drawFavs(); $("favs").scrollTop = 0; return }
+  if(el.getAttribute("data-hclear")){
+    if(!window.confirm(t().confirmClearHist)) return;
+    histSave([]); drawFavs(); return;
+  }
+  var hx = el.getAttribute("data-hx");
+  if(hx !== null && hx !== undefined){
+    var gone = HIST_VIEW[parseInt(hx, 10)];
+    if(gone) histSave(histList().filter(function(x){ return x.u !== gone.u }));
+    drawFavs(); return;
+  }
+  histPlay(parseInt(el.getAttribute("data-hi"), 10));
 });
 
 /* ==================== activation ==================== */
