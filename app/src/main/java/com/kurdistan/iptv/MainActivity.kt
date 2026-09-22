@@ -8,7 +8,9 @@ import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Typeface
+import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.StateListDrawable
 import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
@@ -18,6 +20,7 @@ import android.os.SystemClock
 import android.provider.Settings
 import android.util.Rational
 import android.view.Gravity
+import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
@@ -213,6 +216,8 @@ class MainActivity : ComponentActivity() {
         findViewById<TextView>(R.id.btnClose).setOnClickListener { hideNativePlayer() }
         findViewById<TextView>(R.id.liveBadge).text = getString(R.string.live)
         buildAspectAndLockUi()
+        focusRing(findViewById(R.id.btnClose), round = true)
+        focusRing(findViewById(R.id.btnRetry), round = false, radiusDp = 14)
 
         playerView.controllerShowTimeoutMs = 3500
         playerView.setControllerVisibilityListener(
@@ -737,6 +742,8 @@ class MainActivity : ComponentActivity() {
         loading.visibility = View.GONE
         txtError.text = getString(R.string.player_error) + "\n\n" + code
         errorBox.visibility = View.VISIBLE
+        /* TV remote: Retry is the obvious next press (a finger is not affected) */
+        if (!errorBox.isInTouchMode) findViewById<TextView>(R.id.btnRetry).requestFocus()
     }
 
     private fun reportPosition() {
@@ -802,10 +809,50 @@ class MainActivity : ComponentActivity() {
         setStroke(dp(1), 0x33FFFFFF)
     }
 
-    /** The two new buttons sit at the end of the top bar; the lock layer,
+    /** A white ring that shows only where a TV remote's focus is.
+     *  A finger never focuses these buttons, so a phone looks exactly as before. */
+    private fun focusRing(v: View?, round: Boolean, radiusDp: Int = 12) {
+        if (v == null) return
+        val ring = GradientDrawable().apply {
+            if (round) shape = GradientDrawable.OVAL else cornerRadius = dp(radiusDp).toFloat()
+            setColor(0x33FFFFFF)
+            setStroke(dp(2), Color.WHITE)
+        }
+        v.foreground = StateListDrawable().apply {
+            addState(intArrayOf(android.R.attr.state_focused), ring)
+            addState(IntArray(0), ColorDrawable(Color.TRANSPARENT))
+        }
+        v.isFocusable = true
+    }
+
+    /** a view inside the player's own controls, found by its Media3 name */
+    private fun media3View(name: String): View? {
+        val id = resources.getIdentifier(name, "id", packageName)
+        return if (id == 0) null else playerView.findViewById(id)
+    }
+
+    /** Fit / ⚙ / 🔒 go in the player's own bottom row, under the seek bar, next to
+     *  the time - so they show and hide together with the rest of the controls.
+     *  Media3's "more" button must stay the last one in that row, so ours go
+     *  just before it. If the row is ever missing they fall back to the top bar. */
+    private fun placeButton(v: View, w: Int, h: Int, topMarginStart: Int) {
+        val row = media3View("exo_basic_controls") as? LinearLayout
+        if (row != null) {
+            val more = media3View("exo_overflow_show")
+            val at = if (more != null && row.indexOfChild(more) >= 0) row.indexOfChild(more) else row.childCount
+            row.addView(v, at, LinearLayout.LayoutParams(w, h).apply {
+                gravity = Gravity.CENTER_VERTICAL
+                marginEnd = dp(10)
+            })
+        } else {
+            findViewById<LinearLayout>(R.id.topBar).addView(v,
+                LinearLayout.LayoutParams(w, h).apply { marginStart = topMarginStart })
+        }
+    }
+
+    /** The three buttons sit in the player's bottom row; the lock layer,
      *  the unlock button and the short hint sit on top of the player. */
     private fun buildAspectAndLockUi() {
-        val bar = findViewById<LinearLayout>(R.id.topBar)
         val layer = findViewById<FrameLayout>(R.id.playerLayer)
 
         btnAspect = TextView(this).apply {
@@ -819,8 +866,8 @@ class MainActivity : ComponentActivity() {
             isClickable = true
             isFocusable = true
         }
-        bar.addView(btnAspect, LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.WRAP_CONTENT, dp(36)).apply { marginStart = dp(10) })
+        focusRing(btnAspect, round = false)
+        placeButton(btnAspect, ViewGroup.LayoutParams.WRAP_CONTENT, dp(36), dp(10))
 
         btnTracks = TextView(this).apply {
             background = roundBg()
@@ -831,7 +878,8 @@ class MainActivity : ComponentActivity() {
             isClickable = true
             isFocusable = true
         }
-        bar.addView(btnTracks, LinearLayout.LayoutParams(dp(40), dp(40)).apply { marginStart = dp(8) })
+        focusRing(btnTracks, round = true)
+        placeButton(btnTracks, dp(40), dp(40), dp(8))
 
         btnLock = TextView(this).apply {
             background = roundBg()
@@ -840,12 +888,20 @@ class MainActivity : ComponentActivity() {
             gravity = Gravity.CENTER
             isClickable = true
             isFocusable = true
+            /* a TV has no touch screen to lock */
+            if (isTv) visibility = View.GONE
         }
-        bar.addView(btnLock, LinearLayout.LayoutParams(dp(40), dp(40)).apply { marginStart = dp(8) })
+        focusRing(btnLock, round = true)
+        placeButton(btnLock, dp(40), dp(40), dp(8))
+
+        /* Media3's own gear offered only speed and audio; our ⚙ has audio,
+           subtitles and quality, so one gear is enough */
+        media3View("exo_settings")?.visibility = View.GONE
 
         /* takes every touch while locked, so nothing underneath reacts */
         lockOverlay = View(this).apply {
             isClickable = true
+            isFocusable = false
             visibility = View.GONE
         }
         layer.addView(lockOverlay, FrameLayout.LayoutParams(
@@ -860,6 +916,7 @@ class MainActivity : ComponentActivity() {
             isFocusable = true
             visibility = View.GONE
         }
+        focusRing(btnUnlock, round = true)
         layer.addView(btnUnlock, FrameLayout.LayoutParams(
             dp(56), dp(56), Gravity.START or Gravity.CENTER_VERTICAL).apply { marginStart = dp(28) })
 
@@ -878,6 +935,7 @@ class MainActivity : ComponentActivity() {
         panelScrim = View(this).apply {
             setBackgroundColor(0x66000000)
             isClickable = true
+            isFocusable = false
             visibility = View.GONE
             setOnClickListener { closePanel() }
         }
@@ -909,6 +967,7 @@ class MainActivity : ComponentActivity() {
             aspectIdx = (aspectIdx + 1) % ASPECT_NAMES.size
             prefs().edit().putInt("aspect", aspectIdx).apply()
             applyAspect(true)
+            playerView.showController()     /* stays up while you press through the shapes */
         }
         btnLock.setOnClickListener { setLocked(true) }
         btnUnlock.setOnClickListener { setLocked(false) }
@@ -1152,6 +1211,9 @@ class MainActivity : ComponentActivity() {
         background = panelBg(on)
         setPadding(dp(14), dp(12), dp(14), dp(12))
         isClickable = true
+        focusRing(this, round = false)
+        tag = label                      /* lets the remote's focus come back to it */
+        isSelected = on
         setOnClickListener { action() }
         layoutParams = LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { bottomMargin = dp(6) }
@@ -1174,6 +1236,9 @@ class MainActivity : ComponentActivity() {
                 background = panelBg(on)
                 setPadding(dp(4), dp(10), dp(4), dp(10))
                 isClickable = true
+                focusRing(this, round = false)
+                tag = "size$k"
+                isSelected = on
                 setOnClickListener {
                     prefs().edit().putFloat("subScale", s).apply()
                     applySubScale()
@@ -1205,16 +1270,42 @@ class MainActivity : ComponentActivity() {
         panelScrim.visibility = View.VISIBLE
         panel.visibility = View.VISIBLE
         playerView.hideController()
+        if (!panel.isInTouchMode) focusPanel(null)      /* TV remote: start on the chosen row */
     }
 
     private fun closePanel() {
+        val wasOpen = panelOn()
         panel.visibility = View.GONE
         panelScrim.visibility = View.GONE
+        /* TV remote: back to the ⚙ button, so the next press has somewhere to go */
+        if (wasOpen && !panel.isInTouchMode && !locked && !inPip &&
+            playerLayer.visibility == View.VISIBLE) {
+            playerView.showController()
+            btnTracks.requestFocus()
+        }
+    }
+
+    /** the remote's focus goes to the row it was on, else the chosen one, else the first */
+    private fun focusPanel(key: Any?) {
+        val rows = ArrayList<View>()
+        collectRows(panelBox, rows)
+        val target = rows.firstOrNull { key != null && it.tag == key }
+            ?: rows.firstOrNull { it.isSelected }
+            ?: rows.firstOrNull()
+        target?.requestFocus()
+    }
+
+    private fun collectRows(g: ViewGroup, out: MutableList<View>) {
+        for (i in 0 until g.childCount) {
+            val v = g.getChildAt(i)
+            if (v is ViewGroup) collectRows(v, out) else if (v.isFocusable) out.add(v)
+        }
     }
 
     /** what the stream offers right now, in three short lists */
     private fun fillPanel() {
         val box = panelBox
+        val focusKey = panelBox.findFocus()?.tag
         box.removeAllViews()
         box.layoutDirection = if (uiLang == "en") View.LAYOUT_DIRECTION_LTR else View.LAYOUT_DIRECTION_RTL
         val p = player
@@ -1278,6 +1369,7 @@ class MainActivity : ComponentActivity() {
                 box.addView(optionRow(lbl, qualityPinned && g.isTrackSelected(i)) { chooseQuality(g, i, lbl) })
             }
         }
+        if (panelOn() && !panel.isInTouchMode) focusPanel(focusKey)
     }
 
     /** play exactly this track of its kind */
@@ -1452,6 +1544,63 @@ class MainActivity : ComponentActivity() {
                 showHint((if (v == 0) "🔇" else "🔊") + "  " + (v * 100 / max) + "%")
             } catch (e: Exception) { /* volume is a nicety, never a crash */ }
         }
+    }
+
+    // ---------------- TV remote while a video is on screen ----------------
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (playerKey(event)) return true
+        return super.dispatchKeyEvent(event)
+    }
+
+    /** Only while the player is on screen; the app's pages get every key as before.
+     *  - Channel + / -  : next / previous channel in the list
+     *  - Menu (≡)       : opens / closes the ⚙ panel
+     *  - everything else goes to the player first (as Media3 asks): an arrow or OK
+     *    brings the hidden controls back, play / pause keys work from anywhere */
+    private fun playerKey(e: KeyEvent): Boolean {
+        if (!::playerLayer.isInitialized || playerLayer.visibility != View.VISIBLE || inPip) return false
+        val code = e.keyCode
+        val first = e.action == KeyEvent.ACTION_DOWN && e.repeatCount == 0
+        when (code) {
+            KeyEvent.KEYCODE_CHANNEL_UP, KeyEvent.KEYCODE_CHANNEL_DOWN -> {
+                if (locked) return false
+                if (first) zap(if (code == KeyEvent.KEYCODE_CHANNEL_UP) 1 else -1)
+                return true
+            }
+            KeyEvent.KEYCODE_MENU -> {
+                if (locked || errorBox.visibility == View.VISIBLE) return false
+                if (first) { if (panelOn()) closePanel() else openPanel() }
+                return true
+            }
+        }
+        /* the ⚙ panel, the error screen and the lock handle their own keys */
+        if (locked || panelOn() || errorBox.visibility == View.VISIBLE) return false
+        if (code !in PLAYER_KEYS) return false            /* Back, volume ...: exactly as before */
+        return try { playerView.dispatchKeyEvent(e) } catch (ex: Exception) { false }
+    }
+
+    /** the arrows, OK and the remote's play / pause / skip keys */
+    private val PLAYER_KEYS = setOf(
+        KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN,
+        KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_DPAD_CENTER,
+        KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_MEDIA_PLAY, KeyEvent.KEYCODE_MEDIA_PAUSE,
+        KeyEvent.KEYCODE_MEDIA_FAST_FORWARD, KeyEvent.KEYCODE_MEDIA_REWIND,
+        KeyEvent.KEYCODE_MEDIA_NEXT, KeyEvent.KEYCODE_MEDIA_PREVIOUS, KeyEvent.KEYCODE_HEADSETHOOK)
+
+    /** next / previous channel, going round at the ends - the same way the
+     *  player's own next / previous buttons change it */
+    private fun zap(dir: Int) {
+        val n = urls.size
+        if (n < 2) return
+        val p = player
+        val i = try { p?.currentMediaItemIndex ?: lastIndex } catch (e: Exception) { lastIndex }
+        val j = ((i + dir) % n + n) % n
+        try {
+            if (p == null || dead) buildAndStart(j)       /* after an error: start fresh, like Retry */
+            else p.seekToDefaultPosition(j)
+        } catch (e: Exception) { return }
+        showHint(titles.getOrNull(j) ?: "")
     }
 
     // ---------------- picture-in-picture (Android 8+) ----------------
