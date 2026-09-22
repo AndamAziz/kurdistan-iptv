@@ -2,11 +2,16 @@ package com.kurdistan.iptv
 
 import android.content.Context
 import android.content.pm.ActivityInfo
+import android.graphics.Color
+import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
 import android.view.WindowManager
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
@@ -14,6 +19,7 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
@@ -26,11 +32,13 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.VideoSize
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.NextRenderersFactory
 import org.json.JSONArray
@@ -109,6 +117,19 @@ class MainActivity : ComponentActivity() {
     /** set when we have given up: stops every retry loop dead */
     private var dead = false
 
+    /* ---- picture shape + screen lock: they change only how the picture is
+       shown and whether the screen takes touches, never how a stream opens ---- */
+    private val ASPECT_NAMES = arrayOf("Fit", "Fill", "Zoom", "16:9", "4:3")
+    private var aspectIdx = 0
+    private var locked = false
+    private lateinit var btnAspect: TextView
+    private lateinit var btnLock: TextView
+    private lateinit var btnUnlock: TextView
+    private lateinit var lockOverlay: View
+    private lateinit var txtHint: TextView
+    private val hideUnlock = Runnable { if (locked) btnUnlock.visibility = View.GONE }
+    private val hideHint = Runnable { txtHint.visibility = View.GONE }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -139,6 +160,7 @@ class MainActivity : ComponentActivity() {
         }
         findViewById<TextView>(R.id.btnClose).setOnClickListener { hideNativePlayer() }
         findViewById<TextView>(R.id.liveBadge).text = getString(R.string.live)
+        buildAspectAndLockUi()
 
         playerView.controllerShowTimeoutMs = 3500
         playerView.setControllerVisibilityListener(
@@ -162,6 +184,7 @@ class MainActivity : ComponentActivity() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 when {
+                    playerLayer.visibility == View.VISIBLE && locked -> flashUnlock()
                     playerLayer.visibility == View.VISIBLE -> hideNativePlayer()
                     webView.canGoBack() -> webView.goBack()
                     else -> finish()
@@ -507,6 +530,7 @@ class MainActivity : ComponentActivity() {
 
         player = buildPlayer().also { p ->
             playerView.player = p
+            p.addListener(aspectListener)
 
             p.addListener(object : Player.Listener {
                 override fun onMediaItemTransition(item: MediaItem?, reason: Int) {
@@ -592,8 +616,8 @@ class MainActivity : ComponentActivity() {
             p.prepare()
             p.playWhenReady = true
         }
-        topBar.visibility = View.VISIBLE
-        playerView.showController()
+        if (!locked) topBar.visibility = View.VISIBLE
+        playerView.showController()          /* does nothing while locked */
     }
 
     /** Title and LIVE badge for whichever item is on screen. */
@@ -638,6 +662,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun showError(code: String) {
+        if (locked) setLocked(false)      /* Retry and close must be reachable */
         dead = true                       /* no more retries until the user asks */
         handler.removeCallbacks(posTicker)
         try { player?.playWhenReady = false } catch (e: Exception) {}
@@ -675,6 +700,7 @@ class MainActivity : ComponentActivity() {
 
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         setFullscreen(false)
+        resetLock()
     }
 
     private fun setFullscreen(on: Boolean) {
@@ -687,6 +713,191 @@ class MainActivity : ComponentActivity() {
         } else {
             controller.show(WindowInsetsCompat.Type.systemBars())
         }
+    }
+
+    // ---------------- picture shape + screen lock ----------------
+
+    private fun dp(v: Int): Int = (v * resources.displayMetrics.density + 0.5f).toInt()
+
+    private fun chipBg(): GradientDrawable = GradientDrawable().apply {
+        cornerRadius = dp(12).toFloat()
+        setColor(0xA6000000.toInt())
+        setStroke(dp(1), 0x33FFFFFF)
+    }
+
+    private fun roundBg(): GradientDrawable = GradientDrawable().apply {
+        shape = GradientDrawable.OVAL
+        setColor(0xA6000000.toInt())
+        setStroke(dp(1), 0x33FFFFFF)
+    }
+
+    /** The two new buttons sit at the end of the top bar; the lock layer,
+     *  the unlock button and the short hint sit on top of the player. */
+    private fun buildAspectAndLockUi() {
+        val bar = findViewById<LinearLayout>(R.id.topBar)
+        val layer = findViewById<FrameLayout>(R.id.playerLayer)
+
+        btnAspect = TextView(this).apply {
+            background = chipBg()
+            setTextColor(Color.WHITE)
+            textSize = 12f
+            setTypeface(typeface, Typeface.BOLD)
+            gravity = Gravity.CENTER
+            minWidth = dp(52)
+            setPadding(dp(12), 0, dp(12), 0)
+            isClickable = true
+            isFocusable = true
+        }
+        bar.addView(btnAspect, LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT, dp(36)).apply { marginStart = dp(10) })
+
+        btnLock = TextView(this).apply {
+            background = roundBg()
+            text = "\uD83D\uDD12"
+            textSize = 16f
+            gravity = Gravity.CENTER
+            isClickable = true
+            isFocusable = true
+        }
+        bar.addView(btnLock, LinearLayout.LayoutParams(dp(40), dp(40)).apply { marginStart = dp(8) })
+
+        /* takes every touch while locked, so nothing underneath reacts */
+        lockOverlay = View(this).apply {
+            isClickable = true
+            visibility = View.GONE
+        }
+        layer.addView(lockOverlay, FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+
+        btnUnlock = TextView(this).apply {
+            background = roundBg()
+            text = "\uD83D\uDD13"
+            textSize = 22f
+            gravity = Gravity.CENTER
+            isClickable = true
+            isFocusable = true
+            visibility = View.GONE
+        }
+        layer.addView(btnUnlock, FrameLayout.LayoutParams(
+            dp(56), dp(56), Gravity.START or Gravity.CENTER_VERTICAL).apply { marginStart = dp(28) })
+
+        txtHint = TextView(this).apply {
+            background = chipBg()
+            setTextColor(Color.WHITE)
+            textSize = 16f
+            setTypeface(typeface, Typeface.BOLD)
+            gravity = Gravity.CENTER
+            setPadding(dp(20), dp(10), dp(20), dp(10))
+            visibility = View.GONE
+        }
+        layer.addView(txtHint, FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER))
+
+        aspectIdx = prefs().getInt("aspect", 0).coerceIn(0, ASPECT_NAMES.size - 1)
+        applyAspect(false)
+
+        btnAspect.setOnClickListener {
+            aspectIdx = (aspectIdx + 1) % ASPECT_NAMES.size
+            prefs().edit().putInt("aspect", aspectIdx).apply()
+            applyAspect(true)
+        }
+        btnLock.setOnClickListener { setLocked(true) }
+        btnUnlock.setOnClickListener { setLocked(false) }
+        lockOverlay.setOnClickListener { flashUnlock() }
+    }
+
+    private fun prefs() = getSharedPreferences("kiptv_player", Context.MODE_PRIVATE)
+
+    /** 16:9 and 4:3 force that shape (stretching the picture) - for channels
+     *  with black bars. Fit / Fill / Zoom are the player's own modes. */
+    private fun forcedRatio(): Float = when (aspectIdx) {
+        3 -> 16f / 9f
+        4 -> 4f / 3f
+        else -> 0f
+    }
+
+    private fun applyAspect(announce: Boolean) {
+        playerView.resizeMode = when (aspectIdx) {
+            1 -> AspectRatioFrameLayout.RESIZE_MODE_FILL
+            2 -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+            else -> AspectRatioFrameLayout.RESIZE_MODE_FIT
+        }
+        applyRatio()
+        btnAspect.text = ASPECT_NAMES[aspectIdx]
+        if (announce) showHint(ASPECT_NAMES[aspectIdx])
+    }
+
+    /** the frame the picture sits in (a direct child of PlayerView) */
+    private fun contentFrame(): AspectRatioFrameLayout? {
+        for (i in 0 until playerView.childCount) {
+            val v = playerView.getChildAt(i)
+            if (v is AspectRatioFrameLayout) return v
+        }
+        return null
+    }
+
+    private fun applyRatio() {
+        val frame = contentFrame() ?: return
+        val forced = forcedRatio()
+        if (forced > 0f) {
+            frame.setAspectRatio(forced)
+            return
+        }
+        /* back to the picture's own shape */
+        val vs = try { player?.videoSize } catch (e: Exception) { null }
+        if (vs != null && vs.width > 0 && vs.height > 0)
+            frame.setAspectRatio(vs.width * vs.pixelWidthHeightRatio / vs.height)
+    }
+
+    /** PlayerView sets the frame to the video's own shape on every new video
+     *  size; a forced 16:9 / 4:3 is put back right after it. */
+    private val aspectListener = object : Player.Listener {
+        override fun onVideoSizeChanged(videoSize: VideoSize) {
+            if (forcedRatio() > 0f) playerView.post { applyRatio() }
+        }
+    }
+
+    private fun setLocked(on: Boolean) {
+        locked = on
+        lockOverlay.visibility = if (on) View.VISIBLE else View.GONE
+        if (on) {
+            playerView.hideController()
+            playerView.useController = false
+            topBar.visibility = View.GONE
+            showHint("\uD83D\uDD12")
+            flashUnlock()
+        } else {
+            btnUnlock.removeCallbacks(hideUnlock)
+            btnUnlock.visibility = View.GONE
+            playerView.useController = true
+            topBar.visibility = View.VISIBLE
+            playerView.showController()
+        }
+    }
+
+    /** a touch (or Back) while locked shows the unlock button for a moment */
+    private fun flashUnlock() {
+        btnUnlock.visibility = View.VISIBLE
+        btnUnlock.removeCallbacks(hideUnlock)
+        btnUnlock.postDelayed(hideUnlock, 2500)
+    }
+
+    private fun showHint(text: String) {
+        txtHint.text = text
+        txtHint.visibility = View.VISIBLE
+        txtHint.removeCallbacks(hideHint)
+        txtHint.postDelayed(hideHint, 1200)
+    }
+
+    /** the player closed: leave everything unlocked for next time */
+    private fun resetLock() {
+        locked = false
+        lockOverlay.visibility = View.GONE
+        btnUnlock.removeCallbacks(hideUnlock)
+        btnUnlock.visibility = View.GONE
+        txtHint.removeCallbacks(hideHint)
+        txtHint.visibility = View.GONE
+        playerView.useController = true
     }
 
     // ---------------- lifecycle ----------------
