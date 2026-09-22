@@ -1,0 +1,2301 @@
+<!doctype html>
+<html lang="ku" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#080B10">
+<title>KURDISTAN IPTV</title>
+<style>
+:root{
+  --bg:#080B10; --bg2:#0B0F16; --surface:#121924; --surface2:#19222F;
+  --line:#202A38; --text:#EAF0F6; --muted:#8B97A6; --muted2:#5E6977;
+  --accent:#E63E46; --accent2:#FF6A5E; --live:#2FD46E;
+  --r-lg:24px; --r-md:16px; --r-sm:12px;
+  --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{overscroll-behavior:none}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:340px;z-index:0;pointer-events:none;
+  background:radial-gradient(120% 100% at 50% 0%,rgba(230,62,70,.16),transparent 62%)}
+
+/* ---------- header ---------- */
+header{position:sticky;top:0;z-index:20;padding:calc(10px + var(--safe-t)) 14px 10px;
+  background:rgba(8,11,16,.82);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-bottom:1px solid var(--line)}
+.top{display:flex;align-items:center;gap:10px}
+.iconbtn{width:44px;height:44px;flex:none;display:grid;place-items:center;border-radius:14px;
+  border:1px solid var(--line);background:var(--surface);color:var(--text);cursor:pointer;transition:.18s}
+.iconbtn:active{transform:scale(.92);background:var(--surface2)}
+.iconbtn svg{display:block}
+.brand{flex:1;text-align:center;line-height:1;user-select:none}
+.brand .w1{font-size:20px;font-weight:800;letter-spacing:4px;color:#fff}
+.brand .w2{font-size:20px;font-weight:800;letter-spacing:4px;
+  background:linear-gradient(100deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.brand small{display:block;margin-top:5px;font-size:9px;letter-spacing:2.5px;color:var(--muted2);
+  font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.ann{margin-top:11px;display:flex;align-items:center;gap:9px;
+  background:linear-gradient(90deg,rgba(230,62,70,.14),rgba(230,62,70,.04));
+  border:1px solid rgba(230,62,70,.28);border-radius:var(--r-sm);padding:8px 11px;font-size:12px;overflow:hidden}
+.ann i{font-style:normal;flex:none;display:flex}
+.ann-wrap{flex:1;overflow:hidden;white-space:nowrap}
+.ann-wrap span{display:inline-block;white-space:nowrap;animation:marq 26s linear infinite;
+  animation-delay:-13s;color:#F4C9C9;font-weight:600}
+@keyframes marq{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
+
+.searchbox{display:none;margin-top:10px;position:relative}
+.searchbox.on{display:block}
+.searchbox input{width:100%;padding:13px 42px 13px 14px;background:var(--surface);
+  border:1px solid var(--line);border-radius:var(--r-sm);color:var(--text);font-size:15px;outline:none}
+.searchbox input:focus{border-color:rgba(230,62,70,.55)}
+.searchbox b{position:absolute;inset-inline-end:14px;top:50%;transform:translateY(-50%);color:var(--muted2);display:flex}
+
+.chips{display:flex;gap:8px;overflow-x:auto;padding-top:11px;scrollbar-width:none;-ms-overflow-style:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{white-space:nowrap;border:1px solid var(--line);background:var(--surface);color:var(--muted);
+  border-radius:999px;padding:8px 15px;font-size:13px;font-weight:700;cursor:pointer;transition:.18s;flex:none}
+.chip:active{transform:scale(.94)}
+.chip.on{background:linear-gradient(100deg,var(--accent),var(--accent2));border-color:transparent;
+  color:#fff;box-shadow:0 5px 16px rgba(230,62,70,.35)}
+
+#sync{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + var(--safe-b));z-index:40;
+  display:none;align-items:center;gap:9px;padding:9px 16px;border-radius:999px;
+  background:rgba(18,25,36,.95);border:1px solid var(--line);font-size:12px;font-weight:700;
+  box-shadow:0 10px 30px rgba(0,0,0,.6);max-width:88vw}
+#sync.on{display:flex}
+#sync .sp{width:13px;height:13px;flex:none;border-radius:99px;border:2px solid var(--muted2);
+  border-top-color:var(--accent2);animation:spin .8s linear infinite}
+#sync.err .sp{display:none}
+#sync.err{border-color:rgba(230,62,70,.5);color:#FF9B9B}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ---------- main ---------- */
+main{position:relative;z-index:1;padding:6px 14px calc(44px + var(--safe-b))}
+section{margin-top:22px}
+.shead{display:flex;align-items:center;gap:10px;margin-bottom:13px}
+.shead h2{margin:0;font-size:17px;font-weight:800}
+.shead .bar{width:4px;height:19px;border-radius:99px;background:linear-gradient(var(--accent),var(--accent2));flex:none}
+.shead .cnt{margin-inline-start:auto;font-size:11px;font-weight:700;color:var(--muted2);
+  background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(min-width:520px){.grid{grid-template-columns:repeat(4,1fr)}}
+@media(min-width:760px){.grid{grid-template-columns:repeat(6,1fr)}}
+
+.card{cursor:pointer;transition:transform .16s}
+.card:active{transform:scale(.94)}
+.tile{position:relative;aspect-ratio:1;border-radius:var(--r-lg);overflow:hidden;background:var(--surface);
+  border:1px solid var(--line);box-shadow:0 10px 24px rgba(0,0,0,.45)}
+.tile::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(160deg,rgba(255,255,255,.07),transparent 46%)}
+.mono{position:absolute;inset:0;display:grid;place-items:center;direction:ltr;font-weight:900;
+  font-size:clamp(15px,5.4vw,25px);letter-spacing:.5px;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.45)}
+.tile img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:14%;background:#0E141C}
+.dot{position:absolute;top:9px;inset-inline-start:9px;width:7px;height:7px;border-radius:99px;
+  background:var(--live);box-shadow:0 0 0 3px rgba(47,212,110,.18);animation:pulse 2.1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.name{font-size:11.5px;font-weight:700;color:var(--muted);text-align:center;padding:9px 2px 0;
+  line-height:1.35;min-height:41px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card:active .name{color:var(--text)}
+
+#moreWrap{display:none;text-align:center;padding:26px 0 6px}
+#moreBtn{padding:13px 30px;border-radius:999px;border:1px solid var(--line);background:var(--surface);
+  color:var(--text);font-weight:800;font-size:13.5px;cursor:pointer}
+#moreBtn:active{transform:scale(.95)}
+
+.empty{text-align:center;padding:70px 20px;color:var(--muted2)}
+.empty div:first-child{font-size:42px;margin-bottom:12px;opacity:.5}
+.empty p{margin:0;font-size:14px;font-weight:600}
+
+/* ---------- home: hero + horizontal rows ---------- */
+.heroWrap{position:relative;margin:4px 0 6px}
+.heroBox{
+  position:relative;border-radius:var(--r-lg);overflow:hidden;aspect-ratio:16/9;
+  background:var(--surface);border:1px solid var(--line);
+  box-shadow:0 16px 40px rgba(0,0,0,.55);touch-action:pan-y;
+}
+.hero{
+  position:absolute;inset:0;cursor:pointer;opacity:0;visibility:hidden;
+  transform:scale(1.04);transition:opacity .6s ease,transform 6s linear,visibility .6s;
+}
+.hero.on{opacity:1;visibility:visible;transform:scale(1)}
+.heroDots{display:flex;justify-content:center;gap:6px;margin-top:9px}
+.heroDots i{width:6px;height:6px;border-radius:99px;background:rgba(255,255,255,.22);
+  transition:width .3s ease,background .3s ease;cursor:pointer}
+.heroDots i.on{width:20px;background:var(--accent)}
+.hero .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.55}
+.hero .mono{font-size:clamp(26px,9vw,54px);opacity:.28}
+.hero .sc{position:absolute;inset:0;background:linear-gradient(0deg,rgba(6,8,12,.94) 6%,rgba(6,8,12,.35) 55%,transparent)}
+.hero .in{position:absolute;inset-inline:0;bottom:0;padding:16px}
+.hero .kick{font-size:10px;font-weight:800;letter-spacing:2.5px;color:var(--accent2);margin-bottom:6px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hero h1{margin:0 0 12px;font-size:clamp(19px,5.6vw,28px);font-weight:800;line-height:1.2;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.hero .go{display:inline-flex;align-items:center;gap:8px;padding:11px 24px;border-radius:999px;
+  background:#fff;color:#0A0E14;font-weight:800;font-size:14px}
+
+.hrow{margin-top:20px}
+.rhead{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+.rhead h3{margin:0;font-size:14.5px;font-weight:800;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rhead .bar{width:3px;height:15px;border-radius:99px;background:linear-gradient(var(--accent),var(--accent2));flex:none}
+.rhead .all{font-size:11.5px;font-weight:800;color:var(--muted2);flex:none;cursor:pointer}
+.strip{display:flex;gap:11px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;
+  padding-bottom:2px;scroll-snap-type:x proximity}
+.strip::-webkit-scrollbar{display:none}
+.strip .card{flex:none;width:106px;scroll-snap-align:start}
+.strip.big .card{width:118px}
+
+/* progress on a card */
+.pg{position:absolute;inset-inline:0;bottom:0;height:3px;background:rgba(255,255,255,.22)}
+.pg i{display:block;height:100%;background:var(--accent2)}
+
+/* ---------- movie detail extras ---------- */
+.dact{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:12px}
+.dact .dplay,.dact .dghost{margin-top:0}
+.dghost{display:inline-flex;align-items:center;gap:7px;padding:11px 20px;border-radius:999px;
+  border:1px solid var(--line);background:var(--surface);color:var(--txt);
+  font-size:13px;font-weight:800;cursor:pointer;font-family:inherit}
+.dghost:active{transform:scale(.97)}
+.dbar{margin-top:16px}
+.dbar .tr{height:4px;border-radius:99px;background:rgba(255,255,255,.14);overflow:hidden}
+.dbar .tr i{display:block;height:100%;border-radius:99px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.dbar .lb{display:flex;justify-content:space-between;margin-top:7px;
+  font-size:11px;font-weight:700;color:var(--muted2)}
+.dfacts{margin-top:20px;display:grid;gap:10px}
+.dfacts div{display:flex;gap:10px;font-size:12.5px;line-height:1.5}
+.dfacts b{flex:none;width:74px;color:var(--muted2);font-weight:800}
+.dfacts span{color:var(--muted);min-width:0}
+.dplay{display:inline-flex;align-items:center;gap:8px;margin-top:12px;padding:12px 26px;border-radius:999px;
+  border:0;background:linear-gradient(100deg,var(--accent),var(--accent2));color:#fff;
+  font-weight:800;font-size:14.5px;cursor:pointer;box-shadow:0 10px 24px rgba(230,62,70,.34)}
+.dplay:active{transform:scale(.97)}
+
+/* ---------- bottom nav ---------- */
+#nav{
+  position:fixed;inset-inline:0;bottom:0;z-index:30;display:none;
+  background:rgba(8,11,16,.94);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-top:1px solid var(--line);padding:6px 8px calc(6px + var(--safe-b));
+}
+#nav.on{display:flex}
+#nav button{
+  flex:1;background:none;border:0;color:var(--muted2);cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:4px;padding:7px 0;
+  font-size:11px;font-weight:800;transition:.18s;
+}
+#nav button.on{color:var(--accent2)}
+#nav svg{display:block}
+body.hasnav main{padding-bottom:calc(96px + var(--safe-b))}
+
+/* ---------- poster cards (movies / series) ---------- */
+.grid.posters{grid-template-columns:repeat(3,1fr);gap:12px}
+@media(min-width:520px){.grid.posters{grid-template-columns:repeat(4,1fr)}}
+@media(min-width:760px){.grid.posters{grid-template-columns:repeat(6,1fr)}}
+.poster{position:relative;aspect-ratio:2/3;border-radius:var(--r-md);overflow:hidden;
+  background:var(--surface);border:1px solid var(--line);box-shadow:0 10px 24px rgba(0,0,0,.45)}
+.poster img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.poster .mono{font-size:clamp(13px,4.4vw,20px);padding:6px;text-align:center;line-height:1.2}
+.poster .rt{position:absolute;top:7px;inset-inline-end:7px;background:rgba(0,0,0,.72);
+  border-radius:7px;padding:2px 7px;font-size:10.5px;font-weight:800;color:#FFD466}
+
+/* ---------- series detail ---------- */
+#detail{position:fixed;inset:0;z-index:70;background:var(--bg);overflow-y:auto;display:none}
+#detail.on{display:block}
+.dhero{position:relative;padding:calc(16px + var(--safe-t)) 16px 16px;display:flex;gap:14px;
+  background:linear-gradient(180deg,rgba(230,62,70,.16),transparent)}
+.dhero .pw{width:104px;flex:none;aspect-ratio:2/3;border-radius:var(--r-md);overflow:hidden;
+  background:var(--surface);border:1px solid var(--line)}
+.dhero .pw img{width:100%;height:100%;object-fit:cover}
+.dhero h2{margin:0 0 6px;font-size:18px;font-weight:800;line-height:1.3}
+.dhero .meta{font-size:11.5px;color:var(--muted2);font-weight:700;margin-bottom:8px}
+.dhero p{margin:0;font-size:12.5px;color:var(--muted);line-height:1.6;
+  display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
+#dclose{position:absolute;top:calc(12px + var(--safe-t));inset-inline-end:14px;width:36px;height:36px;
+  border-radius:12px;border:1px solid var(--line);background:rgba(8,11,16,.8);color:#fff;
+  display:grid;place-items:center;font-size:17px;cursor:pointer;z-index:2}
+.dbody{padding:4px 16px calc(28px + var(--safe-b))}
+.ep{display:flex;align-items:center;gap:12px;padding:13px;border-radius:var(--r-md);
+  background:var(--surface);border:1px solid var(--line);margin-bottom:9px;cursor:pointer}
+.ep .no{width:34px;height:34px;flex:none;border-radius:10px;display:grid;place-items:center;
+  background:var(--surface2);font-weight:800;font-size:13px;color:var(--accent2)}
+.ep .tx{flex:1;min-width:0}
+.ep .tx b{display:block;font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ep .tx s{display:block;text-decoration:none;font-size:11px;color:var(--muted2);margin-top:3px}
+.ep:active{transform:scale(.98)}
+
+/* ---------- activation ---------- */
+#gate{position:fixed;inset:0;z-index:90;background:var(--bg);display:grid;place-items:center;padding:24px}
+#gate.hide{display:none}
+.gbox{width:min(400px,100%);text-align:center}
+.glogo{width:84px;height:84px;margin:0 auto 22px;border-radius:26px;display:grid;place-items:center;
+  background:linear-gradient(145deg,var(--accent),var(--accent2));box-shadow:0 18px 44px rgba(230,62,70,.4)}
+.gbox h1{margin:0 0 7px;font-size:22px;font-weight:800;letter-spacing:2px}
+.gbox h1 em{font-style:normal;color:var(--accent2)}
+.gbox p{margin:0 0 26px;color:var(--muted);font-size:13.5px}
+.pins{display:flex;gap:11px;justify-content:center;direction:ltr}
+.pin{width:56px;height:64px;border-radius:var(--r-md);background:var(--surface);border:1.5px solid var(--line);
+  display:grid;place-items:center;font-size:26px;font-weight:800;transition:.2s}
+.pin.fill{border-color:var(--accent);background:var(--surface2)}
+.pin.cur{border-color:var(--accent2);box-shadow:0 0 0 4px rgba(230,62,70,.14)}
+#pininput{position:absolute;opacity:0;pointer-events:none;height:0;width:0}
+.gmsg{height:26px;padding-top:15px;color:#FF7B7B;font-size:13px;font-weight:700}
+.gbtn{width:100%;margin-top:6px;padding:15px;border:0;border-radius:var(--r-md);
+  background:linear-gradient(100deg,var(--accent),var(--accent2));color:#fff;font-weight:800;font-size:15px;
+  cursor:pointer;box-shadow:0 12px 28px rgba(230,62,70,.32)}
+.gbtn:active{transform:scale(.97)}
+.shake{animation:shake .4s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-9px)}75%{transform:translateX(9px)}}
+
+/* ---------- sheet ---------- */
+#sheet{position:fixed;inset:0;z-index:80;display:none}
+#sheet.on{display:block}
+#sheet .bd{position:absolute;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(3px)}
+#sheet .pn{position:absolute;inset-inline:0;bottom:0;max-height:88vh;overflow-y:auto;background:var(--bg2);
+  border-radius:26px 26px 0 0;border-top:1px solid var(--line);
+  padding:10px 16px calc(24px + var(--safe-b));animation:up .28s cubic-bezier(.2,.9,.3,1)}
+@keyframes up{from{transform:translateY(100%)}to{transform:translateY(0)}}
+#sheet .grab{width:42px;height:4px;border-radius:99px;background:var(--line);margin:4px auto 14px}
+.sh{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.sh h3{margin:0;font-size:16px;font-weight:800;flex:1}
+.shback{width:34px;height:34px;flex:none;display:grid;place-items:center;border-radius:11px;
+  border:1px solid var(--line);background:var(--surface);color:var(--text);cursor:pointer}
+
+.row{display:flex;align-items:center;gap:12px;padding:14px;border-radius:var(--r-md);background:var(--surface);
+  border:1px solid var(--line);margin-bottom:9px;cursor:pointer;font-weight:700;font-size:14px}
+.row.on{border-color:var(--accent);background:var(--surface2)}
+.row .ic{flex:none;display:flex;color:var(--muted)}
+.row .tx{flex:1;min-width:0}
+.row .tx b{display:block;font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .tx s{display:block;text-decoration:none;font-size:11.5px;font-weight:600;color:var(--muted2);
+  margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;direction:ltr;text-align:start}
+.row .tick{flex:none;color:var(--accent2);font-size:17px;opacity:0}
+.row.on .tick{opacity:1}
+.row .del{flex:none;padding:6px 10px;border-radius:9px;border:1px solid var(--line);
+  color:#FF8A8A;font-size:11px;font-weight:800;background:transparent}
+
+.addbtn{width:100%;margin-top:6px;padding:14px;border:1px dashed var(--line);border-radius:var(--r-md);
+  background:transparent;color:var(--accent2);font-weight:800;font-size:14px;cursor:pointer}
+.addbtn:active{transform:scale(.98)}
+
+.fld{margin-bottom:12px}
+.fld label{display:block;font-size:11.5px;font-weight:800;color:var(--muted2);margin-bottom:6px}
+.fld input{width:100%;padding:13px 14px;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r-sm);color:var(--text);font-size:15px;outline:none;direction:ltr;text-align:start}
+.fld input:focus{border-color:rgba(230,62,70,.55)}
+.hint{font-size:11.5px;color:var(--muted2);line-height:1.6;margin:2px 0 14px}
+.formErr{color:#FF8A8A;font-size:12.5px;font-weight:700;min-height:20px;margin-bottom:6px}
+
+/* ---------- settings page (opened from the ☰ button, covers the bottom bar) ---------- */
+#settings{position:fixed;inset:0;z-index:60;background:var(--bg);overflow-y:auto;display:none;
+  padding:calc(16px + var(--safe-t)) 16px calc(30px + var(--safe-b))}
+#settings.on{display:block}
+
+/* ---------- favourites tab (the bottom bar stays on top) ---------- */
+#favs{position:fixed;inset:0;z-index:25;background:var(--bg);overflow-y:auto;display:none;
+  padding:calc(16px + var(--safe-t)) 14px calc(100px + var(--safe-b))}
+#favs.on{display:block}
+#favs section{margin-top:18px}
+#favs .chips{padding-top:14px}
+#favs .card.fav .tile::before,#favs .card.fav .poster::before{display:none}
+.fempty{text-align:center;padding:90px 26px 20px;color:var(--muted2)}
+.fempty svg{opacity:.45;margin-bottom:14px}
+.fempty b{display:block;font-size:16px;font-weight:800;color:var(--muted);margin-bottom:8px}
+.fempty p{margin:0;font-size:13px;font-weight:600;line-height:1.7}
+
+/* a favourite card carries a small star */
+.card{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.card.fav .tile::before,.card.fav .poster::before{content:"\2605";position:absolute;z-index:3;top:6px;
+  width:22px;height:22px;border-radius:99px;display:grid;place-items:center;font-size:12px;line-height:1;
+  color:#FFD466;background:rgba(0,0,0,.66)}
+.card.fav .tile::before{inset-inline-end:6px}
+.card.fav .poster::before{inset-inline-start:6px}
+.card.pop{animation:pop .32s ease}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(.9)}100%{transform:scale(1)}}
+
+/* star next to ✕ on the film / series page */
+#dfav{position:absolute;top:calc(12px + var(--safe-t));inset-inline-end:58px;width:36px;height:36px;
+  border-radius:12px;border:1px solid var(--line);background:rgba(8,11,16,.8);color:#fff;
+  display:grid;place-items:center;cursor:pointer;z-index:2;padding:0}
+#dfav.on{color:#FFD466;border-color:rgba(255,212,102,.45)}
+#dfav:active{transform:scale(.92)}
+.dhero h2{padding-inline-end:88px}
+
+/* ---------- search results ---------- */
+.srch .schips{padding-top:4px}
+.srch section{margin-top:18px}
+.smore{text-align:center;padding:16px 0 2px}
+.smore button{padding:11px 24px;border-radius:999px;border:1px solid var(--line);background:var(--surface);
+  color:var(--text);font-weight:800;font-size:13px;cursor:pointer;font-family:inherit}
+.smore button:active{transform:scale(.96)}
+.snote{display:flex;align-items:center;justify-content:center;gap:9px;padding:22px 0 6px;
+  font-size:12.5px;font-weight:700;color:var(--muted2)}
+.snote .sp{width:13px;height:13px;flex:none;border-radius:99px;border:2px solid var(--muted2);
+  border-top-color:var(--accent2);animation:spin .8s linear infinite}
+
+#toast{position:fixed;left:50%;transform:translate(-50%,12px);bottom:calc(84px + var(--safe-b));z-index:95;
+  padding:10px 18px;border-radius:999px;background:rgba(18,25,36,.97);border:1px solid var(--line);
+  font-size:13px;font-weight:800;box-shadow:0 10px 30px rgba(0,0,0,.6);width:max-content;max-width:88vw;text-align:center;
+  opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+.st-h{display:flex;align-items:center;gap:12px;margin:6px 0 4px}
+.st-h h1{margin:0;font-size:23px;font-weight:800;flex:1}
+.st-g{display:flex;align-items:center;gap:9px;margin:24px 0 11px;font-size:12px;font-weight:800;
+  letter-spacing:1px;color:var(--muted2)}
+.st-g .bar{width:3px;height:14px;border-radius:99px;background:linear-gradient(var(--accent),var(--accent2));flex:none}
+.row .tx s.nat{direction:inherit}
+.row .acts{display:flex;gap:6px;flex:none}
+.mini{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;border:1px solid var(--line);
+  background:transparent;color:var(--muted);cursor:pointer;padding:0}
+.mini:active{transform:scale(.92);background:var(--surface2)}
+.mini.red{color:#FF8A8A}
+.badge{flex:none;font-size:10px;font-weight:800;letter-spacing:.6px;padding:4px 8px;border-radius:7px;
+  background:var(--surface2);color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:9px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:13px 6px;text-align:center}
+.stat b{display:block;font-size:18px;font-weight:800;direction:ltr}
+.stat s{display:block;text-decoration:none;font-size:11px;color:var(--muted2);font-weight:700;margin-top:4px}
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="gbox">
+    <div class="glogo"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="8" width="19" height="12.5" rx="2.6"/><path d="M8 3.5l4 4.2 4-4.2"/></svg></div>
+    <h1>KURDISTAN <em>IPTV</em></h1>
+    <p id="gate-sub"></p>
+    <div class="pins" id="pins"></div>
+    <input id="pininput" type="tel" inputmode="numeric" maxlength="4" autocomplete="off">
+    <div class="gmsg" id="gmsg"></div>
+    <button class="gbtn" id="gbtn" onclick="submitPin()"></button>
+  </div>
+</div>
+
+<header>
+  <div class="top">
+    <button class="iconbtn" onclick="toggleSearch()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg></button>
+    <div class="brand">
+      <span class="w1">KURDISTAN</span> <span class="w2">IPTV</span>
+      <small id="tagline"></small>
+    </div>
+    <button class="iconbtn" onclick="openSettings()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  </div>
+
+  <div class="ann">
+    <i><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#E86A6A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10v4a1 1 0 001 1h3l5 4V5L7 9H4a1 1 0 00-1 1z"/><path d="M16.5 8.5a5 5 0 010 7"/><path d="M19.5 5.5a9 9 0 010 13"/></svg></i>
+    <div class="ann-wrap"><span id="annText"></span></div>
+  </div>
+
+  <div class="searchbox" id="sbox">
+    <input id="search" autocomplete="off">
+    <b><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg></b>
+  </div>
+
+  <div class="chips" id="chips"></div>
+</header>
+
+<main id="main"></main>
+
+<div id="favs"><div id="favBody"></div></div>
+<div id="settings"><div id="setBody"></div></div>
+<div id="toast"></div>
+
+<div id="sync"><span class="sp"></span><span id="syncText"></span></div>
+
+<nav id="nav">
+  <button data-s="live" onclick="navTap('live')"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="8" width="19" height="12.5" rx="2.6"/><path d="M8 3.5l4 4.2 4-4.2"/></svg><span id="navLive"></span></button>
+  <button data-s="movies" onclick="navTap('movies')"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.4"/><path d="M8 4v16M16 4v16M3 12h18"/></svg><span id="navMovies"></span></button>
+  <button data-s="series" onclick="navTap('series')"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="14" rx="2.4"/><path d="M7 3l3 3M17 3l-3 3"/></svg><span id="navSeries"></span></button>
+  <button data-s="favs" onclick="navTap('favs')"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg><span id="navFavs"></span></button>
+</nav>
+
+<div id="detail">
+  <button id="dclose" onclick="closeDetail()">&#10005;</button>
+  <button id="dfav" onclick="toggleDetailFav()"></button>
+  <div class="dhero">
+    <div class="pw"><img id="dImg" alt=""></div>
+    <div style="flex:1;min-width:0">
+      <h2 id="dName"></h2>
+      <div class="meta" id="dMeta"></div>
+      <p id="dPlot"></p>
+    </div>
+  </div>
+  <div class="chips" id="dSeasons" style="padding:0 16px 4px"></div>
+  <div class="dbody" id="dEps"></div>
+</div>
+
+<div id="sheet">
+  <div class="bd" onclick="closeSheet()"></div>
+  <div class="pn">
+    <div class="grab"></div>
+    <div class="sh">
+      <button class="shback" id="shBack" onclick="sheetBack()" style="display:none">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+      <h3 id="sheetTitle"></h3>
+    </div>
+    <div id="sheetBody"></div>
+  </div>
+</div>
+
+<script src="channels.js"></script>
+<script>
+/* ==================== CONFIG ==================== */
+var DEFAULT_PLAYLIST = {
+  id: "andam",
+  name: "ANDAM IPTV",
+  type: "m3u",
+  url: "https://raw.githubusercontent.com/AndamAziz/Andamiptv/refs/heads/main/playlist.m3u"
+};
+var PIN_CODE  = "1015";
+var PAGE_SIZE = 48;
+
+/* ==================== i18n ==================== */
+var T = {
+  ku:{name:"کوردی سۆرانی",dir:"rtl",all:"هەموو",search:"گەڕان بۆ کەنال...",
+      featured:"پێشنیارکراو",playNow:"بینین",resume:"بەردەوامبوون",seeAll:"هەمووی",
+      fromStart:"لە سەرەتاوە",left:"%s ماوە",director:"دەرهێنەر",cast:"ئەکتەران",
+      live:"کەناڵ",movies:"فیلم",series:"زنجیرە",seasonN:"وەرزی",episodeN:"ئیپسۆد",
+      noVod:"هیچ فیلمێک نییە",noSer:"هیچ زنجیرەیەک نییە",onlyXtream:"تەنها بۆ لیستی Xtream",
+      tag:"پەخشی ڕاستەوخۆ",ann:"بەخێربێیت بۆ KURDISTAN IPTV — پەخشی ڕاستەوخۆی کەناڵە کوردی و نێودەوڵەتییەکان",
+      recent:"بەردەوامبە لە بینین",none:"هیچ کەناڵێک نەدۆزرایەوە",lang:"زمان",
+      enter:"کۆدی چالاککردن داخڵ بکە",act:"چالاککردن",wrong:"کۆدەکە هەڵەیە",
+      more:"زیاتر پیشان بدە",sync:"نوێکردنەوە",results:"ئەنجامی گەڕان",
+      menu:"ڕێکخستن",lists:"لیستەکانم",addList:"زیادکردنی لیست",
+      chooseType:"جۆری لیستەکە هەڵبژێرە",
+      xtream:"Xtream (پێشنیارکراو)",xtreamSub:"دۆمەین + ناو + وشەی نهێنی",
+      m3uUrl:"M3U بە لینک",m3uUrlSub:"لینکی ڕاستەوخۆی فایلی M3U",
+      fName:"ناوی لیست",fUrl:"لینکی M3U",fDomain:"دۆمەین",fUser:"ناوی بەکارهێنەر",fPass:"وشەی نهێنی",
+      save:"پاشەکەوت",del:"سڕینەوە",
+      errName:"ناو پێویستە",errUrl:"لینک پێویستە و دەبێت بە http دەست پێبکات",
+      errDomain:"دۆمەین پێویستە",errUser:"ناو و وشەی نهێنی پێویستن",
+      loadFail:"نەتوانرا لیستەکە دابەزێنرێت",channels:"کەناڵ",
+      confirmDel:"ئەم لیستە بسڕێتەوە؟",
+      general:"گشتی",storage:"بیرگە",about:"دەربارە",builtIn:"بنەڕەتی",
+      editList:"دەستکاریکردنی لیست",refresh:"ئێستا لیستەکە نوێ بکەرەوە",
+      lastUpd:"دوایین نوێکردنەوە",notYet:"هێشتا نا",
+      clearCache:"سڕینەوەی کاش",cacheSub:"کۆپی پاشەکەوتکراوی لیست · %s",
+      confirmClear:"کاشەکە بسڕدرێتەوە و لیستەکە دووبارە دابەزێنرێتەوە؟",
+      version:"وەشان",plType:"جۆری لیست",
+      favs:"دڵخوازەکان",navFavs:"دڵخواز",favAdded:"زیادکرا بۆ دڵخوازەکان ⭐",favRemoved:"لابرا لە دڵخوازەکان",
+      favEmpty:"هێشتا هیچ دڵخوازێکت نییە",favHint:"پەنجە لەسەر هەر کەناڵ، فیلم یان زنجیرەیەک ڕابگرە تا لێرە زیاد بێت. بۆ لابردنیش هەمان کار بکە.",
+      searchAll:"گەڕان بۆ کەناڵ، فیلم، زنجیرە...",noResults:"هیچ شتێک بۆ «%s» نەدۆزرایەوە",
+      srchLoading:"لە فیلم و زنجیرەکانیش دەگەڕێت…"},
+  en:{name:"English",dir:"ltr",all:"All",search:"Search channels...",
+      featured:"FEATURED",playNow:"Play",resume:"Resume",seeAll:"See all",
+      fromStart:"From start",left:"%s left",director:"Director",cast:"Cast",
+      live:"Live TV",movies:"Movies",series:"Series",seasonN:"Season",episodeN:"Episode",
+      noVod:"No movies here",noSer:"No series here",onlyXtream:"Xtream playlists only",
+      tag:"LIVE STREAMING",ann:"Welcome to KURDISTAN IPTV — live Kurdish and international channels",
+      recent:"Continue watching",none:"No channels found",lang:"Language",
+      enter:"Enter your activation code",act:"Activate",wrong:"Wrong code",
+      more:"Show more",sync:"Updating",results:"Search results",
+      menu:"Settings",lists:"My playlists",addList:"Add playlist",
+      chooseType:"Choose playlist type",
+      xtream:"Xtream (recommended)",xtreamSub:"Domain + username + password",
+      m3uUrl:"M3U by URL",m3uUrlSub:"Direct link to an M3U file",
+      fName:"Playlist name",fUrl:"M3U URL",fDomain:"Domain",fUser:"Username",fPass:"Password",
+      save:"Save",del:"Delete",
+      errName:"Name is required",errUrl:"A URL starting with http is required",
+      errDomain:"Domain is required",errUser:"Username and password are required",
+      loadFail:"Could not load this playlist",channels:"channels",
+      confirmDel:"Delete this playlist?",
+      general:"General",storage:"Storage",about:"About",builtIn:"BUILT-IN",
+      editList:"Edit playlist",refresh:"Update playlist now",
+      lastUpd:"Last updated",notYet:"Not yet",
+      clearCache:"Clear cache",cacheSub:"Saved copy of the playlist · %s",
+      confirmClear:"Clear the cache and download the playlist again?",
+      version:"Version",plType:"Playlist type",
+      favs:"Favorites",navFavs:"Favorites",favAdded:"Added to favorites ⭐",favRemoved:"Removed from favorites",
+      favEmpty:"No favorites yet",favHint:"Press and hold any channel, movie or series to add it here. Do the same to remove it.",
+      searchAll:"Search channels, movies, series...",noResults:"Nothing found for “%s”",
+      srchLoading:"Searching movies and series too…"},
+  ar:{name:"العربية",dir:"rtl",all:"الكل",search:"ابحث عن قناة...",
+      featured:"مميّز",playNow:"تشغيل",resume:"متابعة",seeAll:"الكل",
+      fromStart:"من البداية",left:"باقٍ %s",director:"المخرج",cast:"الأبطال",
+      live:"القنوات",movies:"أفلام",series:"مسلسلات",seasonN:"الموسم",episodeN:"حلقة",
+      noVod:"لا توجد أفلام",noSer:"لا توجد مسلسلات",onlyXtream:"لقوائم Xtream فقط",
+      tag:"بث مباشر",ann:"مرحباً بك في KURDISTAN IPTV — بث مباشر للقنوات الكردية والعالمية",
+      recent:"متابعة المشاهدة",none:"لا توجد قنوات",lang:"اللغة",
+      enter:"أدخل رمز التفعيل",act:"تفعيل",wrong:"الرمز غير صحيح",
+      more:"عرض المزيد",sync:"تحديث",results:"نتائج البحث",
+      menu:"الإعدادات",lists:"قوائمي",addList:"إضافة قائمة",
+      chooseType:"اختر نوع القائمة",
+      xtream:"Xtream (موصى به)",xtreamSub:"النطاق + اسم المستخدم + كلمة السر",
+      m3uUrl:"M3U برابط",m3uUrlSub:"رابط مباشر لملف M3U",
+      fName:"اسم القائمة",fUrl:"رابط M3U",fDomain:"النطاق",fUser:"اسم المستخدم",fPass:"كلمة السر",
+      save:"حفظ",del:"حذف",
+      errName:"الاسم مطلوب",errUrl:"مطلوب رابط يبدأ بـ http",
+      errDomain:"النطاق مطلوب",errUser:"اسم المستخدم وكلمة السر مطلوبان",
+      loadFail:"تعذر تحميل هذه القائمة",channels:"قناة",
+      confirmDel:"حذف هذه القائمة؟",
+      general:"عام",storage:"التخزين",about:"حول التطبيق",builtIn:"افتراضية",
+      editList:"تعديل القائمة",refresh:"تحديث القائمة الآن",
+      lastUpd:"آخر تحديث",notYet:"ليس بعد",
+      clearCache:"مسح الذاكرة المؤقتة",cacheSub:"النسخة المحفوظة من القائمة · %s",
+      confirmClear:"مسح الذاكرة المؤقتة وتحميل القائمة من جديد؟",
+      version:"الإصدار",plType:"نوع القائمة",
+      favs:"المفضلة",navFavs:"المفضلة",favAdded:"أضيفت إلى المفضلة ⭐",favRemoved:"أزيلت من المفضلة",
+      favEmpty:"لا توجد مفضلة بعد",favHint:"اضغط مطولاً على أي قناة أو فيلم أو مسلسل لإضافته هنا، وكرر ذلك لإزالته.",
+      searchAll:"ابحث عن قناة، فيلم، مسلسل...",noResults:"لا توجد نتائج لـ «%s»",
+      srchLoading:"جارٍ البحث في الأفلام والمسلسلات أيضاً…"}
+};
+var LANG_ORDER = ["en", "ku", "ar"];
+var lang = localStorage.kiptv_lang || "en";
+function t(){ return T[lang] || T.ku; }
+
+/* ==================== small helpers ==================== */
+function $(id){ return document.getElementById(id) }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+  .replace(/"/g,"&quot;").replace(/'/g,"&#39;") }
+function lsGet(k,d){ try{ var v=localStorage.getItem(k); return v===null?d:v }catch(e){ return d } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v) }catch(e){} }
+
+var SKIP = {TV:1,HD:1,AND:1,THE:1,OF:1,"4K":1,FHD:1,SD:1};
+function initials(n){
+  var w = String(n).toUpperCase().split(/[\s_\-|\/()\[\]\.]+/).filter(Boolean);
+  var k = w.filter(function(x){ return !SKIP[x] });
+  if(!k.length) k = w;
+  if(!k.length) return "?";
+  if(k.length === 1) return k[0].slice(0,3);
+  if(/^[0-9]+$/.test(k[1])) return (k[0].charAt(0) + k[1]).slice(0,3);
+  return k[0].charAt(0) + k[1].charAt(0);
+}
+function hue(s){ var h=0; for(var i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))%360; return h }
+/* The provider's own category name, exactly as it sends it - only the
+   surrounding whitespace goes. */
+function cleanGroup(g){
+  return String(g == null ? "" : g).trim() || "Other";
+}
+
+/* ==================== playlists ==================== */
+function getLists(){
+  var raw = lsGet("kiptv_lists", null);
+  var arr = null;
+  if(raw){ try{ arr = JSON.parse(raw) }catch(e){ arr = null } }
+  if(!arr || !arr.length) arr = [DEFAULT_PLAYLIST];
+  if(!arr.some(function(p){ return p.id === DEFAULT_PLAYLIST.id })) arr.unshift(DEFAULT_PLAYLIST);
+  return arr;
+}
+function saveLists(a){ lsSet("kiptv_lists", JSON.stringify(a)) }
+function activeId(){
+  var id = lsGet("kiptv_active", DEFAULT_PLAYLIST.id);
+  return getLists().some(function(p){ return p.id === id }) ? id : DEFAULT_PLAYLIST.id;
+}
+function activeList(){
+  var id = activeId(), a = getLists();
+  for(var i=0;i<a.length;i++) if(a[i].id === id) return a[i];
+  return a[0];
+}
+function listUrl(p){
+  if(p.type === "xtream"){
+    var d = String(p.domain||"").replace(/\/+$/,"");
+    return d + "/player_api.php?username=" + encodeURIComponent(p.user)
+             + "&password=" + encodeURIComponent(p.pass);
+  }
+  return p.url || "";
+}
+
+/* ==================== m3u parsing ==================== */
+function lastAttr(L, name){
+  var m = L.match(new RegExp(name + '="[^"]*"', "g"));
+  if(!m) return "";
+  var v = m[m.length-1];
+  return v.slice(name.length + 2, -1);
+}
+/* The tool that built some of these playlists replaced the comma inside
+   "(KHTML, like Gecko)" with a whole group-title attribute, which cuts the
+   user agent in half. Drop every group-title but the last - the last one is
+   the real attribute, the earlier ones are the damage. */
+function repairLine(L){
+  var m = L.match(/group-title="[^"]*"/g);
+  if(!m || m.length < 2) return L;
+  for(var i = 0; i < m.length - 1; i++) L = L.replace(m[i], "");
+  return L;
+}
+
+function firstAttr(L, name){
+  var m = L.match(new RegExp(name + '="[^"]*"'));
+  if(!m) return "";
+  return m[0].slice(name.length + 2, -1).replace(/\s*,\s*/g, ", ")
+             .replace(/\s{2,}/g, " ").trim();
+}
+
+function parseM3U(txt){
+  var lines = txt.split(/\r?\n/), out = [], cur = null;
+  for(var i = 0; i < lines.length; i++){
+    var L = lines[i];
+    if(!L) continue;
+    if(L.charAt(0) === "#"){
+      if(L.slice(0,7) === "#EXTINF"){
+        L = repairLine(L);
+        var nm = L.slice(L.lastIndexOf(",") + 1).trim();
+        if(nm){
+          cur = { c:(lastAttr(L,"group-title") || "Other"), n:nm, u:"",
+                  l:lastAttr(L,"tvg-logo") };
+          /* some channels only answer to their own agent / referrer */
+          var ua = firstAttr(L, "http-user-agent") || firstAttr(L, "user-agent");
+          var rf = firstAttr(L, "http-referrer") || firstAttr(L, "http-referer");
+          if(ua) cur.ua = ua;
+          if(rf) cur.rf = rf;
+        } else cur = null;
+      }
+      /* VLC-style options on their own line, above the URL */
+      else if(L.slice(0,11) === "#EXTVLCOPT:" && cur){
+        var kv = L.slice(11), eq = kv.indexOf("=");
+        if(eq > 0){
+          var k = kv.slice(0, eq).toLowerCase().trim(), v = kv.slice(eq + 1).trim();
+          if(k === "http-user-agent") cur.ua = v;
+          else if(k === "http-referrer" || k === "http-referer") cur.rf = v;
+        }
+      }
+    } else {
+      var u = L.trim();
+      if(u && cur){
+        /* pipe form: ...m3u8|User-Agent=Foo&Referer=Bar */
+        var bar = u.indexOf("|");
+        if(bar > 0){
+          var tail = u.slice(bar + 1);
+          u = u.slice(0, bar);
+          tail.split("&").forEach(function(pair){
+            var e = pair.indexOf("=");
+            if(e < 1) return;
+            var k = pair.slice(0, e).toLowerCase(), v = decodeURIComponent(pair.slice(e + 1));
+            if(k === "user-agent") cur.ua = v;
+            else if(k === "referer" || k === "referrer") cur.rf = v;
+          });
+        }
+        cur.u = u; out.push(cur); cur = null;
+      }
+    }
+  }
+  return out;
+}
+
+/* ==================== xtream api ====================
+   Proper panels answer player_api.php even when get.php is filtered,
+   and it gives categories and logos in one go. */
+function xtGet(base, action){
+  return fetch(viaApp(base + "&action=" + action))
+    .then(function(r){
+      return r.text().then(function(txt){
+        if(!r.ok) throw new Error("HTTP " + r.status + " " + txt.slice(0,110));
+        if(txt.indexOf("PROXY_ERROR") === 0) throw new Error(txt.slice(0,140));
+        var j;
+        try{ j = JSON.parse(txt) }
+        catch(e){ throw new Error("NOT JSON (" + txt.slice(0,70).replace(/\s+/g," ") + ")") }
+        return j;
+      });
+    });
+}
+function loadXtream(p){
+  var d = String(p.domain||"").replace(/\/+$/,"");
+  var base = d + "/player_api.php?username=" + encodeURIComponent(p.user)
+                + "&password=" + encodeURIComponent(p.pass);
+  var live = encodeURIComponent(p.user) + "/" + encodeURIComponent(p.pass);
+
+  return xtGet(base, "get_live_categories").then(function(cats){
+    if(cats && cats.user_info && String(cats.user_info.auth) === "0")
+      throw new Error("LOGIN REJECTED");
+    var map = {};
+    if(Object.prototype.toString.call(cats) === "[object Array]")
+      cats.forEach(function(c){ map[String(c.category_id)] = c.category_name || "Other" });
+
+    return xtGet(base, "get_live_streams").then(function(list){
+      if(Object.prototype.toString.call(list) !== "[object Array]")
+        throw new Error("NO CHANNELS");
+      var out = [];
+      for(var i = 0; i < list.length; i++){
+        var s = list[i];
+        if(!s || !s.stream_id) continue;
+        out.push({
+          c: map[String(s.category_id)] || "Other",
+          n: s.name || ("#" + s.stream_id),
+          u: d + "/live/" + live + "/" + s.stream_id + ".ts",
+          l: s.stream_icon || ""
+        });
+      }
+      return out;
+    });
+  });
+}
+
+/* ==================== cache (one slot, for the active list) ==================== */
+function saveCache(id, list){
+  try{
+    localStorage.setItem("kiptv_cache_owner", id);
+    localStorage.setItem("kiptv_cache", JSON.stringify(list.map(function(c){ return [c.c,c.n,c.u,c.l] })));
+  }catch(e){
+    try{ localStorage.removeItem("kiptv_cache"); localStorage.removeItem("kiptv_cache_owner") }catch(e2){}
+  }
+}
+function loadCache(id){
+  try{
+    if(localStorage.getItem("kiptv_cache_owner") !== id) return null;
+    var a = JSON.parse(localStorage.getItem("kiptv_cache"));
+    if(!a || !a.length) return null;
+    return a.map(function(x){ return {c:x[0],n:x[1],u:x[2],l:x[3]||""} });
+  }catch(e){ return null }
+}
+
+/* ==================== sections: live / movies / series ==================== */
+var SECTION = "live";
+var DATA = { live: [], movies: [], series: [] };   /* per-section channel arrays */
+var LOADED = { live: false, movies: false, series: false };
+var SERIES_CACHE = {};
+
+function isXtream(){ return activeList().type === "xtream" }
+
+function xtBase(p){
+  var d = String(p.domain||"").replace(/\/+$/,"");
+  return d + "/player_api.php?username=" + encodeURIComponent(p.user)
+           + "&password=" + encodeURIComponent(p.pass);
+}
+function xtCreds(p){ return encodeURIComponent(p.user) + "/" + encodeURIComponent(p.pass) }
+
+/* movies ------------------------------------------------------------ */
+function loadVod(p){
+  var d = String(p.domain||"").replace(/\/+$/,""), base = xtBase(p), cr = xtCreds(p);
+  return xtGet(base, "get_vod_categories").then(function(cats){
+    var map = {};
+    if(Object.prototype.toString.call(cats) === "[object Array]")
+      cats.forEach(function(c){ map[String(c.category_id)] = c.category_name || "Other" });
+    return xtGet(base, "get_vod_streams").then(function(list){
+      if(Object.prototype.toString.call(list) !== "[object Array]") return [];
+      var out = [];
+      for(var i = 0; i < list.length; i++){
+        var v = list[i];
+        if(!v || !v.stream_id) continue;
+        out.push({
+          c: map[String(v.category_id)] || "Other",
+          n: v.name || ("#" + v.stream_id),
+          u: d + "/movie/" + cr + "/" + v.stream_id + "." + (v.container_extension || "mp4"),
+          l: v.stream_icon || v.cover || "",
+          r: v.rating || ""
+        });
+      }
+      return out;
+    });
+  });
+}
+
+/* series ------------------------------------------------------------ */
+function loadSeries(p){
+  var base = xtBase(p);
+  return xtGet(base, "get_series_categories").then(function(cats){
+    var map = {};
+    if(Object.prototype.toString.call(cats) === "[object Array]")
+      cats.forEach(function(c){ map[String(c.category_id)] = c.category_name || "Other" });
+    return xtGet(base, "get_series").then(function(list){
+      if(Object.prototype.toString.call(list) !== "[object Array]") return [];
+      var out = [];
+      for(var i = 0; i < list.length; i++){
+        var v = list[i];
+        if(!v || !v.series_id) continue;
+        out.push({
+          c: map[String(v.category_id)] || "Other",
+          n: v.name || ("#" + v.series_id),
+          u: "",                       /* series open a detail page, not a stream */
+          l: v.cover || "",
+          r: v.rating || "",
+          sid: v.series_id,
+          plot: v.plot || ""
+        });
+      }
+      return out;
+    });
+  });
+}
+
+function loadSection(name){
+  if(LOADED[name] || name === "live") return Promise.resolve();
+  var p = activeList();
+  if(p.type !== "xtream"){ LOADED[name] = true; return Promise.resolve() }
+  showSync(t().sync + " · " + (name === "movies" ? t().movies : t().series), false);
+  return (name === "movies" ? loadVod(p) : loadSeries(p))
+    .then(function(list){
+      DATA[name] = list || [];
+      LOADED[name] = true;
+      hideSync();
+    })
+    .catch(function(e){
+      lastLoadError = (e && e.message) ? e.message : "network";
+      LOADED[name] = true;
+      showSync(t().loadFail, true);
+    });
+}
+
+function setSection(name){
+  SECTION = name;
+  f = "";
+  document.getElementById("search").value = "";
+  drawNav();
+  loadSection(name).then(function(){ buildGroups(); renderChips(); render() });
+}
+
+function drawNav(){
+  var d = t(), x = isXtream(), favOn = favsOn();
+  $("navLive").textContent = d.live;
+  $("navMovies").textContent = d.movies;
+  $("navSeries").textContent = d.series;
+  $("navFavs").textContent = d.navFavs;
+  $("search").placeholder = x ? d.searchAll : d.search;
+  var btns = document.querySelectorAll("#nav button");
+  for(var i = 0; i < btns.length; i++){
+    var sName = btns[i].getAttribute("data-s");
+    if(sName === "favs"){ btns[i].className = favOn ? "on" : ""; continue }
+    btns[i].className = (!favOn && SECTION === sName ? "on" : "");
+    btns[i].style.display = (sName !== "live" && !x) ? "none" : "";
+  }
+  $("nav").className = "on";
+  document.body.className = "hasnav";
+}
+
+/* a tap on the bottom bar: the favourites tab opens its page, the others
+   close it (if it is open) and behave exactly as before */
+function navTap(name){
+  if(name === "favs"){ openFavs(); return }
+  var wasOpen = favsOn();
+  if(wasOpen) closeFavs();
+  if(!wasOpen || name !== SECTION) setSection(name);
+}
+
+/* ==================== state ==================== */
+var CH = [], GROUPS = [], f = "", view = [], shown = 0;
+
+function items(){ return SECTION === "live" ? CH : (DATA[SECTION] || []) }
+
+function buildGroups(){
+  var src = items(), n = {};
+  for(var i = 0; i < src.length; i++) n[src[i].c] = (n[src[i].c] || 0) + 1;
+  var g = Object.keys(n).sort(function(a,b){ return n[b] - n[a] });
+  var kur = g.filter(function(k){ return /kurd|كرد|کورد/i.test(k) });
+  GROUPS = kur.concat(g.filter(function(k){ return kur.indexOf(k) < 0 }));
+  if(!f || (f !== "ALL" && !n[f])) f = "ALL";
+}
+function recent(){ try{ return JSON.parse(localStorage.kiptv_recent || "[]") }catch(e){ return [] } }
+function pushRecent(name){
+  var r = recent().filter(function(x){ return x !== name });
+  r.unshift(name);
+  lsSet("kiptv_recent", JSON.stringify(r.slice(0,6)));
+}
+
+/* ==================== resume positions ==================== */
+function allPos(){ try{ return JSON.parse(localStorage.kiptv_pos || "{}") }catch(e){ return {} } }
+function getPos(u){ var a = allPos()[u]; return a || null }
+/* called from the player every few seconds */
+function savePos(u, p, d){
+  if(!u || !d || d < 60000) return;
+  var m = allPos();
+  if(p > d * 0.95) delete m[u];                 /* finished - forget it */
+  else m[u] = { p: Math.round(p), d: Math.round(d), t: Date.now() };
+  var keys = Object.keys(m);
+  if(keys.length > 200){
+    keys.sort(function(a,b){ return (m[b].t||0) - (m[a].t||0) });
+    var trimmed = {};
+    for(var i = 0; i < 200; i++) trimmed[keys[i]] = m[keys[i]];
+    m = trimmed;
+  }
+  lsSet("kiptv_pos", JSON.stringify(m));
+}
+window.savePos = savePos;
+
+/* the player closed - redraw so "Continue watching" and the
+   resume labels show where we actually stopped */
+function refreshHome(){
+  try{
+    if($("detail").classList.contains("on")){
+      if(curMovie) movieBody(curMovie.u, curMovie.n, null);
+      else if(curSeason) pickSeason(curSeason);
+    }
+    if(!($("search").value || "").trim() && f === "ALL") render();
+  }catch(e){}
+}
+window.refreshHome = refreshHome;
+
+/* every watched item we can still find, newest first */
+function continueList(){
+  var m = allPos(), out = [];
+  var pools = [DATA.movies || [], DATA.series || [], CH];
+  var byUrl = {};
+  for(var i = 0; i < pools.length; i++)
+    for(var j = 0; j < pools[i].length; j++) byUrl[pools[i][j].u] = pools[i][j];
+  var eps = lsGet("kiptv_eps", null);
+  if(eps){ try{ JSON.parse(eps).forEach(function(e){ byUrl[e.u] = e }) }catch(e){} }
+
+  Object.keys(m).forEach(function(u){
+    var it = byUrl[u];
+    if(it) out.push({ c:it.c, n:it.n, u:u, l:it.l, r:it.r, pct: m[u].p / m[u].d, t: m[u].t });
+  });
+  out.sort(function(a,b){ return (b.t||0) - (a.t||0) });
+  return out.slice(0, 18);
+}
+
+/* remember episodes so they can appear in Continue watching later */
+function rememberEpisodes(list){
+  try{
+    var old = JSON.parse(lsGet("kiptv_eps","[]"));
+    var seen = {}, all = list.concat(old), keep = [];
+    for(var i = 0; i < all.length && keep.length < 120; i++)
+      if(!seen[all[i].u]){ seen[all[i].u] = 1; keep.push(all[i]) }
+    lsSet("kiptv_eps", JSON.stringify(keep));
+  }catch(e){}
+}
+
+/* ==================== render ==================== */
+function cardHTML(c, forceSquare){
+  var square = (forceSquare !== undefined) ? forceSquare : (SECTION === "live");
+  var h = hue(c.n);
+  var bg = "linear-gradient(145deg,hsl("+h+",42%,34%),hsl("+((h+42)%360)+",48%,20%))";
+  var img = c.l ? '<img src="'+esc(c.l)+'" loading="lazy" onerror="this.remove()" alt="">' : '';
+
+  var pgv = c.pct;
+  if(pgv === undefined){ var sp = getPos(c.u); pgv = sp ? sp.p / sp.d : 0 }
+  var pg = (pgv > 0.01 && pgv < 0.97)
+    ? '<span class="pg"><i style="width:'+Math.round(pgv*100)+'%"></i></span>' : '';
+
+  if(square){
+    return '<div class="card'+(isFav(c) ? " fav" : "")+'" data-u="'+esc(c.u)+'" data-n="'+esc(c.n)+'">'
+         +   '<div class="tile" style="background:'+bg+'">'
+         +     '<div class="mono">'+esc(initials(c.n))+'</div>'+img+'<span class="dot"></span>'+pg
+         +   '</div><div class="name">'+esc(c.n)+'</div></div>';
+  }
+  var rating = c.r ? '<span class="rt">&#9733; '+esc(String(c.r).slice(0,3))+'</span>' : '';
+  var attrs = c.sid ? ' data-sid="'+esc(c.sid)+'"' : ' data-u="'+esc(c.u)+'"';
+  return '<div class="card'+(isFav(c) ? " fav" : "")+'"'+attrs+' data-n="'+esc(c.n)+'">'
+       +   '<div class="poster" style="background:'+bg+'">'
+       +     '<div class="mono">'+esc(c.n)+'</div>'+img+rating+pg
+       +   '</div><div class="name">'+esc(c.n)+'</div></div>';
+}
+/* ---------- home: hero + horizontal rows ---------- */
+/* Up to HERO_N items for the banner, spread across different groups so the
+   same category does not fill it. Picture first, then anything. */
+var HERO_N = 6, HERO_MS = 6000;
+
+function heroPicks(){
+  var pool = (DATA.movies && DATA.movies.length) ? DATA.movies
+           : (DATA.series && DATA.series.length) ? DATA.series : CH;
+  if(!pool.length) return [];
+  var withArt = pool.filter(function(c){ return c.l });
+  var src = withArt.length >= HERO_N ? withArt : pool;
+
+  /* start somewhere new each hour so the banner is not always the same */
+  var start = Math.floor(Date.now() / 3600000) % src.length;
+  var out = [], usedGroup = {}, seen = {};
+
+  for(var pass = 0; pass < 2 && out.length < HERO_N; pass++)
+    for(var i = 0; i < src.length && out.length < HERO_N; i++){
+      var c = src[(start + i) % src.length];
+      if(seen[c.u]) continue;
+      if(pass === 0 && usedGroup[c.c]) continue;   /* one per group first */
+      seen[c.u] = 1; usedGroup[c.c] = 1; out.push(c);
+    }
+  return out;
+}
+
+function slideHTML(c, first){
+  var h = hue(c.n);
+  var bg = "linear-gradient(145deg,hsl("+h+",42%,30%),hsl("+((h+42)%360)+",48%,16%))";
+  var img = c.l ? '<img class="bg" src="'+esc(c.l)+'" onerror="this.remove()" alt="">' : '';
+  var attrs = c.sid ? ' data-sid="'+esc(c.sid)+'"' : ' data-u="'+esc(c.u)+'"';
+  var sub = [];
+  if(c.r) sub.push("★ " + String(c.r).slice(0,3));
+  if(c.c) sub.push(cleanGroup(c.c));
+  return '<div class="hero'+(first ? " on" : "")+'"'+attrs+' data-n="'+esc(c.n)+'" style="background:'+bg+'">'
+       +   img + '<div class="mono">'+esc(initials(c.n))+'</div><div class="sc"></div>'
+       +   '<div class="in"><div class="kick">'+esc(sub.length ? sub.join("  ·  ") : t().featured)+'</div>'
+       +     '<h1>'+esc(c.n)+'</h1>'
+       +     '<span class="go">&#9654;&#65038; '+esc(t().playNow)+'</span></div>'
+       + '</div>';
+}
+
+function heroHTML(list){
+  if(!list || !list.length) return "";
+  var slides = list.map(function(c, i){ return slideHTML(c, i === 0) }).join("");
+  var dots = list.length < 2 ? "" :
+    '<div class="heroDots" id="heroDots">'
+    + list.map(function(c, i){ return '<i'+(i ? "" : ' class="on"')+' data-hd="'+i+'"></i>' }).join("")
+    + '</div>';
+  return '<div class="heroWrap"><div class="heroBox" id="heroBox">'+slides+'</div>'+dots+'</div>';
+}
+
+/* ---------- the banner's own little engine ---------- */
+var heroI = 0, heroTimer = null, heroHold = null;
+
+function heroStop(){
+  if(heroTimer){ clearInterval(heroTimer); heroTimer = null }
+  if(heroHold){ clearTimeout(heroHold); heroHold = null }
+}
+
+function heroGo(i){
+  var box = $("heroBox"); if(!box) return;
+  var s = box.getElementsByClassName("hero");
+  if(s.length < 2) return;
+  heroI = (i + s.length) % s.length;
+  for(var k = 0; k < s.length; k++) s[k].className = "hero" + (k === heroI ? " on" : "");
+  var d = $("heroDots");
+  if(d){
+    var dd = d.getElementsByTagName("i");
+    for(var j = 0; j < dd.length; j++) dd[j].className = (j === heroI ? "on" : "");
+  }
+}
+
+/* the user touched it - stop rotating, pick up again after a pause */
+function heroPause(){
+  heroStop();
+  heroHold = setTimeout(heroStart, HERO_MS * 2);
+}
+
+function heroStart(){
+  heroStop();
+  var box = $("heroBox");
+  if(!box || box.getElementsByClassName("hero").length < 2) return;
+  heroI = 0;
+  heroTimer = setInterval(function(){
+    if(!$("heroBox")){ heroStop(); return }         /* the view changed */
+    if(document.hidden) return;                      /* app in the background */
+    if($("detail").classList.contains("on")) return; /* a detail page is open */
+    heroGo(heroI + 1);
+  }, HERO_MS);
+}
+
+function rowHTML(title, list, square){
+  if(!list || !list.length) return "";
+  return '<div class="hrow"><div class="rhead"><span class="bar"></span><h3>'+esc(title)+'</h3>'
+       + '<span class="all" data-go="'+esc(title)+'">'+esc(t().seeAll)+' &#8250;</span></div>'
+       + '<div class="strip'+(square ? "" : " big")+'">'
+       + list.slice(0,16).map(function(c){ return cardHTML(c, square) }).join("")
+       + '</div></div>';
+}
+
+function homeHTML(){
+  var square = SECTION === "live";
+  var html = heroHTML(heroPicks());
+
+  var cont = continueList();
+  if(cont.length) html += rowHTML(t().recent, cont, false);
+
+  var src = items(), byGroup = {};
+  for(var i = 0; i < src.length; i++) (byGroup[src[i].c] = byGroup[src[i].c] || []).push(src[i]);
+  for(var g = 0; g < GROUPS.length && g < 12; g++)
+    html += rowHTML(cleanGroup(GROUPS[g]), byGroup[GROUPS[g]], square);
+  return html;
+}
+
+function currentTitle(q){
+  if(q) return t().results;
+  if(f === "ALL") return t().all;
+  return cleanGroup(f);
+}
+function render(){
+  var q = ($("search").value || "").trim().toLowerCase();
+  if(q){ heroStop(); renderSearch(); return }      /* search: channels + films + series */
+  $("chips").style.display = "";                   /* the group chips come back after a search */
+  var src = items();
+  view = q ? src.filter(function(c){ return c.n.toLowerCase().indexOf(q) > -1 })
+           : (f === "ALL" ? src : src.filter(function(c){ return c.c === f }));
+
+  /* the home view: a hero and horizontal rows */
+  heroStop();
+  if(!q && f === "ALL" && src.length){
+    $("main").innerHTML = homeHTML();
+    shown = 0;
+    heroStart();
+    window.scrollTo(0,0);
+    return;
+  }
+
+  var gcls = SECTION === "live" ? "grid" : "grid posters";
+  var html = "";
+  if(!view.length){
+    var msg = SECTION === "movies" ? t().noVod : (SECTION === "series" ? t().noSer : t().none);
+    if(!isXtream() && SECTION !== "live") msg = t().onlyXtream;
+    $("main").innerHTML = html + '<div class="empty"><div>&#128533;</div><p>'+esc(msg)+'</p></div>';
+    return;
+  }
+  html += '<section><div class="shead"><span class="bar"></span><h2>'+esc(currentTitle(q))+'</h2>'
+       +  '<span class="cnt">'+view.length+'</span></div><div class="'+gcls+'" id="grid"></div></section>'
+       +  '<div id="moreWrap"><button id="moreBtn" onclick="loadMore()"></button></div>';
+  $("main").innerHTML = html;
+  $("moreBtn").textContent = t().more;
+  shown = 0;
+  loadMore();
+  window.scrollTo(0,0);
+}
+function loadMore(){
+  var g = $("grid"); if(!g) return;
+  var next = view.slice(shown, shown + PAGE_SIZE);
+  if(next.length){ g.insertAdjacentHTML("beforeend", next.map(function(c){ return cardHTML(c); }).join("")); shown += next.length }
+  $("moreWrap").style.display = (shown < view.length) ? "block" : "none";
+}
+function renderChips(){
+  var html = '<button class="chip'+(f==="ALL"?" on":"")+'" data-g="ALL">'+esc(t().all)+'</button>';
+  for(var i = 0; i < GROUPS.length; i++)
+    html += '<button class="chip'+(f===GROUPS[i]?" on":"")+'" data-g="'+esc(GROUPS[i])+'">'
+          + esc(cleanGroup(GROUPS[i])) + '</button>';
+  $("chips").innerHTML = html;
+}
+function applyLang(){
+  var d = t();
+  document.documentElement.lang = lang;
+  document.documentElement.dir = d.dir;
+  $("tagline").textContent = activeList().name;
+  $("annText").textContent = d.ann;
+  $("search").placeholder = d.search;
+  $("gate-sub").textContent = d.enter;
+  $("gbtn").textContent = d.act;
+  drawNav();                       /* the bottom bar speaks the new language too */
+  renderChips(); render();
+  refreshSettings();               /* ...and so does the settings page */
+  refreshFavs();
+}
+
+/* ==================== actions ==================== */
+function play(url,title){
+  pushRecent(title);
+  if(window.AndroidPlayer) AndroidPlayer.playNative(url,title);
+  else window.open(url,"_blank");
+}
+
+/* Hand the player a queue so its next / previous buttons work.
+   Only a window around the chosen item is sent, to keep it light. */
+function playQueue(arr, idx){
+  if(!arr || !arr.length) return;
+  var WIN = 150;
+  var from = Math.max(0, idx - WIN), to = Math.min(arr.length, idx + WIN);
+  var slice = arr.slice(from, to);
+  var pick = idx - from;
+  pushRecent(arr[idx].n);
+  /* keep enough about a film / episode that "Continue watching"
+     can show it again on the next cold start */
+  if(/\/movie\/|\/series\//.test(arr[idx].u || ""))
+    rememberEpisodes([{ c:arr[idx].c || "", n:arr[idx].n, u:arr[idx].u,
+                        l:arr[idx].l || "", r:arr[idx].r || "" }]);
+  var sp = getPos(arr[idx].u);
+  var startMs = (sp && sp.p > 10000 && sp.p < sp.d * 0.95) ? sp.p : 0;
+  if(window.AndroidPlayer && AndroidPlayer.playList){
+    AndroidPlayer.playList(JSON.stringify(slice.map(function(c){
+      var o = { n: c.n, u: c.u };
+      if(c.ua) o.ua = c.ua;            /* channel's own user agent */
+      if(c.rf) o.rf = c.rf;            /* channel's own referrer */
+      return o;
+    })), pick, startMs);
+  } else {
+    play(arr[idx].u, arr[idx].n);
+  }
+}
+/* tap a dot to jump to that banner */
+$("main").addEventListener("click", function(e){
+  var hd = e.target.getAttribute && e.target.getAttribute("data-hd");
+  if(hd !== null && hd !== undefined && hd !== ""){
+    heroGo(parseInt(hd, 10)); heroPause(); e.stopPropagation();
+  }
+}, true);
+
+/* swipe the banner left or right */
+(function(){
+  var x0 = null, y0 = null;
+  $("main").addEventListener("touchstart", function(e){
+    var el = e.target;
+    while(el && el !== this && !(el.id === "heroBox")) el = el.parentNode;
+    if(!el || el === this){ x0 = null; return }
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY;
+  }, { passive:true });
+
+  $("main").addEventListener("touchend", function(e){
+    if(x0 === null) return;
+    var dx = e.changedTouches[0].clientX - x0;
+    var dy = e.changedTouches[0].clientY - y0;
+    x0 = null;
+    if(Math.abs(dx) < 45 || Math.abs(dx) < Math.abs(dy)) return;   /* a scroll, not a swipe */
+    var back = (t().dir === "rtl") ? (dx < 0) : (dx > 0);
+    heroGo(heroI + (back ? -1 : 1));
+    heroPause();
+    e.preventDefault();
+  });
+})();
+
+$("main").addEventListener("click", function(e){
+  if(e.target.getAttribute && e.target.getAttribute("data-hd") !== null) return;
+  var go = e.target.getAttribute && e.target.getAttribute("data-go");
+  if(go){
+    for(var k = 0; k < GROUPS.length; k++) if(cleanGroup(GROUPS[k]) === go){ f = GROUPS[k]; break }
+    renderChips(); render(); return;
+  }
+  var el = e.target;
+  while(el && el !== this && !(el.getAttribute && (el.getAttribute("data-u") || el.getAttribute("data-sid"))))
+    el = el.parentNode;
+  if(!el || el === this) return;
+  var sid = el.getAttribute("data-sid");
+  if(sid){ openSeries(sid, el.getAttribute("data-n")); return }
+  var u = el.getAttribute("data-u"), nm = el.getAttribute("data-n");
+  if(u.indexOf("/movie/") > -1){ openMovie(u, nm); return }
+  var idx = -1;
+  for(var i = 0; i < view.length; i++) if(view[i].u === u){ idx = i; break }
+  if(idx > -1) playQueue(view, idx);
+  else play(u, nm);
+});
+$("chips").addEventListener("click", function(e){
+  var el = e.target;
+  while(el && el !== this && !el.getAttribute("data-g")) el = el.parentNode;
+  if(el && el.getAttribute("data-g")){
+    f = el.getAttribute("data-g");
+    $("search").value = "";
+    renderChips(); render();
+  }
+});
+var stimer = null;
+$("search").addEventListener("input", function(){ clearTimeout(stimer); stimer = setTimeout(render, 220) });
+
+var ticking = false;
+window.addEventListener("scroll", function(){
+  if(ticking) return;
+  ticking = true;
+  setTimeout(function(){
+    ticking = false;
+    if(shown && shown < view.length &&
+       window.innerHeight + window.pageYOffset > document.body.offsetHeight - 900) loadMore();
+  }, 120);
+});
+function toggleSearch(){
+  var b = $("sbox");
+  if(b.classList.contains("on")){ layerClose("search"); return }   /* Back does the same */
+  b.classList.add("on");
+  layerOpen("search");
+  SQ_TYPE = "all";
+  $("search").focus();
+  searchWarm();                    /* films + series start loading while you type */
+}
+
+/* ==================== search: channels + films + series ====================
+   Everything in the active playlist is searched at once and shown by type,
+   the tab you are on first. Words can come in any order, capitals and
+   accents do not matter, and Arabic / Kurdish letter forms (ك ک, ي ی ى …)
+   count as the same letter. A channel found here plays through the same
+   playQueue as before; films and series open their usual page. */
+var SQ_TYPE = "all";              /* all | live | movie | series */
+var SQ_SHOW = 48;                 /* how many are shown for one type */
+var SQ_LOADING = false;
+
+function searchNorm(s){
+  s = String(s == null ? "" : s).toLowerCase();
+  try{ s = s.normalize("NFD") }catch(e){}
+  return s.replace(/[̀-ًͯ-ٰٟـ‌‍]/g, "")
+          .replace(/[يى]/g, "ی").replace(/ك/g, "ک").replace(/ة/g, "ه")
+          .replace(/[أإآٱ]/g, "ا").replace(/ؤ/g, "و")
+          .replace(/[٠-٩]/g, function(d){ return String(d.charCodeAt(0) - 1632) })
+          .replace(/[۰-۹]/g, function(d){ return String(d.charCodeAt(0) - 1776) });
+}
+function isWordStart(s, at){
+  if(at <= 0) return true;
+  return /[\s\-_|:.,\/()\[\]]/.test(s.charAt(at - 1));
+}
+/* every word of the query must appear; names that start with it come first */
+function searchHits(list, q, toks){
+  var out = [];
+  for(var i = 0; i < list.length; i++){
+    var c = list[i];
+    if(!c || !c.n) continue;
+    var s = c._s || (c._s = searchNorm(c.n));
+    var ok = true;
+    for(var k = 0; k < toks.length; k++) if(s.indexOf(toks[k]) < 0){ ok = false; break }
+    if(!ok) continue;
+    /* 0 starts with the query · 1 the whole query at a word · 2 the whole query
+       anywhere · 3 the words apart, first one at a word · 4 anything else */
+    var p = s.indexOf(q), score;
+    if(p === 0) score = 0;
+    else if(p > 0) score = isWordStart(s, p) ? 1 : 2;
+    else score = isWordStart(s, s.indexOf(toks[0])) ? 3 : 4;
+    out.push({ c: c, s: score, i: i });
+  }
+  out.sort(function(a, b){ return a.s - b.s || a.i - b.i });
+  return out.map(function(x){ return x.c });
+}
+
+/* films and series of an Xtream playlist are loaded when you first search */
+function searchWarm(){
+  if(SQ_LOADING || !isXtream() || (LOADED.movies && LOADED.series)) return;
+  SQ_LOADING = true;
+  var owner = activeId();
+  loadSection("movies")
+    .then(function(){ return activeId() === owner ? loadSection("series") : null })
+    .then(function(){
+      SQ_LOADING = false;
+      if(activeId() === owner && ($("search").value || "").trim()) renderSearch(true);
+    });
+}
+
+function renderSearch(keepScroll){
+  var d = t(), raw = ($("search").value || "").trim();
+  var q = searchNorm(raw).replace(/\s+/g, " ");
+  var toks = q.split(" ").filter(Boolean);
+  if(!toks.length){ return }
+  searchWarm();
+
+  var res = { live: searchHits(CH, q, toks),
+              movie: LOADED.movies ? searchHits(DATA.movies || [], q, toks) : [],
+              series: LOADED.series ? searchHits(DATA.series || [], q, toks) : [] };
+  var order = SECTION === "movies" ? ["movie", "live", "series"]
+            : SECTION === "series" ? ["series", "live", "movie"] : ["live", "movie", "series"];
+  var types = order.filter(function(k){ return res[k].length });
+  var total = types.reduce(function(n, k){ return n + res[k].length }, 0);
+  if(SQ_TYPE !== "all" && !res[SQ_TYPE].length) SQ_TYPE = "all";
+  var one = types.length === 1 ? types[0] : (SQ_TYPE !== "all" ? SQ_TYPE : null);
+  var names = { live: d.live, movie: d.movies, series: d.series };
+
+  /* the found channels are the next / previous queue, as before */
+  view = res.live;
+  shown = 0;                        /* keeps the page-scroll loader out of the way */
+
+  var h = '<div class="srch">';
+  if(types.length > 1){
+    h += '<div class="chips schips">'
+       + '<button class="chip'+(one ? "" : " on")+'" data-st="all">'+esc(d.all)+' · '+total+'</button>'
+       + types.map(function(k){
+           return '<button class="chip'+(one === k ? " on" : "")+'" data-st="'+k+'">'+esc(names[k])+' · '+res[k].length+'</button>';
+         }).join("")
+       + '</div>';
+  }
+  (one ? [one] : types).forEach(function(k){
+    var list = res[k], square = k === "live";
+    var lim = one ? SQ_SHOW : (square ? 12 : 9);
+    h += '<section><div class="shead"><span class="bar"></span><h2>'+esc(names[k])+'</h2>'
+       + '<span class="cnt">'+list.length+'</span></div>'
+       + '<div class="'+(square ? "grid" : "grid posters")+'">'
+       + list.slice(0, lim).map(function(c){ return cardHTML(c, square) }).join("")
+       + '</div>';
+    if(list.length > lim)
+      h += one ? '<div class="smore"><button data-sm="1">'+esc(d.more)+'</button></div>'
+               : '<div class="smore"><button data-st="'+k+'">'+esc(d.seeAll)+' · '+list.length+' &#8250;</button></div>';
+    h += '</section>';
+  });
+  if(SQ_LOADING)
+    h += '<div class="snote"><span class="sp"></span>'+esc(d.srchLoading)+'</div>';
+  else if(!total)
+    h += '<div class="empty"><div>&#128269;</div><p>'+esc(d.noResults.replace("%s", raw))+'</p></div>';
+  h += '</div>';
+
+  $("main").innerHTML = h;
+  $("chips").style.display = "none";               /* group chips do nothing while searching */
+  if(!keepScroll) window.scrollTo(0, 0);
+}
+
+/* type chips, "see all" and "show more" inside the results */
+$("main").addEventListener("click", function(e){
+  var el = e.target;
+  while(el && el !== this && !(el.getAttribute && (el.getAttribute("data-st") || el.getAttribute("data-sm"))))
+    el = el.parentNode;
+  if(!el || el === this) return;
+  if(el.getAttribute("data-sm")){ SQ_SHOW += 48; renderSearch(true); return }
+  SQ_TYPE = el.getAttribute("data-st");
+  SQ_SHOW = 48;
+  renderSearch();
+});
+/* a new query starts from the first page again */
+$("search").addEventListener("input", function(){ SQ_SHOW = 48 });
+
+/* ==================== series detail ==================== */
+var curSeries = null, curSeason = null, curMovie = null;
+
+function openSeries(sid, name){
+  var p = activeList();
+  if(p.type !== "xtream") return;
+  curMovie = null;
+  detailFav("series", sid, name);
+  if(!$("detail").classList.contains("on")) layerOpen("detail");   /* phone Back closes it */
+  $("detail").classList.add("on");
+  $("dName").textContent = name || "";
+  $("dMeta").textContent = "";
+  $("dPlot").textContent = "";
+  $("dSeasons").innerHTML = "";
+  $("dEps").innerHTML = '<div class="empty"><p>…</p></div>';
+  $("dImg").removeAttribute("src");
+
+  var done = function(info){
+    curSeries = info;
+    var i = info.info || {};
+    $("dName").textContent = i.name || name || "";
+    if(i.cover) $("dImg").src = i.cover;
+    var bits = [];
+    if(i.releaseDate || i.releasedate) bits.push(String(i.releaseDate || i.releasedate).slice(0,4));
+    if(i.genre) bits.push(i.genre);
+    if(i.rating) bits.push("\u2605 " + i.rating);
+    $("dMeta").textContent = bits.join("  ·  ");
+    $("dPlot").textContent = i.plot || "";
+    var seasons = [];
+    for(var k in info.episodes) if(info.episodes.hasOwnProperty(k)) seasons.push(k);
+    seasons.sort(function(a,b){ return (parseInt(a,10)||0) - (parseInt(b,10)||0) });
+    if(!seasons.length){ $("dEps").innerHTML = '<div class="empty"><p>-</p></div>'; return }
+    curSeason = seasons[0];
+    $("dSeasons").innerHTML = seasons.map(function(k){
+      return '<button class="chip" data-se="'+esc(k)+'" onclick="pickSeason(\''+esc(k)+'\')">'
+           + esc(t().seasonN + " " + k) + '</button>';
+    }).join("");
+    pickSeason(curSeason);
+  };
+
+  if(SERIES_CACHE[sid]) { done(SERIES_CACHE[sid]); return }
+  xtGet(xtBase(p), "get_series_info&series_id=" + encodeURIComponent(sid))
+    .then(function(info){
+      if(!info || !info.episodes) throw new Error("NO EPISODES");
+      SERIES_CACHE[sid] = info;
+      done(info);
+    })
+    .catch(function(e){
+      lastLoadError = (e && e.message) ? e.message : "network";
+      $("dEps").innerHTML = '<div class="empty"><div>&#128533;</div><p>'+esc(t().loadFail)+'</p></div>';
+    });
+}
+
+/* ---------- movie detail ---------- */
+function fmtTime(ms){
+  var t = Math.round(ms / 1000), h = Math.floor(t/3600), m = Math.floor((t%3600)/60);
+  return (h ? h + "h " : "") + m + "m";
+}
+/* the buttons, the resume bar and the extra facts of a film.
+   Called twice: once from what we already know, once the panel answers. */
+function movieBody(url, name, i){
+  var d = t(), sp = getPos(url), html = '<div class="dact">';
+  html += '<button class="dplay" data-play="'+esc(url)+'" data-n="'+esc(name||"")+'">&#9654;&#65038; '
+       +  esc(sp ? (d.resume + "  ·  " + fmtTime(sp.p)) : d.playNow) + '</button>';
+  if(sp) html += '<button class="dghost" data-play="'+esc(url)+'" data-n="'+esc(name||"")
+              +  '" data-fresh="1">&#8634; ' + esc(d.fromStart) + '</button>';
+  html += '</div>';
+
+  if(sp){
+    var pct = Math.min(100, Math.round(sp.p / sp.d * 100));
+    html += '<div class="dbar"><div class="tr"><i style="width:'+pct+'%"></i></div>'
+         +  '<div class="lb"><span>'+esc(fmtTime(sp.p))+'</span>'
+         +  '<span>'+esc(d.left.replace("%s", fmtTime(sp.d - sp.p)))+'</span></div></div>';
+  }
+
+  i = i || {};
+  var facts = "";
+  if(i.director) facts += '<div><b>'+esc(d.director)+'</b><span>'+esc(i.director)+'</span></div>';
+  if(i.cast)     facts += '<div><b>'+esc(d.cast)+'</b><span>'+esc(i.cast)+'</span></div>';
+  if(facts) html += '<div class="dfacts">'+facts+'</div>';
+
+  $("dEps").innerHTML = html;
+}
+
+function openMovie(url, name){
+  var item = null, src = DATA.movies || [];
+  for(var i = 0; i < src.length; i++) if(src[i].u === url){ item = src[i]; break }
+  curMovie = { c:(item && item.c) || "", n:name || (item && item.n) || "",
+               u:url, l:(item && item.l) || "", r:(item && item.r) || "" };
+  curSeries = null; curSeason = null;
+  detailFav("movie");
+
+  if(!$("detail").classList.contains("on")) layerOpen("detail");   /* phone Back closes it */
+  $("detail").classList.add("on");
+  $("dSeasons").innerHTML = "";
+  $("dEps").innerHTML = "";
+  $("dName").textContent = name || "";
+  $("dMeta").textContent = "";
+  $("dPlot").textContent = "";
+  $("dImg").removeAttribute("src");
+  if(item && item.l) $("dImg").src = item.l;
+
+  movieBody(url, name, null);
+
+  var bits = [];
+  if(item && item.r) bits.push("\u2605 " + item.r);
+  if(item && item.c) bits.push(cleanGroup(item.c));
+  $("dMeta").textContent = bits.join("  ·  ");
+
+  /* the panel knows more about it - ask, but the page already works without it */
+  var id = (url.split("/").pop() || "").split(".")[0];
+  var p = activeList();
+  if(p.type !== "xtream" || !id) return;
+  xtGet(xtBase(p), "get_vod_info&vod_id=" + encodeURIComponent(id))
+    .then(function(r){
+      var i = (r && r.info) || {};
+      if(i.movie_image && !$("dImg").getAttribute("src")) $("dImg").src = i.movie_image;
+      if(curMovie && curMovie.u === url && !curMovie.l && i.movie_image) curMovie.l = i.movie_image;
+      var b = [];
+      if(i.releasedate || i.releaseDate) b.push(String(i.releasedate || i.releaseDate).slice(0,4));
+      if(i.genre) b.push(i.genre);
+      if(i.duration) b.push(i.duration);
+      if(i.rating) b.push("\u2605 " + i.rating);
+      if(b.length) $("dMeta").textContent = b.join("  ·  ");
+      if(i.plot) $("dPlot").textContent = i.plot;
+      if($("detail").classList.contains("on")) movieBody(url, name, i);
+    })
+    .catch(function(){});
+}
+
+$("dEps").addEventListener("click", function(e){
+  var el = e.target;
+  while(el && el !== this && !(el.getAttribute && el.getAttribute("data-play"))) el = el.parentNode;
+  if(!el || el === this) return;
+  var pu = el.getAttribute("data-play");
+  if(el.getAttribute("data-fresh")){          /* play it from the beginning */
+    var m = allPos(); delete m[pu]; lsSet("kiptv_pos", JSON.stringify(m));
+  }
+  playQueue([(curMovie && curMovie.u === pu) ? curMovie
+             : { n: el.getAttribute("data-n"), u: pu }], 0);
+});
+
+function pickSeason(k){
+  if(!curSeries) return;
+  curSeason = k;
+  var chips = $("dSeasons").getElementsByTagName("button");
+  for(var i = 0; i < chips.length; i++)
+    chips[i].className = "chip" + (chips[i].getAttribute("data-se") === k ? " on" : "");
+
+  var p = activeList();
+  var d = String(p.domain||"").replace(/\/+$/,""), cr = xtCreds(p);
+  var eps = curSeries.episodes[k] || [];
+  var memo = [];
+  $("dEps").innerHTML = eps.map(function(e, idx){
+    var ext = e.container_extension || "mp4";
+    var url = d + "/series/" + cr + "/" + e.id + "." + ext;
+    var inf = e.info || {};
+    var sub = [];
+    if(inf.duration) sub.push(inf.duration);
+    if(inf.release_date) sub.push(String(inf.release_date).slice(0,10));
+    var sp = getPos(url);
+    if(sp) sub.unshift(t().resume + " " + fmtTime(sp.p));
+    memo.push({ c:"SERIES", n:(curSeries.info && curSeries.info.name ? curSeries.info.name + " · " : "") + (e.title || ""), u:url, l:(curSeries.info && curSeries.info.cover) || "" });
+    return '<div class="ep" data-u="'+esc(url)+'" data-n="'+esc((curSeries.info && curSeries.info.name ? curSeries.info.name + " · " : "") + (e.title || (t().episodeN + " " + (idx+1))))+'">'
+         +   '<span class="no">'+(e.episode_num || (idx+1))+'</span>'
+         +   '<span class="tx"><b>'+esc(e.title || (t().episodeN + " " + (idx+1)))+'</b>'
+         +   (sub.length ? '<s>'+esc(sub.join("  ·  "))+'</s>' : '')+'</span>'
+         + '</div>';
+  }).join("") || '<div class="empty"><p>-</p></div>';
+  rememberEpisodes(memo);
+}
+
+$("dEps").addEventListener("click", function(e){
+  var el = e.target;
+  while(el && el !== this && !(el.getAttribute && el.getAttribute("data-u"))) el = el.parentNode;
+  if(!el || el === this) return;
+  var rows = this.getElementsByClassName("ep"), list = [], idx = 0;
+  for(var i = 0; i < rows.length; i++){
+    list.push({ n: rows[i].getAttribute("data-n"), u: rows[i].getAttribute("data-u") });
+    if(rows[i] === el) idx = i;
+  }
+  playQueue(list, idx);
+});
+function closeDetail(){ layerClose("detail") }
+
+/* ==================== sheet ==================== */
+var sheetStack = [];
+var ICON = {
+  list:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>',
+  globe:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.6 3 2.6 15 0 18M12 3c-2.6 3-2.6 15 0 18"/></svg>',
+  tv:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="8" width="19" height="12.5" rx="2.6"/><path d="M8 3.5l4 4.2 4-4.2"/></svg>',
+  key:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="8" cy="12" r="4"/><path d="M12 12h9M18 12v3"/></svg>',
+  link:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a4 4 0 006 .5l2-2a4 4 0 10-5.6-5.6l-1 1"/><path d="M14 11a4 4 0 00-6-.5l-2 2A4 4 0 109.6 18l1-1"/></svg>',
+  edit:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>',
+  trash:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>',
+  refresh:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 11-2.6-6.4"/><path d="M21 3v6h-6"/></svg>',
+  disk:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><ellipse cx="12" cy="5.5" rx="8" ry="3"/><path d="M4 5.5v13c0 1.7 3.6 3 8 3s8-1.3 8-3v-13"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>',
+  info:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 16.5v-5M12 8h.01"/></svg>'
+};
+/* every sheet level is one step for the phone's Back button */
+function openSheet(view){
+  if($("sheet").classList.contains("on") && sheetStack.length){ pushSheet(view); return }
+  sheetStack = [view]; drawSheet(); $("sheet").classList.add("on"); layerOpen("sheet");
+}
+function pushSheet(view){ sheetStack.push(view); drawSheet(); layerOpen("sheet") }
+function sheetBack(){ layerBack(1) }
+function closeSheet(){
+  var n = 0;
+  while(n < LAYERS.length && LAYERS[LAYERS.length - 1 - n] === "sheet") n++;
+  if(n) layerBack(n);
+  else { $("sheet").classList.remove("on"); sheetStack = [] }
+}
+
+function drawSheet(){
+  var v = sheetStack[sheetStack.length-1] || "menu";
+  $("shBack").style.display = sheetStack.length > 1 ? "grid" : "none";
+  var d = t(), body = "", title = "";
+
+  if(v === "menu"){
+    title = d.menu;
+    var a = activeList();
+    body = '<div class="row" onclick="pushSheet(\'lists\')">'
+         +   '<span class="ic">'+ICON.tv+'</span>'
+         +   '<span class="tx"><b>'+esc(d.lists)+'</b><s>'+esc(a.name)+' · '+CH.length+' '+esc(d.channels)+'</s></span>'
+         + '</div>'
+         + '<div class="row" onclick="pushSheet(\'lang\')">'
+         +   '<span class="ic">'+ICON.globe+'</span>'
+         +   '<span class="tx"><b>'+esc(d.lang)+'</b><s>'+esc(T[lang].name)+'</s></span>'
+         + '</div>';
+  }
+  else if(v === "lang"){
+    title = d.lang;
+    body = LANG_ORDER.filter(function(k){ return T[k] }).map(function(k){
+      return '<div class="row'+(lang===k?" on":"")+'" onclick="setLang(\''+k+'\')">'
+           + '<span class="tx"><b>'+T[k].name+'</b></span><span class="tick">&#10003;</span></div>';
+    }).join("");
+  }
+  else if(v === "lists"){
+    title = d.lists;
+    var cur = activeId();
+    body = getLists().map(function(p){
+      var sub = p.type === "xtream" ? (p.domain||"") : (p.url||"");
+      return '<div class="row'+(p.id===cur?" on":"")+'">'
+           +   '<span class="tx" onclick="useList(\''+p.id+'\')"><b>'+esc(p.name)+'</b><s>'+esc(sub)+'</s></span>'
+           +   (p.id === DEFAULT_PLAYLIST.id ? '' :
+               '<button class="del" onclick="delList(\''+p.id+'\')">'+esc(d.del)+'</button>')
+           +   '<span class="tick">&#10003;</span>'
+           + '</div>';
+    }).join("");
+    body += '<button class="addbtn" onclick="pushSheet(\'type\')">+ '+esc(d.addList)+'</button>';
+  }
+  else if(v === "type"){
+    title = d.chooseType;
+    body = '<div class="row" onclick="pushSheet(\'form_xtream\')">'
+         +   '<span class="ic">'+ICON.key+'</span>'
+         +   '<span class="tx"><b>'+esc(d.xtream)+'</b><s>'+esc(d.xtreamSub)+'</s></span></div>'
+         + '<div class="row" onclick="pushSheet(\'form_m3u\')">'
+         +   '<span class="ic">'+ICON.link+'</span>'
+         +   '<span class="tx"><b>'+esc(d.m3uUrl)+'</b><s>'+esc(d.m3uUrlSub)+'</s></span></div>';
+  }
+  else if(v === "form_xtream"){
+    title = d.xtream;
+    body = fld("pl_name", d.fName, "My provider")
+         + fld("pl_domain", d.fDomain, "http://example.com:8080")
+         + fld("pl_user", d.fUser, "")
+         + fld("pl_pass", d.fPass, "")
+         + '<div class="hint">http://dns:port — /get.php ـی بۆ زیاد مەکە</div>'
+         + '<div class="formErr" id="formErr"></div>'
+         + '<button class="gbtn" onclick="saveForm(\'xtream\')">'+esc(d.save)+'</button>';
+  }
+  else if(v === "form_m3u"){
+    title = d.m3uUrl;
+    body = fld("pl_name", d.fName, "My playlist")
+         + fld("pl_url", d.fUrl, "http://example.com/playlist.m3u")
+         + '<div class="formErr" id="formErr"></div>'
+         + '<button class="gbtn" onclick="saveForm(\'m3u\')">'+esc(d.save)+'</button>';
+  }
+  else if(v === "edit"){
+    title = d.editList;
+    var ep = findList(EDIT_ID);
+    if(ep && ep.type === "xtream")
+      body = fld("pl_name", d.fName, "My provider")
+           + fld("pl_domain", d.fDomain, "http://example.com:8080")
+           + fld("pl_user", d.fUser, "")
+           + fld("pl_pass", d.fPass, "");
+    else
+      body = fld("pl_name", d.fName, "My playlist")
+           + fld("pl_url", d.fUrl, "http://example.com/playlist.m3u");
+    body += '<div class="formErr" id="formErr"></div>'
+         +  '<button class="gbtn" onclick="saveEdit()">'+esc(d.save)+'</button>';
+  }
+  $("sheetTitle").textContent = title;
+  $("sheetBody").innerHTML = body;
+  if(v === "edit") fillEdit();
+}
+function fld(id,label,ph){
+  return '<div class="fld"><label>'+esc(label)+'</label>'
+       + '<input id="'+id+'" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="'+esc(ph)+'"></div>';
+}
+function setLang(k){ lang = k; lsSet("kiptv_lang", k); closeSheet(); applyLang() }
+
+function saveForm(type){
+  var d = t(), err = $("formErr");
+  var name = ($("pl_name").value || "").trim();
+  if(!name){ err.textContent = d.errName; return }
+  var p = { id: "p" + Date.now(), name: name, type: type };
+  if(type === "m3u"){
+    var url = ($("pl_url").value || "").trim();
+    if(!/^https?:\/\//i.test(url)){ err.textContent = d.errUrl; return }
+    p.url = url;
+  } else {
+    var dom = ($("pl_domain").value || "").trim();
+    var u = ($("pl_user").value || "").trim();
+    var pw = ($("pl_pass").value || "").trim();
+    if(!/^https?:\/\//i.test(dom)){ err.textContent = d.errDomain; return }
+    if(!u || !pw){ err.textContent = d.errUser; return }
+    p.domain = dom.replace(/\/+$/,""); p.user = u; p.pass = pw;
+  }
+  var a = getLists(); a.push(p); saveLists(a);
+  lsSet("kiptv_active", p.id);
+  closeSheet();
+  loadActive(true);
+}
+function useList(id){ lsSet("kiptv_active", id); closeSheet(); loadActive(true) }
+function delList(id){
+  if(!window.confirm(t().confirmDel)) return;
+  var a = getLists().filter(function(p){ return p.id !== id });
+  saveLists(a);
+  if(activeId() === id){ lsSet("kiptv_active", DEFAULT_PLAYLIST.id); closeSheet(); loadActive(true); }
+  else drawSheet();
+}
+
+/* ==================== layers: the phone's Back button ====================
+   Every page that opens over the main view (a film or series, the settings
+   tab, each sheet level) leaves one step in the page history. MainActivity
+   already does webView.goBack() while webView.canGoBack() is true, so Back
+   now closes the top page instead of leaving the app. With nothing open the
+   history is empty and Back leaves the app exactly as before. */
+var LAYERS = [];
+
+function layerOpen(name){
+  LAYERS.push(name);
+  try{ history.pushState({ k: LAYERS.length }, "") }catch(e){}
+}
+/* close the top n layers, the same way Back does */
+function layerBack(n){
+  n = Math.min(n || 1, LAYERS.length);
+  if(n < 1) return;
+  try{ history.go(-n) }catch(e){ layerUnwind(LAYERS.length - n) }
+}
+/* close one named layer and anything that is open above it */
+function layerClose(name){
+  var i = LAYERS.lastIndexOf(name);
+  if(i > -1) layerBack(LAYERS.length - i);
+  else layerHide(name);
+}
+function layerUnwind(depth){
+  while(LAYERS.length > depth) layerHide(LAYERS.pop());
+}
+function layerHide(name){
+  if(name === "detail") $("detail").classList.remove("on");
+  else if(name === "settings"){ $("settings").classList.remove("on"); drawNav() }
+  else if(name === "favs"){ $("favs").classList.remove("on"); drawNav() }
+  else if(name === "search"){
+    $("sbox").classList.remove("on");
+    $("search").value = ""; $("search").blur();
+    render();
+  }
+  else if(name === "sheet"){
+    sheetStack.pop();
+    if(!sheetStack.length) $("sheet").classList.remove("on");
+    else drawSheet();
+  }
+}
+window.addEventListener("popstate", function(e){
+  layerUnwind((e.state && e.state.k) || 0);
+});
+
+/* ==================== settings page ==================== */
+var APP_VERSION = "1.0";
+var EDIT_ID = null;
+
+function settingsOn(){ var s = $("settings"); return !!(s && s.classList.contains("on")) }
+function refreshSettings(){ if(settingsOn()) drawSettings() }
+
+function openSettings(){
+  if(settingsOn()){ $("settings").scrollTop = 0; return }
+  layerOpen("settings");
+  $("settings").classList.add("on");
+  drawSettings();
+  $("settings").scrollTop = 0;
+  drawNav();
+}
+function closeSettings(){ layerClose("settings") }
+
+function findList(id){
+  var a = getLists();
+  for(var i = 0; i < a.length; i++) if(a[i].id === id) return a[i];
+  return null;
+}
+
+/* when each playlist was last downloaded */
+function updTimes(){ try{ return JSON.parse(lsGet("kiptv_upd", "{}")) || {} }catch(e){ return {} } }
+function markUpdated(id){ var m = updTimes(); m[id] = Date.now(); lsSet("kiptv_upd", JSON.stringify(m)) }
+function fmtWhen(ts){
+  if(!ts) return t().notYet;
+  var d = new Date(ts), now = new Date();
+  function two(n){ return (n < 10 ? "0" : "") + n }
+  var hm = two(d.getHours()) + ":" + two(d.getMinutes());
+  if(d.toDateString() === now.toDateString()) return hm;
+  return d.getFullYear() + "-" + two(d.getMonth() + 1) + "-" + two(d.getDate()) + " " + hm;
+}
+function cacheSize(){
+  var n = 0;
+  try{ n = (localStorage.getItem("kiptv_cache") || "").length * 2 }catch(e){}
+  /* ⁦ ... ⁩ keeps "7.1 MB" in that order inside Kurdish / Arabic text */
+  var s = n === 0 ? "0 KB" : n < 1048576 ? Math.max(1, Math.round(n / 1024)) + " KB"
+                                         : (n / 1048576).toFixed(1) + " MB";
+  return "⁦" + s + "⁩";
+}
+
+function setRow(icon, title, sub, onclick, natural){
+  return '<div class="row" onclick="'+onclick+'">'
+       +   '<span class="ic">'+icon+'</span>'
+       +   '<span class="tx"><b>'+esc(title)+'</b>'
+       +     (sub ? '<s'+(natural ? ' class="nat"' : '')+'>'+esc(sub)+'</s>' : '')+'</span>'
+       + '</div>';
+}
+function setGroup(title){ return '<div class="st-g"><span class="bar"></span>'+esc(title)+'</div>' }
+
+function drawSettings(){
+  var d = t(), cur = activeId(), act = activeList(), upd = updTimes();
+  var h = '<div class="st-h"><h1>'+esc(d.menu)+'</h1>'
+        + '<button class="iconbtn" onclick="closeSettings()">&#10005;</button></div>';
+
+  /* playlists: tap to switch, pencil to edit, bin to delete */
+  h += setGroup(d.lists);
+  h += getLists().map(function(p){
+    var sub = p.type === "xtream" ? (p.domain || "") : (p.url || "");
+    var own = p.id !== DEFAULT_PLAYLIST.id;
+    return '<div class="row'+(p.id === cur ? " on" : "")+'" onclick="pickList(\''+esc(p.id)+'\')">'
+         +   '<span class="ic">'+(p.type === "xtream" ? ICON.key : ICON.link)+'</span>'
+         +   '<span class="tx"><b>'+esc(p.name)+'</b><s>'+esc(sub)+'</s></span>'
+         +   (own
+              ? '<span class="acts">'
+              +   '<button class="mini" onclick="event.stopPropagation();editList(\''+esc(p.id)+'\')">'+ICON.edit+'</button>'
+              +   '<button class="mini red" onclick="event.stopPropagation();removeList(\''+esc(p.id)+'\')">'+ICON.trash+'</button>'
+              + '</span>'
+              : '<span class="badge">'+esc(d.builtIn)+'</span>')
+         +   '<span class="tick">&#10003;</span>'
+         + '</div>';
+  }).join("");
+  h += setRow(ICON.refresh, d.refresh, d.lastUpd + ": " + fmtWhen(upd[cur]), "refreshList()", true);
+  h += '<button class="addbtn" onclick="openSheet(\'type\')">+ '+esc(d.addList)+'</button>';
+
+  /* general */
+  h += setGroup(d.general);
+  h += setRow(ICON.globe, d.lang, T[lang].name, "openSheet('lang')", true);
+
+  /* storage */
+  h += setGroup(d.storage);
+  h += setRow(ICON.disk, d.clearCache, d.cacheSub.replace("%s", cacheSize()), "clearCache()", true);
+
+  /* about */
+  h += setGroup(d.about);
+  var nMov = (act.type === "xtream" && LOADED.movies) ? DATA.movies.length : "–";
+  var nSer = (act.type === "xtream" && LOADED.series) ? DATA.series.length : "–";
+  h += '<div class="stats">'
+     +   '<div class="stat"><b>'+CH.length+'</b><s>'+esc(d.live)+'</s></div>'
+     +   '<div class="stat"><b>'+nMov+'</b><s>'+esc(d.movies)+'</s></div>'
+     +   '<div class="stat"><b>'+nSer+'</b><s>'+esc(d.series)+'</s></div>'
+     + '</div>';
+  h += setRow(ICON.tv, "KURDISTAN IPTV", d.version + " " + APP_VERSION, "", true);
+  h += setRow(ICON.info, d.plType, act.name + " · " + (act.type === "xtream" ? "Xtream Codes" : "M3U"), "", true);
+
+  $("setBody").innerHTML = h;
+}
+
+/* tapping the playlist that is already active does nothing -
+   use "Update playlist now" to download it again */
+function pickList(id){ if(id !== activeId()) useList(id) }
+
+function refreshList(){ loadActive(true) }
+
+function clearCache(){
+  if(!window.confirm(t().confirmClear)) return;
+  try{ localStorage.removeItem("kiptv_cache"); localStorage.removeItem("kiptv_cache_owner") }catch(e){}
+  loadActive(true);
+}
+
+function removeList(id){
+  if(id === DEFAULT_PLAYLIST.id) return;
+  if(!window.confirm(t().confirmDel)) return;
+  saveLists(getLists().filter(function(p){ return p.id !== id }));
+  favDropList(id);                         /* its favourites go with it */
+  if(activeId() === id || lsGet("kiptv_active", "") === id){
+    lsSet("kiptv_active", DEFAULT_PLAYLIST.id);
+    loadActive(true);
+  }
+  refreshSettings();
+}
+
+function editList(id){
+  if(id === DEFAULT_PLAYLIST.id || !findList(id)) return;
+  EDIT_ID = id;
+  openSheet("edit");
+}
+function fillEdit(){
+  var p = findList(EDIT_ID); if(!p) return;
+  $("pl_name").value = p.name || "";
+  if(p.type === "xtream"){
+    $("pl_domain").value = p.domain || "";
+    $("pl_user").value = p.user || "";
+    $("pl_pass").value = p.pass || "";
+  } else $("pl_url").value = p.url || "";
+}
+function saveEdit(){
+  var d = t(), err = $("formErr"), a = getLists(), at = -1;
+  for(var i = 0; i < a.length; i++) if(a[i].id === EDIT_ID) at = i;
+  if(at < 0 || EDIT_ID === DEFAULT_PLAYLIST.id){ closeSheet(); return }
+  var old = a[at];
+  var name = ($("pl_name").value || "").trim();
+  if(!name){ err.textContent = d.errName; return }
+  var p = { id: old.id, name: name, type: old.type };
+  if(old.type === "m3u"){
+    var url = ($("pl_url").value || "").trim();
+    if(!/^https?:\/\//i.test(url)){ err.textContent = d.errUrl; return }
+    p.url = url;
+  } else {
+    var dom = ($("pl_domain").value || "").trim();
+    var u = ($("pl_user").value || "").trim();
+    var pw = ($("pl_pass").value || "").trim();
+    if(!/^https?:\/\//i.test(dom)){ err.textContent = d.errDomain; return }
+    if(!u || !pw){ err.textContent = d.errUser; return }
+    p.domain = dom.replace(/\/+$/,""); p.user = u; p.pass = pw;
+  }
+  var changed = JSON.stringify(listUrl(old)) !== JSON.stringify(listUrl(p));
+  a[at] = p;
+  saveLists(a);
+  closeSheet();
+  /* new address for the active playlist: download it again */
+  if(changed && activeId() === p.id) loadActive(true);
+  else { $("tagline").textContent = activeList().name; refreshSettings() }
+}
+
+/* ==================== favourites ====================
+   Kept per playlist in kiptv_favs = { listId: [ {k,t,n,u|sid,l,c,r,ua,rf,at} ] }.
+   A long press on any card adds it or takes it away; the Favourites tab
+   shows them. Nothing here touches how a stream is played - a favourite
+   is handed to exactly the same playQueue / openMovie / openSeries. */
+var FAV_MS = 550;                 /* how long to hold a card */
+var favIdx = null, favIdxOwner = null;
+var FAVF = "all";                 /* type filter on the favourites page */
+var DFAV = null;                  /* what the film / series page is showing */
+
+function favStore(){ try{ return JSON.parse(lsGet("kiptv_favs", "{}")) || {} }catch(e){ return {} } }
+function favList(){ return (favStore()[activeId()] || []).slice() }
+function favSave(list){
+  var s = favStore(); s[activeId()] = list;
+  lsSet("kiptv_favs", JSON.stringify(s));
+  favIdx = null;
+}
+function favDropList(id){ var s = favStore(); if(s[id]){ delete s[id]; lsSet("kiptv_favs", JSON.stringify(s)) } favIdx = null }
+function favKey(c){ return c.sid ? "s:" + c.sid : "u:" + (c.u || "") }
+/* live / movie / series - an episode on its own is not a favourite */
+function favType(c){
+  if(c.sid) return "series";
+  var u = c.u || "";
+  if(!u) return "";
+  if(/\/movie\//.test(u)) return "movie";
+  if(/\/series\//.test(u)) return "";
+  return "live";
+}
+function isFav(c){
+  var owner = lsGet("kiptv_active", "");
+  if(!favIdx || favIdxOwner !== owner){
+    favIdx = {}; favIdxOwner = owner;
+    favList().forEach(function(f){ favIdx[f.k] = 1 });
+  }
+  return !!favIdx[favKey(c)];
+}
+function favFind(k){ var a = favList(); for(var i = 0; i < a.length; i++) if(a[i].k === k) return a[i]; return null }
+
+/* returns true when added, false when removed, null when it cannot be a favourite */
+function toggleFav(c){
+  var ty = favType(c); if(!ty) return null;
+  var list = favList(), k = favKey(c);
+  for(var i = 0; i < list.length; i++) if(list[i].k === k){
+    list.splice(i, 1); favSave(list); showToast(t().favRemoved); return false;
+  }
+  var o = { k: k, t: ty, n: c.n || "", l: c.l || "", c: c.c || "", at: Date.now() };
+  if(c.u) o.u = c.u;
+  if(c.sid) o.sid = c.sid;
+  if(c.r) o.r = c.r;
+  if(c.ua) o.ua = c.ua;
+  if(c.rf) o.rf = c.rf;
+  list.push(o); favSave(list); showToast(t().favAdded);
+  return true;
+}
+
+/* the full item behind a card on screen */
+function itemForCard(el){
+  var sid = el.getAttribute("data-sid"), u = el.getAttribute("data-u"), n = el.getAttribute("data-n") || "";
+  if(sid){
+    var s = DATA.series || [];
+    for(var i = 0; i < s.length; i++) if(String(s[i].sid) === sid) return s[i];
+    return favFind("s:" + sid) || { sid: sid, n: n };
+  }
+  if(!u) return null;
+  var pools = [view || [], CH, DATA.movies || []];
+  for(var p = 0; p < pools.length; p++)
+    for(var j = 0; j < pools[p].length; j++) if(pools[p][j].u === u) return pools[p][j];
+  return favFind("u:" + u) || { u: u, n: n };
+}
+/* every copy of this card on screen gets (or loses) its star */
+function markCards(c, on){
+  var cards = document.querySelectorAll(".card"), sid = c.sid ? String(c.sid) : null;
+  for(var i = 0; i < cards.length; i++){
+    var hit = sid ? cards[i].getAttribute("data-sid") === sid
+                  : (c.u && cards[i].getAttribute("data-u") === c.u);
+    if(hit) cards[i].classList.toggle("fav", on);
+  }
+}
+
+var toastT = null;
+function showToast(msg){
+  var el = $("toast");
+  el.textContent = msg;
+  el.className = "on";
+  clearTimeout(toastT);
+  toastT = setTimeout(function(){ el.className = "" }, 1800);
+}
+
+function longPress(card){
+  var it = itemForCard(card); if(!it) return;
+  var on = toggleFav(it);
+  if(on === null) return;
+  markCards(it, on);
+  card.classList.remove("pop"); void card.offsetWidth; card.classList.add("pop");
+  if(favsOn()) drawFavs();
+  drawDetailFav();
+}
+
+/* hold a card for FAV_MS without moving: add / remove it.
+   The tap that ends a long press does not also play the card. */
+(function(){
+  var timer = null, x0 = 0, y0 = 0, fired = false, swallowUntil = 0;
+  function cardOf(el){
+    while(el && el.nodeType === 1){
+      if(el.classList.contains("card")) return el;
+      el = el.parentNode;
+    }
+    return null;
+  }
+  function cancel(){ if(timer){ clearTimeout(timer); timer = null } }
+  function start(e){
+    cancel(); fired = false;
+    var card = cardOf(e.target); if(!card || !e.touches || e.touches.length > 1) return;
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY;
+    timer = setTimeout(function(){ timer = null; fired = true; longPress(card) }, FAV_MS);
+  }
+  function move(e){
+    if(!timer || !e.touches) return;
+    var p = e.touches[0];
+    if(Math.abs(p.clientX - x0) > 10 || Math.abs(p.clientY - y0) > 10) cancel();   /* a scroll */
+  }
+  function end(e){
+    cancel();
+    if(fired){ fired = false; swallowUntil = Date.now() + 450; if(e.cancelable) e.preventDefault() }
+  }
+  [$("main"), $("favs")].forEach(function(box){
+    box.addEventListener("touchstart", start, { passive: true });
+    box.addEventListener("touchmove", move, { passive: true });
+    box.addEventListener("touchend", end, false);
+    box.addEventListener("touchcancel", cancel, { passive: true });
+    box.addEventListener("contextmenu", function(e){ if(cardOf(e.target)) e.preventDefault() });
+    box.addEventListener("click", function(e){
+      if(Date.now() < swallowUntil){ swallowUntil = 0; e.stopPropagation(); e.preventDefault() }
+    }, true);
+  });
+})();
+
+/* ---------- the star on the film / series page ---------- */
+function detailFav(kind, sid, name){
+  if(kind === "series"){
+    var it = null, s = DATA.series || [];
+    for(var i = 0; i < s.length; i++) if(String(s[i].sid) === String(sid)){ it = s[i]; break }
+    if(!it) it = favFind("s:" + sid);
+    DFAV = { sid: sid, n: (it && it.n) || name || "", l: (it && it.l) || "",
+             c: (it && it.c) || "", r: (it && it.r) || "" };
+  } else DFAV = "movie";
+  drawDetailFav();
+}
+function detailItem(){
+  if(DFAV === "movie") return curMovie;
+  var sc = DFAV && SERIES_CACHE[DFAV.sid];
+  if(DFAV && !DFAV.l && sc && sc.info && sc.info.cover) DFAV.l = sc.info.cover;
+  return DFAV;
+}
+var STAR_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="%f" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg>';
+function drawDetailFav(){
+  var b = $("dfav"); if(!b) return;
+  var it = detailItem(), on = !!(it && isFav(it));
+  b.className = on ? "on" : "";
+  b.innerHTML = STAR_SVG.replace("%f", on ? "currentColor" : "none");
+}
+function toggleDetailFav(){
+  var it = detailItem(); if(!it) return;
+  var on = toggleFav(it);
+  if(on === null) return;
+  markCards(it, on);
+  drawDetailFav();
+  if(favsOn()) drawFavs();
+}
+
+/* ---------- the favourites tab ---------- */
+function favsOn(){ var f = $("favs"); return !!(f && f.classList.contains("on")) }
+function refreshFavs(){ if(favsOn()) drawFavs() }
+function openFavs(){
+  if(favsOn()){ $("favs").scrollTop = 0; return }
+  layerOpen("favs");
+  $("favs").classList.add("on");
+  drawFavs();
+  $("favs").scrollTop = 0;
+  drawNav();
+}
+function closeFavs(){ layerClose("favs") }
+
+var FAV_VIEW = [];                /* the live favourites on screen, for next / previous */
+function drawFavs(){
+  var d = t(), all = favList();
+  var byType = { live: [], movie: [], series: [] };
+  all.forEach(function(f){ if(byType[f.t]) byType[f.t].push(f) });
+  var types = ["live", "movie", "series"].filter(function(k){ return byType[k].length });
+  if(types.indexOf(FAVF) < 0) FAVF = "all";
+
+  var h = '<div class="st-h"><h1>'+esc(d.favs)+'</h1>'
+        + '<button class="iconbtn" onclick="openSettings()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>';
+
+  if(!all.length){
+    $("favBody").innerHTML = h + '<div class="fempty">'
+      + STAR_SVG.replace("%f", "none").replace('width="18" height="18"', 'width="54" height="54"')
+      + '<b>'+esc(d.favEmpty)+'</b><p>'+esc(d.favHint)+'</p></div>';
+    FAV_VIEW = [];
+    return;
+  }
+
+  var names = { live: d.live, movie: d.movies, series: d.series };
+  if(types.length > 1){
+    h += '<div class="chips" id="favChips">'
+       + '<button class="chip'+(FAVF === "all" ? " on" : "")+'" data-ft="all">'+esc(d.all)+' · '+all.length+'</button>'
+       + types.map(function(k){
+           return '<button class="chip'+(FAVF === k ? " on" : "")+'" data-ft="'+k+'">'+esc(names[k])+' · '+byType[k].length+'</button>';
+         }).join("")
+       + '</div>';
+  }
+
+  /* live favourites use the channel as it is in the list right now, so a
+     channel that needs its own agent / referrer gets the current one */
+  var fresh = {};
+  if(byType.live.length) for(var i = 0; i < CH.length; i++) fresh[CH[i].u] = CH[i];
+  FAV_VIEW = byType.live.map(function(f){ return fresh[f.u] || f });
+
+  types.forEach(function(k){
+    if(FAVF !== "all" && FAVF !== k) return;
+    var list = k === "live" ? FAV_VIEW : byType[k];
+    h += '<section><div class="shead"><span class="bar"></span><h2>'+esc(names[k])+'</h2>'
+       + '<span class="cnt">'+list.length+'</span></div>'
+       + '<div class="'+(k === "live" ? "grid" : "grid posters")+'">'
+       + list.map(function(c){ return cardHTML(c, k === "live") }).join("")
+       + '</div></section>';
+  });
+  $("favBody").innerHTML = h;
+}
+
+$("favs").addEventListener("click", function(e){
+  var el = e.target;
+  var ft = el.getAttribute && el.getAttribute("data-ft");
+  if(!ft && el.parentNode && el.parentNode.getAttribute) ft = el.parentNode.getAttribute("data-ft");
+  if(ft){ FAVF = ft; drawFavs(); return }
+
+  while(el && el !== this && !(el.getAttribute && (el.getAttribute("data-u") || el.getAttribute("data-sid"))))
+    el = el.parentNode;
+  if(!el || el === this) return;
+  var sid = el.getAttribute("data-sid"), nm = el.getAttribute("data-n");
+  if(sid){ openSeries(sid, nm); return }
+  var u = el.getAttribute("data-u");
+  if(u.indexOf("/movie/") > -1){
+    var f = favFind("u:" + u) || {};
+    openMovie(u, nm);
+    /* the film list may not be loaded yet - use the poster we kept */
+    if(f.l && !$("dImg").getAttribute("src")) $("dImg").src = f.l;
+    if(curMovie && curMovie.u === u){ if(!curMovie.l) curMovie.l = f.l || ""; if(!curMovie.c) curMovie.c = f.c || "" }
+    return;
+  }
+  for(var i = 0; i < FAV_VIEW.length; i++) if(FAV_VIEW[i].u === u){ playQueue(FAV_VIEW, i); return }
+  play(u, nm);
+});
+
+/* ==================== activation ==================== */
+var PIN = "";
+function drawPins(){
+  $("pins").innerHTML = [0,1,2,3].map(function(i){
+    return '<div class="pin'+(PIN[i]?" fill":"")+(i===PIN.length?" cur":"")+'">'+(PIN[i]?"&#9679;":"")+'</div>';
+  }).join("");
+}
+function submitPin(){
+  if(PIN === PIN_CODE){ lsSet("kiptv","1"); $("gate").classList.add("hide") }
+  else {
+    $("gmsg").textContent = t().wrong;
+    document.querySelector(".pins").classList.add("shake");
+    setTimeout(function(){
+      document.querySelector(".pins").classList.remove("shake");
+      PIN = ""; $("pininput").value = ""; drawPins();
+    }, 420);
+  }
+}
+$("pininput").addEventListener("input", function(e){
+  PIN = e.target.value.replace(/\D/g,"").slice(0,4);
+  e.target.value = PIN;
+  $("gmsg").textContent = "";
+  drawPins();
+  if(PIN.length === 4) setTimeout(submitPin, 180);
+});
+$("pins").addEventListener("click", function(){ $("pininput").focus() });
+
+/* ==================== loading ==================== */
+var lastLoadError = "";
+
+/* Inside the app, downloads go through native code (no CORS limits).
+   In a plain browser the URL is used directly. */
+function viaApp(u){
+  return window.AndroidPlayer ? "https://kiptv.local/p?u=" + encodeURIComponent(u) : u;
+}
+
+function setData(list){ CH = list; buildGroups(); renderChips(); render() }
+function showSync(text, isErr){
+  var el = $("sync");
+  $("syncText").textContent = text;
+  el.className = "on" + (isErr ? " err" : "");
+  el.onclick = isErr ? function(){ window.alert(lastLoadError || "-") } : null;
+  if(isErr) setTimeout(function(){ el.className = "" }, 7000);
+}
+function hideSync(){ $("sync").className = "" }
+
+function loadActive(force){
+  var p = activeList(), url = listUrl(p);
+  $("tagline").textContent = p.name;
+  SECTION = "live";
+  DATA = { live: [], movies: [], series: [] };
+  LOADED = { live: false, movies: false, series: false };
+  SERIES_CACHE = {};
+  drawNav();
+  refreshSettings();
+  refreshFavs();
+
+  var cached = force ? null : loadCache(p.id);
+  if(cached && cached.length) setData(cached);
+  else if(!CH.length) setData((window.CHANNELS || []).map(function(c){ return {c:c.c,n:c.n,u:c.u,l:""} }));
+
+  if(!url || !window.fetch) return;
+  showSync(t().sync + " · " + p.name, false);
+
+  var job = (p.type === "xtream") ? loadXtream(p) :
+    fetch(viaApp(url))
+      .then(function(r){
+        return r.text().then(function(txt){
+          if(!r.ok) throw new Error("HTTP " + r.status + " " + txt.slice(0,120));
+          if(txt.indexOf("PROXY_ERROR") === 0) throw new Error(txt.slice(0,140));
+          var list = parseM3U(txt);
+          if(list.length < 1) throw new Error("EMPTY (" + txt.slice(0,80).replace(/\s+/g," ") + ")");
+          return list;
+        });
+      });
+
+  job
+    .then(function(list){
+      if(!list || !list.length) throw new Error("NO CHANNELS");
+      f = "";
+      setData(list);
+      saveCache(p.id, list);
+      hideSync();
+      markUpdated(p.id);
+      refreshSettings();
+    })
+    .catch(function(e){
+      lastLoadError = (e && e.message) ? e.message : "network";
+      showSync(t().loadFail + " · " + p.name, true);
+    });
+}
+
+/* ==================== boot ==================== */
+(function boot(){
+  if(lsGet("kiptv","") === "1") $("gate").classList.add("hide");
+  else setTimeout(function(){ $("pininput").focus() }, 350);
+  drawPins();
+  drawNav();
+  applyLang();
+  loadActive(false);
+})();
+</script>
+</body>
+</html>
