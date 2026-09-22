@@ -519,6 +519,7 @@ var T = {
       enter:"کۆدی چالاککردن داخڵ بکە",act:"چالاککردن",wrong:"کۆدەکە هەڵەیە",
       more:"زیاتر پیشان بدە",sync:"نوێکردنەوە",results:"ئەنجامی گەڕان",
       menu:"ڕێکخستن",lists:"لیستەکانم",addList:"زیادکردنی لیست",
+      epgTest:"تاقیکردنەوەی ڕێبەری بەرنامەکان",epgTestSub:"وەڵامی پرۆڤایدەرەکە دەبینیت",
       chooseType:"جۆری لیستەکە هەڵبژێرە",
       xtream:"Xtream (پێشنیارکراو)",xtreamSub:"دۆمەین + ناو + وشەی نهێنی",
       m3uUrl:"M3U بە لینک",m3uUrlSub:"لینکی ڕاستەوخۆی فایلی M3U",
@@ -551,6 +552,7 @@ var T = {
       enter:"Enter your activation code",act:"Activate",wrong:"Wrong code",
       more:"Show more",sync:"Updating",results:"Search results",
       menu:"Settings",lists:"My playlists",addList:"Add playlist",
+      epgTest:"Guide test",epgTestSub:"see what the panel answers",
       chooseType:"Choose playlist type",
       xtream:"Xtream (recommended)",xtreamSub:"Domain + username + password",
       m3uUrl:"M3U by URL",m3uUrlSub:"Direct link to an M3U file",
@@ -583,6 +585,7 @@ var T = {
       enter:"أدخل رمز التفعيل",act:"تفعيل",wrong:"الرمز غير صحيح",
       more:"عرض المزيد",sync:"تحديث",results:"نتائج البحث",
       menu:"الإعدادات",lists:"قوائمي",addList:"إضافة قائمة",
+      epgTest:"اختبار دليل البرامج",epgTestSub:"شاهد رد المزود",
       chooseType:"اختر نوع القائمة",
       xtream:"Xtream (موصى به)",xtreamSub:"النطاق + اسم المستخدم + كلمة السر",
       m3uUrl:"M3U برابط",m3uUrlSub:"رابط مباشر لملف M3U",
@@ -792,7 +795,7 @@ function loadXtream(p){
    guide simply shows nothing, exactly as before. Nothing here touches how a
    channel opens or plays. */
 var EPG = {}, epgWait = [], epgBusy = 0, epgObs = null, epgSoon = null;
-var EPG_AT_ONCE = 3, EPG_RETRY_MS = 1800000;
+var EPG_AT_ONCE = 3, EPG_RETRY_MS = 1800000, EPG_MIN_MS = 300000;
 
 function epgOn(){ return isXtream() }
 
@@ -805,11 +808,19 @@ function epgSid(u){
   return m ? m[1] : "";
 }
 
-/* panels send the titles base64-encoded */
+/* most panels send the titles base64-encoded, some send them as they are */
 function epgText(s){
+  s = String(s == null ? "" : s);
   if(!s) return "";
-  try{ return decodeURIComponent(escape(atob(String(s).replace(/\s+/g, "")))) }
-  catch(e){ try{ return atob(String(s)) }catch(e2){ return "" } }
+  var packed = s.replace(/\s+/g, "");
+  if(packed.length > 3 && packed.length % 4 === 0 && /^[A-Za-z0-9+\/]+={0,2}$/.test(packed)){
+    try{
+      var raw = atob(packed), out = raw;
+      try{ out = decodeURIComponent(escape(raw)) }catch(e){}
+      if(out && !/[\u0000-\u0008\u000E-\u001F]/.test(out)) return out;
+    }catch(e){}
+  }
+  return s;
 }
 
 function epgWhen(text, stamp){
@@ -842,7 +853,10 @@ function epgPick(listings){
     else if(it.s > now && !nxt) nxt = it;
   }
   if(!cur) for(var k = 0; k < items.length; k++) if(items[k].on){ cur = items[k]; break }
-  var use = cur || nxt || null;
+  /* a panel whose clock is out by a few hours still shows something sensible */
+  var past = null;
+  for(var q = 0; q < items.length; q++) if(!items[q].s || items[q].s <= now) past = items[q];
+  var use = cur || nxt || past || items[0] || null;
   return use ? { t: use.t, s: use.s, e: use.e, at: Date.now() } : null;
 }
 
@@ -853,8 +867,10 @@ function epgLine(x){
 }
 
 function epgShow(sid){
-  var nodes = document.querySelectorAll('.epg[data-e="' + sid + '"]');
-  for(var i = 0; i < nodes.length; i++) nodes[i].textContent = epgLine(EPG[sid]);
+  var nodes = document.querySelectorAll('.epg[data-e="' + sid + '"]'), line = epgLine(EPG[sid]);
+  /* only write when it really changed - writing is a page change, which would
+     otherwise ask for the guide again, and again */
+  for(var i = 0; i < nodes.length; i++) if(nodes[i].textContent !== line) nodes[i].textContent = line;
 }
 
 function epgSave(sid, val){
@@ -864,8 +880,24 @@ function epgSave(sid, val){
 
 function epgFresh(x){
   if(!x) return false;
+  var age = Date.now() - x.at;
+  if(age < EPG_MIN_MS) return true;                       /* just asked: leave the panel alone */
   if(!x.none && x.e && Date.now() >= x.e) return false;   /* that programme has ended */
-  return (Date.now() - x.at) < EPG_RETRY_MS;
+  return age < EPG_RETRY_MS;
+}
+
+/* the listings a panel answers with, whichever wrapper it uses */
+function epgRows(txt){
+  var j;
+  try{ j = JSON.parse(txt) }catch(e){ return [] }
+  var a = j && (j.epg_listings || j.epg || j.listings || j.data);
+  if(Object.prototype.toString.call(j) === "[object Array]") a = j;
+  return Object.prototype.toString.call(a) === "[object Array]" ? a : [];
+}
+
+function epgUrl(p, action, sid){
+  return xtBase(p) + "&action=" + action + "&stream_id=" + encodeURIComponent(sid)
+       + (action === "get_short_epg" ? "&limit=4" : "");
 }
 
 function epgAsk(sid){
@@ -876,11 +908,16 @@ function epgAsk(sid){
     epgNext();
   };
   if(!p || p.type !== "xtream"){ setTimeout(function(){ done(null) }, 0); return }
-  var url = xtBase(p) + "&action=get_short_epg&stream_id=" + encodeURIComponent(sid) + "&limit=4";
-  fetch(viaApp(url)).then(function(r){ return r.text() }).then(function(txt){
-    var j = JSON.parse(txt);
-    var a = (j && j.epg_listings) || [];
-    done(Object.prototype.toString.call(a) === "[object Array]" ? epgPick(a) : null);
+  var get = function(action){
+    return fetch(viaApp(epgUrl(p, action, sid))).then(function(r){ return r.text() });
+  };
+  get("get_short_epg").then(function(txt){
+    var pick = epgPick(epgRows(txt));
+    if(pick){ done(pick); return }
+    /* some panels answer only the whole day's table */
+    get("get_simple_data_table").then(function(txt2){
+      done(epgPick(epgRows(txt2)));
+    }, function(){ done(null) });
   }, function(){ done(null) });
 }
 
@@ -920,7 +957,11 @@ function epgScan(){
   for(var i = 0; i < nodes.length; i++){
     var el = nodes[i], sid = el.getAttribute("data-e");
     if(!sid) continue;
-    if(epgFresh(EPG[sid])){ el.textContent = epgLine(EPG[sid]); continue }
+    if(epgFresh(EPG[sid])){
+      var line = epgLine(EPG[sid]);
+      if(el.textContent !== line) el.textContent = line;
+      continue;
+    }
     if(obs) obs.observe(el); else epgNeed(sid);
   }
 }
@@ -928,6 +969,46 @@ function epgScan(){
 function epgScanSoon(){
   if(epgSoon) return;
   epgSoon = setTimeout(function(){ epgSoon = null; epgScan() }, 150);
+}
+
+/* Settings -> guide test: asks the panel about the first live channel and
+   shows exactly what came back, so a panel without a guide can be told apart
+   from one that answers in an unusual way. */
+var EPG_REPORT = "";
+
+function epgProbe(){
+  var p = activeList(), ch = null;
+  for(var i = 0; i < CH.length && !ch; i++) if(epgSid(CH[i].u)) ch = CH[i];
+  EPG_REPORT = "…";
+  openSheet("epgtest");
+  if(!p || p.type !== "xtream" || !ch){ EPG_REPORT = "NO XTREAM CHANNEL"; drawSheet(); return }
+
+  var sid = epgSid(ch.u), out = ch.n + "  (id " + sid + ")";
+  var step = function(action, next){
+    fetch(viaApp(epgUrl(p, action, sid))).then(function(r){
+      return r.text().then(function(txt){ return { s: r.status, t: txt } });
+    }).then(function(a){
+      var rows = epgRows(a.t), one = rows[0] || {};
+      var pick = epgPick(rows);
+      out += "\n\n" + action + "  HTTP " + a.s
+           + "\nrows: " + rows.length
+           + (rows.length ? "\ntitle raw: " + String(one.title || "").slice(0, 60)
+                          + "\ntitle read: " + epgText(one.title)
+                          + "\nstart: " + (one.start || "-") + "  ts: " + (one.start_timestamp || "-")
+                          + "\nend: " + (one.end || "-") + "  ts: " + (one.stop_timestamp || "-")
+                          + "\nshown: " + (epgLine(pick) || "(nothing)")
+                        : "\nanswer: " + String(a.t).replace(/\s+/g, " ").slice(0, 200));
+      EPG_REPORT = out;
+      drawSheet();
+      if(next) step(next, null);
+    }, function(e){
+      out += "\n\n" + action + "  FAILED: " + (e && e.message ? e.message : e);
+      EPG_REPORT = out;
+      drawSheet();
+      if(next) step(next, null);
+    });
+  };
+  step("get_short_epg", "get_simple_data_table");
 }
 
 /* a new list (or the same one again): start the guide from scratch */
@@ -1848,7 +1929,13 @@ function drawSheet(){
          + '<div class="row" onclick="pushSheet(\'lang\')">'
          +   '<span class="ic">'+ICON.globe+'</span>'
          +   '<span class="tx"><b>'+esc(d.lang)+'</b><s>'+esc(T[lang].name)+'</s></span>'
-         + '</div>';
+         + '</div>'
+         ;
+  }
+  else if(v === "epgtest"){
+    title = d.epgTest;
+    body = '<div class="row"><span class="tx"><s class="nat" style="white-space:pre-wrap">'
+         + esc(EPG_REPORT || "…") + '</s></span></div>';
   }
   else if(v === "lang"){
     title = d.lang;
@@ -2078,6 +2165,7 @@ function drawSettings(){
   /* general */
   h += setGroup(d.general);
   h += setRow(ICON.globe, d.lang, T[lang].name, "openSheet('lang')", true);
+  if(act.type === "xtream") h += setRow(ICON.tv, d.epgTest, d.epgTestSub, "epgProbe()", true);
 
   /* storage */
   h += setGroup(d.storage);
