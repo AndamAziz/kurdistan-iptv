@@ -86,6 +86,9 @@ section{margin-top:22px}
 @media(min-width:760px){.grid{grid-template-columns:repeat(6,1fr)}}
 
 .card{cursor:pointer;transition:transform .16s}
+.card .epg{margin-top:1px;font-size:10px;font-weight:600;line-height:1.35;color:var(--muted2);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html.tv .card .epg{font-size:12px}
 .card:active{transform:scale(.94)}
 .tile{position:relative;aspect-ratio:1;border-radius:var(--r-lg);overflow:hidden;background:var(--surface);
   border:1px solid var(--line);box-shadow:0 10px 24px rgba(0,0,0,.45)}
@@ -783,6 +786,157 @@ function loadXtream(p){
   });
 }
 
+/* ==================== EPG: what is on now (Xtream panels) ====================
+   Only the channels that are on screen are asked about, three at a time, and
+   the answer is kept until that programme ends. A channel whose panel has no
+   guide simply shows nothing, exactly as before. Nothing here touches how a
+   channel opens or plays. */
+var EPG = {}, epgWait = [], epgBusy = 0, epgObs = null, epgSoon = null;
+var EPG_AT_ONCE = 3, EPG_RETRY_MS = 1800000;
+
+function epgOn(){ return isXtream() }
+
+/* the channel's number inside its link: .../live/user/pass/1234.ts */
+function epgSid(u){
+  u = String(u || "");
+  var m = u.match(/\/live\/[^\/]+\/[^\/]+\/(\d+)/);
+  if(m) return m[1];
+  m = u.match(/\/(\d+)\.(?:ts|m3u8)(?:$|\?)/);
+  return m ? m[1] : "";
+}
+
+/* panels send the titles base64-encoded */
+function epgText(s){
+  if(!s) return "";
+  try{ return decodeURIComponent(escape(atob(String(s).replace(/\s+/g, "")))) }
+  catch(e){ try{ return atob(String(s)) }catch(e2){ return "" } }
+}
+
+function epgWhen(text, stamp){
+  if(stamp && /^\d+$/.test(String(stamp))) return parseInt(stamp, 10) * 1000;
+  var m = String(text || "").match(/(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
+  return m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]).getTime() : 0;
+}
+
+function epgClock(ms){
+  if(!ms) return "";
+  var d = new Date(ms), h = d.getHours(), mi = d.getMinutes();
+  return (h < 10 ? "0" : "") + h + ":" + (mi < 10 ? "0" : "") + mi;
+}
+
+/* the programme that is on now; if none says so, the next one */
+function epgPick(listings){
+  var now = Date.now(), items = [];
+  for(var i = 0; i < listings.length; i++){
+    var e = listings[i] || {};
+    var title = epgText(e.title);
+    if(!title) continue;
+    items.push({ t: title, s: epgWhen(e.start, e.start_timestamp),
+                 e: epgWhen(e.end, e.stop_timestamp), on: String(e.now_playing) === "1" });
+  }
+  items.sort(function(a, b){ return a.s - b.s });
+  var cur = null, nxt = null;
+  for(var j = 0; j < items.length; j++){
+    var it = items[j];
+    if(it.s && it.e && now >= it.s && now < it.e){ if(!cur) cur = it }
+    else if(it.s > now && !nxt) nxt = it;
+  }
+  if(!cur) for(var k = 0; k < items.length; k++) if(items[k].on){ cur = items[k]; break }
+  var use = cur || nxt || null;
+  return use ? { t: use.t, s: use.s, e: use.e, at: Date.now() } : null;
+}
+
+function epgLine(x){
+  if(!x || x.none || !x.t) return "";
+  var time = epgClock(x.s);
+  return (time ? time + "  ·  " : "") + x.t;
+}
+
+function epgShow(sid){
+  var nodes = document.querySelectorAll('.epg[data-e="' + sid + '"]');
+  for(var i = 0; i < nodes.length; i++) nodes[i].textContent = epgLine(EPG[sid]);
+}
+
+function epgSave(sid, val){
+  EPG[sid] = val || { none: true, at: Date.now() };
+  epgShow(sid);
+}
+
+function epgFresh(x){
+  if(!x) return false;
+  if(!x.none && x.e && Date.now() >= x.e) return false;   /* that programme has ended */
+  return (Date.now() - x.at) < EPG_RETRY_MS;
+}
+
+function epgAsk(sid){
+  var p = activeList();
+  var done = function(val){
+    try{ epgSave(sid, val) }catch(e){}
+    epgBusy--;
+    epgNext();
+  };
+  if(!p || p.type !== "xtream"){ setTimeout(function(){ done(null) }, 0); return }
+  var url = xtBase(p) + "&action=get_short_epg&stream_id=" + encodeURIComponent(sid) + "&limit=4";
+  fetch(viaApp(url)).then(function(r){ return r.text() }).then(function(txt){
+    var j = JSON.parse(txt);
+    var a = (j && j.epg_listings) || [];
+    done(Object.prototype.toString.call(a) === "[object Array]" ? epgPick(a) : null);
+  }, function(){ done(null) });
+}
+
+function epgNext(){
+  while(epgBusy < EPG_AT_ONCE && epgWait.length){
+    var sid = epgWait.shift();
+    if(epgFresh(EPG[sid])){ epgShow(sid); continue }
+    epgBusy++;
+    epgAsk(sid);
+  }
+}
+
+function epgNeed(sid){
+  if(!sid || !epgOn() || epgFresh(EPG[sid])) return;
+  if(epgWait.indexOf(sid) < 0) epgWait.push(sid);
+  epgNext();
+}
+
+function epgWatcher(){
+  if(epgObs) return epgObs;
+  if(!window.IntersectionObserver) return null;
+  epgObs = new IntersectionObserver(function(entries){
+    for(var i = 0; i < entries.length; i++){
+      if(!entries[i].isIntersecting) continue;
+      var el = entries[i].target;
+      epgObs.unobserve(el);
+      epgNeed(el.getAttribute("data-e"));
+    }
+  }, { rootMargin: "300px 0px" });
+  return epgObs;
+}
+
+/* write in what is already known and watch the rest */
+function epgScan(){
+  if(!epgOn()) return;
+  var nodes = document.getElementsByClassName("epg"), obs = epgWatcher();
+  for(var i = 0; i < nodes.length; i++){
+    var el = nodes[i], sid = el.getAttribute("data-e");
+    if(!sid) continue;
+    if(epgFresh(EPG[sid])){ el.textContent = epgLine(EPG[sid]); continue }
+    if(obs) obs.observe(el); else epgNeed(sid);
+  }
+}
+
+function epgScanSoon(){
+  if(epgSoon) return;
+  epgSoon = setTimeout(function(){ epgSoon = null; epgScan() }, 150);
+}
+
+/* a new list (or the same one again): start the guide from scratch */
+function epgReset(){
+  EPG = {};
+  epgWait = [];
+  if(epgObs){ try{ epgObs.disconnect() }catch(e){} epgObs = null }
+}
+
 /* ==================== cache (one slot, for the active list) ==================== */
 function saveCache(id, list){
   try{
@@ -1019,10 +1173,14 @@ function cardHTML(c, forceSquare){
     ? '<span class="pg"><i style="width:'+Math.round(pgv*100)+'%"></i></span>' : '';
 
   if(square){
+    /* what is on now, when the list is a panel that has a guide */
+    var sid = epgOn() ? epgSid(c.u) : "";
+    var epg = sid ? '<div class="epg" data-e="'+esc(sid)+'">'
+                  + esc(epgFresh(EPG[sid]) ? epgLine(EPG[sid]) : "") + '</div>' : '';
     return '<div class="card'+(isFav(c) ? " fav" : "")+'" data-u="'+esc(c.u)+'" data-n="'+esc(c.n)+'">'
          +   '<div class="tile" style="background:'+bg+'">'
          +     '<div class="mono">'+esc(initials(c.n))+'</div>'+img+'<span class="dot"></span>'+pg
-         +   '</div><div class="name">'+esc(c.n)+'</div></div>';
+         +   '</div><div class="name">'+esc(c.n)+'</div>'+epg+'</div>';
   }
   var rating = c.r ? '<span class="rt">&#9733; '+esc(String(c.r).slice(0,3))+'</span>' : '';
   var attrs = c.sid ? ' data-sid="'+esc(c.sid)+'"' : ' data-u="'+esc(c.u)+'"';
@@ -2619,6 +2777,16 @@ try{
 }catch(e){}
 if(TV){ document.documentElement.classList.add("tv"); kbdOn() }
 
+/* the guide fills itself in as cards appear, and again every minute */
+try{
+  var epgMo = new MutationObserver(function(){ epgScanSoon() });
+  epgMo.observe($("main"), { childList: true, subtree: true });
+  var epgFavBody = $("favBody");
+  if(epgFavBody) epgMo.observe(epgFavBody, { childList: true, subtree: true });
+}catch(e){}
+setInterval(function(){ epgScan() }, 60000);
+epgScanSoon();
+
 /* ==================== activation ==================== */
 var PIN = "";
 function drawPins(){
@@ -2655,7 +2823,7 @@ function viaApp(u){
   return window.AndroidPlayer ? "https://kiptv.local/p?u=" + encodeURIComponent(u) : u;
 }
 
-function setData(list){ CH = list; buildGroups(); renderChips(); render() }
+function setData(list){ CH = list; epgReset(); buildGroups(); renderChips(); render() }
 function showSync(text, isErr){
   var el = $("sync");
   $("syncText").textContent = text;
