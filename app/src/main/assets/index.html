@@ -1188,6 +1188,8 @@ function applyLang(){
   renderChips(); render();
   refreshSettings();               /* ...and so does the settings page */
   refreshFavs();
+  /* ...and the player's own menu (an older app without it just skips this) */
+  try{ if(window.AndroidPlayer && AndroidPlayer.setLang) AndroidPlayer.setLang(lang) }catch(e){}
 }
 
 /* ==================== actions ==================== */
