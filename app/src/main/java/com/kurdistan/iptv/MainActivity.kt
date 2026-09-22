@@ -20,7 +20,6 @@ import android.os.SystemClock
 import android.provider.Settings
 import android.util.Rational
 import android.view.Gravity
-import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
@@ -52,6 +51,7 @@ import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
 import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.HttpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
@@ -146,6 +146,8 @@ class MainActivity : ComponentActivity() {
     private var locked = false
     private lateinit var btnAspect: TextView
     private lateinit var btnLock: TextView
+    /** Fit / ⚙ / 🔒 - a row of our own at the bottom, under the seek bar */
+    private lateinit var bottomBar: LinearLayout
     private lateinit var btnUnlock: TextView
     private lateinit var lockOverlay: View
     private lateinit var txtHint: TextView
@@ -175,6 +177,9 @@ class MainActivity : ComponentActivity() {
     private var stopped = false
     /** when the small window last ended (it can end just before the app stops) */
     private var pipEndedAt = 0L
+
+    /** the server's answer when a stream is refused (403, 404 ...), shown with the error */
+    private var lastHttp = 0
 
     /** Android TV / Google TV / Fire TV: no touch screen, used with a remote */
     private val isTv: Boolean by lazy {
@@ -223,6 +228,7 @@ class MainActivity : ComponentActivity() {
         playerView.setControllerVisibilityListener(
             PlayerView.ControllerVisibilityListener { visibility ->
                 topBar.visibility = visibility
+                bottomBar.visibility = visibility
             }
         )
 
@@ -740,10 +746,9 @@ class MainActivity : ComponentActivity() {
         handler.removeCallbacks(posTicker)
         try { player?.playWhenReady = false } catch (e: Exception) {}
         loading.visibility = View.GONE
-        txtError.text = getString(R.string.player_error) + "\n\n" + code
+        txtError.text = getString(R.string.player_error) + "\n\n" + code +
+            (if (lastHttp > 0) "  (HTTP $lastHttp)" else "")
         errorBox.visibility = View.VISIBLE
-        /* TV remote: Retry is the obvious next press (a finger is not affected) */
-        if (!errorBox.isInTouchMode) findViewById<TextView>(R.id.btnRetry).requestFocus()
     }
 
     private fun reportPosition() {
@@ -825,35 +830,21 @@ class MainActivity : ComponentActivity() {
         v.isFocusable = true
     }
 
-    /** a view inside the player's own controls, found by its Media3 name */
-    private fun media3View(name: String): View? {
-        val id = resources.getIdentifier(name, "id", packageName)
-        return if (id == 0) null else playerView.findViewById(id)
-    }
-
-    /** Fit / ⚙ / 🔒 go in the player's own bottom row, under the seek bar, next to
-     *  the time - so they show and hide together with the rest of the controls.
-     *  Media3's "more" button must stay the last one in that row, so ours go
-     *  just before it. If the row is ever missing they fall back to the top bar. */
-    private fun placeButton(v: View, w: Int, h: Int, topMarginStart: Int) {
-        val row = media3View("exo_basic_controls") as? LinearLayout
-        if (row != null) {
-            val more = media3View("exo_overflow_show")
-            val at = if (more != null && row.indexOfChild(more) >= 0) row.indexOfChild(more) else row.childCount
-            row.addView(v, at, LinearLayout.LayoutParams(w, h).apply {
-                gravity = Gravity.CENTER_VERTICAL
-                marginEnd = dp(10)
-            })
-        } else {
-            findViewById<LinearLayout>(R.id.topBar).addView(v,
-                LinearLayout.LayoutParams(w, h).apply { marginStart = topMarginStart })
-        }
-    }
-
-    /** The three buttons sit in the player's bottom row; the lock layer,
-     *  the unlock button and the short hint sit on top of the player. */
+    /** Fit / ⚙ / 🔒 sit in a row of our own at the bottom right, in the same
+     *  line as the time, under the seek bar. It is not part of the player's own
+     *  controls (those stay exactly as they were); it shows and hides with them,
+     *  the same way the top bar does. */
     private fun buildAspectAndLockUi() {
         val layer = findViewById<FrameLayout>(R.id.playerLayer)
+        val bar = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            layoutDirection = View.LAYOUT_DIRECTION_LTR      /* same order in every language */
+        }
+        bottomBar = bar
+        /* 60dp = the height of the player's bottom line (the one with the time) */
+        layer.addView(bar, FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT, dp(60), Gravity.BOTTOM or Gravity.END).apply { marginEnd = dp(4) })
 
         btnAspect = TextView(this).apply {
             background = chipBg()
@@ -867,7 +858,8 @@ class MainActivity : ComponentActivity() {
             isFocusable = true
         }
         focusRing(btnAspect, round = false)
-        placeButton(btnAspect, ViewGroup.LayoutParams.WRAP_CONTENT, dp(36), dp(10))
+        bar.addView(btnAspect, LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT, dp(36)).apply { marginEnd = dp(10) })
 
         btnTracks = TextView(this).apply {
             background = roundBg()
@@ -879,7 +871,7 @@ class MainActivity : ComponentActivity() {
             isFocusable = true
         }
         focusRing(btnTracks, round = true)
-        placeButton(btnTracks, dp(40), dp(40), dp(8))
+        bar.addView(btnTracks, LinearLayout.LayoutParams(dp(40), dp(40)).apply { marginEnd = dp(10) })
 
         btnLock = TextView(this).apply {
             background = roundBg()
@@ -888,15 +880,17 @@ class MainActivity : ComponentActivity() {
             gravity = Gravity.CENTER
             isClickable = true
             isFocusable = true
-            /* a TV has no touch screen to lock */
-            if (isTv) visibility = View.GONE
+            if (isTv) visibility = View.GONE       /* a TV has no touch screen to lock */
         }
         focusRing(btnLock, round = true)
-        placeButton(btnLock, dp(40), dp(40), dp(8))
+        bar.addView(btnLock, LinearLayout.LayoutParams(dp(40), dp(40)).apply { marginEnd = dp(10) })
 
-        /* Media3's own gear offered only speed and audio; our ⚙ has audio,
-           subtitles and quality, so one gear is enough */
-        media3View("exo_settings")?.visibility = View.GONE
+        /* the player's own gear (speed + audio) sat in this spot; our ⚙ has audio,
+           subtitles and quality, so it is hidden - only its visibility changes */
+        try {
+            val id = resources.getIdentifier("exo_settings", "id", packageName)
+            if (id != 0) playerView.findViewById<View>(id)?.visibility = View.GONE
+        } catch (e: Exception) { /* keep it, then */ }
 
         /* takes every touch while locked, so nothing underneath reacts */
         lockOverlay = View(this).apply {
@@ -1029,8 +1023,26 @@ class MainActivity : ComponentActivity() {
         }
 
         override fun onPlaybackStateChanged(playbackState: Int) {
-            if (playbackState == Player.STATE_READY)
+            if (playbackState == Player.STATE_READY) {
+                lastHttp = 0
                 playerView.post { if (playerLayer.visibility == View.VISIBLE && !dead) setPipAuto(true) }
+            }
+        }
+
+        /* only notes the server's answer for the error text - the fallback
+           steps that follow are exactly as before */
+        override fun onPlayerError(error: PlaybackException) {
+            lastHttp = try {
+                var c: Throwable? = error.cause
+                var code = 0
+                var n = 0
+                while (c != null && n < 6) {
+                    if (c is HttpDataSource.InvalidResponseCodeException) { code = c.responseCode; break }
+                    c = c.cause
+                    n++
+                }
+                code
+            } catch (e: Exception) { 0 }
         }
 
         override fun onTracksChanged(tracks: Tracks) {
@@ -1056,6 +1068,7 @@ class MainActivity : ComponentActivity() {
             playerView.hideController()
             playerView.useController = false
             topBar.visibility = View.GONE
+            bottomBar.visibility = View.GONE
             showHint("\uD83D\uDD12")
             flashUnlock()
         } else {
@@ -1063,6 +1076,7 @@ class MainActivity : ComponentActivity() {
             btnUnlock.visibility = View.GONE
             playerView.useController = true
             topBar.visibility = View.VISIBLE
+            bottomBar.visibility = View.VISIBLE
             playerView.showController()
         }
     }
@@ -1277,7 +1291,7 @@ class MainActivity : ComponentActivity() {
         val wasOpen = panelOn()
         panel.visibility = View.GONE
         panelScrim.visibility = View.GONE
-        /* TV remote: back to the ⚙ button, so the next press has somewhere to go */
+        /* TV remote only: back to the ⚙ button, so the next press has somewhere to go */
         if (wasOpen && !panel.isInTouchMode && !locked && !inPip &&
             playerLayer.visibility == View.VISIBLE) {
             playerView.showController()
@@ -1546,63 +1560,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // ---------------- TV remote while a video is on screen ----------------
-
-    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        if (playerKey(event)) return true
-        return super.dispatchKeyEvent(event)
-    }
-
-    /** Only while the player is on screen; the app's pages get every key as before.
-     *  - Channel + / -  : next / previous channel in the list
-     *  - Menu (≡)       : opens / closes the ⚙ panel
-     *  - everything else goes to the player first (as Media3 asks): an arrow or OK
-     *    brings the hidden controls back, play / pause keys work from anywhere */
-    private fun playerKey(e: KeyEvent): Boolean {
-        if (!::playerLayer.isInitialized || playerLayer.visibility != View.VISIBLE || inPip) return false
-        val code = e.keyCode
-        val first = e.action == KeyEvent.ACTION_DOWN && e.repeatCount == 0
-        when (code) {
-            KeyEvent.KEYCODE_CHANNEL_UP, KeyEvent.KEYCODE_CHANNEL_DOWN -> {
-                if (locked) return false
-                if (first) zap(if (code == KeyEvent.KEYCODE_CHANNEL_UP) 1 else -1)
-                return true
-            }
-            KeyEvent.KEYCODE_MENU -> {
-                if (locked || errorBox.visibility == View.VISIBLE) return false
-                if (first) { if (panelOn()) closePanel() else openPanel() }
-                return true
-            }
-        }
-        /* the ⚙ panel, the error screen and the lock handle their own keys */
-        if (locked || panelOn() || errorBox.visibility == View.VISIBLE) return false
-        if (code !in PLAYER_KEYS) return false            /* Back, volume ...: exactly as before */
-        return try { playerView.dispatchKeyEvent(e) } catch (ex: Exception) { false }
-    }
-
-    /** the arrows, OK and the remote's play / pause / skip keys */
-    private val PLAYER_KEYS = setOf(
-        KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN,
-        KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_DPAD_CENTER,
-        KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_MEDIA_PLAY, KeyEvent.KEYCODE_MEDIA_PAUSE,
-        KeyEvent.KEYCODE_MEDIA_FAST_FORWARD, KeyEvent.KEYCODE_MEDIA_REWIND,
-        KeyEvent.KEYCODE_MEDIA_NEXT, KeyEvent.KEYCODE_MEDIA_PREVIOUS, KeyEvent.KEYCODE_HEADSETHOOK)
-
-    /** next / previous channel, going round at the ends - the same way the
-     *  player's own next / previous buttons change it */
-    private fun zap(dir: Int) {
-        val n = urls.size
-        if (n < 2) return
-        val p = player
-        val i = try { p?.currentMediaItemIndex ?: lastIndex } catch (e: Exception) { lastIndex }
-        val j = ((i + dir) % n + n) % n
-        try {
-            if (p == null || dead) buildAndStart(j)       /* after an error: start fresh, like Retry */
-            else p.seekToDefaultPosition(j)
-        } catch (e: Exception) { return }
-        showHint(titles.getOrNull(j) ?: "")
-    }
-
     // ---------------- picture-in-picture (Android 8+) ----------------
 
     private fun inPipNow(): Boolean =
@@ -1659,6 +1616,7 @@ class MainActivity : ComponentActivity() {
         playerView.hideController()
         playerView.useController = false
         topBar.visibility = View.GONE
+        bottomBar.visibility = View.GONE
         btnUnlock.visibility = View.GONE
         txtHint.visibility = View.GONE
     }
@@ -1666,6 +1624,7 @@ class MainActivity : ComponentActivity() {
     private fun exitPipUi() {
         playerView.useController = true
         topBar.visibility = View.VISIBLE
+        bottomBar.visibility = View.VISIBLE
         playerView.showController()
     }
 
