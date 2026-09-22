@@ -2080,7 +2080,13 @@ function showSync(text, isErr){
   var el = $("sync");
   $("syncText").textContent = text;
   el.className = "on" + (isErr ? " err" : "");
-  el.onclick = isErr ? function(){ window.alert(lastLoadError || "-") } : null;
+  el.onclick = function(){ 
+    if(isErr) { 
+        window.alert(lastloadError || "-"); 
+    } else { 
+        loadActive(true); 
+    } 
+};
   if(isErr) setTimeout(function(){ el.className = "" }, 7000);
 }
 function hideSync(){ $("sync").className = "" }
