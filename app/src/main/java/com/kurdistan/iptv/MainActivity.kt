@@ -1,7 +1,10 @@
 package com.kurdistan.iptv
 
+import android.app.PictureInPictureParams
 import android.content.Context
 import android.content.pm.ActivityInfo
+import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
@@ -10,7 +13,9 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.provider.Settings
+import android.util.Rational
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
@@ -160,6 +165,12 @@ class MainActivity : ComponentActivity() {
     private var swipeStartVol = 0
     /** the brightness picked in the player this session (-1 = the phone's own) */
     private var playerBrightness = -1f
+
+    /* ---- picture-in-picture: Home while watching keeps it playing small ---- */
+    private var inPip = false
+    private var stopped = false
+    /** when the small window last ended (it can end just before the app stops) */
+    private var pipEndedAt = 0L
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -537,6 +548,7 @@ class MainActivity : ComponentActivity() {
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
         setFullscreen(true)
         if (playerBrightness >= 0f) setWindowBrightness(playerBrightness)
+        setPipAuto(true)
 
         buildAndStart(index)
         handler.postDelayed(posTicker, 5000)
@@ -703,6 +715,7 @@ class MainActivity : ComponentActivity() {
 
     private fun showError(code: String) {
         if (locked) setLocked(false)      /* Retry and close must be reachable */
+        setPipAuto(false)                 /* no small window for an error screen */
         dead = true                       /* no more retries until the user asks */
         handler.removeCallbacks(posTicker)
         try { player?.playWhenReady = false } catch (e: Exception) {}
@@ -935,6 +948,12 @@ class MainActivity : ComponentActivity() {
     private val uiListener = object : Player.Listener {
         override fun onVideoSizeChanged(videoSize: VideoSize) {
             if (forcedRatio() > 0f) playerView.post { applyRatio() }
+            playerView.post { if (playerLayer.visibility == View.VISIBLE && !dead) setPipAuto(true) }
+        }
+
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            if (playbackState == Player.STATE_READY)
+                playerView.post { if (playerLayer.visibility == View.VISIBLE && !dead) setPipAuto(true) }
         }
 
         override fun onTracksChanged(tracks: Tracks) {
@@ -987,6 +1006,7 @@ class MainActivity : ComponentActivity() {
 
     /** the player closed: leave everything unlocked for next time */
     private fun resetLock() {
+        setPipAuto(false)
         setWindowBrightness(WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE)
         closePanel()
         locked = false
@@ -1340,7 +1360,7 @@ class MainActivity : ComponentActivity() {
      *  only once a finger clearly moves up or down does the swipe take over. */
     private fun swipeAllowed(): Boolean =
         ::swipe.isInitialized && ::playerLayer.isInitialized && ::panel.isInitialized &&
-            playerLayer.visibility == View.VISIBLE && !locked && !panelOn()
+            playerLayer.visibility == View.VISIBLE && !locked && !panelOn() && !inPip
 
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
         if (!swipeAllowed()) {
@@ -1416,12 +1436,101 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    // ---------------- picture-in-picture (Android 8+) ----------------
+
+    private fun inPipNow(): Boolean =
+        inPip || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && isInPictureInPictureMode)
+
+    /** the small window takes the picture's shape (Android allows 1:2.39 .. 2.39:1) */
+    private fun pipRatio(): Rational {
+        val vs = try { player?.videoSize } catch (e: Exception) { null }
+        if (vs != null && vs.width > 0 && vs.height > 0) {
+            val r = vs.width * vs.pixelWidthHeightRatio / vs.height
+            if (r in 0.42f..2.38f) return Rational((r * 1000).roundToInt(), 1000)
+        }
+        return Rational(16, 9)
+    }
+
+    private fun pipParams(auto: Boolean): PictureInPictureParams? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return null
+        val b = PictureInPictureParams.Builder().setAspectRatio(pipRatio())
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) b.setAutoEnterEnabled(auto)
+        return b.build()
+    }
+
+    /** Android 12+: go small by itself on Home, but only while a video is open */
+    private fun setPipAuto(on: Boolean) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        try { pipParams(on)?.let { setPictureInPictureParams(it) } } catch (e: Exception) { /* no PiP here */ }
+    }
+
+    /** Android 8 - 11: Home while watching */
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) return     /* 12+ does it by itself */
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        if (!::playerLayer.isInitialized || playerLayer.visibility != View.VISIBLE || dead) return
+        try {
+            if (!packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)) return
+            pipParams(false)?.let { enterPictureInPictureMode(it) }
+        } catch (e: Exception) { /* no PiP here: it simply pauses, as before */ }
+    }
+
+    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        inPip = isInPictureInPictureMode
+        if (isInPictureInPictureMode) { enterPipUi(); return }
+        /* the small window was closed, or opened back to full screen */
+        pipEndedAt = SystemClock.uptimeMillis()
+        if (stopped) closeFromPip() else exitPipUi()
+    }
+
+    /** nothing to press in the small window: no bars, no buttons */
+    private fun enterPipUi() {
+        closePanel()
+        if (locked) setLocked(false)
+        playerView.hideController()
+        playerView.useController = false
+        topBar.visibility = View.GONE
+        btnUnlock.visibility = View.GONE
+        txtHint.visibility = View.GONE
+    }
+
+    private fun exitPipUi() {
+        playerView.useController = true
+        topBar.visibility = View.VISIBLE
+        playerView.showController()
+    }
+
+    /** the small window was closed: stop and go back to the app's pages */
+    private fun closeFromPip() {
+        inPip = false
+        if (::playerLayer.isInitialized && playerLayer.visibility == View.VISIBLE) hideNativePlayer()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        stopped = false
+    }
+
+    override fun onStop() {
+        super.onStop()
+        stopped = true
+        /* the small window was closed (Android may report its end just before this) */
+        if (inPip || SystemClock.uptimeMillis() - pipEndedAt < 2000) { closeFromPip(); return }
+        /* never keep playing unseen - onPause normally did this already */
+        if (::playerLayer.isInitialized && playerLayer.visibility == View.VISIBLE) {
+            reportPosition()
+            player?.playWhenReady = false
+        }
+    }
+
     // ---------------- lifecycle ----------------
 
     override fun onPause() {
         super.onPause()
         reportPosition()
-        player?.playWhenReady = false
+        if (!inPipNow()) player?.playWhenReady = false   /* the small window keeps playing */
     }
 
     override fun onResume() {
