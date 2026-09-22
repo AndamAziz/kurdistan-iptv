@@ -323,6 +323,18 @@ body.hasnav main{padding-bottom:calc(96px + var(--safe-b))}
 #dfav:active{transform:scale(.92)}
 .dhero h2{padding-inline-end:88px}
 
+/* ---------- search results ---------- */
+.srch .schips{padding-top:4px}
+.srch section{margin-top:18px}
+.smore{text-align:center;padding:16px 0 2px}
+.smore button{padding:11px 24px;border-radius:999px;border:1px solid var(--line);background:var(--surface);
+  color:var(--text);font-weight:800;font-size:13px;cursor:pointer;font-family:inherit}
+.smore button:active{transform:scale(.96)}
+.snote{display:flex;align-items:center;justify-content:center;gap:9px;padding:22px 0 6px;
+  font-size:12.5px;font-weight:700;color:var(--muted2)}
+.snote .sp{width:13px;height:13px;flex:none;border-radius:99px;border:2px solid var(--muted2);
+  border-top-color:var(--accent2);animation:spin .8s linear infinite}
+
 #toast{position:fixed;left:50%;transform:translate(-50%,12px);bottom:calc(84px + var(--safe-b));z-index:95;
   padding:10px 18px;border-radius:999px;background:rgba(18,25,36,.97);border:1px solid var(--line);
   font-size:13px;font-weight:800;box-shadow:0 10px 30px rgba(0,0,0,.6);width:max-content;max-width:88vw;text-align:center;
@@ -468,7 +480,9 @@ var T = {
       confirmClear:"کاشەکە بسڕدرێتەوە و لیستەکە دووبارە دابەزێنرێتەوە؟",
       version:"وەشان",plType:"جۆری لیست",
       favs:"دڵخوازەکان",navFavs:"دڵخواز",favAdded:"زیادکرا بۆ دڵخوازەکان ⭐",favRemoved:"لابرا لە دڵخوازەکان",
-      favEmpty:"هێشتا هیچ دڵخوازێکت نییە",favHint:"پەنجە لەسەر هەر کەناڵ، فیلم یان زنجیرەیەک ڕابگرە تا لێرە زیاد بێت. بۆ لابردنیش هەمان کار بکە."},
+      favEmpty:"هێشتا هیچ دڵخوازێکت نییە",favHint:"پەنجە لەسەر هەر کەناڵ، فیلم یان زنجیرەیەک ڕابگرە تا لێرە زیاد بێت. بۆ لابردنیش هەمان کار بکە.",
+      searchAll:"گەڕان بۆ کەناڵ، فیلم، زنجیرە...",noResults:"هیچ شتێک بۆ «%s» نەدۆزرایەوە",
+      srchLoading:"لە فیلم و زنجیرەکانیش دەگەڕێت…"},
   en:{name:"English",dir:"ltr",all:"All",search:"Search channels...",
       featured:"FEATURED",playNow:"Play",resume:"Resume",seeAll:"See all",
       fromStart:"From start",left:"%s left",director:"Director",cast:"Cast",
@@ -495,7 +509,9 @@ var T = {
       confirmClear:"Clear the cache and download the playlist again?",
       version:"Version",plType:"Playlist type",
       favs:"Favorites",navFavs:"Favorites",favAdded:"Added to favorites ⭐",favRemoved:"Removed from favorites",
-      favEmpty:"No favorites yet",favHint:"Press and hold any channel, movie or series to add it here. Do the same to remove it."},
+      favEmpty:"No favorites yet",favHint:"Press and hold any channel, movie or series to add it here. Do the same to remove it.",
+      searchAll:"Search channels, movies, series...",noResults:"Nothing found for “%s”",
+      srchLoading:"Searching movies and series too…"},
   ar:{name:"العربية",dir:"rtl",all:"الكل",search:"ابحث عن قناة...",
       featured:"مميّز",playNow:"تشغيل",resume:"متابعة",seeAll:"الكل",
       fromStart:"من البداية",left:"باقٍ %s",director:"المخرج",cast:"الأبطال",
@@ -522,7 +538,9 @@ var T = {
       confirmClear:"مسح الذاكرة المؤقتة وتحميل القائمة من جديد؟",
       version:"الإصدار",plType:"نوع القائمة",
       favs:"المفضلة",navFavs:"المفضلة",favAdded:"أضيفت إلى المفضلة ⭐",favRemoved:"أزيلت من المفضلة",
-      favEmpty:"لا توجد مفضلة بعد",favHint:"اضغط مطولاً على أي قناة أو فيلم أو مسلسل لإضافته هنا، وكرر ذلك لإزالته."}
+      favEmpty:"لا توجد مفضلة بعد",favHint:"اضغط مطولاً على أي قناة أو فيلم أو مسلسل لإضافته هنا، وكرر ذلك لإزالته.",
+      searchAll:"ابحث عن قناة، فيلم، مسلسل...",noResults:"لا توجد نتائج لـ «%s»",
+      srchLoading:"جارٍ البحث في الأفلام والمسلسلات أيضاً…"}
 };
 var LANG_ORDER = ["en", "ku", "ar"];
 var lang = localStorage.kiptv_lang || "en";
@@ -823,6 +841,7 @@ function drawNav(){
   $("navMovies").textContent = d.movies;
   $("navSeries").textContent = d.series;
   $("navFavs").textContent = d.navFavs;
+  $("search").placeholder = x ? d.searchAll : d.search;
   var btns = document.querySelectorAll("#nav button");
   for(var i = 0; i < btns.length; i++){
     var sName = btns[i].getAttribute("data-s");
@@ -1072,6 +1091,8 @@ function currentTitle(q){
 }
 function render(){
   var q = ($("search").value || "").trim().toLowerCase();
+  if(q){ heroStop(); renderSearch(); return }      /* search: channels + films + series */
+  $("chips").style.display = "";                   /* the group chips come back after a search */
   var src = items();
   view = q ? src.filter(function(c){ return c.n.toLowerCase().indexOf(q) > -1 })
            : (f === "ALL" ? src : src.filter(function(c){ return c.c === f }));
@@ -1240,10 +1261,140 @@ window.addEventListener("scroll", function(){
 });
 function toggleSearch(){
   var b = $("sbox");
-  b.classList.toggle("on");
-  if(b.classList.contains("on")) $("search").focus();
-  else { $("search").value = ""; render() }
+  if(b.classList.contains("on")){ layerClose("search"); return }   /* Back does the same */
+  b.classList.add("on");
+  layerOpen("search");
+  SQ_TYPE = "all";
+  $("search").focus();
+  searchWarm();                    /* films + series start loading while you type */
 }
+
+/* ==================== search: channels + films + series ====================
+   Everything in the active playlist is searched at once and shown by type,
+   the tab you are on first. Words can come in any order, capitals and
+   accents do not matter, and Arabic / Kurdish letter forms (ك ک, ي ی ى …)
+   count as the same letter. A channel found here plays through the same
+   playQueue as before; films and series open their usual page. */
+var SQ_TYPE = "all";              /* all | live | movie | series */
+var SQ_SHOW = 48;                 /* how many are shown for one type */
+var SQ_LOADING = false;
+
+function searchNorm(s){
+  s = String(s == null ? "" : s).toLowerCase();
+  try{ s = s.normalize("NFD") }catch(e){}
+  return s.replace(/[̀-ًͯ-ٰٟـ‌‍]/g, "")
+          .replace(/[يى]/g, "ی").replace(/ك/g, "ک").replace(/ة/g, "ه")
+          .replace(/[أإآٱ]/g, "ا").replace(/ؤ/g, "و")
+          .replace(/[٠-٩]/g, function(d){ return String(d.charCodeAt(0) - 1632) })
+          .replace(/[۰-۹]/g, function(d){ return String(d.charCodeAt(0) - 1776) });
+}
+function isWordStart(s, at){
+  if(at <= 0) return true;
+  return /[\s\-_|:.,\/()\[\]]/.test(s.charAt(at - 1));
+}
+/* every word of the query must appear; names that start with it come first */
+function searchHits(list, q, toks){
+  var out = [];
+  for(var i = 0; i < list.length; i++){
+    var c = list[i];
+    if(!c || !c.n) continue;
+    var s = c._s || (c._s = searchNorm(c.n));
+    var ok = true;
+    for(var k = 0; k < toks.length; k++) if(s.indexOf(toks[k]) < 0){ ok = false; break }
+    if(!ok) continue;
+    /* 0 starts with the query · 1 the whole query at a word · 2 the whole query
+       anywhere · 3 the words apart, first one at a word · 4 anything else */
+    var p = s.indexOf(q), score;
+    if(p === 0) score = 0;
+    else if(p > 0) score = isWordStart(s, p) ? 1 : 2;
+    else score = isWordStart(s, s.indexOf(toks[0])) ? 3 : 4;
+    out.push({ c: c, s: score, i: i });
+  }
+  out.sort(function(a, b){ return a.s - b.s || a.i - b.i });
+  return out.map(function(x){ return x.c });
+}
+
+/* films and series of an Xtream playlist are loaded when you first search */
+function searchWarm(){
+  if(SQ_LOADING || !isXtream() || (LOADED.movies && LOADED.series)) return;
+  SQ_LOADING = true;
+  var owner = activeId();
+  loadSection("movies")
+    .then(function(){ return activeId() === owner ? loadSection("series") : null })
+    .then(function(){
+      SQ_LOADING = false;
+      if(activeId() === owner && ($("search").value || "").trim()) renderSearch(true);
+    });
+}
+
+function renderSearch(keepScroll){
+  var d = t(), raw = ($("search").value || "").trim();
+  var q = searchNorm(raw).replace(/\s+/g, " ");
+  var toks = q.split(" ").filter(Boolean);
+  if(!toks.length){ return }
+  searchWarm();
+
+  var res = { live: searchHits(CH, q, toks),
+              movie: LOADED.movies ? searchHits(DATA.movies || [], q, toks) : [],
+              series: LOADED.series ? searchHits(DATA.series || [], q, toks) : [] };
+  var order = SECTION === "movies" ? ["movie", "live", "series"]
+            : SECTION === "series" ? ["series", "live", "movie"] : ["live", "movie", "series"];
+  var types = order.filter(function(k){ return res[k].length });
+  var total = types.reduce(function(n, k){ return n + res[k].length }, 0);
+  if(SQ_TYPE !== "all" && !res[SQ_TYPE].length) SQ_TYPE = "all";
+  var one = types.length === 1 ? types[0] : (SQ_TYPE !== "all" ? SQ_TYPE : null);
+  var names = { live: d.live, movie: d.movies, series: d.series };
+
+  /* the found channels are the next / previous queue, as before */
+  view = res.live;
+  shown = 0;                        /* keeps the page-scroll loader out of the way */
+
+  var h = '<div class="srch">';
+  if(types.length > 1){
+    h += '<div class="chips schips">'
+       + '<button class="chip'+(one ? "" : " on")+'" data-st="all">'+esc(d.all)+' · '+total+'</button>'
+       + types.map(function(k){
+           return '<button class="chip'+(one === k ? " on" : "")+'" data-st="'+k+'">'+esc(names[k])+' · '+res[k].length+'</button>';
+         }).join("")
+       + '</div>';
+  }
+  (one ? [one] : types).forEach(function(k){
+    var list = res[k], square = k === "live";
+    var lim = one ? SQ_SHOW : (square ? 12 : 9);
+    h += '<section><div class="shead"><span class="bar"></span><h2>'+esc(names[k])+'</h2>'
+       + '<span class="cnt">'+list.length+'</span></div>'
+       + '<div class="'+(square ? "grid" : "grid posters")+'">'
+       + list.slice(0, lim).map(function(c){ return cardHTML(c, square) }).join("")
+       + '</div>';
+    if(list.length > lim)
+      h += one ? '<div class="smore"><button data-sm="1">'+esc(d.more)+'</button></div>'
+               : '<div class="smore"><button data-st="'+k+'">'+esc(d.seeAll)+' · '+list.length+' &#8250;</button></div>';
+    h += '</section>';
+  });
+  if(SQ_LOADING)
+    h += '<div class="snote"><span class="sp"></span>'+esc(d.srchLoading)+'</div>';
+  else if(!total)
+    h += '<div class="empty"><div>&#128269;</div><p>'+esc(d.noResults.replace("%s", raw))+'</p></div>';
+  h += '</div>';
+
+  $("main").innerHTML = h;
+  $("chips").style.display = "none";               /* group chips do nothing while searching */
+  if(!keepScroll) window.scrollTo(0, 0);
+}
+
+/* type chips, "see all" and "show more" inside the results */
+$("main").addEventListener("click", function(e){
+  var el = e.target;
+  while(el && el !== this && !(el.getAttribute && (el.getAttribute("data-st") || el.getAttribute("data-sm"))))
+    el = el.parentNode;
+  if(!el || el === this) return;
+  if(el.getAttribute("data-sm")){ SQ_SHOW += 48; renderSearch(true); return }
+  SQ_TYPE = el.getAttribute("data-st");
+  SQ_SHOW = 48;
+  renderSearch();
+});
+/* a new query starts from the first page again */
+$("search").addEventListener("input", function(){ SQ_SHOW = 48 });
 
 /* ==================== series detail ==================== */
 var curSeries = null, curSeason = null, curMovie = null;
@@ -1608,6 +1759,11 @@ function layerHide(name){
   if(name === "detail") $("detail").classList.remove("on");
   else if(name === "settings"){ $("settings").classList.remove("on"); drawNav() }
   else if(name === "favs"){ $("favs").classList.remove("on"); drawNav() }
+  else if(name === "search"){
+    $("sbox").classList.remove("on");
+    $("search").value = ""; $("search").blur();
+    render();
+  }
   else if(name === "sheet"){
     sheetStack.pop();
     if(!sheetStack.length) $("sheet").classList.remove("on");
@@ -2080,13 +2236,7 @@ function showSync(text, isErr){
   var el = $("sync");
   $("syncText").textContent = text;
   el.className = "on" + (isErr ? " err" : "");
-  el.onclick = function(){ 
-    if(isErr) { 
-        window.alert(lastloadError || "-"); 
-    } else { 
-        loadActive(true); 
-    } 
-};
+  el.onclick = isErr ? function(){ window.alert(lastLoadError || "-") } : null;
   if(isErr) setTimeout(function(){ el.className = "" }, 7000);
 }
 function hideSync(){ $("sync").className = "" }
