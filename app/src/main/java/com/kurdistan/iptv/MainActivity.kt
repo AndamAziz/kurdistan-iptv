@@ -22,9 +22,12 @@ import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ProgressBar
+import android.widget.ScrollView
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
+import androidx.media3.common.C
+import androidx.media3.common.Format
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -32,6 +35,8 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.TrackSelectionOverride
+import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
@@ -40,6 +45,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
+import androidx.media3.ui.SubtitleView
 import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.NextRenderersFactory
 import org.json.JSONArray
 import org.json.JSONObject
@@ -49,6 +55,8 @@ import java.net.CookieManager
 import java.net.CookiePolicy
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.Locale
+import kotlin.math.abs
 
 class MainActivity : ComponentActivity() {
 
@@ -130,6 +138,17 @@ class MainActivity : ComponentActivity() {
     private val hideUnlock = Runnable { if (locked) btnUnlock.visibility = View.GONE }
     private val hideHint = Runnable { txtHint.visibility = View.GONE }
 
+    /* ---- audio / subtitles / quality: choose among the tracks the stream
+       already has - how the stream is opened stays exactly the same ---- */
+    private lateinit var btnTracks: TextView
+    private lateinit var panelScrim: View
+    private lateinit var panel: ScrollView
+    private lateinit var panelBox: LinearLayout
+    private var qualityPinned = false
+    /** the app's language, sent by the page (en / ku / ar) */
+    @Volatile private var uiLang = "en"
+    private val SUB_SCALES = floatArrayOf(0.8f, 1f, 1.3f, 1.6f)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -184,6 +203,7 @@ class MainActivity : ComponentActivity() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 when {
+                    playerLayer.visibility == View.VISIBLE && panelOn() -> closePanel()
                     playerLayer.visibility == View.VISIBLE && locked -> flashUnlock()
                     playerLayer.visibility == View.VISIBLE -> hideNativePlayer()
                     webView.canGoBack() -> webView.goBack()
@@ -290,6 +310,12 @@ class MainActivity : ComponentActivity() {
             runOnUiThread {
                 openQueue(listOf(url), listOf(title), listOf(null), listOf(null), 0, 0L)
             }
+        }
+
+        /** the page's language, so the player's own menu speaks it too */
+        @android.webkit.JavascriptInterface
+        fun setLang(l: String) {
+            runOnUiThread { uiLang = if (l == "ku" || l == "ar") l else "en" }
         }
 
         /** json: [{"n":..,"u":..,"ua"?:..,"rf"?:..}, ...] - lets next / previous work */
@@ -530,7 +556,8 @@ class MainActivity : ComponentActivity() {
 
         player = buildPlayer().also { p ->
             playerView.player = p
-            p.addListener(aspectListener)
+            p.addListener(uiListener)
+            applyTrackPrefs(p)
 
             p.addListener(object : Player.Listener {
                 override fun onMediaItemTransition(item: MediaItem?, reason: Int) {
@@ -751,6 +778,17 @@ class MainActivity : ComponentActivity() {
         bar.addView(btnAspect, LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT, dp(36)).apply { marginStart = dp(10) })
 
+        btnTracks = TextView(this).apply {
+            background = roundBg()
+            text = "\u2699\uFE0E"
+            setTextColor(Color.WHITE)
+            textSize = 19f
+            gravity = Gravity.CENTER
+            isClickable = true
+            isFocusable = true
+        }
+        bar.addView(btnTracks, LinearLayout.LayoutParams(dp(40), dp(40)).apply { marginStart = dp(8) })
+
         btnLock = TextView(this).apply {
             background = roundBg()
             text = "\uD83D\uDD12"
@@ -792,6 +830,31 @@ class MainActivity : ComponentActivity() {
         }
         layer.addView(txtHint, FrameLayout.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER))
+
+        panelScrim = View(this).apply {
+            setBackgroundColor(0x66000000)
+            isClickable = true
+            visibility = View.GONE
+            setOnClickListener { closePanel() }
+        }
+        layer.addView(panelScrim, FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+
+        panelBox = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(16), dp(8), dp(16), dp(28))
+        }
+        panel = ScrollView(this).apply {
+            setBackgroundColor(0xF20B0F16.toInt())
+            isClickable = true
+            visibility = View.GONE
+            addView(panelBox)
+        }
+        layer.addView(panel, FrameLayout.LayoutParams(
+            dp(340), ViewGroup.LayoutParams.MATCH_PARENT, Gravity.END))
+
+        btnTracks.setOnClickListener { openPanel() }
+        applySubScale()
 
         aspectIdx = prefs().getInt("aspect", 0).coerceIn(0, ASPECT_NAMES.size - 1)
         applyAspect(false)
@@ -849,11 +912,28 @@ class MainActivity : ComponentActivity() {
             frame.setAspectRatio(vs.width * vs.pixelWidthHeightRatio / vs.height)
     }
 
-    /** PlayerView sets the frame to the video's own shape on every new video
-     *  size; a forced 16:9 / 4:3 is put back right after it. */
-    private val aspectListener = object : Player.Listener {
+    /** Only looks, never steers playback:
+     *  - PlayerView sets the frame to the video's own shape on every new video
+     *    size; a forced 16:9 / 4:3 is put back right after it
+     *  - an open ⚙ panel is redrawn when the stream's tracks change
+     *  - a quality picked for one stream is dropped when the next one starts */
+    private val uiListener = object : Player.Listener {
         override fun onVideoSizeChanged(videoSize: VideoSize) {
             if (forcedRatio() > 0f) playerView.post { applyRatio() }
+        }
+
+        override fun onTracksChanged(tracks: Tracks) {
+            if (panelOn()) playerView.post { if (panelOn()) fillPanel() }
+        }
+
+        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            if (!qualityPinned) return
+            qualityPinned = false
+            val p = player ?: return
+            try {
+                p.trackSelectionParameters = p.trackSelectionParameters.buildUpon()
+                    .clearOverridesOfType(C.TRACK_TYPE_VIDEO).build()
+            } catch (e: Exception) { /* never let a menu choice stop playback */ }
         }
     }
 
@@ -861,6 +941,7 @@ class MainActivity : ComponentActivity() {
         locked = on
         lockOverlay.visibility = if (on) View.VISIBLE else View.GONE
         if (on) {
+            closePanel()
             playerView.hideController()
             playerView.useController = false
             topBar.visibility = View.GONE
@@ -891,6 +972,7 @@ class MainActivity : ComponentActivity() {
 
     /** the player closed: leave everything unlocked for next time */
     private fun resetLock() {
+        closePanel()
         locked = false
         lockOverlay.visibility = View.GONE
         btnUnlock.removeCallbacks(hideUnlock)
@@ -898,6 +980,341 @@ class MainActivity : ComponentActivity() {
         txtHint.removeCallbacks(hideHint)
         txtHint.visibility = View.GONE
         playerView.useController = true
+    }
+
+    // ---------------- audio / subtitles / quality (⚙) ----------------
+
+    private val TX_EN = mapOf(
+        "audio" to "Audio", "subs" to "Subtitles", "quality" to "Quality",
+        "off" to "Off", "auto" to "Auto", "size" to "Text size",
+        "s1" to "Small", "s2" to "Normal", "s3" to "Large", "s4" to "Extra large",
+        "noSubs" to "No subtitles in this video", "oneAudio" to "Only one audio track",
+        "oneVideo" to "Only one quality", "track" to "Track")
+    private val TX_KU = mapOf(
+        "audio" to "دەنگ", "subs" to "ژێرنووس", "quality" to "کوالیتی",
+        "off" to "بێ ژێرنووس", "auto" to "خۆکار", "size" to "قەبارەی نووسین",
+        "s1" to "بچووک", "s2" to "ئاسایی", "s3" to "گەورە", "s4" to "زۆر گەورە",
+        "noSubs" to "ئەم ڤیدیۆیە ژێرنووسی نییە", "oneAudio" to "تەنها یەک دەنگ هەیە",
+        "oneVideo" to "تەنها یەک کوالیتی هەیە", "track" to "تراک")
+    private val TX_AR = mapOf(
+        "audio" to "الصوت", "subs" to "الترجمة", "quality" to "الجودة",
+        "off" to "بدون ترجمة", "auto" to "تلقائي", "size" to "حجم الخط",
+        "s1" to "صغير", "s2" to "عادي", "s3" to "كبير", "s4" to "كبير جداً",
+        "noSubs" to "لا توجد ترجمة في هذا الفيديو", "oneAudio" to "يوجد صوت واحد فقط",
+        "oneVideo" to "توجد جودة واحدة فقط", "track" to "مسار")
+
+    private fun tx(key: String): String =
+        (when (uiLang) { "ku" -> TX_KU; "ar" -> TX_AR; else -> TX_EN })[key] ?: TX_EN[key] ?: key
+
+    private val LANG_EN = mapOf("ku" to "Kurdish", "ckb" to "Kurdish (Sorani)", "kmr" to "Kurdish (Kurmanji)",
+        "sdh" to "Kurdish (Southern)", "ar" to "Arabic", "en" to "English", "tr" to "Turkish", "fa" to "Persian",
+        "fr" to "French", "de" to "German", "es" to "Spanish", "ru" to "Russian", "it" to "Italian",
+        "hi" to "Hindi", "ur" to "Urdu")
+    private val LANG_KU = mapOf("ku" to "کوردی", "ckb" to "کوردی (سۆرانی)", "kmr" to "کوردی (کرمانجی)",
+        "sdh" to "کوردی (باشووری)", "ar" to "عەرەبی", "en" to "ئینگلیزی", "tr" to "تورکی", "fa" to "فارسی",
+        "fr" to "فەرەنسی", "de" to "ئەڵمانی", "es" to "ئیسپانی", "ru" to "ڕووسی", "it" to "ئیتاڵی",
+        "hi" to "هیندی", "ur" to "ئوردو")
+    private val LANG_AR = mapOf("ku" to "الكردية", "ckb" to "الكردية (السورانية)", "kmr" to "الكردية (الكرمانجية)",
+        "sdh" to "الكردية (الجنوبية)", "ar" to "العربية", "en" to "الإنجليزية", "tr" to "التركية", "fa" to "الفارسية",
+        "fr" to "الفرنسية", "de" to "الألمانية", "es" to "الإسبانية", "ru" to "الروسية", "it" to "الإيطالية",
+        "hi" to "الهندية", "ur" to "الأردية")
+
+    /** a track's language in the app's language, or null when it has none */
+    private fun langName(code: String?): String? {
+        if (code.isNullOrBlank() || code == C.LANGUAGE_UNDETERMINED) return null
+        val c = code.lowercase(Locale.ROOT).substringBefore('-').substringBefore('_')
+        val names = when (uiLang) { "ku" -> LANG_KU; "ar" -> LANG_AR; else -> LANG_EN }
+        names[c]?.let { return it }
+        val d = try { Locale.forLanguageTag(code).getDisplayLanguage(Locale.ENGLISH) } catch (e: Exception) { "" }
+        return if (d.isNotBlank() && d.lowercase(Locale.ROOT) != c) d else code
+    }
+
+    private fun codecName(mime: String?): String? = when (mime) {
+        MimeTypes.AUDIO_AC3 -> "AC3"
+        MimeTypes.AUDIO_E_AC3 -> "E-AC3"
+        MimeTypes.AUDIO_AC4 -> "AC4"
+        MimeTypes.AUDIO_AAC -> "AAC"
+        MimeTypes.AUDIO_MPEG -> "MP3"
+        MimeTypes.AUDIO_MPEG_L2 -> "MP2"
+        MimeTypes.AUDIO_DTS -> "DTS"
+        MimeTypes.AUDIO_OPUS -> "Opus"
+        else -> null
+    }
+
+    private fun audioLabel(f: Format, n: Int): String {
+        val parts = ArrayList<String>()
+        val lang = langName(f.language)
+        val label = f.label
+        parts.add(label ?: lang ?: (tx("track") + " " + n))
+        if (label != null && lang != null && lang != label) parts.add(lang)
+        when (f.channelCount) {
+            1 -> parts.add("Mono")
+            2 -> parts.add("Stereo")
+            6 -> parts.add("5.1")
+            8 -> parts.add("7.1")
+        }
+        codecName(f.sampleMimeType)?.let { parts.add(it) }
+        return parts.joinToString("  ·  ")
+    }
+
+    private fun textLabel(f: Format, n: Int): String {
+        val lang = langName(f.language)
+        val label = f.label
+        val main = label ?: lang ?: (tx("track") + " " + n)
+        return if (label != null && lang != null && lang != label) "$main  ·  $lang" else main
+    }
+
+    private fun qualityLabel(f: Format): String {
+        val mbps = if (f.bitrate > 0) String.format(Locale.US, "  ·  %.1f Mbps", f.bitrate / 1_000_000f) else ""
+        return "${f.height}p$mbps"
+    }
+
+    private fun panelBg(on: Boolean): GradientDrawable = GradientDrawable().apply {
+        cornerRadius = dp(12).toFloat()
+        setColor(if (on) 0x33E63E46 else 0x14FFFFFF)
+        setStroke(dp(1), if (on) 0xFFE63E46.toInt() else 0x1FFFFFFF)
+    }
+
+    private fun sectionTitle(t: String): TextView = TextView(this).apply {
+        text = t
+        setTextColor(0xFF8B97A6.toInt())
+        textSize = 12.5f
+        setTypeface(typeface, Typeface.BOLD)
+        setPadding(dp(4), dp(18), dp(4), dp(8))
+    }
+
+    private fun noteRow(t: String): TextView = TextView(this).apply {
+        text = t
+        setTextColor(0xFF5E6977.toInt())
+        textSize = 12f
+        setPadding(dp(6), dp(2), dp(6), dp(8))
+    }
+
+    private fun optionRow(label: String, on: Boolean, action: () -> Unit): TextView = TextView(this).apply {
+        text = (if (on) "✓   " else "") + label
+        setTextColor(if (on) 0xFFFF6A5E.toInt() else Color.WHITE)
+        textSize = 14f
+        if (on) setTypeface(typeface, Typeface.BOLD)
+        background = panelBg(on)
+        setPadding(dp(14), dp(12), dp(14), dp(12))
+        isClickable = true
+        setOnClickListener { action() }
+        layoutParams = LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { bottomMargin = dp(6) }
+    }
+
+    private fun sizeRow(): LinearLayout {
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(0, dp(4), 0, dp(4))
+        }
+        val cur = prefs().getFloat("subScale", 1f)
+        for ((k, s) in SUB_SCALES.withIndex()) {
+            val on = abs(cur - s) < 0.01f
+            val b = TextView(this).apply {
+                text = tx("s" + (k + 1))
+                gravity = Gravity.CENTER
+                setTextColor(if (on) 0xFFFF6A5E.toInt() else Color.WHITE)
+                textSize = 12f
+                if (on) setTypeface(typeface, Typeface.BOLD)
+                background = panelBg(on)
+                setPadding(dp(4), dp(10), dp(4), dp(10))
+                isClickable = true
+                setOnClickListener {
+                    prefs().edit().putFloat("subScale", s).apply()
+                    applySubScale()
+                    fillPanel()
+                }
+            }
+            row.addView(b, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
+                if (k > 0) marginStart = dp(6)
+            })
+        }
+        return row
+    }
+
+    private fun applySubScale() {
+        val s = prefs().getFloat("subScale", 0f)
+        if (s > 0f) playerView.subtitleView?.setFractionalTextSize(SubtitleView.DEFAULT_TEXT_SIZE_FRACTION * s)
+    }
+
+    private fun panelOn(): Boolean = panel.visibility == View.VISIBLE
+
+    private fun openPanel() {
+        if (locked) return
+        val w = resources.displayMetrics.widthPixels
+        panel.layoutParams = (panel.layoutParams as FrameLayout.LayoutParams).apply {
+            width = minOf(dp(360), (w * 0.62f).toInt())
+        }
+        fillPanel()
+        panel.scrollTo(0, 0)
+        panelScrim.visibility = View.VISIBLE
+        panel.visibility = View.VISIBLE
+        playerView.hideController()
+    }
+
+    private fun closePanel() {
+        panel.visibility = View.GONE
+        panelScrim.visibility = View.GONE
+    }
+
+    /** what the stream offers right now, in three short lists */
+    private fun fillPanel() {
+        val box = panelBox
+        box.removeAllViews()
+        box.layoutDirection = if (uiLang == "en") View.LAYOUT_DIRECTION_LTR else View.LAYOUT_DIRECTION_RTL
+        val p = player
+        val groups: List<Tracks.Group> = try { p?.currentTracks?.groups } catch (e: Exception) { null } ?: emptyList()
+
+        /* audio */
+        box.addView(sectionTitle("🔊  " + tx("audio")))
+        var n = 0
+        for (g in groups) {
+            if (g.type != C.TRACK_TYPE_AUDIO) continue
+            for (i in 0 until g.length) {
+                if (!g.isTrackSupported(i)) continue
+                n++
+                val f = g.getTrackFormat(i)
+                box.addView(optionRow(audioLabel(f, n), g.isTrackSelected(i)) { chooseAudio(g, i) })
+            }
+        }
+        if (n == 0) box.addView(noteRow("–"))
+        else if (n == 1) box.addView(noteRow(tx("oneAudio")))
+
+        /* subtitles */
+        box.addView(sectionTitle("💬  " + tx("subs")))
+        val subRows = ArrayList<TextView>()
+        var anySub = false
+        var m = 0
+        for (g in groups) {
+            if (g.type != C.TRACK_TYPE_TEXT) continue
+            for (i in 0 until g.length) {
+                if (!g.isTrackSupported(i)) continue
+                m++
+                val sel = g.isTrackSelected(i)
+                if (sel) anySub = true
+                subRows.add(optionRow(textLabel(g.getTrackFormat(i), m), sel) { chooseText(g, i) })
+            }
+        }
+        if (m == 0) box.addView(noteRow(tx("noSubs")))
+        else {
+            box.addView(optionRow(tx("off"), !anySub) { subsOff() })
+            for (r in subRows) box.addView(r)
+            box.addView(noteRow(tx("size")))
+            box.addView(sizeRow())
+        }
+
+        /* quality */
+        box.addView(sectionTitle("🎬  " + tx("quality")))
+        val video = ArrayList<Pair<Tracks.Group, Int>>()
+        for (g in groups) {
+            if (g.type != C.TRACK_TYPE_VIDEO) continue
+            for (i in 0 until g.length)
+                if (g.isTrackSupported(i) && g.getTrackFormat(i).height > 0) video.add(Pair(g, i))
+        }
+        video.sortByDescending { (g, i) -> g.getTrackFormat(i).height * 100000L + maxOf(0, g.getTrackFormat(i).bitrate) / 1000 }
+        val nowH = try { p?.videoFormat?.height ?: 0 } catch (e: Exception) { 0 }
+        box.addView(optionRow(tx("auto") + (if (!qualityPinned && nowH > 0) "  ·  ${nowH}p" else ""), !qualityPinned) { qualityAuto() })
+        if (video.size <= 1) box.addView(noteRow(tx("oneVideo")))
+        else {
+            val seen = HashSet<String>()
+            for ((g, i) in video) {
+                val lbl = qualityLabel(g.getTrackFormat(i))
+                if (!seen.add(lbl)) continue
+                box.addView(optionRow(lbl, qualityPinned && g.isTrackSelected(i)) { chooseQuality(g, i, lbl) })
+            }
+        }
+    }
+
+    /** play exactly this track of its kind */
+    private fun useTrack(g: Tracks.Group, i: Int): Boolean {
+        val p = player ?: return false
+        return try {
+            p.trackSelectionParameters = p.trackSelectionParameters.buildUpon()
+                .setTrackTypeDisabled(g.type, false)
+                .setOverrideForType(TrackSelectionOverride(g.mediaTrackGroup, i))
+                .build()
+            true
+        } catch (e: Exception) { false }
+    }
+
+    private fun chooseAudio(g: Tracks.Group, i: Int) {
+        if (!useTrack(g, i)) return
+        val f = g.getTrackFormat(i)
+        val lang = f.language
+        val e = prefs().edit()
+        if (lang.isNullOrBlank() || lang == C.LANGUAGE_UNDETERMINED) e.remove("audioLang") else e.putString("audioLang", lang)
+        e.apply()
+        closePanel()
+        showHint(audioLabel(f, 1))
+    }
+
+    private fun chooseText(g: Tracks.Group, i: Int) {
+        if (!useTrack(g, i)) return
+        val f = g.getTrackFormat(i)
+        val lang = f.language
+        prefs().edit().putString("textLang",
+            if (lang.isNullOrBlank() || lang == C.LANGUAGE_UNDETERMINED) C.LANGUAGE_UNDETERMINED else lang).apply()
+        closePanel()
+        showHint(textLabel(f, 1))
+    }
+
+    private fun subsOff() {
+        val p = player ?: return
+        try {
+            p.trackSelectionParameters = p.trackSelectionParameters.buildUpon()
+                .clearOverridesOfType(C.TRACK_TYPE_TEXT)
+                .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, true)
+                .build()
+        } catch (e: Exception) { return }
+        prefs().edit().putString("textLang", "off").apply()
+        closePanel()
+        showHint(tx("off"))
+    }
+
+    private fun chooseQuality(g: Tracks.Group, i: Int, label: String) {
+        if (!useTrack(g, i)) return
+        qualityPinned = true
+        closePanel()
+        showHint(label)
+    }
+
+    private fun qualityAuto() {
+        val p = player ?: return
+        try {
+            p.trackSelectionParameters = p.trackSelectionParameters.buildUpon()
+                .clearOverridesOfType(C.TRACK_TYPE_VIDEO).build()
+        } catch (e: Exception) { return }
+        qualityPinned = false
+        closePanel()
+        showHint(tx("auto"))
+    }
+
+    /** A new player starts with the language choices made before. With no
+     *  choice made yet nothing is touched - exactly the old behaviour. */
+    private fun applyTrackPrefs(p: ExoPlayer) {
+        qualityPinned = false
+        val pr = prefs()
+        val audio = pr.getString("audioLang", null)
+        val text = pr.getString("textLang", null)
+        if (audio == null && text == null) return
+        try {
+            val b = p.trackSelectionParameters.buildUpon()
+            if (audio != null) b.setPreferredAudioLanguage(audio)
+            when (text) {
+                null -> {}
+                "off" -> b.setTrackTypeDisabled(C.TRACK_TYPE_TEXT, true)
+                C.LANGUAGE_UNDETERMINED -> {
+                    b.setTrackTypeDisabled(C.TRACK_TYPE_TEXT, false)
+                    b.setSelectUndeterminedTextLanguage(true)
+                }
+                else -> {
+                    b.setTrackTypeDisabled(C.TRACK_TYPE_TEXT, false)
+                    b.setPreferredTextLanguage(text)
+                }
+            }
+            p.trackSelectionParameters = b.build()
+        } catch (e: Exception) { /* keep the player's defaults */ }
     }
 
     // ---------------- lifecycle ----------------
