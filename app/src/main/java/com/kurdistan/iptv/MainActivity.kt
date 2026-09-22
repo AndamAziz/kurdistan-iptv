@@ -1,6 +1,7 @@
 package com.kurdistan.iptv
 
 import android.app.PictureInPictureParams
+import android.app.UiModeManager
 import android.content.Context
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
@@ -172,6 +173,15 @@ class MainActivity : ComponentActivity() {
     /** when the small window last ended (it can end just before the app stops) */
     private var pipEndedAt = 0L
 
+    /** Android TV / Google TV / Fire TV: no touch screen, used with a remote */
+    private val isTv: Boolean by lazy {
+        val mode = try {
+            (getSystemService(Context.UI_MODE_SERVICE) as UiModeManager).currentModeType
+        } catch (e: Exception) { 0 }
+        mode == Configuration.UI_MODE_TYPE_TELEVISION ||
+            (try { !packageManager.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN) } catch (e: Exception) { false })
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -222,6 +232,7 @@ class MainActivity : ComponentActivity() {
 
         configureWebView()
         webView.loadUrl("file:///android_asset/index.html")
+        webView.requestFocus()                /* a TV remote's keys go to the page */
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -334,6 +345,10 @@ class MainActivity : ComponentActivity() {
                 openQueue(listOf(url), listOf(title), listOf(null), listOf(null), 0, 0L)
             }
         }
+
+        /** the page asks this to show where the remote's focus is from the start */
+        @android.webkit.JavascriptInterface
+        fun isTv(): Boolean = this@MainActivity.isTv
 
         /** the page's language, so the player's own menu speaks it too */
         @android.webkit.JavascriptInterface
@@ -750,8 +765,11 @@ class MainActivity : ComponentActivity() {
         loading.visibility = View.GONE
         topBar.visibility = View.VISIBLE
         webView.visibility = View.VISIBLE
+        webView.requestFocus()                /* the remote works in the page again */
 
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        /* a phone goes back upright; a TV stays as it is (portrait would turn its picture) */
+        requestedOrientation = if (isTv) ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                               else ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         setFullscreen(false)
         resetLock()
     }
