@@ -4,4 +4,6 @@
     <string name="player_error">نەتوانرا ئەم کەناڵە بکرێتەوە. دەکرێت کەناڵەکە لەکارکەوتبێت یان ئینتەرنێتەکەت لاوازبێت.</string>
     <string name="retry">هەوڵدانەوە</string>
     <string name="live">● LIVE</string>
+    <string name="radio_channel">Background playback</string>
+    <string name="radio_playing">KURDISTAN IPTV · گوێگرتن لە پشتەوە</string>
 </resources>
