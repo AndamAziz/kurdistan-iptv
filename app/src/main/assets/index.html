@@ -472,6 +472,9 @@ html.kbd .card,html.kbd .row,html.kbd .ep,html.kbd .hi,html.kbd button{scroll-ma
   background:rgba(255,255,255,.04);font-size:11.5px;font-weight:800;color:var(--text);cursor:pointer}
 .chip.sq{padding:8px 10px;color:var(--muted)}
 .chip.red{color:#FF8A8A}
+.chip.busy{color:var(--muted);cursor:default}
+.chip.busy svg{animation:spin .9s linear infinite}
+.row .tx s.wrap{white-space:normal;line-height:1.5;margin-top:4px}
 .chip:active{transform:scale(.95)}
 #settings .row .val{flex:none;font-size:11.5px;color:var(--muted);font-weight:700;direction:ltr}
 #settings .row .ch{flex:none;color:var(--muted2);font-size:15px;line-height:1}
@@ -639,7 +642,12 @@ var T = {
       more:"زیاتر پیشان بدە",sync:"نوێکردنەوە",results:"ئەنجامی گەڕان",
       menu:"ڕێکخستن",lists:"لیستەکانم",addList:"زیادکردنی لیست",
       epgTest:"تاقیکردنەوەی ڕێبەری بەرنامەکان",epgTestSub:"وەڵامی پرۆڤایدەرەکە دەبینیت",
-      activeList:"لیستی چالاک",otherLists:"لیستەکانی تر",
+      activeList:"لیستی چالاک",otherLists:"لیستەکانی تر",updating:"نوێکردنەوە...",
+      speedTest:"تاقیکردنەوەی پەیوەندی",speedTestSub:"خێرایی سێرڤەری پرۆڤایدەرەکە دەپێوێت",
+      spdServer:"سێرڤەر",spdAnswer:"وەڵامدانەوە",spdSpeed:"خێرایی",spdGot:"داگیراو",
+      spdTesting:"تاقیکردنەوە...",spdAgain:"دووبارە تاقی بکەرەوە",
+      spd4k:"باشە بۆ 4K",spdFhd:"باشە بۆ Full HD",spdHd:"باشە بۆ HD",spdLow:"خێرایی کەمە",
+      spdNote:"ئەم ژمارانە لە سێرڤەری ئەم لیستەوە پێوراون، نەک لە سێرڤەرێکی تر",
       chooseType:"جۆری لیستەکە هەڵبژێرە",
       xtream:"Xtream (پێشنیارکراو)",xtreamSub:"دۆمەین + ناو + وشەی نهێنی",
       m3uUrl:"M3U بە لینک",m3uUrlSub:"لینکی ڕاستەوخۆی فایلی M3U",
@@ -673,7 +681,12 @@ var T = {
       more:"Show more",sync:"Updating",results:"Search results",
       menu:"Settings",lists:"My playlists",addList:"Add playlist",
       epgTest:"Guide test",epgTestSub:"see what the panel answers",
-      activeList:"Active playlist",otherLists:"Other playlists",
+      activeList:"Active playlist",otherLists:"Other playlists",updating:"Updating…",
+      speedTest:"Connection test",speedTestSub:"measures your provider's own speed",
+      spdServer:"Server",spdAnswer:"Response",spdSpeed:"Speed",spdGot:"Downloaded",
+      spdTesting:"Testing…",spdAgain:"Test again",
+      spd4k:"Good for 4K",spdFhd:"Good for Full HD",spdHd:"Good for HD",spdLow:"Low speed",
+      spdNote:"measured against this playlist's own server, not another one",
       chooseType:"Choose playlist type",
       xtream:"Xtream (recommended)",xtreamSub:"Domain + username + password",
       m3uUrl:"M3U by URL",m3uUrlSub:"Direct link to an M3U file",
@@ -707,7 +720,12 @@ var T = {
       more:"عرض المزيد",sync:"تحديث",results:"نتائج البحث",
       menu:"الإعدادات",lists:"قوائمي",addList:"إضافة قائمة",
       epgTest:"اختبار دليل البرامج",epgTestSub:"شاهد رد المزود",
-      activeList:"القائمة النشطة",otherLists:"القوائم الأخرى",
+      activeList:"القائمة النشطة",otherLists:"القوائم الأخرى",updating:"جاري التحديث…",
+      speedTest:"اختبار الاتصال",speedTestSub:"يقيس سرعة خادم المزوّد",
+      spdServer:"الخادم",spdAnswer:"الاستجابة",spdSpeed:"السرعة",spdGot:"تم تنزيل",
+      spdTesting:"جاري الاختبار…",spdAgain:"أعد الاختبار",
+      spd4k:"جيد لـ 4K",spdFhd:"جيد لـ Full HD",spdHd:"جيد لـ HD",spdLow:"سرعة منخفضة",
+      spdNote:"مقاسة من خادم هذه القائمة نفسه، لا من خادم آخر",
       chooseType:"اختر نوع القائمة",
       xtream:"Xtream (موصى به)",xtreamSub:"النطاق + اسم المستخدم + كلمة السر",
       m3uUrl:"M3U برابط",m3uUrlSub:"رابط مباشر لملف M3U",
@@ -872,6 +890,7 @@ function xtGet(base, action){
       return r.text().then(function(txt){
         if(!r.ok) throw new Error("HTTP " + r.status + " " + txt.slice(0,110));
         if(txt.indexOf("PROXY_ERROR") === 0) throw new Error(txt.slice(0,140));
+        DL_BYTES += byteLen(txt);
         var j;
         try{ j = JSON.parse(txt) }
         catch(e){ throw new Error("NOT JSON (" + txt.slice(0,70).replace(/\s+/g," ") + ")") }
@@ -1131,6 +1150,106 @@ function epgProbe(){
     });
   };
   step("get_short_epg", "get_simple_data_table");
+}
+
+/* ==================== connection test ====================
+   Downloads a couple of megabytes from the server this playlist really comes
+   from, and times it. Nothing is invented: what is shown is what arrived.
+   It never opens a channel, so a one-connection account is never blocked. */
+var SPEED = null;
+
+function speedRow(label, value, strong){
+  return '<div class="row"><span class="tx"><b>'+esc(label)+'</b></span>'
+       + '<span class="val"'+(strong ? ' style="color:var(--text);font-size:14px"' : '')+'>'
+       + esc(value)+'</span></div>';
+}
+
+function speedVerdict(d, mbps){
+  if(mbps >= 25) return d.spd4k;
+  if(mbps >= 8)  return d.spdFhd;
+  if(mbps >= 3)  return d.spdHd;
+  return d.spdLow;
+}
+
+function speedBody(d){
+  var p = activeList();
+  var host = "";
+  try{ host = (p.type === "xtream" ? (p.domain || "") : (p.url || "")).replace(/^https?:\/\//,"").split("/")[0] }catch(e){}
+  if(!SPEED) return '<div class="row"><span class="tx"><b>…</b></span></div>';
+  if(SPEED.state === "run"){
+    return speedRow(d.spdServer, host)
+         + '<div class="row"><span class="tx"><b>'+esc(d.spdTesting)+'</b></span>'
+         + '<span class="val" id="spdGot">'+esc(fmtSize(SPEED.got || 0))+'</span></div>';
+  }
+  if(SPEED.state === "err"){
+    return speedRow(d.spdServer, host)
+         + '<div class="row"><span class="tx"><b>'+esc(d.loadFail)+'</b>'
+         + '<s class="nat">'+esc(SPEED.msg || "")+'</s></span></div>';
+  }
+  var mbps = SPEED.bps / 1000000;
+  return speedRow(d.spdServer, host)
+       + speedRow(d.spdAnswer, "\u2066" + Math.round(SPEED.ping) + " ms\u2069")
+       + speedRow(d.spdSpeed, fmtRate(SPEED.bps / 8), true)
+       + speedRow(d.spdGot, fmtSize(SPEED.bytes))
+       + '<div class="row"><span class="tx"><b>'+esc(speedVerdict(d, mbps))+'</b>'
+       + '<s class="wrap">'+esc(d.spdNote)+'</s></span></div>'
+       + '<button class="addbtn" onclick="speedTest()">'+esc(d.spdAgain)+'</button>';
+}
+
+function speedTest(){
+  var p = activeList();
+  var url = p.type === "xtream" ? (xtBase(p) + "&action=get_live_streams") : (p.url || "");
+  SPEED = { state: "run", got: 0 };
+  openSheet("speed");
+  if(!url || !window.fetch){ SPEED = { state:"err", msg:"—" }; drawSheet(); return }
+
+  var t0 = Date.now(), first = 0, got = 0;
+  var LIMIT = 2 * 1024 * 1024, MAX_MS = 9000;
+
+  var done = function(){
+    var end = Date.now();
+    /* when the whole answer lands in one piece there is no transfer window to
+       measure, so the honest number is the whole time, waiting included */
+    var transfer = end - (first || t0);
+    var base = Math.max(120, transfer >= 150 ? transfer : (end - t0));
+    SPEED = { state:"done", ping: (first || end) - t0, bytes: got, ms: end - t0,
+              bps: got * 8 / (base / 1000) };
+    drawSheet();
+  };
+  var fail = function(e){
+    SPEED = { state:"err", msg: (e && e.message) ? String(e.message).slice(0,120) : "network" };
+    drawSheet();
+  };
+  var tick = function(){
+    var el = $("spdGot");
+    if(el) el.textContent = fmtSize(got);
+  };
+
+  fetch(viaApp(url)).then(function(r){
+    if(!r.ok) throw new Error("HTTP " + r.status);
+    if(!r.body || !r.body.getReader){          /* an older webview: take the whole answer */
+      return r.text().then(function(txt){
+        first = Date.now();
+        got = byteLen(txt);
+        done();
+      });
+    }
+    var reader = r.body.getReader();
+    var step = function(){
+      return reader.read().then(function(res){
+        if(!first) first = Date.now();
+        if(res.value) got += res.value.length;
+        tick();
+        if(res.done || got >= LIMIT || (Date.now() - t0) > MAX_MS){
+          try{ reader.cancel() }catch(e){}
+          done();
+          return;
+        }
+        return step();
+      });
+    };
+    return step();
+  }).catch(fail);
 }
 
 /* a new list (or the same one again): start the guide from scratch */
@@ -2020,7 +2139,8 @@ var ICON = {
   trash:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>',
   refresh:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 11-2.6-6.4"/><path d="M21 3v6h-6"/></svg>',
   disk:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><ellipse cx="12" cy="5.5" rx="8" ry="3"/><path d="M4 5.5v13c0 1.7 3.6 3 8 3s8-1.3 8-3v-13"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>',
-  info:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 16.5v-5M12 8h.01"/></svg>'
+  info:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 16.5v-5M12 8h.01"/></svg>',
+  gauge:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 18a9 9 0 1117 0"/><path d="M12 18l4.2-5"/><circle cx="12" cy="18" r="1.4" fill="currentColor" stroke="none"/></svg>'
 };
 /* every sheet level is one step for the phone's Back button */
 function openSheet(view){
@@ -2058,6 +2178,10 @@ function drawSheet(){
     title = d.epgTest;
     body = '<div class="row"><span class="tx"><s class="nat" style="white-space:pre-wrap">'
          + esc(EPG_REPORT || "…") + '</s></span></div>';
+  }
+  else if(v === "speed"){
+    title = d.speedTest;
+    body = speedBody(d);
   }
   else if(v === "lang"){
     title = d.lang;
@@ -2261,6 +2385,17 @@ function setRow(icon, title, sub, onclick, natural, value){
 }
 function setGroup(title){ return '<div class="st-g"><span class="bar"></span>'+esc(title)+'</div>' }
 
+/* "Last updated 03:25 · 7.1 MB · 18 Mbps" - every number really happened */
+function updLine(d, when){
+  if(SYNCING) return d.updating;
+  var line = d.lastUpd + " " + fmtWhen(when);
+  if(LAST_DL && LAST_DL.bytes > 0){
+    line += "  ·  " + fmtSize(LAST_DL.bytes)
+          + "  ·  " + fmtRate(LAST_DL.bytes / (LAST_DL.ms / 1000));
+  }
+  return line;
+}
+
 function drawSettings(){
   var d = t(), cur = activeId(), act = activeList(), upd = updTimes();
   var h = '<div class="st-h"><h1>'+esc(d.menu)+'</h1>'
@@ -2282,8 +2417,10 @@ function drawSettings(){
      +     '<div class="num"><b>'+nMov+'</b><s>'+esc(d.movies)+'</s></div>'
      +     '<div class="num"><b>'+nSer+'</b><s>'+esc(d.series)+'</s></div>'
      +   '</div>'
-     +   '<div class="upd"><span>'+esc(d.lastUpd + " " + fmtWhen(upd[cur]))+'</span>'
-     +     '<button class="chip" onclick="refreshList()">'+ICON.refresh+' '+esc(d.refreshShort)+'</button>'
+     +   '<div class="upd"><span>'+esc(updLine(d, upd[cur]))+'</span>'
+     +     (SYNCING
+        ? '<button class="chip busy">'+ICON.refresh+' '+esc(d.updating)+'</button>'
+        : '<button class="chip" onclick="refreshList()">'+ICON.refresh+' '+esc(d.refreshShort)+'</button>')
      +     (own
         ? '<button class="chip sq mini" onclick="editList(\''+esc(act.id)+'\')">'+ICON.edit+'</button>'
         + '<button class="chip sq red mini" onclick="removeList(\''+esc(act.id)+'\')">'+ICON.trash+'</button>'
@@ -2315,6 +2452,7 @@ function drawSettings(){
   h += setGroup(d.general);
   h += setRow(ICON.globe, d.lang, "", "openSheet('lang')", true, T[lang].name);
   if(act.type === "xtream") h += setRow(ICON.tv, d.epgTest, d.epgTestSub, "epgProbe()", true);
+  h += setRow(ICON.gauge, d.speedTest, d.speedTestSub, "speedTest()", true);
   h += setRow(ICON.disk, d.clearCache, "", "clearCache()", true, cacheSize());
 
   h += '<div class="st-foot"><span class="lg">'+LOGO_ICON+'</span><b>KURDISTAN IPTV</b><br>'
@@ -3103,6 +3241,23 @@ function showSync(text, isErr){
 }
 function hideSync(){ $("sync").className = "" }
 
+/* what the last playlist download really cost, and whether one is running */
+var SYNCING = false, LAST_DL = null, DL_BYTES = 0;
+
+/* the size of a text answer in bytes, not characters */
+function byteLen(txt){
+  try{ return new Blob([txt]).size }catch(e){ return (txt || "").length }
+}
+function fmtSize(n){
+  var s = n < 1048576 ? Math.max(1, Math.round(n / 1024)) + " KB" : (n / 1048576).toFixed(1) + " MB";
+  return "\u2066" + s + "\u2069";
+}
+function fmtRate(bytesPerSec){
+  var mbps = bytesPerSec * 8 / 1000000;
+  var s = mbps >= 10 ? mbps.toFixed(0) + " Mbps" : mbps.toFixed(1) + " Mbps";
+  return "\u2066" + s + "\u2069";
+}
+
 function loadActive(force){
   var p = activeList(), url = listUrl(p);
   $("tagline").textContent = p.name;
@@ -3120,6 +3275,11 @@ function loadActive(force){
 
   if(!url || !window.fetch) return;
   showSync(t().sync + " · " + p.name, false);
+  SYNCING = true;
+  LAST_DL = null;
+  DL_BYTES = 0;
+  var dlStart = Date.now();
+  refreshSettings();
 
   var job = (p.type === "xtream") ? loadXtream(p) :
     fetch(viaApp(url))
@@ -3127,6 +3287,7 @@ function loadActive(force){
         return r.text().then(function(txt){
           if(!r.ok) throw new Error("HTTP " + r.status + " " + txt.slice(0,120));
           if(txt.indexOf("PROXY_ERROR") === 0) throw new Error(txt.slice(0,140));
+          DL_BYTES += byteLen(txt);
           var list = parseM3U(txt);
           if(list.length < 1) throw new Error("EMPTY (" + txt.slice(0,80).replace(/\s+/g," ") + ")");
           return list;
@@ -3141,10 +3302,14 @@ function loadActive(force){
       saveCache(p.id, list);
       hideSync();
       markUpdated(p.id);
+      SYNCING = false;
+      LAST_DL = { bytes: DL_BYTES, ms: Math.max(1, Date.now() - dlStart) };
       refreshSettings();
     })
     .catch(function(e){
       lastLoadError = (e && e.message) ? e.message : "network";
+      SYNCING = false;
+      refreshSettings();
       showSync(t().loadFail + " · " + p.name, true);
     });
 }
