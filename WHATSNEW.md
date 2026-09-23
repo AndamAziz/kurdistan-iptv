@@ -1,31 +1,31 @@
 [en]
-Windows playback: channels start quickly, and a dropped line comes back.
+The Windows app can now tell which version it is.
 
-Three things the desktop player was doing differently from the phone:
-it studied five seconds of every channel before showing anything, it never
-reconnected when a stream dropped mid-programme, and it waited for ever on a
-channel that had gone away. All three are now set the way the phone has them.
+It always called itself build 1, so it never knew a newer one existed and the
+fixes from the last release never reached anyone who was waiting to be told.
+The number now travels inside the app itself instead of being read from the
+machine that built it.
 
-A record of every attempt is kept, so a channel that still refuses can be
-looked into instead of guessed at.
+On a wide window, settings and the panels that slide up are no longer stretched
+from edge to edge: they stand in the middle at a readable width.
 
 [ku]
-پەخشکردن لەسەر Windows: کەناڵەکان خێرا دەست پێ دەکەن، و پەیوەندییەکی پچڕاو
-دەگەڕێتەوە.
+ئەپی Windows ئێستا دەزانێت کام وەشانە.
 
-سێ شت هەبوون کە پلەیەری کۆمپیوتەر جیاواز لە تەلەفۆن دەیکردن: پێنج چرکە
-هەر کەناڵێکی دەخوێندەوە پێش ئەوەی هیچ پیشان بدات، هەرگیز پەیوەندی نەدەگێڕایەوە
-کاتێک لە ناوەڕاستی بەرنامەدا دەپچڕا، و بۆ هەمیشە چاوەڕێی کەناڵێکی مردوو دەکرد.
-هەر سێکیان ئێستا وەک تەلەفۆن ڕێکخراون.
+هەمیشە خۆی بە بیڵدی ١ دەناساند، بۆیە هەرگیز نەیدەزانی وەشانێکی نوێتر هەیە، و
+ئەو چاککارییانەی وەشانی پێشوو نەگەیشتنە دەستی ئەو کەسانەی چاوەڕێی ئاگادارکردنەوە
+بوون. ئێستا ژمارەکە لەناو خودی ئەپەکەدا دەڕوات، نەک لەو کۆمپیوتەرەوە بخوێندرێتەوە
+کە دروستی کردووە.
 
-هەروەها تۆمارێک لە هەر هەوڵێک هەڵدەگیرێت، بۆ ئەوەی کەناڵێک کە هێشتا کار ناکات
-بپشکنرێت نەک گومانی لێ بکرێت.
+لەسەر پەنجەرەیەکی فراوان، ڕێکخستن و ئەو پەڕانەی لە خوارەوە سەردەکەون ئیتر لە
+لێوارێکەوە بۆ لێوارەکەی تر ڕانەکێشراون: لە ناوەڕاستدا دەوەستن بە پانییەکی خوێندنەوە.
 
 [ar]
-التشغيل على Windows: القنوات تبدأ بسرعة، والاتصال المنقطع يعود.
+تطبيق Windows صار يعرف أي إصدار هو.
 
-ثلاثة أمور كان مشغّل الحاسوب يفعلها بخلاف الهاتف: يدرس خمس ثوانٍ من كل قناة
-قبل أن يعرض شيئًا، ولا يعيد الاتصال أبدًا حين ينقطع البث في منتصف البرنامج،
-وينتظر إلى ما لا نهاية قناةً لم تعد موجودة. الثلاثة مضبوطة الآن كما في الهاتف.
+كان يسمّي نفسه دائمًا الإصدار ١، فلم يعرف قط بوجود أحدث منه، ولم تصل إصلاحات
+الإصدار السابق إلى من كان ينتظر إشعارًا. صار الرقم يسافر داخل التطبيق نفسه بدل
+أن يُقرأ من الجهاز الذي بناه.
 
-ويُحفظ سجل بكل محاولة، حتى تُفحص القناة التي ما زالت ترفض بدل التخمين.
+وعلى نافذة عريضة، لم تعد الإعدادات واللوحات التي تصعد من الأسفل ممتدة من حافة
+إلى حافة: تقف في الوسط بعرض مريح للقراءة.
