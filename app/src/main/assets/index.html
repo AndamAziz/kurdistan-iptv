@@ -248,9 +248,9 @@ body.hasnav main{padding-bottom:calc(96px + var(--safe-b))}
 .gbox h1 em{font-style:normal;background:linear-gradient(100deg,var(--accent),var(--accent2));
   -webkit-background-clip:text;background-clip:text;color:transparent}
 .gbox p{margin:0 0 24px;color:var(--muted);font-size:13px;font-weight:600}
-.pins{display:flex;gap:12px;justify-content:center;direction:ltr}
-.pin{width:62px;height:72px;border-radius:18px;background:rgba(18,25,36,.85);border:1.5px solid var(--line);
-  display:grid;place-items:center;font-size:27px;font-weight:800;transition:.2s;
+.pins{display:flex;gap:8px;justify-content:center;direction:ltr}
+.pin{width:46px;height:60px;border-radius:14px;background:rgba(18,25,36,.85);border:1.5px solid var(--line);
+  display:grid;place-items:center;font-size:23px;font-weight:800;transition:.2s;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
 .pin.fill{border-color:rgba(230,62,70,.5);background:var(--surface2)}
 .pin.cur{border-color:var(--accent2);box-shadow:0 0 0 4px rgba(230,62,70,.16)}
@@ -276,8 +276,8 @@ body.hasnav main{padding-bottom:calc(96px + var(--safe-b))}
 html.tv .glogo{width:106px;height:82px;margin-bottom:6px}
 html.tv .gbox h1{font-size:20px;letter-spacing:2.5px}
 html.tv .gbox p{margin-bottom:14px;font-size:12px}
-html.tv .pin{width:52px;height:58px;font-size:22px;border-radius:15px}
-html.tv .pins{gap:10px}
+html.tv .pin{width:42px;height:50px;font-size:19px;border-radius:12px}
+html.tv .pins{gap:7px}
 html.tv .keys{max-width:244px;gap:8px;margin-top:14px}
 html.tv .key{height:44px;font-size:18px;border-radius:13px}
 html.tv .gmsg{height:18px;padding-top:6px;font-size:12px}
@@ -575,7 +575,7 @@ html.tv .st-two button{padding:11px 8px;font-size:14px}
     <p id="gate-sub"></p>
     <div class="pins" id="pins"></div>
     <div class="keys" id="keys"></div>
-    <input id="pininput" type="tel" inputmode="numeric" maxlength="4" autocomplete="off">
+    <input id="pininput" type="tel" inputmode="numeric" maxlength="6" autocomplete="off">
     <div class="gmsg" id="gmsg"></div>
     <button class="gbtn" id="gbtn" onclick="submitPin()"></button>
   </div>
@@ -657,7 +657,17 @@ var DEFAULT_PLAYLIST = {
   type: "m3u",
   url: "https://raw.githubusercontent.com/AndamAziz/Andamiptv/refs/heads/main/playlist.m3u"
 };
-var PIN_CODE  = "1015";
+/* ---- activation ----------------------------------------------------
+   Every code lives on the server, so one can be given out, switched off or
+   given an end date without touching the app. PIN_CODE is the owner's own
+   key: it never expires and needs no internet, so the app can always be
+   opened even when the server cannot be reached. */
+var PIN_CODE  = "516353";
+var PIN_LEN   = 6;
+var ACT_URL   = "https://dbmxnhsnipbpycmdmmer.supabase.co/functions/v1/kiptv-check";
+/* once a code has been accepted, the app keeps working this long without
+   being able to ask again - a week of bad internet locks nobody out */
+var ACT_GRACE = 7 * 24 * 3600 * 1000;
 var PAGE_SIZE = 48;
 
 /* ==================== i18n ==================== */
@@ -670,6 +680,9 @@ var T = {
       tag:"پەخشی ڕاستەوخۆ",ann:"بەخێربێیت بۆ KURDISTAN IPTV — پەخشی ڕاستەوخۆی کەناڵە کوردی و نێودەوڵەتییەکان",
       recent:"بەردەوامبە لە بینین",none:"هیچ کەناڵێک نەدۆزرایەوە",lang:"زمان",
       enter:"کۆدی چالاککردن داخڵ بکە",act:"چالاککردن",wrong:"کۆدەکە هەڵەیە",
+      actChecking:"چاوەڕێ بکە…",actExpired:"ماوەی ئەم کۆدە تەواو بووە",
+      actOff:"ئەم کۆدە کوژێنراوەتەوە",actWait:"هەوڵی زۆر درا. ١٥ خولەک چاوەڕێ بکە",
+      actNet:"ناتوانرێت پەیوەندی بکرێت. ئینتەرنێتەکەت بپشکنە",
       more:"زیاتر پیشان بدە",sync:"نوێکردنەوە",results:"ئەنجامی گەڕان",
       menu:"ڕێکخستن",lists:"لیستەکانم",addList:"زیادکردنی لیست",
       epgTest:"تاقیکردنەوەی ڕێبەری بەرنامەکان",epgTestSub:"وەڵامی پرۆڤایدەرەکە دەبینیت",
@@ -718,6 +731,9 @@ var T = {
       tag:"LIVE STREAMING",ann:"Welcome to KURDISTAN IPTV — live Kurdish and international channels",
       recent:"Continue watching",none:"No channels found",lang:"Language",
       enter:"Enter your activation code",act:"Activate",wrong:"Wrong code",
+      actChecking:"Please wait…",actExpired:"This code has ended",
+      actOff:"This code has been switched off",actWait:"Too many tries. Wait 15 minutes",
+      actNet:"Cannot reach the server. Check your internet",
       more:"Show more",sync:"Updating",results:"Search results",
       menu:"Settings",lists:"My playlists",addList:"Add playlist",
       epgTest:"Guide test",epgTestSub:"see what the panel answers",
@@ -766,6 +782,9 @@ var T = {
       tag:"بث مباشر",ann:"مرحباً بك في KURDISTAN IPTV — بث مباشر للقنوات الكردية والعالمية",
       recent:"متابعة المشاهدة",none:"لا توجد قنوات",lang:"اللغة",
       enter:"أدخل رمز التفعيل",act:"تفعيل",wrong:"الرمز غير صحيح",
+      actChecking:"يرجى الانتظار…",actExpired:"انتهت صلاحية هذا الرمز",
+      actOff:"تم إيقاف هذا الرمز",actWait:"محاولات كثيرة. انتظر ١٥ دقيقة",
+      actNet:"تعذّر الاتصال بالخادم. تحقّق من الإنترنت",
       more:"عرض المزيد",sync:"تحديث",results:"نتائج البحث",
       menu:"الإعدادات",lists:"قوائمي",addList:"إضافة قائمة",
       epgTest:"اختبار دليل البرامج",epgTestSub:"شاهد رد المزود",
@@ -3516,11 +3535,13 @@ var PIN = "";
 var KEY_BACK = '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 5H9l-6 7 6 7h12z"/><path d="M17 9.5l-5 5M12 9.5l5 5"/></svg>';
 
 function drawPins(){
-  $("pins").innerHTML = [0,1,2,3].map(function(i){
+  var boxes = [];
+  for(var i = 0; i < PIN_LEN; i++) boxes.push(i);
+  $("pins").innerHTML = boxes.map(function(i){
     return '<div class="pin'+(PIN[i]?" fill":"")+(i===PIN.length?" cur":"")+'">'+(PIN[i]?"&#9679;":"")+'</div>';
   }).join("");
   var b = $("gbtn");
-  if(b) b.className = "gbtn" + (PIN.length === 4 ? "" : " off");
+  if(b) b.className = "gbtn" + (PIN.length === PIN_LEN ? "" : " off");
 }
 
 /* the keypad - every key is a real button, so a TV remote can reach it.
@@ -3539,31 +3560,115 @@ function drawKeys(){
 
 /* one place where the code changes, whatever was pressed */
 function pinSet(v){
-  PIN = String(v).replace(/\D/g,"").slice(0,4);
+  if(ACT_BUSY) return;                       /* the server is being asked - wait */
+  PIN = String(v).replace(/\D/g,"").slice(0,PIN_LEN);
   var inp = $("pininput");
   if(inp) inp.value = PIN;
   $("gmsg").textContent = "";
   drawPins();
-  if(PIN.length === 4) setTimeout(submitPin, 180);
+  if(PIN.length === PIN_LEN) setTimeout(submitPin, 180);
 }
 function pinKey(k){
   if(k === "back") pinSet(PIN.slice(0, -1));
-  else if(PIN.length < 4) pinSet(PIN + k);
+  else if(PIN.length < PIN_LEN) pinSet(PIN + k);
 }
-function submitPin(){
-  if(PIN === PIN_CODE){ lsSet("kiptv","1"); $("gate").classList.add("hide") }
-  else {
-    $("gmsg").textContent = t().wrong;
-    document.querySelector(".pins").classList.add("shake");
-    setTimeout(function(){
-      document.querySelector(".pins").classList.remove("shake");
-      PIN = ""; $("pininput").value = ""; drawPins();
-      if(!$("gate").classList.contains("hide") && document.documentElement.classList.contains("kbd")){
-        var first = $("keys").querySelector(".key");
-        if(first) first.focus();
-      }
-    }, 420);
+/* ==================== the activation code ====================
+   The owner's own code opens the app straight away, with no internet.
+   Every other code is asked about once, and the answer is kept: after that
+   the app opens by itself until the code's end date, or for a week without
+   internet, whichever comes first. */
+var ACT_BUSY = false;
+
+/* a name this phone keeps, so wrong tries can be counted per device */
+function actDevice(){
+  var d = lsGet("kiptv_dev", "");
+  if(!d){
+    d = "d" + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+    lsSet("kiptv_dev", d);
   }
+  return d;
+}
+function actRead(){ try{ return JSON.parse(lsGet("kiptv_act", "")) || null }catch(e){ return null } }
+function actSave(code, until){
+  lsSet("kiptv", "1");
+  lsSet("kiptv_act", JSON.stringify({ c: code, u: until || "", t: Date.now() }));
+}
+function actForget(){
+  try{ localStorage.removeItem("kiptv"); localStorage.removeItem("kiptv_act") }catch(e){}
+}
+
+/* one question to the server: is this code good? Never throws. */
+function actAsk(code){
+  if(!window.fetch) return Promise.resolve({ ok: false, reason: "net" });
+  var u = ACT_URL + "?code=" + encodeURIComponent(code) + "&device=" + encodeURIComponent(actDevice());
+  return fetch(viaApp(u), { method: "GET" })
+    .then(function(r){ return r.text() })
+    .then(function(x){
+      var o = null;
+      try{ o = JSON.parse(x) }catch(e){}
+      return (o && typeof o.ok === "boolean") ? o : { ok: false, reason: "net" };
+    })
+    .catch(function(){ return { ok: false, reason: "net" } });
+}
+
+function actMessage(reason){
+  var d = t();
+  return reason === "expired" ? d.actExpired
+       : reason === "off"     ? d.actOff
+       : reason === "wait"    ? d.actWait
+       : (reason === "net" || reason === "server") ? d.actNet
+       : d.wrong;
+}
+
+function gateFail(msg){
+  $("gmsg").textContent = msg;
+  var p = document.querySelector("#gate .pins");
+  if(p) p.classList.add("shake");
+  setTimeout(function(){
+    if(p) p.classList.remove("shake");
+    PIN = "";
+    var inp = $("pininput"); if(inp) inp.value = "";
+    drawPins();
+    if(!$("gate").classList.contains("hide") && document.documentElement.classList.contains("kbd")){
+      var first = $("keys").querySelector(".key");
+      if(first) first.focus();
+    }
+  }, 420);
+}
+
+function gateOpen(){
+  PIN = "";
+  var inp = $("pininput"); if(inp) inp.value = "";
+  $("gmsg").textContent = "";
+  drawPins();
+  $("gate").classList.remove("hide");
+}
+
+function submitPin(){
+  if(ACT_BUSY) return;
+  var code = PIN;
+  if(code === PIN_CODE){                      /* the owner's key: no internet needed */
+    lsSet("kiptv", "1");
+    try{ localStorage.removeItem("kiptv_act") }catch(e){}
+    $("gate").classList.add("hide");
+    return;
+  }
+  if(code.length !== PIN_LEN){ gateFail(t().wrong); return }
+
+  ACT_BUSY = true;
+  $("gmsg").textContent = t().actChecking;
+  var b = $("gbtn"); if(b) b.className = "gbtn off";
+
+  actAsk(code).then(function(r){
+    ACT_BUSY = false;
+    if(r && r.ok){
+      actSave(code, r.until);
+      $("gmsg").textContent = "";
+      $("gate").classList.add("hide");
+      return;
+    }
+    gateFail(actMessage(r && r.reason));
+  });
 }
 $("pininput").addEventListener("input", function(e){ pinSet(e.target.value) });
 
@@ -3592,7 +3697,7 @@ document.addEventListener("keydown", function(e){
   if($("gate").classList.contains("hide")) return;
   if(e.key >= "0" && e.key <= "9"){ pinKey(e.key); e.preventDefault() }
   else if(e.key === "Backspace"){ pinKey("back"); e.preventDefault() }
-  else if(e.key === "Enter" && PIN.length === 4 && document.activeElement === document.body) submitPin();
+  else if(e.key === "Enter" && PIN.length === PIN_LEN && document.activeElement === document.body) submitPin();
 });
 
 /* ==================== loading ==================== */
@@ -3689,10 +3794,65 @@ function loadActive(force){
     });
 }
 
+/* ==================== what happens at every start ====================
+   never activated            -> the code screen
+   the owner's own key        -> straight in, nothing to ask
+   a code with an end date    -> in, unless that date has passed
+   a code not checked for a
+   week                       -> the code screen, while the server is asked */
+function actBoot(){
+  if(lsGet("kiptv", "") !== "1") return;              /* the code screen stays */
+  var a = actRead();
+  if(!a || !a.c){ $("gate").classList.add("hide"); return }   /* owner's key, or an older install */
+
+  var now = Date.now(),
+      ends = a.u ? Date.parse(a.u) : 0,
+      age  = now - (a.t || 0);
+
+  if(ends && now > ends){ actForget(); return }        /* the date has passed */
+  if(age > ACT_GRACE){ actAskAgainNow(a); return }     /* too long unchecked */
+
+  $("gate").classList.add("hide");
+  if(age > 6 * 3600 * 1000) actAskAgainQuietly(a);
+}
+
+/* past the week: the app waits at the code screen for one answer */
+function actAskAgainNow(a){
+  ACT_BUSY = true;
+  setTimeout(function(){ $("gmsg").textContent = t().actChecking }, 0);
+  actAsk(a.c).then(function(r){
+    ACT_BUSY = false;
+    if(r && r.ok){
+      actSave(a.c, r.until);
+      $("gmsg").textContent = "";
+      $("gate").classList.add("hide");
+      return;
+    }
+    if(r && (r.reason === "net" || r.reason === "server" || r.reason === "wait")){
+      $("gmsg").textContent = t().actNet;              /* still locked, can try again */
+      return;
+    }
+    actForget();
+    $("gmsg").textContent = actMessage(r && r.reason);
+  });
+}
+
+/* inside the week: asked without the user noticing; only a real "no" closes */
+function actAskAgainQuietly(a){
+  actAsk(a.c).then(function(r){
+    if(!r) return;
+    if(r.ok){ actSave(a.c, r.until); return }
+    if(r.reason === "net" || r.reason === "server" || r.reason === "wait") return;
+    actForget();
+    gateOpen();
+    $("gmsg").textContent = actMessage(r.reason);
+  });
+}
+
 /* ==================== boot ==================== */
 (function boot(){
   $("glogo").innerHTML = LOGO_SVG;
-  if(lsGet("kiptv","") === "1") $("gate").classList.add("hide");
+  actBoot();
   drawKeys();
   drawPins();
   drawNav();
