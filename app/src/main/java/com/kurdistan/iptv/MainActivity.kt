@@ -3,6 +3,7 @@ package com.kurdistan.iptv
 import android.app.PictureInPictureParams
 import android.app.UiModeManager
 import android.content.Context
+import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -56,6 +57,7 @@ import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.session.MediaSession
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import androidx.media3.ui.SubtitleView
@@ -73,6 +75,12 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 class MainActivity : ComponentActivity() {
+
+    /** what radio mode's notification shows, and the session it is built around */
+    companion object {
+        @Volatile var liveSession: MediaSession? = null
+        @Volatile var nowTitle: String = ""
+    }
 
     /* Many IPTV / Xtream servers only answer to VLC's user agent... */
     private val UA = "VLC/3.0.20 LibVLC/3.0.20"
@@ -164,6 +172,12 @@ class MainActivity : ComponentActivity() {
     /** the app's language, sent by the page (en / ku / ar) */
     @Volatile private var uiLang = "en"
     private val SUB_SCALES = floatArrayOf(0.8f, 1f, 1.3f, 1.6f)
+
+    /* ---- how fast a film plays, and keeping the sound on with the app away.
+       Neither changes how a stream is opened. ---- */
+    private val SPEEDS = floatArrayOf(0.5f, 0.75f, 1f, 1.25f, 1.5f, 2f)
+    /** lets the system show play / pause on the lock screen and headsets */
+    private var session: MediaSession? = null
 
     /* ---- swipe up / down: left half = brightness, right half = volume ---- */
     private lateinit var swipe: SwipeGesture
@@ -574,13 +588,14 @@ class MainActivity : ComponentActivity() {
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
         setFullscreen(true)
         if (playerBrightness >= 0f) setWindowBrightness(playerBrightness)
-        setPipAuto(true)
+        setPipAuto(!radioOn())        /* radio mode takes Home for the sound instead */
 
         buildAndStart(index)
         handler.postDelayed(posTicker, 5000)
     }
 
     private fun buildAndStart(index: Int) {
+        releaseSession()                     /* always before the new one is made */
         player?.release()
         errorBox.visibility = View.GONE
         loading.visibility = View.VISIBLE
@@ -630,6 +645,7 @@ class MainActivity : ComponentActivity() {
                     curRef = refs.getOrNull(i)
                     plan = planFor(currentUrl ?: "")
                     applyItemChrome(i)
+                    applySpeed()        /* a film keeps the chosen speed, live is always 1× */
                     /* this channel wants a different agent - the data source
                        carries it, so start it over with one that matches */
                     if (curUa != builtUa || curRef != builtRef) {
@@ -693,6 +709,9 @@ class MainActivity : ComponentActivity() {
             startAtMs = 0L
             p.prepare()
             p.playWhenReady = true
+            applyWake()
+            applySpeed()
+            openSession(p)
         }
         if (!locked) topBar.visibility = View.VISIBLE
         playerView.showController()          /* does nothing while locked */
@@ -701,8 +720,89 @@ class MainActivity : ComponentActivity() {
     /** Title and LIVE badge for whichever item is on screen. */
     private fun applyItemChrome(index: Int) {
         txtTitle.text = titles.getOrNull(index) ?: ""
+        nowTitle = titles.getOrNull(index) ?: ""
         findViewById<TextView>(R.id.liveBadge).visibility =
             if (isVod(urls.getOrNull(index) ?: "")) View.GONE else View.VISIBLE
+    }
+
+    // ---------------- playing speed ----------------
+
+    private fun speedPref(): Float = prefs().getFloat("speed", 1f)
+
+    private fun setSpeed(s: Float) {
+        prefs().edit().putFloat("speed", s).apply()
+        applySpeed()
+        fillPanel()
+    }
+
+    /** films and series follow the chosen speed; a live channel always runs at 1× */
+    private fun applySpeed() {
+        val p = player ?: return
+        val wanted = if (isVod(currentUrl ?: "")) speedPref() else 1f
+        try { if (p.playbackParameters.speed != wanted) p.setPlaybackSpeed(wanted) } catch (e: Exception) {}
+    }
+
+    // ---------------- radio mode: the sound stays on ----------------
+
+    private fun radioOn(): Boolean = prefs().getBoolean("radio", false)
+
+    private fun setRadio(on: Boolean) {
+        prefs().edit().putBoolean("radio", on).apply()
+        if (on) askNotify()
+        applyWake()
+        /* radio mode and the small floating window ask for the same gesture:
+           with the sound carrying on, Home no longer opens the small window */
+        if (playerLayer.visibility == View.VISIBLE) setPipAuto(!on)
+        if (!on) stopRadio()
+        fillPanel()
+    }
+
+    /** keeps the network awake while the screen sleeps; off again when radio mode is */
+    private fun applyWake() {
+        try { player?.setWakeMode(if (radioOn()) C.WAKE_MODE_NETWORK else C.WAKE_MODE_NONE) } catch (e: Exception) {}
+    }
+
+    /** the system's own play / pause, on the lock screen and on headsets */
+    private fun openSession(p: ExoPlayer) {
+        try {
+            val s = MediaSession.Builder(this, p).build()
+            session = s
+            liveSession = s
+        } catch (e: Exception) { session = null; liveSession = null }
+    }
+
+    private fun releaseSession() {
+        try { session?.release() } catch (e: Exception) {}
+        session = null
+        liveSession = null
+    }
+
+    /** true while the sound should carry on after the app leaves the screen */
+    private fun keepPlaying(): Boolean =
+        radioOn() && !dead && ::playerLayer.isInitialized &&
+        playerLayer.visibility == View.VISIBLE && player?.playWhenReady == true
+
+    private fun startRadio() {
+        if (!keepPlaying()) return
+        try {
+            val i = Intent(this, RadioService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(i) else startService(i)
+        } catch (e: Exception) { /* the system said no: the sound simply stops, as before */ }
+    }
+
+    private fun stopRadio() {
+        try { stopService(Intent(this, RadioService::class.java)) } catch (e: Exception) {}
+    }
+
+    /** Android 13 and up hide the notification unless the user allows it; asked
+     *  once, the first time radio mode is switched on, never at startup */
+    private fun askNotify() {
+        if (Build.VERSION.SDK_INT < 33) return                 /* TIRAMISU */
+        try {
+            val perm = "android.permission.POST_NOTIFICATIONS"
+            if (checkSelfPermission(perm) != PackageManager.PERMISSION_GRANTED)
+                requestPermissions(arrayOf(perm), 91)
+        } catch (e: Exception) { /* no dialog: the sound still plays */ }
     }
 
     private fun reconnect() {
@@ -768,8 +868,11 @@ class MainActivity : ComponentActivity() {
         reportPosition()
         webView.evaluateJavascript("window.refreshHome&&refreshHome()", null)
         handler.removeCallbacksAndMessages(null)
+        stopRadio()
+        releaseSession()
         player?.release()
         player = null
+        nowTitle = ""
         playerView.player = null
 
         playerLayer.visibility = View.GONE
@@ -1116,19 +1219,31 @@ class MainActivity : ComponentActivity() {
         "off" to "Off", "auto" to "Auto", "size" to "Text size",
         "s1" to "Small", "s2" to "Normal", "s3" to "Large", "s4" to "Extra large",
         "noSubs" to "No subtitles in this video", "oneAudio" to "Only one audio track",
-        "oneVideo" to "Only one quality", "track" to "Track")
+        "oneVideo" to "Only one quality", "track" to "Track",
+        "speed" to "Speed", "normalSpeed" to "Normal",
+        "speedLive" to "Speed is for films and series",
+        "radio" to "Background", "radioOn" to "Keep the sound playing",
+        "radioNote" to "Leave the app and the sound goes on, like a radio. No small window then.")
     private val TX_KU = mapOf(
         "audio" to "دەنگ", "subs" to "ژێرنووس", "quality" to "کوالیتی",
         "off" to "بێ ژێرنووس", "auto" to "خۆکار", "size" to "قەبارەی نووسین",
         "s1" to "بچووک", "s2" to "ئاسایی", "s3" to "گەورە", "s4" to "زۆر گەورە",
         "noSubs" to "ئەم ڤیدیۆیە ژێرنووسی نییە", "oneAudio" to "تەنها یەک دەنگ هەیە",
-        "oneVideo" to "تەنها یەک کوالیتی هەیە", "track" to "تراک")
+        "oneVideo" to "تەنها یەک کوالیتی هەیە", "track" to "تراک",
+        "speed" to "خێرایی پەخش", "normalSpeed" to "ئاسایی",
+        "speedLive" to "خێرایی تەنها بۆ فیلم و زنجیرەیە",
+        "radio" to "لە پشتەوە", "radioOn" to "دەنگ بەردەوام بێت",
+        "radioNote" to "لە ئەپەکە دەردەچیت و دەنگەکە بەردەوام دەبێت، وەک ڕادیۆ. ئەوکات پەنجەرە بچووکەکە ناکرێتەوە.")
     private val TX_AR = mapOf(
         "audio" to "الصوت", "subs" to "الترجمة", "quality" to "الجودة",
         "off" to "بدون ترجمة", "auto" to "تلقائي", "size" to "حجم الخط",
         "s1" to "صغير", "s2" to "عادي", "s3" to "كبير", "s4" to "كبير جداً",
         "noSubs" to "لا توجد ترجمة في هذا الفيديو", "oneAudio" to "يوجد صوت واحد فقط",
-        "oneVideo" to "توجد جودة واحدة فقط", "track" to "مسار")
+        "oneVideo" to "توجد جودة واحدة فقط", "track" to "مسار",
+        "speed" to "سرعة العرض", "normalSpeed" to "عادية",
+        "speedLive" to "السرعة للأفلام والمسلسلات فقط",
+        "radio" to "في الخلفية", "radioOn" to "استمرار الصوت",
+        "radioNote" to "تخرج من التطبيق ويستمر الصوت كالراديو، ولا تُفتح النافذة الصغيرة حينها.")
 
     private fun tx(key: String): String =
         (when (uiLang) { "ku" -> TX_KU; "ar" -> TX_AR; else -> TX_EN })[key] ?: TX_EN[key] ?: key
@@ -1266,6 +1381,48 @@ class MainActivity : ComponentActivity() {
         return row
     }
 
+    /** 0.5× … 2×, in two rows so every one of them stays readable */
+    private fun speedRows(): LinearLayout {
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(0, dp(4), 0, dp(4))
+        }
+        val cur = speedPref()
+        var row: LinearLayout? = null
+        for ((k, s) in SPEEDS.withIndex()) {
+            if (k % 3 == 0) {
+                row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+                box.addView(row, LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                        if (k > 0) topMargin = dp(6)
+                    })
+            }
+            val on = abs(cur - s) < 0.01f
+            val b = TextView(this).apply {
+                text = (if (abs(s - 1f) < 0.01f) tx("normalSpeed") else speedLabel(s))
+                gravity = Gravity.CENTER
+                setTextColor(if (on) 0xFFFF6A5E.toInt() else Color.WHITE)
+                textSize = 12.5f
+                if (on) setTypeface(typeface, Typeface.BOLD)
+                background = panelBg(on)
+                setPadding(dp(4), dp(11), dp(4), dp(11))
+                isClickable = true
+                focusRing(this, round = false)
+                tag = "spd$k"
+                isSelected = on
+                setOnClickListener { setSpeed(s) }
+            }
+            row?.addView(b, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
+                if (k % 3 > 0) marginStart = dp(6)
+            })
+        }
+        return box
+    }
+
+    private fun speedLabel(s: Float): String =
+        (if (s == s.toInt().toFloat()) s.toInt().toString()
+         else String.format(Locale.US, "%.2f", s).trimEnd('0').trimEnd('.')) + "×"
+
     private fun applySubScale() {
         val s = prefs().getFloat("subScale", 0f)
         if (s > 0f) playerView.subtitleView?.setFractionalTextSize(SubtitleView.DEFAULT_TEXT_SIZE_FRACTION * s)
@@ -1383,6 +1540,17 @@ class MainActivity : ComponentActivity() {
                 box.addView(optionRow(lbl, qualityPinned && g.isTrackSelected(i)) { chooseQuality(g, i, lbl) })
             }
         }
+
+        /* how fast it plays - films and series only */
+        box.addView(sectionTitle("⏩  " + tx("speed")))
+        if (isVod(currentUrl ?: "")) box.addView(speedRows())
+        else box.addView(noteRow(tx("speedLive")))
+
+        /* the sound carries on with the app away */
+        box.addView(sectionTitle("🎧  " + tx("radio")))
+        box.addView(optionRow(tx("radioOn"), radioOn()) { setRadio(!radioOn()) })
+        box.addView(noteRow(tx("radioNote")))
+
         if (panelOn() && !panel.isInTouchMode) focusPanel(focusKey)
     }
 
@@ -1593,6 +1761,7 @@ class MainActivity : ComponentActivity() {
         super.onUserLeaveHint()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) return     /* 12+ does it by itself */
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        if (radioOn()) return                                          /* sound only, no small window */
         if (!::playerLayer.isInitialized || playerLayer.visibility != View.VISIBLE || dead) return
         try {
             if (!packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)) return
@@ -1644,10 +1813,11 @@ class MainActivity : ComponentActivity() {
         stopped = true
         /* the small window was closed (Android may report its end just before this) */
         if (inPip || SystemClock.uptimeMillis() - pipEndedAt < 2000) { closeFromPip(); return }
-        /* never keep playing unseen - onPause normally did this already */
+        /* never keep playing unseen - onPause normally did this already.
+           Radio mode is the one thing the user asked to go on hearing. */
         if (::playerLayer.isInitialized && playerLayer.visibility == View.VISIBLE) {
             reportPosition()
-            player?.playWhenReady = false
+            if (!radioOn()) player?.playWhenReady = false
         }
     }
 
@@ -1656,11 +1826,14 @@ class MainActivity : ComponentActivity() {
     override fun onPause() {
         super.onPause()
         reportPosition()
-        if (!inPipNow()) player?.playWhenReady = false   /* the small window keeps playing */
+        if (inPipNow()) return                           /* the small window keeps playing */
+        if (keepPlaying()) { startRadio(); return }       /* ...and so does radio mode */
+        player?.playWhenReady = false
     }
 
     override fun onResume() {
         super.onResume()
+        stopRadio()                                      /* back on screen: no notification */
         if (playerLayer.visibility == View.VISIBLE) {
             player?.playWhenReady = true
             setFullscreen(true)
@@ -1671,8 +1844,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)
+        stopRadio()
+        releaseSession()
         player?.release()
         player = null
+        nowTitle = ""
         webView.destroy()
         super.onDestroy()
     }
