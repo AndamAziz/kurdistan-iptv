@@ -1869,6 +1869,19 @@ class MainActivity : ComponentActivity() {
         stopped = false
     }
 
+    /**
+     * The page keeps the posters it has already fetched so that moving between
+     * Live TV, Films and Series does not fetch them all over again - this
+     * panel's picture server forbids them being kept any other way. On a box
+     * with little room to spare that is the first thing that should go, so the
+     * system's own warning is passed straight through to it.
+     */
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        if (level < TRIM_MEMORY_RUNNING_LOW) return
+        try { webView.evaluateJavascript("window.imgForget&&imgForget()", null) } catch (e: Exception) { }
+    }
+
     override fun onStop() {
         super.onStop()
         stopped = true
