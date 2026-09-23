@@ -66,6 +66,17 @@ header{position:sticky;top:0;z-index:20;padding:calc(10px + var(--safe-t)) 14px 
   background:rgba(18,25,36,.95);border:1px solid var(--line);font-size:12px;font-weight:700;
   box-shadow:0 10px 30px rgba(0,0,0,.6);max-width:88vw}
 #sync.on{display:flex}
+/* the one thing the app ever interrupts with: a new version is ready. It sits
+   above the bottom bar, says so in one line, and goes away when tapped. */
+#updBar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + var(--safe-b));z-index:41;
+  display:none;align-items:center;gap:2px;padding:4px 4px 4px 6px;border-radius:999px;
+  background:linear-gradient(100deg,var(--accent),var(--accent2));color:#fff;
+  box-shadow:0 12px 30px rgba(230,62,70,.38);max-width:92vw}
+#updBar.on{display:flex}
+#updBar button{background:none;border:0;color:#fff;font:inherit;cursor:pointer;padding:8px 12px;
+  font-size:12.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#updBar .x{padding:8px 13px;font-size:15px;opacity:.85}
+#updBar button:active{transform:scale(.97)}
 #sync .sp{width:13px;height:13px;flex:none;border-radius:99px;border:2px solid var(--muted2);
   border-top-color:var(--accent2);animation:spin .8s linear infinite}
 #sync.err .sp{display:none}
@@ -618,6 +629,11 @@ html.tv .st-two button{padding:11px 8px;font-size:14px}
 
 <div id="sync"><span class="sp"></span><span id="syncText"></span></div>
 
+<div id="updBar">
+  <button onclick="updOpen()"><span id="updBarText"></span></button>
+  <button class="x" onclick="updHide()" aria-label="close">&#10005;</button>
+</div>
+
 <nav id="nav">
   <button data-s="live" onclick="navTap('live')"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="8" width="19" height="12.5" rx="2.6"/><path d="M8 3.5l4 4.2 4-4.2"/></svg><span id="navLive"></span></button>
   <button data-s="movies" onclick="navTap('movies')"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.4"/><path d="M8 4v16M16 4v16M3 12h18"/></svg><span id="navMovies"></span></button>
@@ -718,6 +734,11 @@ var T = {
       clearCache:"سڕینەوەی کاش",cacheSub:"کۆپی پاشەکەوتکراوی لیست · %s",
       confirmClear:"کاشەکە بسڕدرێتەوە و لیستەکە دووبارە دابەزێنرێتەوە؟",
       version:"وەشان",plType:"جۆری لیست",
+      updCheck:"پشکنینی وەشانی نوێ",updCheckSub:"ڕۆژی جارێک خۆی پشکنین دەکات",
+      updTitle:"وەشانی ئەپەکە",updNow:"وەشانی ئێستات",updNew:"وەشانی نوێ",updSize:"قەبارە",
+      updNone:"نوێترین وەشانت هەیە",updFound:"وەشانێکی نوێ ئامادەیە",
+      updWhat:"چی نوێیە",updGet:"دایبگرە",updSkip:"ئەم وەشانە تێپەڕێنە",
+      updChecking:"پشکنین…",updFail:"نەتوانرا پشکنین بکرێت",
       favs:"دڵخوازەکان",navFavs:"دڵخواز",favAdded:"زیادکرا بۆ دڵخوازەکان ⭐",favRemoved:"لابرا لە دڵخوازەکان",
       favEmpty:"هێشتا هیچ دڵخوازێکت نییە",favHint:"پەنجە لەسەر هەر کەناڵ، فیلم یان زنجیرەیەک ڕابگرە تا لێرە زیاد بێت. بۆ لابردنیش هەمان کار بکە.",
       searchAll:"گەڕان بۆ کەناڵ، فیلم، زنجیرە...",noResults:"هیچ شتێک بۆ «%s» نەدۆزرایەوە",
@@ -774,6 +795,11 @@ var T = {
       clearCache:"Clear cache",cacheSub:"Saved copy of the playlist · %s",
       confirmClear:"Clear the cache and download the playlist again?",
       version:"Version",plType:"Playlist type",
+      updCheck:"Check for updates",updCheckSub:"it looks once a day on its own",
+      updTitle:"App version",updNow:"You have",updNew:"Newest",updSize:"Size",
+      updNone:"You have the newest version",updFound:"A new version is ready",
+      updWhat:"What's new",updGet:"Download",updSkip:"Skip this version",
+      updChecking:"Checking…",updFail:"Could not check just now",
       favs:"Favorites",navFavs:"Favorites",favAdded:"Added to favorites ⭐",favRemoved:"Removed from favorites",
       favEmpty:"No favorites yet",favHint:"Press and hold any channel, movie or series to add it here. Do the same to remove it.",
       searchAll:"Search channels, movies, series...",noResults:"Nothing found for “%s”",
@@ -830,6 +856,11 @@ var T = {
       clearCache:"مسح الذاكرة المؤقتة",cacheSub:"النسخة المحفوظة من القائمة · %s",
       confirmClear:"مسح الذاكرة المؤقتة وتحميل القائمة من جديد؟",
       version:"الإصدار",plType:"نوع القائمة",
+      updCheck:"البحث عن تحديث",updCheckSub:"يبحث مرة كل يوم من تلقاء نفسه",
+      updTitle:"إصدار التطبيق",updNow:"لديك",updNew:"الأحدث",updSize:"الحجم",
+      updNone:"لديك أحدث إصدار",updFound:"إصدار جديد جاهز",
+      updWhat:"الجديد",updGet:"تنزيل",updSkip:"تخطَّ هذا الإصدار",
+      updChecking:"جاري البحث…",updFail:"تعذّر البحث الآن",
       favs:"المفضلة",navFavs:"المفضلة",favAdded:"أضيفت إلى المفضلة ⭐",favRemoved:"أزيلت من المفضلة",
       favEmpty:"لا توجد مفضلة بعد",favHint:"اضغط مطولاً على أي قناة أو فيلم أو مسلسل لإضافته هنا، وكرر ذلك لإزالته.",
       searchAll:"ابحث عن قناة، فيلم، مسلسل...",noResults:"لا توجد نتائج لـ «%s»",
@@ -1792,6 +1823,142 @@ function rememberEpisodes(list){
   }catch(e){}
 }
 
+/* ==================== the newest version ====================
+   The app asks a public list of releases what the newest build is. The source
+   itself stays private - only the finished releases are public - so a plain
+   GET is all it takes and no key of any kind ever travels with the app.
+
+   It looks once a day, never while the user is doing something else, and what
+   it finds is one line above the bottom bar that can be waved away. */
+var UPD_API   = "https://api.github.com/repos/AndamAziz/kurdistan-iptv-releases/releases/latest";
+var UPD_EVERY = 24 * 3600 * 1000;
+var UPD = null;                       /* what the last look found, for the sheet */
+
+/* "1.0|105" from the app itself; empty in a plain browser */
+function appVer(){
+  try{ if(window.AndroidPlayer && AndroidPlayer.version) return String(AndroidPlayer.version() || "") }
+  catch(e){}
+  return "";
+}
+function appBuild(){
+  var p = appVer().split("|");
+  return p.length > 1 ? (parseInt(p[1], 10) || 0) : 0;
+}
+function appVerText(){
+  var p = appVer().split("|");
+  if(!p[0]) return APP_VERSION;
+  return p[0] + (p[1] ? " (" + p[1] + ")" : "");
+}
+
+function updState(){ try{ return JSON.parse(lsGet("kiptv_ver", "{}")) || {} }catch(e){ return {} } }
+function updSave(o){ try{ lsSet("kiptv_ver", JSON.stringify(o)) }catch(e){} }
+
+/* the number at the end of a tag: v1.0.105 is build 105 */
+function updBuildOf(tag){
+  var m = String(tag || "").match(/(\d+)\s*$/);
+  return m ? (parseInt(m[1], 10) || 0) : 0;
+}
+
+function updAsk(){
+  if(!window.fetch) return Promise.resolve(null);
+  return fetch(viaApp(UPD_API))
+    .then(function(r){ return r.text() })
+    .then(function(txt){
+      var o = JSON.parse(txt);
+      if(!o || !o.tag_name) return null;
+      var list = o.assets || [], apk = null;
+      for(var i = 0; i < list.length && !apk; i++)
+        if(list[i] && /\.apk$/i.test(list[i].name || "")) apk = list[i];
+      return { build: updBuildOf(o.tag_name),
+               name:  o.name || o.tag_name,
+               notes: String(o.body || "").replace(/\r/g, "").slice(0, 1200),
+               url:   apk ? apk.browser_download_url : (o.html_url || ""),
+               size:  apk ? (apk.size || 0) : 0 };
+    })
+    .catch(function(){ return null });
+}
+
+/* Newer than what is installed, and not one the user has already waved off.
+   An app that cannot say which build it is - a plain browser, or a version
+   from before this was added - is never told anything: with nothing to
+   compare against, "newer" would be a guess. */
+function updWorth(r){
+  var mine = appBuild();
+  return !!(mine && r && r.build && r.build > mine && updState().skip !== r.build);
+}
+
+function updCheck(manual){
+  var kept = updState();
+  if(!manual && kept.t && Date.now() - kept.t < UPD_EVERY){
+    if(updWorth(kept.b ? { build: kept.b } : null)) updShow();
+    return Promise.resolve(null);
+  }
+  if(manual){ UPD = { state: "run" }; drawSheet() }
+  return updAsk().then(function(r){
+    var st = updState();
+    st.t = Date.now();
+    if(r){ st.b = r.build; st.url = r.url; st.name = r.name; st.notes = r.notes; st.size = r.size }
+    updSave(st);
+    UPD = r ? { state: "done", r: r } : { state: "err" };
+    if(manual) drawSheet();
+    if(updWorth(r)) updShow();
+    return r;
+  });
+}
+
+function updShow(){ var b = $("updBar"); if(b) b.classList.add("on") }
+function updHide(){ var b = $("updBar"); if(b) b.classList.remove("on") }
+
+/* "not this one" - it stays quiet until a build after this one appears */
+function updSkipNow(){
+  var st = updState();
+  st.skip = st.b || 0;
+  updSave(st);
+  updHide();
+  closeSheet();
+}
+
+function updOpen(){
+  updHide();
+  openSheet("upd");
+  if(!UPD || UPD.state !== "done") updCheck(true);
+}
+
+/* the download goes to the phone's own browser, where the user can see what
+   is being downloaded and decide to install it */
+function updGet(){
+  var st = updState(), u = (UPD && UPD.r && UPD.r.url) || st.url || "";
+  if(!u) return;
+  try{ if(window.AndroidPlayer && AndroidPlayer.openUrl){ AndroidPlayer.openUrl(u); return } }catch(e){}
+  try{ window.open(u, "_blank") }catch(e){}
+}
+
+function updBody(d){
+  var head = speedRow(d.updNow, appVerText()), st = updState();
+  if(UPD && UPD.state === "run")
+    return head + '<div class="row"><span class="tx"><b>'+esc(d.updChecking)+'</b></span></div>';
+
+  var r = (UPD && UPD.r) ? UPD.r
+        : (st.b ? { build: st.b, name: st.name, notes: st.notes, url: st.url, size: st.size } : null);
+
+  if(!r && UPD && UPD.state === "err")
+    return head + '<div class="row"><span class="tx"><b>'+esc(d.updFail)+'</b></span></div>'
+         + '<button class="addbtn" onclick="updCheck(true)">'+esc(d.spdAgain)+'</button>';
+
+  if(!r || r.build <= appBuild())
+    return head + '<div class="row"><span class="tx"><b>'+esc(d.updNone)+'</b></span></div>'
+         + '<button class="addbtn" onclick="updCheck(true)">'+esc(d.spdAgain)+'</button>';
+
+  var h = head + speedRow(d.updNew, r.name || String(r.build), true);
+  if(r.size) h += speedRow(d.updSize, fmtSize(r.size));
+  if(r.notes)
+    h += '<div class="row"><span class="tx"><b>'+esc(d.updWhat)+'</b>'
+       + '<s class="wrap">'+esc(r.notes)+'</s></span></div>';
+  return h + '<button class="addbtn" onclick="updGet()">'+esc(d.updGet)+'</button>'
+           + '<button class="addbtn" onclick="updSkipNow()" '
+           + 'style="color:var(--muted);border-style:solid">'+esc(d.updSkip)+'</button>';
+}
+
 /* ==================== the pictures ====================
    Posters are by far the heaviest thing the page asks for, and a panel's own
    picture server is usually the narrow end of the pipe: a browser will open
@@ -1816,9 +1983,11 @@ function imgStart(el){
        second knock - and only then does the card fall back to its letters */
     if(el.getAttribute("data-try")){ if(el.parentNode) el.parentNode.removeChild(el); return }
     el.setAttribute("data-try", "1");
-    setTimeout(function(){
-      if(el.parentNode){ el.setAttribute("data-src", u); imgPush(el) }
-    }, 1500);
+    /* put the address back at once: that is also what hides the broken
+       picture the browser would otherwise show while the second try waits */
+    el.setAttribute("data-src", u);
+    el.removeAttribute("src");
+    setTimeout(function(){ if(el.parentNode) imgPush(el) }, 1500);
   };
   /* a picture whose node is taken off the page may answer neither way, and the
      queue must not be held by it for ever */
@@ -2082,6 +2251,7 @@ function applyLang(){
   $("annText").textContent = d.ann;
   $("search").placeholder = d.search;
   $("gate-sub").textContent = d.enter;
+  $("updBarText").textContent = d.updFound;
   $("gbtn").textContent = d.act;
   drawNav();                       /* the bottom bar speaks the new language too */
   renderChips(); render();
@@ -2588,6 +2758,10 @@ function drawSheet(){
     title = d.speedTest;
     body = speedBody(d);
   }
+  else if(v === "upd"){
+    title = d.updTitle;
+    body = updBody(d);
+  }
   else if(v === "cats"){
     title = d.cats;
     body = catsBody(d);
@@ -3026,9 +3200,10 @@ function drawSettings(){
   if(act.type === "xtream") h += setRow(ICON.tv, d.epgTest, d.epgTestSub, "epgProbe()", true);
   h += setRow(ICON.gauge, d.speedTest, d.speedTestSub, "speedTest()", true);
   h += setRow(ICON.disk, d.clearCache, "", "clearCache()", true, cacheSize());
+  h += setRow(ICON.down, d.updCheck, d.updCheckSub, "updOpen()", true, appVerText());
 
   h += '<div class="st-foot"><span class="lg">'+LOGO_ICON+'</span><b>KURDISTAN IPTV</b><br>'
-     +   esc(d.version + " " + APP_VERSION)+'</div>';
+     +   esc(d.version + " " + appVerText())+'</div>';
 
   $("setBody").innerHTML = h;
 }
@@ -4056,6 +4231,8 @@ function actAskAgainQuietly(a){
   applyLang();
   imgWatch();
   loadActive(false);
+  /* long after the screen is up, so it never gets in the way of the first draw */
+  setTimeout(function(){ try{ updCheck(false) }catch(e){} }, 6000);
 })();
 </script>
 </body>
