@@ -62,3 +62,37 @@ jobs:
           name: KURDISTAN-IPTV-apk
           path: app/build/outputs/apk/*/*.apk
           if-no-files-found: error
+
+      # The finished APK goes to a second, public repository that holds nothing
+      # but releases. This source stays private; the app asks that public list
+      # what the newest build is, so it needs no key of its own to ask.
+      # Without RELEASE_TOKEN in the secrets nothing is published and the build
+      # ends exactly as it always did.
+      - name: Publish the new version
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          RELEASE_REPO: AndamAziz/kurdistan-iptv-releases
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "No RELEASE_TOKEN in the secrets - nothing published."
+            exit 0
+          fi
+          APK=$(ls app/build/outputs/apk/release/*.apk 2>/dev/null | head -1)
+          if [ -z "$APK" ]; then
+            echo "No signed APK was built - nothing published."
+            exit 0
+          fi
+          NAME="KURDISTAN-IPTV-${GITHUB_RUN_NUMBER}.apk"
+          cp "$APK" "$NAME"
+          if [ -s WHATSNEW.md ]; then
+            NOTES=$(cat WHATSNEW.md)
+          else
+            NOTES=$(git log -1 --pretty=%B)
+          fi
+          # the app reads the number at the end of the tag as the build number
+          gh release create "v1.0.${GITHUB_RUN_NUMBER}" "$NAME" \
+            --repo "$RELEASE_REPO" \
+            --title "KURDISTAN IPTV 1.0 (${GITHUB_RUN_NUMBER})" \
+            --notes "$NOTES"
+          echo "Published v1.0.${GITHUB_RUN_NUMBER} to $RELEASE_REPO"
