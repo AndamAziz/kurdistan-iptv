@@ -373,7 +373,7 @@ html.tv #nav button{flex-direction:row;justify-content:center;gap:9px;padding:9p
 html.tv header{top:54px}
 html.tv body.hasnav main{padding-bottom:40px}
 html.tv #favs{padding-top:calc(72px + var(--safe-t))}
-html.tv .heroBox{aspect-ratio:auto;height:min(46vh,300px)}
+html.tv .heroBox{aspect-ratio:auto;height:min(38vh,215px)}
 /* room for the ring inside the sideways rows */
 html.kbd .strip{padding:8px 8px 10px;margin:-8px -8px -8px}
 html.kbd .card,html.kbd .row,html.kbd .ep,html.kbd .hi,html.kbd button{scroll-margin-top:170px;scroll-margin-bottom:96px}
@@ -432,6 +432,29 @@ html.kbd .card,html.kbd .row,html.kbd .ep,html.kbd .hi,html.kbd button{scroll-ma
 .st-two button.solid{border-style:solid;background:var(--surface);color:var(--text)}
 .st-two button:active{transform:scale(.98)}
 .st-foot{text-align:center;font-size:11px;font-weight:700;color:var(--muted2);line-height:1.8;padding:2px 0 4px}
+/* ---------- a TV is watched from across the room, and its edges can be cut off ---------- */
+html.tv header{padding:8px 3% 8px}
+html.tv main{padding:6px 3% calc(40px + var(--safe-b))}
+html.tv .brand .w1,html.tv .brand .w2{font-size:17px;letter-spacing:3px}
+html.tv .brand small{font-size:8.5px;margin-top:3px}
+html.tv .iconbtn{width:38px;height:38px;border-radius:12px}
+html.tv .ann{margin-top:7px;padding:5px 10px;font-size:11px}
+html.tv .chips{padding-top:8px}
+html.tv .chip{padding:6px 13px;font-size:12px}
+html.tv .hero h1{font-size:22px;margin:0 0 8px}
+html.tv .hero .in{padding:12px}
+html.tv .hero .go{padding:8px 18px;font-size:12.5px}
+html.tv .heroDots{margin-top:6px}
+html.tv .hrow{margin-top:14px}
+html.tv .rhead{margin-bottom:8px}
+html.tv .rhead h3{font-size:13.5px}
+/* more channels on screen, each still large enough to read from the sofa */
+html.tv .grid{grid-template-columns:repeat(8,1fr);gap:11px}
+html.tv .strip .card{width:92px}
+html.tv .strip.big .card{width:104px}
+html.tv .name{font-size:10.5px;padding-top:7px;min-height:34px}
+html.tv .card .epg{font-size:10px}
+
 html.tv #settings{padding-top:12px}
 html.tv #settings .st-h h1{font-size:24px}
 html.tv #settings .st-g{margin:10px 0 6px}
