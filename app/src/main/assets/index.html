@@ -1965,17 +1965,33 @@ function updBody(d){
    about six doors to one host, so four hundred posters queue up behind each
    other and the dozen actually on screen wait their turn.
 
-   So: nothing is asked for until it is nearly in view, and never more than a
-   few at a time. The posters the eye is on get the whole line to themselves. */
-var IMG_MAX = 4, imgBusy = 0, imgWait = [], imgEye = null, imgSoon = 0;
+   So nothing is asked for until it is nearly in view. Everything that IS in
+   view is asked for at once - the browser opens about six doors to one server
+   and keeps them all busy, which it does better than any waiting of ours. The
+   number below is only a ceiling against a server that has gone slow: it is
+   set well above a screenful, so nothing a person is looking at ever waits
+   on us. (Measured against this panel: one poster 117ms, six together 287ms.)
+*/
+var IMG_MAX = 12, IMG_EAGER = 12, imgBusy = 0, imgWait = [], imgEye = null, imgSoon = 0;
+/* Which screen a picture belongs to. A picture asked for on the screen before
+   this one must not be counted against this one: its card is gone, the browser
+   may have dropped the request without a word, and waiting on it would hold
+   back the screen the person is actually looking at. */
+var IMG_GEN = 0;
 
 function imgStart(el){
   var u = el.getAttribute("data-src");
   if(!u || !el.parentNode) return;
   el.removeAttribute("data-src");
   imgBusy++;
-  var over = false;
-  var free = function(){ if(over) return; over = true; imgBusy--; imgNext() };
+  var over = false, gen = IMG_GEN;
+  var free = function(){
+    if(over) return;
+    over = true;
+    if(gen !== IMG_GEN) return;        /* it belonged to a screen that is gone */
+    imgBusy--;
+    imgNext();
+  };
   el.onload = function(){ free(); el.className = (el.className ? el.className + " " : "") + "rdy" };
   el.onerror = function(){
     free();
@@ -2008,15 +2024,25 @@ function imgEyes(){
       imgEye.unobserve(seen[i].target);
       imgPush(seen[i].target);
     }
-  }, { rootMargin: "500px 300px" });
+  }, { rootMargin: "900px 400px" });
   return imgEye;
 }
 function imgScan(){
-  var eye = imgEyes(), all = document.querySelectorAll("img[data-src]");
-  for(var i = 0; i < all.length; i++){
-    if(all[i].getAttribute("data-w")) continue;
-    all[i].setAttribute("data-w", "1");
-    if(eye) eye.observe(all[i]); else imgPush(all[i]);   /* an old webview: as before */
+  var eye = imgEyes(), all = document.querySelectorAll("img[data-src]"), fresh = [], i;
+  for(i = 0; i < all.length; i++){
+    /* marked on the element itself, not in the page: a mark written into the
+       page would be a change, and every change brings us back here */
+    if(all[i].kSeen) continue;
+    all[i].kSeen = 1;
+    fresh.push(all[i]);
+  }
+  for(i = 0; i < fresh.length; i++){
+    /* Being told a card is in view costs a layout and arrives a moment late,
+       and for the first cards of anything just drawn the answer is already
+       known: they are at the top, which is where the eye is. So those go at
+       once and only the rest wait to be noticed. */
+    if(!eye || i < IMG_EAGER) imgPush(fresh[i]);
+    else eye.observe(fresh[i]);
   }
 }
 /* a new screen: the old watch list is thrown away, whatever is still in
@@ -2025,6 +2051,8 @@ function imgReset(){
   try{ if(imgEye) imgEye.disconnect() }catch(e){}
   imgEye = null;
   imgWait = [];
+  IMG_GEN++;
+  imgBusy = 0;
 }
 /* every way the page draws cards ends in new nodes, so watch for nodes
    instead of remembering to call this from each of them */
@@ -2034,7 +2062,7 @@ function imgWatch(){
     new MutationObserver(function(){
       if(imgSoon) return;
       imgSoon = 1;
-      setTimeout(function(){ imgSoon = 0; imgScan() }, 60);
+      setTimeout(function(){ imgSoon = 0; imgScan() }, 250);
     }).observe(document.body, { childList: true, subtree: true });
   }catch(e){ }
 }
@@ -2205,6 +2233,7 @@ function render(){
     shown = 0;
     heroStart();
     window.scrollTo(0,0);
+    imgScan();
     return;
   }
 
@@ -2224,12 +2253,14 @@ function render(){
   shown = 0;
   loadMore();
   window.scrollTo(0,0);
+  imgScan();                 /* ask for the pictures now, not a moment later */
 }
 function loadMore(){
   var g = $("grid"); if(!g) return;
   var next = view.slice(shown, shown + PAGE_SIZE);
   if(next.length){ g.insertAdjacentHTML("beforeend", next.map(function(c){ return cardHTML(c); }).join("")); shown += next.length }
   $("moreWrap").style.display = (shown < view.length) ? "block" : "none";
+  imgScan();
 }
 function renderChips(){
   var html = '<button class="chip'+(f==="ALL"?" on":"")+'" data-g="ALL">'+esc(t().all)+'</button>';
