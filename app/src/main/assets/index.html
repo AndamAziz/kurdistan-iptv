@@ -208,6 +208,20 @@ body.hasnav main{padding-bottom:calc(96px + var(--safe-b))}
 .grid.posters{grid-template-columns:repeat(3,1fr);gap:12px}
 @media(min-width:520px){.grid.posters{grid-template-columns:repeat(4,1fr)}}
 @media(min-width:760px){.grid.posters{grid-template-columns:repeat(6,1fr)}}
+/* A window on a desk is far wider than a phone. A banner that kept its shape
+   would fill the whole of it, so past this width it stops growing downwards
+   and the rows put more on a line instead. A television is left alone: it has
+   its own sizes already, set for a remote and a room away. */
+@media(min-width:900px){
+  html:not(.tv) .heroBox{aspect-ratio:auto;height:min(46vh,380px)}
+  html:not(.tv) .grid{grid-template-columns:repeat(8,1fr)}
+  html:not(.tv) .grid.posters{grid-template-columns:repeat(7,1fr)}
+  html:not(.tv) main{max-width:1500px;margin-inline:auto}
+}
+@media(min-width:1500px){
+  html:not(.tv) .grid{grid-template-columns:repeat(10,1fr)}
+  html:not(.tv) .grid.posters{grid-template-columns:repeat(9,1fr)}
+}
 .poster{position:relative;aspect-ratio:2/3;border-radius:var(--r-md);overflow:hidden;
   background:var(--surface);border:1px solid var(--line);box-shadow:0 10px 24px rgba(0,0,0,.45)}
 .poster img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
@@ -1866,9 +1880,12 @@ function updAsk(){
     .then(function(txt){
       var o = JSON.parse(txt);
       if(!o || !o.tag_name) return null;
+      /* one release carries both: the phone wants the apk, the desktop the
+         installer beside it */
+      var want = (window.KIPTV_OS === "win") ? /\.exe$/i : /\.apk$/i;
       var list = o.assets || [], apk = null;
       for(var i = 0; i < list.length && !apk; i++)
-        if(list[i] && /\.apk$/i.test(list[i].name || "")) apk = list[i];
+        if(list[i] && want.test(list[i].name || "")) apk = list[i];
       return { build: updBuildOf(o.tag_name),
                name:  o.name || o.tag_name,
                notes: String(o.body || "").replace(/\r/g, "").slice(0, 1200),
@@ -4164,7 +4181,12 @@ var lastLoadError = "";
 
 /* Inside the app, downloads go through native code (no CORS limits).
    In a plain browser the URL is used directly. */
+/* Anything this page cannot ask for itself, the app asks on its behalf: on
+   Android through a made-up host the WebView catches, on Windows through a
+   small server of its own that only this machine can reach. In a plain
+   browser there is no app, and the address is asked for as it is. */
 function viaApp(u){
+  if(window.KIPTV_PROXY) return window.KIPTV_PROXY + encodeURIComponent(u);
   return window.AndroidPlayer ? "https://kiptv.local/p?u=" + encodeURIComponent(u) : u;
 }
 
