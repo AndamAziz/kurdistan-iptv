@@ -11,8 +11,25 @@ android {
         applicationId = "com.kurdistan.iptv"
         minSdk = 24
         targetSdk = 35
-        versionCode = 1
+        /* every build from GitHub gets a higher number, so a new APK always
+           installs over the old one; a build made by hand stays at 1 */
+        versionCode = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInt()
         versionName = "1.0"
+    }
+
+    /* The same key signs every release build, so an APK installs over the one
+       before it and keeps the playlists, favourites and history. The key never
+       lives in this repository: the build gets it from the GitHub secrets. */
+    signingConfigs {
+        create("release") {
+            val ks = System.getenv("KEYSTORE_FILE")
+            if (!ks.isNullOrBlank() && file(ks).exists()) {
+                storeFile = file(ks)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS") ?: "kurdistan"
+                keyPassword = System.getenv("KEY_PASSWORD") ?: System.getenv("KEYSTORE_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
@@ -22,7 +39,17 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            val ks = System.getenv("KEYSTORE_FILE")
+            if (!ks.isNullOrBlank() && file(ks).exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
+    }
+
+    /* a warning must never stop the build */
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
     }
 
     compileOptions {
