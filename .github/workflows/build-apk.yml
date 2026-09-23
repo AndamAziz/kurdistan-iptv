@@ -96,3 +96,84 @@ jobs:
             --title "KURDISTAN IPTV 1.0 (${GITHUB_RUN_NUMBER})" \
             --notes "$NOTES"
           echo "Published v1.0.${GITHUB_RUN_NUMBER} to $RELEASE_REPO"
+
+  # ---------------------------------------------------------------------------
+  # The Windows app: the same page, carried by Electron, playing with mpv.
+  # It goes into the SAME release the phone build just made, beside the APK -
+  # the app asks for whichever of the two suits the machine it is running on.
+  #
+  # Nothing here can hold up or redden the phone build: it waits for it, and
+  # any trouble of its own is its own.
+  # ---------------------------------------------------------------------------
+  windows:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: windows-latest
+    continue-on-error: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # mpv is what makes this worth having: a browser plays neither a live
+      # MPEG-TS stream nor HEVC nor Matroska, and a panel sends all three.
+      - name: Fetch mpv
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $h = @{ 'User-Agent' = 'kiptv-build' }
+          if ($env:GITHUB_TOKEN) { $h['Authorization'] = "Bearer $env:GITHUB_TOKEN" }
+          $rel = Invoke-RestMethod -Headers $h `
+            'https://api.github.com/repos/shinchiro/mpv-winbuild-cmake/releases/latest'
+          $asset = $rel.assets |
+            Where-Object { $_.name -match '^mpv-x86_64-\d' -and $_.name -notmatch 'dev' } |
+            Select-Object -First 1
+          if (-not $asset) { throw 'no mpv build found in the latest release' }
+          Write-Host "mpv: $($asset.name)"
+          Invoke-WebRequest -Headers $h -Uri $asset.browser_download_url -OutFile mpv.7z
+          New-Item -ItemType Directory -Force -Path desktop/mpv | Out-Null
+          & 7z x mpv.7z -odesktop/mpv -y | Out-Null
+          if (-not (Test-Path desktop/mpv/mpv.exe)) { throw 'mpv.exe is not where it should be' }
+          '{0:N1} MB' -f ((Get-Item desktop/mpv/mpv.exe).Length / 1MB)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Build the installer
+        working-directory: desktop
+        env:
+          KIPTV_BUILD: ${{ github.run_number }}
+        run: |
+          npm install --no-audit --no-fund
+          npm run dist
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: KURDISTAN-IPTV-windows
+          path: desktop/out/*.exe
+          if-no-files-found: error
+
+      - name: Add it to the release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          RELEASE_REPO: AndamAziz/kurdistan-iptv-releases
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "No RELEASE_TOKEN in the secrets - nothing published."
+            exit 0
+          fi
+          EXE=$(ls desktop/out/*.exe 2>/dev/null | head -1)
+          if [ -z "$EXE" ]; then
+            echo "No installer was built - nothing published."
+            exit 0
+          fi
+          # beside the APK, in the release the phone build made a moment ago
+          gh release upload "v1.0.${GITHUB_RUN_NUMBER}" "$EXE" \
+            --repo "$RELEASE_REPO" --clobber
+          echo "Added $(basename "$EXE") to v1.0.${GITHUB_RUN_NUMBER}"
