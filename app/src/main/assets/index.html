@@ -1888,7 +1888,7 @@ function updAsk(){
         if(list[i] && want.test(list[i].name || "")) apk = list[i];
       return { build: updBuildOf(o.tag_name),
                name:  o.name || o.tag_name,
-               notes: String(o.body || "").replace(/\r/g, "").slice(0, 1200),
+               notes: String(o.body || "").replace(/\r/g, "").slice(0, 4000),
                url:   apk ? apk.browser_download_url : (o.html_url || ""),
                size:  apk ? (apk.size || 0) : 0 };
     })
@@ -1899,6 +1899,25 @@ function updAsk(){
    An app that cannot say which build it is - a plain browser, or a version
    from before this was added - is never told anything: with nothing to
    compare against, "newer" would be a guess. */
+/* One release, three languages. The notes carry a marker on a line of its
+   own - [en], [ku], [ar] - and the app shows the one it is speaking in.
+   English is what anything unmarked, unknown or missing falls back to, and a
+   release written without any markers at all is shown whole, as before. */
+function updNotes(body, want){
+  var txt = String(body || "").replace(/\r/g, "");
+  if(!/^[ \t]*\[(en|ku|ar)\][ \t]*$/im.test(txt)) return txt.trim();
+
+  var parts = {}, now = null, lines = txt.split("\n");
+  for(var i = 0; i < lines.length; i++){
+    var m = lines[i].match(/^[ \t]*\[(en|ku|ar)\][ \t]*$/i);
+    if(m){ now = m[1].toLowerCase(); parts[now] = parts[now] || []; continue }
+    if(now) parts[now].push(lines[i]);
+  }
+  var pick = parts[want] || parts.en;
+  if(!pick) for(var k in parts) if(parts[k] && parts[k].length){ pick = parts[k]; break }
+  return (pick || []).join("\n").trim();
+}
+
 function updWorth(r){
   var mine = appBuild();
   return !!(mine && r && r.build && r.build > mine && updState().skip !== r.build);
@@ -1968,9 +1987,10 @@ function updBody(d){
 
   var h = head + speedRow(d.updNew, r.name || String(r.build), true);
   if(r.size) h += speedRow(d.updSize, fmtSize(r.size));
-  if(r.notes)
+  var notes = updNotes(r.notes, lang);
+  if(notes)
     h += '<div class="row"><span class="tx"><b>'+esc(d.updWhat)+'</b>'
-       + '<s class="wrap">'+esc(r.notes)+'</s></span></div>';
+       + '<s class="wrap">'+esc(notes)+'</s></span></div>';
   return h + '<button class="addbtn" onclick="updGet()">'+esc(d.updGet)+'</button>'
            + '<button class="addbtn" onclick="updSkipNow()" '
            + 'style="color:var(--muted);border-style:solid">'+esc(d.updSkip)+'</button>';
