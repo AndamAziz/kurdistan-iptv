@@ -324,6 +324,37 @@ html.tv #gate .gbtn{margin-top:8px;padding:12px;font-size:14.5px}
 .hint{font-size:11.5px;color:var(--muted2);line-height:1.6;margin:2px 0 14px}
 .formErr{color:#FF8A8A;font-size:12.5px;font-weight:700;min-height:20px;margin-bottom:6px}
 
+/* ---------- categories: hide, put in order, lock ---------- */
+.segs{display:flex;gap:7px;margin-bottom:13px}
+.seg{flex:1;padding:10px 4px;border-radius:12px;border:1px solid var(--line);background:var(--surface);
+  color:var(--muted);font-size:12.5px;font-weight:800;cursor:pointer}
+.seg.on{border-color:rgba(230,62,70,.55);background:var(--surface2);color:var(--text)}
+.seg[disabled]{opacity:.35;cursor:default}
+.catrow{display:flex;align-items:center;gap:7px;padding:9px 11px;border-radius:14px;background:var(--surface);
+  border:1px solid var(--line);margin-bottom:7px}
+.catrow.off{opacity:.48}
+.catrow.lk{border-color:rgba(230,62,70,.4)}
+.catrow .nm{flex:1;min-width:0}
+.catrow .nm b{display:block;font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.catrow .nm s{display:block;text-decoration:none;font-size:10.5px;font-weight:700;color:var(--muted2);margin-top:2px}
+.catrow .mini{width:32px;height:32px;flex:none}
+.catrow .mini.on{color:var(--accent2);border-color:rgba(230,62,70,.5);background:rgba(230,62,70,.1)}
+.catbar{display:flex;gap:8px;margin:13px 0 2px}
+.catbar button{flex:1;padding:12px 8px;border-radius:13px;border:1px solid var(--line);background:transparent;
+  color:var(--muted);font-size:12.5px;font-weight:800;cursor:pointer}
+.catbar button:active{transform:scale(.98);background:var(--surface2)}
+.cathint{font-size:11.5px;color:var(--muted2);line-height:1.6;margin:0 0 12px}
+.chips .chip.lk{display:inline-flex;align-items:center;gap:5px;flex:none;padding-inline:12px}
+/* open, but still clearly the lock - never mistaken for the chosen group */
+.chips .chip.lk.open{color:var(--accent2);border-color:rgba(230,62,70,.55);background:rgba(230,62,70,.12)}
+/* the code keypad, inside a sheet this time */
+.pinwrap{text-align:center;padding:2px 0}
+.pinwrap .pin{width:54px;height:62px;font-size:23px;border-radius:15px}
+.pinwrap .keys{margin-top:18px}
+.pinmsg{min-height:22px;padding-top:11px;color:#FF7B7B;font-size:12.5px;font-weight:800}
+html.tv .pinwrap .pin{width:46px;height:52px;font-size:20px}
+html.tv .pinwrap .keys{max-width:230px;margin-top:12px}
+
 /* ---------- settings page (opened from the ☰ button, covers the bottom bar) ---------- */
 #settings{position:fixed;inset:0;z-index:60;background:var(--bg);overflow-y:auto;display:none;
   padding:calc(16px + var(--safe-t)) 16px calc(30px + var(--safe-b))}
@@ -669,7 +700,16 @@ var T = {
       srchLoading:"لە فیلم و زنجیرەکانیش دەگەڕێت…",
       history:"مێژوو",histTitle:"مێژووی بینین",histEmpty:"هێشتا هیچت نەبینیوە",
       histHint:"ئەو کەناڵ، فیلم و ئیپسۆدانەی دەیانبینیت لێرە دەردەکەون.",today:"ئەمڕۆ",yesterday:"دوێنێ",
-      clearHist:"سڕینەوەی هەموو مێژوو",confirmClearHist:"هەموو مێژووی بینین بسڕێتەوە؟",episode:"ئیپسۆد",movie:"فیلم",liveOne:"کەناڵ"},
+      clearHist:"سڕینەوەی هەموو مێژوو",confirmClearHist:"هەموو مێژووی بینین بسڕێتەوە؟",episode:"ئیپسۆد",movie:"فیلم",liveOne:"کەناڵ",
+      cats:"بەڕێوەبردنی پۆلەکان",catsSub:"شاردنەوە، ڕیزکردن و قفڵکردنی پۆلەکان",
+      catsHint:"پۆلی شاراوە لە هیچ شوێنێکی ئەپەکە دەرناکەوێت. پۆلی قفڵکراویش تەنها بە کۆد دەکرێتەوە.",
+      catsNone:"هیچ پۆلێک لەم بەشەدا نییە",catsOrder:"ڕیزبەندی بنەڕەتی",catsShowAll:"هەموویان پیشان بدە",
+      hiddenW:"شاراوە",lockedW:"قفڵدراو",
+      pinTitle:"کۆدی قفڵ",pinNew:"کۆدێکی نوێ لە چوار ژمارە دابنێ",pinAgain:"دووبارە هەمان کۆد بنووسەوە",
+      pinAsk:"کۆدی قفڵ بنووسە",pinBad:"کۆدەکە هەڵەیە",pinNoMatch:"هەردوو کۆدەکە وەک یەک نین",
+      pinSaved:"کۆدەکە پاشەکەوتکرا 🔒",pinChange:"گۆڕینی کۆد",pinOff:"لابردنی کۆد",
+      pinOffAsk:"کۆدەکە لابدرێت؟ هەموو پۆلە قفڵکراوەکانیش دەکرێنەوە.",
+      lockOpened:"پۆلە قفڵکراوەکان کرانەوە",lockClosed:"پۆلە قفڵکراوەکان داخران"},
   en:{name:"English",dir:"ltr",all:"All",search:"Search channels...",
       featured:"FEATURED",playNow:"Play",resume:"Resume",seeAll:"See all",
       fromStart:"From start",left:"%s left",director:"Director",cast:"Cast",
@@ -708,7 +748,16 @@ var T = {
       srchLoading:"Searching movies and series too…",
       history:"History",histTitle:"Watch history",histEmpty:"Nothing watched yet",
       histHint:"Channels, movies and episodes you play will appear here.",today:"Today",yesterday:"Yesterday",
-      clearHist:"Clear all history",confirmClearHist:"Clear the whole watch history?",episode:"Episode",movie:"Movie",liveOne:"Live"},
+      clearHist:"Clear all history",confirmClearHist:"Clear the whole watch history?",episode:"Episode",movie:"Movie",liveOne:"Live",
+      cats:"Categories",catsSub:"Hide, reorder and lock your groups",
+      catsHint:"A hidden group disappears from the whole app. A locked one opens only with the code.",
+      catsNone:"No groups in this section",catsOrder:"Default order",catsShowAll:"Show them all",
+      hiddenW:"Hidden",lockedW:"Locked",
+      pinTitle:"Lock code",pinNew:"Set a new four-digit code",pinAgain:"Type the same code again",
+      pinAsk:"Enter the lock code",pinBad:"Wrong code",pinNoMatch:"The two codes are not the same",
+      pinSaved:"Code saved 🔒",pinChange:"Change code",pinOff:"Remove code",
+      pinOffAsk:"Remove the code? Every locked group opens again.",
+      lockOpened:"Locked groups are open",lockClosed:"Locked groups are closed"},
   ar:{name:"العربية",dir:"rtl",all:"الكل",search:"ابحث عن قناة...",
       featured:"مميّز",playNow:"تشغيل",resume:"متابعة",seeAll:"الكل",
       fromStart:"من البداية",left:"باقٍ %s",director:"المخرج",cast:"الأبطال",
@@ -747,7 +796,16 @@ var T = {
       srchLoading:"جارٍ البحث في الأفلام والمسلسلات أيضاً…",
       history:"السجل",histTitle:"سجل المشاهدة",histEmpty:"لم تشاهد شيئاً بعد",
       histHint:"القنوات والأفلام والحلقات التي تشاهدها ستظهر هنا.",today:"اليوم",yesterday:"أمس",
-      clearHist:"مسح السجل بالكامل",confirmClearHist:"مسح سجل المشاهدة بالكامل؟",episode:"حلقة",movie:"فيلم",liveOne:"مباشر"}
+      clearHist:"مسح السجل بالكامل",confirmClearHist:"مسح سجل المشاهدة بالكامل؟",episode:"حلقة",movie:"فيلم",liveOne:"مباشر",
+      cats:"إدارة الفئات",catsSub:"إخفاء الفئات وترتيبها وقفلها",
+      catsHint:"الفئة المخفية تختفي من التطبيق كله، والمقفلة لا تُفتح إلا بالرمز.",
+      catsNone:"لا توجد فئات في هذا القسم",catsOrder:"الترتيب الأصلي",catsShowAll:"إظهار الجميع",
+      hiddenW:"مخفية",lockedW:"مقفلة",
+      pinTitle:"رمز القفل",pinNew:"اختر رمزاً جديداً من أربعة أرقام",pinAgain:"اكتب الرمز نفسه مرة أخرى",
+      pinAsk:"اكتب رمز القفل",pinBad:"الرمز غير صحيح",pinNoMatch:"الرمزان غير متطابقين",
+      pinSaved:"تم حفظ الرمز 🔒",pinChange:"تغيير الرمز",pinOff:"إزالة الرمز",
+      pinOffAsk:"إزالة الرمز؟ ستُفتح كل الفئات المقفلة.",
+      lockOpened:"الفئات المقفلة مفتوحة",lockClosed:"الفئات المقفلة مغلقة"}
 };
 var LANG_ORDER = ["en", "ku", "ar"];
 var lang = localStorage.kiptv_lang || "en";
@@ -1402,15 +1460,131 @@ function navTap(name){
 /* ==================== state ==================== */
 var CH = [], GROUPS = [], f = "", view = [], shown = 0;
 
-function items(){ return SECTION === "live" ? CH : (DATA[SECTION] || []) }
+/* ==================== groups: hide, reorder, lock ====================
+   Every choice is kept per playlist. Hidden groups are simply not there;
+   locked ones come back once the code is typed, for as long as the app is
+   open. Nothing here changes how a channel plays. */
+var CATS = null, PLOCK_OPEN = false;
 
-function buildGroups(){
-  var src = items(), n = {};
+function catsAll(){
+  try{
+    var o = JSON.parse(localStorage.getItem("kiptv_cats") || "{}");
+    return (o && typeof o === "object") ? o : {};
+  }catch(e){ return {} }
+}
+function cats(){
+  if(CATS) return CATS;
+  var o = catsAll()[activeId()] || {};
+  CATS = { hide: o.hide || [], lock: o.lock || [], order: o.order || [] };
+  return CATS;
+}
+function catsSave(){
+  var all = catsAll();
+  all[activeId()] = CATS || { hide: [], lock: [], order: [] };
+  lsSet("kiptv_cats", JSON.stringify(all));
+}
+function catsReset(){ CATS = null; PLOCK_OPEN = false }
+
+function catHidden(name){ return cats().hide.indexOf(name) > -1 }
+function catLocked(name){ return cats().lock.indexOf(name) > -1 }
+function catOpen(name){ return !catLocked(name) || PLOCK_OPEN }
+function anyLocked(){ return cats().lock.length > 0 }
+
+function catToggle(kind, name){
+  var a = cats()[kind], i = a.indexOf(name);
+  if(i > -1) a.splice(i, 1); else a.push(name);
+  catsSave();
+}
+
+/* one step up or down in the order the user sees. Only this section's groups
+   move; whatever another section saved keeps its place. */
+function catMove(name, dir, sec){
+  var order = catOrder(allGroups(sec));
+  var i = order.indexOf(name), j = i + dir;
+  if(i < 0 || j < 0 || j >= order.length) return;
+  order.splice(j, 0, order.splice(i, 1)[0]);
+  var rest = cats().order.filter(function(k){ return order.indexOf(k) < 0 });
+  cats().order = order.concat(rest);
+  catsSave();
+}
+
+/* this section goes back to the order it had on the first day */
+function catOrderReset(sec){
+  var mine = allGroups(sec).list;
+  cats().order = cats().order.filter(function(k){ return mine.indexOf(k) < 0 });
+  catsSave();
+}
+
+/* this section's groups all come back into view */
+function catShowAll(sec){
+  var mine = allGroups(sec).list;
+  cats().hide = cats().hide.filter(function(k){ return mine.indexOf(k) < 0 });
+  catsSave();
+}
+
+/* every group in the playlist, before anything is hidden - the Kurdish ones
+   first, then the biggest, exactly as the app has always ordered them */
+function allGroups(sec){
+  sec = sec || SECTION;
+  var src = sec === "live" ? CH : (DATA[sec] || []), n = {};
   for(var i = 0; i < src.length; i++) n[src[i].c] = (n[src[i].c] || 0) + 1;
   var g = Object.keys(n).sort(function(a,b){ return n[b] - n[a] });
   var kur = g.filter(function(k){ return /kurd|كرد|کورد/i.test(k) });
-  GROUPS = kur.concat(g.filter(function(k){ return kur.indexOf(k) < 0 }));
-  if(!f || (f !== "ALL" && !n[f])) f = "ALL";
+  return { list: kur.concat(g.filter(function(k){ return kur.indexOf(k) < 0 })), count: n };
+}
+
+/* the saved order first, anything new after it */
+function catOrder(all){
+  var saved = cats().order, list = all.list.slice(), out = [];
+  for(var i = 0; i < saved.length; i++){
+    var k = list.indexOf(saved[i]);
+    if(k > -1) out.push(list.splice(k, 1)[0]);
+  }
+  return out.concat(list);
+}
+
+/* anything a list shows the user goes through here first, so a hidden or
+   locked group is gone from the home rows, the search and the banner alike */
+function catVisible(list){
+  var c = cats();
+  if(!list || !list.length || (!c.hide.length && !c.lock.length)) return list || [];
+  return list.filter(function(x){ return !x || !x.c || (!catHidden(x.c) && catOpen(x.c)) });
+}
+
+function items(){
+  return catVisible(SECTION === "live" ? CH : (DATA[SECTION] || []));
+}
+
+function buildGroups(){
+  var all = allGroups();
+  GROUPS = catOrder(all).filter(function(k){ return !catHidden(k) && catOpen(k) });
+  if(!f || (f !== "ALL" && GROUPS.indexOf(f) < 0)) f = "ALL";
+}
+
+/* everything that shows groups is drawn again; the player is never touched */
+function catsApply(){
+  buildGroups();
+  renderChips();
+  render();
+  refreshSettings();
+}
+
+/* ---- the lock code -------------------------------------------------
+   Kept as a short number, not the four digits, so it cannot simply be
+   read out of the phone's storage. */
+function pinHash(s){
+  var h = 5381, str = String(s);
+  for(var i = 0; i < str.length; i++) h = ((h * 33) ^ str.charCodeAt(i)) >>> 0;
+  return "h" + h.toString(36);
+}
+function ppinHas(){ return !!lsGet("kiptv_ppin", "") }
+function ppinSet(code){ lsSet("kiptv_ppin", pinHash(code)) }
+function ppinOk(code){ return ppinHas() && pinHash(code) === lsGet("kiptv_ppin", "") }
+function ppinClear(){
+  try{ localStorage.removeItem("kiptv_ppin") }catch(e){}
+  cats().lock = [];
+  catsSave();
+  PLOCK_OPEN = false;
 }
 function recent(){ try{ return JSON.parse(localStorage.kiptv_recent || "[]") }catch(e){ return [] } }
 function pushRecent(name){
@@ -1456,7 +1630,7 @@ window.refreshHome = refreshHome;
 /* every watched item we can still find, newest first */
 function continueList(){
   var m = allPos(), out = [];
-  var pools = [DATA.movies || [], DATA.series || [], CH];
+  var pools = [catVisible(DATA.movies || []), catVisible(DATA.series || []), catVisible(CH)];
   var byUrl = {};
   for(var i = 0; i < pools.length; i++)
     for(var j = 0; j < pools[i].length; j++) byUrl[pools[i][j].u] = pools[i][j];
@@ -1519,6 +1693,7 @@ var HERO_N = 6, HERO_MS = 6000;
 function heroPicks(){
   var pool = (DATA.movies && DATA.movies.length) ? DATA.movies
            : (DATA.series && DATA.series.length) ? DATA.series : CH;
+  pool = catVisible(pool);
   if(!pool.length) return [];
   var withArt = pool.filter(function(c){ return c.l });
   var src = withArt.length >= HERO_N ? withArt : pool;
@@ -1674,6 +1849,11 @@ function loadMore(){
 }
 function renderChips(){
   var html = '<button class="chip'+(f==="ALL"?" on":"")+'" data-g="ALL">'+esc(t().all)+'</button>';
+  /* the locked groups sit behind this one chip; it is only there once
+     something really is locked */
+  if(anyLocked())
+    html += '<button class="chip lk'+(PLOCK_OPEN ? " open" : "")+'" data-lock="1" '
+          + 'aria-label="'+esc(t().lockedW)+'">'+(PLOCK_OPEN ? ICON.unlock : ICON.lock)+'</button>';
   for(var i = 0; i < GROUPS.length; i++)
     html += '<button class="chip'+(f===GROUPS[i]?" on":"")+'" data-g="'+esc(GROUPS[i])+'">'
           + esc(cleanGroup(GROUPS[i])) + '</button>';
@@ -1785,8 +1965,10 @@ $("main").addEventListener("click", function(e){
 });
 $("chips").addEventListener("click", function(e){
   var el = e.target;
-  while(el && el !== this && !el.getAttribute("data-g")) el = el.parentNode;
-  if(el && el.getAttribute("data-g")){
+  while(el && el !== this && !el.getAttribute("data-g") && !el.getAttribute("data-lock")) el = el.parentNode;
+  if(!el || el === this) return;
+  if(el.getAttribute("data-lock")){ lockChipTap(); return }
+  if(el.getAttribute("data-g")){
     f = el.getAttribute("data-g");
     $("search").value = "";
     renderChips(); render();
@@ -1880,9 +2062,10 @@ function renderSearch(keepScroll){
   if(!toks.length){ return }
   searchWarm();
 
-  var res = { live: searchHits(CH, q, toks),
-              movie: LOADED.movies ? searchHits(DATA.movies || [], q, toks) : [],
-              series: LOADED.series ? searchHits(DATA.series || [], q, toks) : [] };
+  /* a hidden or locked group stays out of the results too */
+  var res = { live: searchHits(catVisible(CH), q, toks),
+              movie: LOADED.movies ? searchHits(catVisible(DATA.movies || []), q, toks) : [],
+              series: LOADED.series ? searchHits(catVisible(DATA.series || []), q, toks) : [] };
   var order = SECTION === "movies" ? ["movie", "live", "series"]
             : SECTION === "series" ? ["series", "live", "movie"] : ["live", "movie", "series"];
   var types = order.filter(function(k){ return res[k].length });
@@ -2140,7 +2323,14 @@ var ICON = {
   refresh:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 11-2.6-6.4"/><path d="M21 3v6h-6"/></svg>',
   disk:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><ellipse cx="12" cy="5.5" rx="8" ry="3"/><path d="M4 5.5v13c0 1.7 3.6 3 8 3s8-1.3 8-3v-13"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>',
   info:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 16.5v-5M12 8h.01"/></svg>',
-  gauge:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 18a9 9 0 1117 0"/><path d="M12 18l4.2-5"/><circle cx="12" cy="18" r="1.4" fill="currentColor" stroke="none"/></svg>'
+  gauge:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 18a9 9 0 1117 0"/><path d="M12 18l4.2-5"/><circle cx="12" cy="18" r="1.4" fill="currentColor" stroke="none"/></svg>',
+  layers:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg>',
+  eye:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.8-6.5 10-6.5S22 12 22 12s-3.8 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="2.8"/></svg>',
+  eyeOff:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.6 6.1A9.9 9.9 0 0112 6c6.2 0 10 6 10 6a17 17 0 01-3.3 3.8M6.4 6.9A17 17 0 002 12s3.8 6.5 10 6.5a9.8 9.8 0 004-.8"/><path d="M3 3l18 18"/></svg>',
+  lock:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10.5" width="16" height="10.5" rx="2.6"/><path d="M8 10.5V7.4a4 4 0 018 0v3.1"/></svg>',
+  unlock:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10.5" width="16" height="10.5" rx="2.6"/><path d="M8 10.5V7.4a4 4 0 017.4-2"/></svg>',
+  up:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V6"/><path d="M6 11l6-6 6 6"/></svg>',
+  down:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v13"/><path d="M6 13l6 6 6-6"/></svg>'
 };
 /* every sheet level is one step for the phone's Back button */
 function openSheet(view){
@@ -2182,6 +2372,19 @@ function drawSheet(){
   else if(v === "speed"){
     title = d.speedTest;
     body = speedBody(d);
+  }
+  else if(v === "cats"){
+    title = d.cats;
+    body = catsBody(d);
+  }
+  else if(v === "ppin"){
+    title = d.pinTitle;
+    body = '<div class="pinwrap">'
+         +   '<p class="cathint" id="pinSub"></p>'
+         +   '<div class="pins" id="ppins"></div>'
+         +   '<div class="pinmsg" id="pinMsg"></div>'
+         +   '<div class="keys" id="pkeys"></div>'
+         + '</div>';
   }
   else if(v === "lang"){
     title = d.lang;
@@ -2247,6 +2450,151 @@ function drawSheet(){
   $("sheetTitle").textContent = title;
   $("sheetBody").innerHTML = body;
   if(v === "edit") fillEdit();
+  if(v === "ppin") pinBoot();
+}
+
+/* ==================== categories: the manager ====================
+   One page for every group in a section: show it or hide it, lock it
+   behind the code, and move it up or down. Nothing here touches the
+   playlist itself - only what the app shows you. */
+var CATSEC = "live";
+
+function catSecOk(s){
+  if(s === "live") return true;
+  return isXtream() && LOADED[s] && (DATA[s] || []).length > 0;
+}
+function catSec(s){ if(catSecOk(s)){ CATSEC = s; drawSheet() } }
+function catAt(i){ return catOrder(allGroups(CATSEC))[i] }
+function catsRedraw(){ drawSheet(); catsApply() }
+
+function catsBody(d){
+  if(!catSecOk(CATSEC)) CATSEC = "live";
+  var secs = [["live", d.live], ["movies", d.movies], ["series", d.series]];
+  var h = '<div class="segs">' + secs.map(function(s){
+      var can = catSecOk(s[0]);
+      return '<button class="seg'+(CATSEC === s[0] ? " on" : "")+'"'+(can ? "" : " disabled")
+           + ' onclick="catSec(\''+s[0]+'\')">'+esc(s[1])+'</button>';
+    }).join("") + '</div>';
+  h += '<p class="cathint">'+esc(d.catsHint)+'</p>';
+
+  var all = allGroups(CATSEC), order = catOrder(all);
+  if(!order.length)
+    return h + '<div class="cathint" style="text-align:center;padding:26px 0">'+esc(d.catsNone)+'</div>';
+
+  h += order.map(function(k, i){
+    var hid = catHidden(k), lk = catLocked(k), tags = [];
+    if(hid) tags.push(d.hiddenW);
+    if(lk) tags.push(d.lockedW);
+    return '<div class="catrow'+(hid ? " off" : "")+(lk ? " lk" : "")+'">'
+         +   '<span class="nm"><b>'+esc(cleanGroup(k))+'</b>'
+         +     '<s>'+(all.count[k] || 0)+(tags.length ? "  ·  " + esc(tags.join("  ·  ")) : "")+'</s></span>'
+         +   '<button class="mini'+(hid ? "" : " on")+'" onclick="catEye('+i+')">'+(hid ? ICON.eyeOff : ICON.eye)+'</button>'
+         +   '<button class="mini'+(lk ? " on" : "")+'" onclick="catLockTap('+i+')">'+(lk ? ICON.lock : ICON.unlock)+'</button>'
+         +   '<button class="mini" onclick="catUp('+i+')"'+(i === 0 ? " disabled" : "")+'>'+ICON.up+'</button>'
+         +   '<button class="mini" onclick="catDown('+i+')"'+(i === order.length - 1 ? " disabled" : "")+'>'+ICON.down+'</button>'
+         + '</div>';
+  }).join("");
+
+  h += '<div class="catbar">'
+     +   '<button onclick="catShowAllNow()">'+esc(d.catsShowAll)+'</button>'
+     +   '<button onclick="catOrderNow()">'+esc(d.catsOrder)+'</button>'
+     + '</div>';
+  if(ppinHas())
+    h += '<div class="catbar">'
+       +   '<button onclick="pinOpen(\'change\')">'+esc(d.pinChange)+'</button>'
+       +   '<button onclick="pinOpen(\'remove\')">'+esc(d.pinOff)+'</button>'
+       + '</div>';
+  return h;
+}
+
+function catEye(i){ var k = catAt(i); if(k){ catToggle("hide", k); catsRedraw() } }
+function catUp(i){ var k = catAt(i); if(k){ catMove(k, -1, CATSEC); catsRedraw() } }
+function catDown(i){ var k = catAt(i); if(k){ catMove(k, 1, CATSEC); catsRedraw() } }
+function catShowAllNow(){ catShowAll(CATSEC); catsRedraw() }
+function catOrderNow(){ catOrderReset(CATSEC); catsRedraw() }
+
+/* the first lock asks for a code; after that it is one tap */
+function catLockTap(i){
+  var k = catAt(i);
+  if(!k) return;
+  if(catLocked(k)){ catToggle("lock", k); catsRedraw(); return }
+  if(!ppinHas()){ PIN_AFTER = k; pinOpen("new"); return }
+  catToggle("lock", k);
+  catsRedraw();
+}
+
+/* ==================== the code screen inside a sheet ====================
+   new -> again = setting a code · ask = opening the locked groups
+   change / remove = the old code first */
+var PINMODE = "new", PINBUF = "", PINFIRST = "", PIN_AFTER = null;
+
+function pinOpen(mode){ PINMODE = mode; PINBUF = ""; PINFIRST = ""; openSheet("ppin") }
+
+function pinBoot(){
+  var d = t(), s = $("pinSub");
+  if(s) s.textContent = PINMODE === "new" ? d.pinNew
+                      : PINMODE === "again" ? d.pinAgain : d.pinAsk;
+  var k = $("pkeys");
+  if(k) k.innerHTML = keypadHTML("pk");
+  pinDraw();
+  /* a remote has nowhere to start once the keys are drawn again */
+  if(k && document.documentElement.classList.contains("kbd")){
+    var first = k.querySelector(".key");
+    if(first) setTimeout(function(){ first.focus() }, 0);
+  }
+}
+function pinDraw(){
+  var b = $("ppins");
+  if(!b) return;
+  b.innerHTML = [0,1,2,3].map(function(i){
+    return '<div class="pin'+(PINBUF[i] ? " fill" : "")+(i === PINBUF.length ? " cur" : "")+'">'
+         + (PINBUF[i] ? "&#9679;" : "") + '</div>';
+  }).join("");
+}
+function pinFail(msg){
+  var m = $("pinMsg"), b = $("ppins");
+  if(m) m.textContent = msg;
+  if(b) b.classList.add("shake");
+  setTimeout(function(){
+    if(b) b.classList.remove("shake");
+    PINBUF = "";
+    pinBoot();
+  }, 420);
+}
+function pinTap(k){
+  var m = $("pinMsg");
+  if(m) m.textContent = "";
+  if(k === "back") PINBUF = PINBUF.slice(0, -1);
+  else if(PINBUF.length < 4) PINBUF += String(k).replace(/\D/g, "");
+  pinDraw();
+  if(PINBUF.length === 4) setTimeout(pinDone, 180);
+}
+function pinDone(){
+  var d = t(), code = PINBUF;
+  if(PINMODE === "new"){ PINFIRST = code; PINMODE = "again"; PINBUF = ""; pinBoot(); return }
+  if(PINMODE === "again"){
+    if(code !== PINFIRST){ PINMODE = "new"; PINFIRST = ""; pinFail(d.pinNoMatch); return }
+    ppinSet(code);
+    var after = PIN_AFTER;
+    PIN_AFTER = null;
+    if(after && !catLocked(after)) catToggle("lock", after);
+    sheetBack();                       /* back to the list of groups */
+    showToast(d.pinSaved);
+    catsApply();
+    return;
+  }
+  if(!ppinOk(code)){ pinFail(d.pinBad); return }
+  if(PINMODE === "ask"){ PLOCK_OPEN = true; sheetBack(); showToast(d.lockOpened); catsApply(); return }
+  if(PINMODE === "change"){ PINMODE = "new"; PINBUF = ""; pinBoot(); return }
+  if(PINMODE === "remove"){ ppinClear(); sheetBack(); catsApply(); return }
+}
+
+/* the lock chip beside the group chips */
+function lockChipTap(){
+  var d = t();
+  if(PLOCK_OPEN){ PLOCK_OPEN = false; showToast(d.lockClosed); catsApply(); return }
+  if(!ppinHas()){ PLOCK_OPEN = true; catsApply(); return }   /* a lock with no code is no lock */
+  pinOpen("ask");
 }
 function fld(id,label,ph){
   return '<div class="fld"><label>'+esc(label)+'</label>'
@@ -2385,6 +2733,14 @@ function setRow(icon, title, sub, onclick, natural, value){
 }
 function setGroup(title){ return '<div class="st-g"><span class="bar"></span>'+esc(title)+'</div>' }
 
+/* "Hidden 3 · Locked 1", or what the row is for while nothing is set */
+function catsLine(d){
+  var c = cats(), p = [];
+  if(c.hide.length) p.push(d.hiddenW + " " + c.hide.length);
+  if(c.lock.length) p.push(d.lockedW + " " + c.lock.length);
+  return p.length ? p.join("  ·  ") : d.catsSub;
+}
+
 /* "Last updated 03:25 · 7.1 MB · 18 Mbps" - every number really happened */
 function updLine(d, when){
   if(SYNCING) return d.updating;
@@ -2451,6 +2807,7 @@ function drawSettings(){
   /* general */
   h += setGroup(d.general);
   h += setRow(ICON.globe, d.lang, "", "openSheet('lang')", true, T[lang].name);
+  h += setRow(ICON.layers, d.cats, catsLine(d), "openSheet('cats')", true);
   if(act.type === "xtream") h += setRow(ICON.tv, d.epgTest, d.epgTestSub, "epgProbe()", true);
   h += setRow(ICON.gauge, d.speedTest, d.speedTestSub, "speedTest()", true);
   h += setRow(ICON.disk, d.clearCache, "", "clearCache()", true, cacheSize());
@@ -2714,7 +3071,7 @@ function closeFavs(){ layerClose("favs") }
 
 var FAV_VIEW = [];                /* the live favourites on screen, for next / previous */
 function drawFavs(){
-  var d = t(), all = favList();
+  var d = t(), all = catVisible(favList());   /* a locked group stays locked here too */
   var byType = { live: [], movie: [], series: [] };
   all.forEach(function(f){ if(byType[f.t]) byType[f.t].push(f) });
   var types = ["live", "movie", "series"].filter(function(k){ return byType[k].length });
@@ -2848,7 +3205,7 @@ function clockOf(ts){
 }
 
 function histHTML(){
-  var d = t(), list = histList();
+  var d = t(), list = catVisible(histList());
   HIST_VIEW = list;
   if(!list.length)
     return '<div class="fempty"><div style="font-size:50px;opacity:.4;margin-bottom:10px">&#128339;&#65038;</div>'
@@ -3166,16 +3523,18 @@ function drawPins(){
   if(b) b.className = "gbtn" + (PIN.length === 4 ? "" : " off");
 }
 
-/* the keypad - every key is a real button, so a TV remote can reach it */
+/* the keypad - every key is a real button, so a TV remote can reach it.
+   The same nine keys serve the activation screen and the lock code. */
+function keypadHTML(attr){
+  var a = "data-" + (attr || "k"), html = "";
+  for(var i = 1; i <= 9; i++) html += '<button class="key" '+a+'="'+i+'">'+i+'</button>';
+  return html + '<button class="key ghost" '+a+'="back" aria-label="back">'+KEY_BACK+'</button>'
+              + '<button class="key" '+a+'="0">0</button>'
+              + '<button class="key hide" tabindex="-1"></button>';
+}
 function drawKeys(){
   var k = $("keys");
-  if(!k) return;
-  var html = "";
-  for(var i = 1; i <= 9; i++) html += '<button class="key" data-k="'+i+'">'+i+'</button>';
-  html += '<button class="key ghost" data-k="back" aria-label="back">'+KEY_BACK+'</button>'
-        + '<button class="key" data-k="0">0</button>'
-        + '<button class="key hide" tabindex="-1"></button>';
-  k.innerHTML = html;
+  if(k) k.innerHTML = keypadHTML("k");
 }
 
 /* one place where the code changes, whatever was pressed */
@@ -3212,6 +3571,20 @@ $("keys").addEventListener("click", function(e){
   var el = e.target;
   while(el && el !== this && !el.getAttribute("data-k")) el = el.parentNode;
   if(el && el !== this) pinKey(el.getAttribute("data-k"));
+});
+
+/* the lock code's own keypad lives inside a sheet, so it is drawn again
+   every time - one listener on the sheet body catches all of its keys */
+$("sheetBody").addEventListener("click", function(e){
+  var el = e.target;
+  while(el && el !== this && !(el.getAttribute && el.getAttribute("data-pk"))) el = el.parentNode;
+  if(el && el !== this) pinTap(el.getAttribute("data-pk"));
+});
+document.addEventListener("keydown", function(e){
+  if(!$("sheet").classList.contains("on")) return;
+  if(sheetStack[sheetStack.length - 1] !== "ppin") return;
+  if(e.key >= "0" && e.key <= "9"){ pinTap(e.key); e.preventDefault() }
+  else if(e.key === "Backspace"){ pinTap("back"); e.preventDefault() }
 });
 
 /* a keyboard, a TV remote's number keys, or a barcode-style entry all work */
@@ -3265,6 +3638,8 @@ function loadActive(force){
   DATA = { live: [], movies: [], series: [] };
   LOADED = { live: false, movies: false, series: false };
   SERIES_CACHE = {};
+  catsReset();                    /* every playlist keeps its own groups */
+  CATSEC = "live";
   drawNav();
   refreshSettings();
   refreshFavs();
