@@ -214,7 +214,7 @@ body.hasnav main{padding-bottom:calc(96px + var(--safe-b))}
 /* A picture the page has not asked for yet must never cover the letters that
    stand in for it, and it must still take up room - an element with no room
    is never seen coming, so it would never be asked for at all. */
-img[data-src]{opacity:0!important;background:transparent!important}
+img[data-src],img[data-gone]{opacity:0!important;background:transparent!important}
 img.rdy{animation:imgIn .25s ease both}
 @keyframes imgIn{from{opacity:0}to{opacity:1}}
 .poster .mono{font-size:clamp(13px,4.4vw,20px);padding:6px;text-align:center;line-height:1.2}
@@ -1979,10 +1979,55 @@ var IMG_MAX = 12, IMG_EAGER = 12, imgBusy = 0, imgWait = [], imgEye = null, imgS
    back the screen the person is actually looking at. */
 var IMG_GEN = 0;
 
+/* Pictures that have already arrived are kept - the element and all.
+   Changing section throws every card away and builds new ones, and a new
+   <img> with the same address is a fresh request unless the server allowed
+   its answer to be kept. This panel's picture server does not allow it, so
+   the same posters were being fetched again on every trip between Live TV,
+   Films and Series. Putting the very element back costs nothing: no request
+   is made at all, whatever the server says. */
+var IMG_DONE = {}, IMG_SEEN = [], IMG_DONE_MAX = 180;
+
+function imgHold(u, el){
+  if(!u || IMG_DONE[u]) return;
+  IMG_DONE[u] = el;
+  IMG_SEEN.push(u);
+  /* the oldest are let go first, so this can never grow without end */
+  while(IMG_SEEN.length > IMG_DONE_MAX){
+    var old = IMG_SEEN.shift();
+    if(old !== u) delete IMG_DONE[old];
+  }
+}
+
+/* A phone or a box that is running out of room says so, and the app passes
+   that on: everything kept is let go at once. Nothing breaks - the posters
+   are simply asked for again the next time they are wanted. */
+function imgForget(){
+  IMG_DONE = {};
+  IMG_SEEN = [];
+}
+
+/* One kept picture can only be in one place, so it is offered only while it
+   is not on the screen somewhere else. The test is whether it is still part
+   of the page: a card thrown away by a redraw keeps its own inner parents,
+   so asking the element for a parent would always answer yes. */
+function imgKept(u){
+  var k = IMG_DONE[u];
+  return (k && k.complete && k.naturalWidth && !document.contains(k)) ? k : null;
+}
+
 function imgStart(el){
   var u = el.getAttribute("data-src");
   if(!u || !el.parentNode) return;
   el.removeAttribute("data-src");
+
+  /* already here from a screen before this one: put it back and ask nobody */
+  var kept = imgKept(u);
+  if(kept){
+    el.parentNode.replaceChild(kept, el);
+    return;
+  }
+
   imgBusy++;
   var over = false, gen = IMG_GEN;
   var free = function(){
@@ -1992,12 +2037,23 @@ function imgStart(el){
     imgBusy--;
     imgNext();
   };
-  el.onload = function(){ free(); el.className = (el.className ? el.className + " " : "") + "rdy" };
+  el.onload = function(){
+    free();
+    el.className = (el.className ? el.className + " " : "") + "rdy";
+    imgHold(u, el);
+  };
   el.onerror = function(){
     free();
     /* one quiet second try - a picture server that is busy often answers the
        second knock - and only then does the card fall back to its letters */
-    if(el.getAttribute("data-try")){ if(el.parentNode) el.parentNode.removeChild(el); return }
+    /* Twice is enough: the card keeps its letters from here on. The element
+       itself stays where it is - taking it away from under a finger that is
+       mid-press loses the touch, and with it the tap the person meant. */
+    if(el.getAttribute("data-try")){
+      el.removeAttribute("src");
+      el.setAttribute("data-gone", "1");
+      return;
+    }
     el.setAttribute("data-try", "1");
     /* put the address back at once: that is also what hides the broken
        picture the browser would otherwise show while the second try waits */
