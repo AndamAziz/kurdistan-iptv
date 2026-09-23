@@ -683,6 +683,7 @@ var T = {
       actChecking:"چاوەڕێ بکە…",actExpired:"ماوەی ئەم کۆدە تەواو بووە",
       actOff:"ئەم کۆدە کوژێنراوەتەوە",actWait:"هەوڵی زۆر درا. ١٥ خولەک چاوەڕێ بکە",
       actNet:"ناتوانرێت پەیوەندی بکرێت. ئینتەرنێتەکەت بپشکنە",
+      actDevices:"ئەم کۆدە لەسەر ئامێری زۆر بەکارهاتووە",
       more:"زیاتر پیشان بدە",sync:"نوێکردنەوە",results:"ئەنجامی گەڕان",
       menu:"ڕێکخستن",lists:"لیستەکانم",addList:"زیادکردنی لیست",
       epgTest:"تاقیکردنەوەی ڕێبەری بەرنامەکان",epgTestSub:"وەڵامی پرۆڤایدەرەکە دەبینیت",
@@ -734,6 +735,7 @@ var T = {
       actChecking:"Please wait…",actExpired:"This code has ended",
       actOff:"This code has been switched off",actWait:"Too many tries. Wait 15 minutes",
       actNet:"Cannot reach the server. Check your internet",
+      actDevices:"This code is already used on too many devices",
       more:"Show more",sync:"Updating",results:"Search results",
       menu:"Settings",lists:"My playlists",addList:"Add playlist",
       epgTest:"Guide test",epgTestSub:"see what the panel answers",
@@ -785,6 +787,7 @@ var T = {
       actChecking:"يرجى الانتظار…",actExpired:"انتهت صلاحية هذا الرمز",
       actOff:"تم إيقاف هذا الرمز",actWait:"محاولات كثيرة. انتظر ١٥ دقيقة",
       actNet:"تعذّر الاتصال بالخادم. تحقّق من الإنترنت",
+      actDevices:"هذا الرمز مستخدم على أجهزة كثيرة",
       more:"عرض المزيد",sync:"تحديث",results:"نتائج البحث",
       menu:"الإعدادات",lists:"قوائمي",addList:"إضافة قائمة",
       epgTest:"اختبار دليل البرامج",epgTestSub:"شاهد رد المزود",
@@ -3615,6 +3618,7 @@ function actMessage(reason){
   var d = t();
   return reason === "expired" ? d.actExpired
        : reason === "off"     ? d.actOff
+       : reason === "devices" ? d.actDevices
        : reason === "wait"    ? d.actWait
        : (reason === "net" || reason === "server") ? d.actNet
        : d.wrong;
