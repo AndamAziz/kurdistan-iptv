@@ -70,14 +70,44 @@ function mpvArgs(opts) {
     "--title=${media-title}",
     "--hwdec=auto-safe",
     "--force-seekable=yes",
-    /* a live stream that stutters is worse than one that starts a moment later */
     "--cache=yes",
     "--demuxer-max-bytes=64MiB",
-    "--demuxer-readahead-secs=20",
+    "--demuxer-readahead-secs=8",
+
+    /* Start as the phone starts.
+       ffmpeg studies a stream before playing it, and for MPEG-TS it studies
+       five seconds of it by default - which is exactly five seconds of staring
+       at nothing on every channel. ExoPlayer on the phone begins almost at
+       once. One second of study, and a megabyte or two, is enough to find the
+       picture and the sound on a television channel. */
+    "--demuxer-lavf-analyzeduration=1",
+    "--demuxer-lavf-probesize=2000000",
+
+    /* A line that drops is put back up.
+       This is what the phone does with reconnects of its own, and its absence
+       here is why a film or an episode simply stopped part way through. */
+    "--stream-lavf-o-append=reconnect=1",
+    "--stream-lavf-o-append=reconnect_streamed=1",
+    "--stream-lavf-o-append=reconnect_on_network_error=1",
+    "--stream-lavf-o-append=reconnect_delay_max=7",
+
+    /* A channel that has gone away must say so rather than be waited on for
+       ever - with the reconnects above, a slow answer is still retried. */
+    "--network-timeout=20",
+
+    /* a playlist served over plain http whose pieces are https is ordinary
+       enough, and is refused unless both are allowed */
+    "--stream-lavf-o-append=protocol_whitelist=file,http,https,tcp,tls,crypto,hls,applehttp",
+    "--demuxer-lavf-o-append=protocol_whitelist=file,http,https,tcp,tls,crypto,hls,applehttp",
+
     /* the panel is spoken to the way the Android app speaks to it */
-    "--user-agent=" + (it.ua || opts.ua || "VLC/3.0.20 LibVLC/3.0.20")
+    "--user-agent=" + (it.ua || opts.ua || "VLC/3.0.20 LibVLC/3.0.20"),
+    "--http-header-fields-append=Accept: */*",
+    "--http-header-fields-append=Accept-Language: en-US,en;q=0.9"
   ];
-  if (it.rf) a.push("--http-header-fields=Referer: " + it.rf);
+  if (it.rf) a.push("--http-header-fields-append=Referer: " + it.rf);
+  /* when a channel will not play, this is what says why */
+  if (opts.log) a.push("--log-file=" + opts.log);
   if (opts.startMs > 0) a.push("--start=" + Math.floor(opts.startMs / 1000));
   if (opts.speed && opts.speed !== 1) a.push("--speed=" + opts.speed);
   /* open exactly over the app, so it reads as the same program going full screen */
@@ -180,7 +210,8 @@ class Player {
     if (!this.items.length) return false;
 
     const playlist = writePlaylist(this.items, this.dir);
-    const args = mpvArgs({ items: this.items, index, startMs, playlist, box });
+    const log = path.join(this.dir, "mpv.log");
+    const args = mpvArgs({ items: this.items, index, startMs, playlist, box, log });
 
     const started = this.spawn(args);
     if (!started) return false;
@@ -189,7 +220,7 @@ class Player {
        without the placing it always opens somewhere */
     const alive = await this.settled();
     if (!alive && box) {
-      this.spawn(mpvArgs({ items: this.items, index, startMs, playlist }));
+      this.spawn(mpvArgs({ items: this.items, index, startMs, playlist, log }));
       await this.settled();
     }
     if (!this.child) return false;
