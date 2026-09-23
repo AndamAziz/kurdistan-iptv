@@ -72,6 +72,9 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer-hls:$media3")
     implementation("androidx.media3:media3-exoplayer-dash:$media3")
     implementation("androidx.media3:media3-ui:$media3")
+    /* the system's own media controls (lock screen, headset buttons) while
+       the sound keeps playing in the background */
+    implementation("androidx.media3:media3-session:$media3")
 
     // FFmpeg audio decoders (AC3, EAC3, DTS, TrueHD ...); version must start with the Media3 version
     implementation("io.github.anilbeesetti:nextlib-media3ext:1.7.1-0.9.0")
