@@ -143,6 +143,24 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
+      # The build number has to travel inside the app. It used to be read from
+      # the environment when the app ran, which works on the machine that
+      # builds it and nowhere else - so every copy called itself build 1 and
+      # could never tell it was out of date.
+      - name: Stamp the build number
+        working-directory: desktop
+        shell: bash
+        env:
+          KIPTV_BUILD: ${{ github.run_number }}
+        run: |
+          node -e "
+            const fs = require('fs');
+            const p = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            p.version = '1.0.' + process.env.KIPTV_BUILD;
+            fs.writeFileSync('package.json', JSON.stringify(p, null, 2) + '\n');
+            console.log('version = ' + p.version);
+          "
+
       - name: Build the installer
         working-directory: desktop
         env:
