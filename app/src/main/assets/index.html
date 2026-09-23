@@ -412,6 +412,33 @@ html.kbd .card,html.kbd .row,html.kbd .ep,html.kbd .hi,html.kbd button{scroll-ma
 .stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:13px 6px;text-align:center}
 .stat b{display:block;font-size:18px;font-weight:800;direction:ltr}
 .stat s{display:block;text-decoration:none;font-size:11px;color:var(--muted2);font-weight:700;margin-top:4px}
+
+/* the settings page holds a lot: keep every line tight so it fits one screen */
+#settings .st-h{margin:0 0 2px}
+#settings .st-h h1{font-size:21px}
+#settings .st-g{margin:15px 0 8px}
+#settings .row{padding:10px 12px;margin-bottom:7px}
+#settings .row .tx b{font-size:13.5px}
+#settings .row .tx s{font-size:10.5px;margin-top:1px}
+#settings .mini{width:31px;height:31px}
+#settings .stats{gap:8px;margin:14px 0 8px}
+#settings .stat{padding:9px 6px}
+#settings .stat b{font-size:16px}
+#settings .stat s{font-size:10px;margin-top:2px}
+.st-two{display:flex;gap:8px;margin-top:2px}
+.st-two button{flex:1;min-width:0;padding:11px 8px;border-radius:var(--r-md);border:1px dashed var(--line);
+  background:transparent;color:var(--accent2);font-weight:800;font-size:12.5px;cursor:pointer;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-two button.solid{border-style:solid;background:var(--surface);color:var(--text)}
+.st-two button:active{transform:scale(.98)}
+.st-foot{text-align:center;font-size:11px;font-weight:700;color:var(--muted2);line-height:1.8;padding:2px 0 4px}
+html.tv #settings{padding-top:12px}
+html.tv #settings .st-h h1{font-size:24px}
+html.tv #settings .st-g{margin:10px 0 6px}
+html.tv #settings .row{padding:11px 14px;margin-bottom:6px}
+html.tv #settings .stats{margin:10px 0 6px}
+html.tv #settings .stat{padding:7px 6px}
+html.tv .st-two button{padding:11px 8px;font-size:14px}
 </style>
 </head>
 <body>
@@ -530,7 +557,7 @@ var T = {
       loadFail:"نەتوانرا لیستەکە دابەزێنرێت",channels:"کەناڵ",
       confirmDel:"ئەم لیستە بسڕێتەوە؟",
       general:"گشتی",storage:"بیرگە",about:"دەربارە",builtIn:"بنەڕەتی",
-      editList:"دەستکاریکردنی لیست",refresh:"ئێستا لیستەکە نوێ بکەرەوە",
+      editList:"دەستکاریکردنی لیست",refresh:"ئێستا لیستەکە نوێ بکەرەوە",refreshShort:"نوێکردنەوە",
       lastUpd:"دوایین نوێکردنەوە",notYet:"هێشتا نا",
       clearCache:"سڕینەوەی کاش",cacheSub:"کۆپی پاشەکەوتکراوی لیست · %s",
       confirmClear:"کاشەکە بسڕدرێتەوە و لیستەکە دووبارە دابەزێنرێتەوە؟",
@@ -563,7 +590,7 @@ var T = {
       loadFail:"Could not load this playlist",channels:"channels",
       confirmDel:"Delete this playlist?",
       general:"General",storage:"Storage",about:"About",builtIn:"BUILT-IN",
-      editList:"Edit playlist",refresh:"Update playlist now",
+      editList:"Edit playlist",refresh:"Update playlist now",refreshShort:"Update",
       lastUpd:"Last updated",notYet:"Not yet",
       clearCache:"Clear cache",cacheSub:"Saved copy of the playlist · %s",
       confirmClear:"Clear the cache and download the playlist again?",
@@ -596,7 +623,7 @@ var T = {
       loadFail:"تعذر تحميل هذه القائمة",channels:"قناة",
       confirmDel:"حذف هذه القائمة؟",
       general:"عام",storage:"التخزين",about:"حول التطبيق",builtIn:"افتراضية",
-      editList:"تعديل القائمة",refresh:"تحديث القائمة الآن",
+      editList:"تعديل القائمة",refresh:"تحديث القائمة الآن",refreshShort:"تحديث",
       lastUpd:"آخر تحديث",notYet:"ليس بعد",
       clearCache:"مسح الذاكرة المؤقتة",cacheSub:"النسخة المحفوظة من القائمة · %s",
       confirmClear:"مسح الذاكرة المؤقتة وتحميل القائمة من جديد؟",
@@ -2159,20 +2186,20 @@ function drawSettings(){
          +   '<span class="tick">&#10003;</span>'
          + '</div>';
   }).join("");
-  h += setRow(ICON.refresh, d.refresh, d.lastUpd + ": " + fmtWhen(upd[cur]), "refreshList()", true);
-  h += '<button class="addbtn" onclick="openSheet(\'type\')">+ '+esc(d.addList)+'</button>';
+  /* update and add sit side by side - two buttons instead of two whole rows */
+  h += '<div class="st-two">'
+     +   '<button class="solid" onclick="refreshList()" title="'+esc(d.refresh)+'">&#8635; '
+     +     esc(d.refreshShort) + '  ·  ' + esc(fmtWhen(upd[cur])) + '</button>'
+     +   '<button onclick="openSheet(\'type\')">+ '+esc(d.addList)+'</button>'
+     + '</div>';
 
   /* general */
   h += setGroup(d.general);
   h += setRow(ICON.globe, d.lang, T[lang].name, "openSheet('lang')", true);
   if(act.type === "xtream") h += setRow(ICON.tv, d.epgTest, d.epgTestSub, "epgProbe()", true);
-
-  /* storage */
-  h += setGroup(d.storage);
   h += setRow(ICON.disk, d.clearCache, d.cacheSub.replace("%s", cacheSize()), "clearCache()", true);
 
-  /* about */
-  h += setGroup(d.about);
+  /* what the list holds, and one line about the app */
   var nMov = (act.type === "xtream" && LOADED.movies) ? DATA.movies.length : "–";
   var nSer = (act.type === "xtream" && LOADED.series) ? DATA.series.length : "–";
   h += '<div class="stats">'
@@ -2180,8 +2207,8 @@ function drawSettings(){
      +   '<div class="stat"><b>'+nMov+'</b><s>'+esc(d.movies)+'</s></div>'
      +   '<div class="stat"><b>'+nSer+'</b><s>'+esc(d.series)+'</s></div>'
      + '</div>';
-  h += setRow(ICON.tv, "KURDISTAN IPTV", d.version + " " + APP_VERSION, "", true);
-  h += setRow(ICON.info, d.plType, act.name + " · " + (act.type === "xtream" ? "Xtream Codes" : "M3U"), "", true);
+  h += '<div class="st-foot">KURDISTAN IPTV  ·  '+esc(d.version + " " + APP_VERSION)+'<br>'
+     +   esc(act.name)+'  ·  '+(act.type === "xtream" ? "Xtream Codes" : "M3U")+'</div>';
 
   $("setBody").innerHTML = h;
 }
