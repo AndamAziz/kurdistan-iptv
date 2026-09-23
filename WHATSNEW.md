@@ -1,32 +1,31 @@
 [en]
-Windows video fix: the picture now appears.
+Windows playback: channels start quickly, and a dropped line comes back.
 
-mpv was being asked to draw inside the app's own window, but Electron keeps a
-window of its own in front of it and paints it solid, so the film played behind
-a black sheet and only the sound came through. It now opens a window of its
-own, the same size and in the same place as the app, and names whatever is
-playing.
+Three things the desktop player was doing differently from the phone:
+it studied five seconds of every channel before showing anything, it never
+reconnected when a stream dropped mid-programme, and it waited for ever on a
+channel that had gone away. All three are now set the way the phone has them.
 
-What's new is written in three languages from this release on; the app shows
-whichever one it is set to, and English when it has no other.
+A record of every attempt is kept, so a channel that still refuses can be
+looked into instead of guessed at.
 
 [ku]
-چاککردنی وەشانی Windows: ڤیدیۆکە ئێستا دەردەکەوێت.
+پەخشکردن لەسەر Windows: کەناڵەکان خێرا دەست پێ دەکەن، و پەیوەندییەکی پچڕاو
+دەگەڕێتەوە.
 
-پێشتر mpv داوای لێ دەکرا لەناو پەنجەرەی ئەپەکەدا وێنەکە بکێشێت، بەڵام Electron
-پەنجەرەیەکی خۆی لەسەرەوە ڕادەگرێت و بە ڕەنگێکی داپۆشراو دەیکێشێت — بۆیە وێنەکە
-لە ژێریدا دەمایەوە و تەنها دەنگ دەبیسترا. ئێستا پەنجەرەی خۆی هەیە، بە هەمان
-قەبارە و شوێنی ئەپەکە، و ناوی ئەوەی دەیبینیت پیشان دەدات.
+سێ شت هەبوون کە پلەیەری کۆمپیوتەر جیاواز لە تەلەفۆن دەیکردن: پێنج چرکە
+هەر کەناڵێکی دەخوێندەوە پێش ئەوەی هیچ پیشان بدات، هەرگیز پەیوەندی نەدەگێڕایەوە
+کاتێک لە ناوەڕاستی بەرنامەدا دەپچڕا، و بۆ هەمیشە چاوەڕێی کەناڵێکی مردوو دەکرد.
+هەر سێکیان ئێستا وەک تەلەفۆن ڕێکخراون.
 
-لەم وەشانەوە «چی نوێیە» بە سێ زمان دەنووسرێت؛ ئەپەکە ئەوە پیشان دەدات کە پێی
-ڕێکخراوە، و ئینگلیزی کاتێک هی خۆی نەبوو.
+هەروەها تۆمارێک لە هەر هەوڵێک هەڵدەگیرێت، بۆ ئەوەی کەناڵێک کە هێشتا کار ناکات
+بپشکنرێت نەک گومانی لێ بکرێت.
 
 [ar]
-إصلاح الفيديو على Windows: الصورة تظهر الآن.
+التشغيل على Windows: القنوات تبدأ بسرعة، والاتصال المنقطع يعود.
 
-كان mpv يُطلب منه الرسم داخل نافذة التطبيق نفسها، لكن Electron يبقي نافذته
-أمامها ويطليها بلون معتم، فكان الفيلم يُعرض خلف ستار أسود ولا يصل سوى الصوت.
-أصبحت له الآن نافذة خاصة به، بالحجم نفسه وفي المكان نفسه، وتحمل اسم ما يُعرض.
+ثلاثة أمور كان مشغّل الحاسوب يفعلها بخلاف الهاتف: يدرس خمس ثوانٍ من كل قناة
+قبل أن يعرض شيئًا، ولا يعيد الاتصال أبدًا حين ينقطع البث في منتصف البرنامج،
+وينتظر إلى ما لا نهاية قناةً لم تعد موجودة. الثلاثة مضبوطة الآن كما في الهاتف.
 
-ابتداءً من هذا الإصدار تُكتب «الجديد» بثلاث لغات؛ ويعرض التطبيق اللغة المضبوطة
-عليه، والإنجليزية عند عدم توفر غيرها.
+ويُحفظ سجل بكل محاولة، حتى تُفحص القناة التي ما زالت ترفض بدل التخمين.
