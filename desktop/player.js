@@ -47,8 +47,12 @@ function writePlaylist(items, dir) {
 
 /**
  * Everything mpv is told, in one place so it can be read and checked.
- * `hwnd` is the app's own window; without it mpv opens a window of its own,
- * which is the fallback when embedding is refused.
+ *
+ * mpv gets a window of its own rather than drawing inside the app's. Drawing
+ * inside was tried and gives sound without a picture: Electron keeps its own
+ * window for the page in front of everything else in that window, and paints
+ * it solid, so the film plays behind a black sheet. Its own window, opened
+ * over the app's and the same size, is what the person actually wanted.
  */
 function mpvArgs(opts) {
   const it = (opts.items || [])[opts.index || 0] || {};
@@ -62,7 +66,8 @@ function mpvArgs(opts) {
     "--osd-bar=yes",
     "--input-default-bindings=yes",
     "--input-ipc-server=" + PIPE,
-    "--title=KURDISTAN IPTV",
+    /* the name of whatever is playing, which the queue file carries */
+    "--title=${media-title}",
     "--hwdec=auto-safe",
     "--force-seekable=yes",
     /* a live stream that stutters is worse than one that starts a moment later */
@@ -75,8 +80,18 @@ function mpvArgs(opts) {
   if (it.rf) a.push("--http-header-fields=Referer: " + it.rf);
   if (opts.startMs > 0) a.push("--start=" + Math.floor(opts.startMs / 1000));
   if (opts.speed && opts.speed !== 1) a.push("--speed=" + opts.speed);
-  if (opts.hwnd) a.push("--wid=" + opts.hwnd);
+  /* open exactly over the app, so it reads as the same program going full screen */
+  if (opts.box) a.push("--geometry=" + geometry(opts.box));
   return a;
+}
+
+/** WxH+X+Y, the shape mpv expects, from the app window's own corners */
+function geometry(b) {
+  const w = Math.max(320, Math.round(b.width || 0));
+  const h = Math.max(240, Math.round(b.height || 0));
+  const x = Math.round(b.x || 0);
+  const y = Math.round(b.y || 0);
+  return w + "x" + h + (x >= 0 ? "+" : "") + x + (y >= 0 ? "+" : "") + y;
 }
 
 /* ------------------------------------------------------------------ speaking */
@@ -159,20 +174,21 @@ class Player {
 
   get playing() { return !!this.child }
 
-  async open(items, index, startMs, hwnd) {
+  async open(items, index, startMs, box) {
     await this.close();
     this.items = items || [];
     if (!this.items.length) return false;
 
     const playlist = writePlaylist(this.items, this.dir);
-    const args = mpvArgs({ items: this.items, index, startMs, playlist, hwnd });
+    const args = mpvArgs({ items: this.items, index, startMs, playlist, box });
 
     const started = this.spawn(args);
     if (!started) return false;
 
-    /* embedding can be refused - a window of its own is better than nothing */
+    /* a screen arrangement mpv will not have leaves it no window at all;
+       without the placing it always opens somewhere */
     const alive = await this.settled();
-    if (!alive && hwnd) {
+    if (!alive && box) {
       this.spawn(mpvArgs({ items: this.items, index, startMs, playlist }));
       await this.settled();
     }
@@ -237,4 +253,4 @@ class Player {
   }
 }
 
-module.exports = { Player, mpvArgs, playlistText, writePlaylist, PIPE };
+module.exports = { Player, mpvArgs, playlistText, writePlaylist, geometry, PIPE };

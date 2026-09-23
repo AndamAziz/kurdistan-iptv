@@ -119,17 +119,15 @@ function run(js) {
   if (win && !win.isDestroyed()) win.webContents.executeJavaScript(js).catch(() => { });
 }
 
-function hwnd() {
-  if (process.platform !== "win32" || !win || win.isDestroyed()) return 0;
-  try {
-    const b = win.getNativeWindowHandle();
-    return b.length === 8 ? Number(b.readBigUInt64LE(0)) : b.readUInt32LE(0);
-  } catch (e) { return 0 }
+/** where the app is sitting, so the picture opens in the same place */
+function box() {
+  if (!win || win.isDestroyed()) return null;
+  try { return win.getBounds() } catch (e) { return null }
 }
 
 async function play(items, index, startMs) {
   if (!player) player = makePlayer();
-  const started = await player.open(items, index, startMs, hwnd());
+  const started = await player.open(items, index, startMs, box());
   if (!started) run("window.showSync&&showSync('mpv',true)");
   return started;
 }
