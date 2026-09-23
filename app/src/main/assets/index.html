@@ -200,6 +200,12 @@ body.hasnav main{padding-bottom:calc(96px + var(--safe-b))}
 .poster{position:relative;aspect-ratio:2/3;border-radius:var(--r-md);overflow:hidden;
   background:var(--surface);border:1px solid var(--line);box-shadow:0 10px 24px rgba(0,0,0,.45)}
 .poster img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+/* A picture the page has not asked for yet must never cover the letters that
+   stand in for it, and it must still take up room - an element with no room
+   is never seen coming, so it would never be asked for at all. */
+img[data-src]{opacity:0!important;background:transparent!important}
+img.rdy{animation:imgIn .25s ease both}
+@keyframes imgIn{from{opacity:0}to{opacity:1}}
 .poster .mono{font-size:clamp(13px,4.4vw,20px);padding:6px;text-align:center;line-height:1.2}
 .poster .rt{position:absolute;top:7px;inset-inline-end:7px;background:rgba(0,0,0,.72);
   border-radius:7px;padding:2px 7px;font-size:10.5px;font-weight:800;color:#FFD466}
@@ -693,6 +699,10 @@ var T = {
       spdTesting:"تاقیکردنەوە...",spdAgain:"دووبارە تاقی بکەرەوە",
       spd4k:"باشە بۆ 4K",spdFhd:"باشە بۆ Full HD",spdHd:"باشە بۆ HD",spdLow:"خێرایی کەمە",
       spdNote:"ئەم ژمارانە لە سێرڤەری ئەم لیستەوە پێوراون، نەک لە سێرڤەرێکی تر",
+      spdCons:"پەیوەندی هاوکات",spdConsFull:"پڕە — بۆیە لە ئامێری دووەم پەخش ناکات",
+      spdStat:"دۆخی ئەکاونت",spdExp:"کۆتایی ئەکاونت",spdNoExp:"بێ کۆتایی",
+      spdImg:"یەک پۆستەر",spdImgMany:"پۆستەر پێکەوە",
+      spdImgSlow:"پۆستەرەکان لە سێرڤەری پرۆڤایدەرەوە خاون",spdImgFail:"پۆستەرەکە نەهات",
       chooseType:"جۆری لیستەکە هەڵبژێرە",
       xtream:"Xtream (پێشنیارکراو)",xtreamSub:"دۆمەین + ناو + وشەی نهێنی",
       m3uUrl:"M3U بە لینک",m3uUrlSub:"لینکی ڕاستەوخۆی فایلی M3U",
@@ -745,6 +755,10 @@ var T = {
       spdTesting:"Testing…",spdAgain:"Test again",
       spd4k:"Good for 4K",spdFhd:"Good for Full HD",spdHd:"Good for HD",spdLow:"Low speed",
       spdNote:"measured against this playlist's own server, not another one",
+      spdCons:"Connections in use",spdConsFull:"full - this is why the other device will not play",
+      spdStat:"Account",spdExp:"Account ends",spdNoExp:"no end date",
+      spdImg:"One poster",spdImgMany:"Posters together",
+      spdImgSlow:"posters are slow at the provider's end",spdImgFail:"the poster did not arrive",
       chooseType:"Choose playlist type",
       xtream:"Xtream (recommended)",xtreamSub:"Domain + username + password",
       m3uUrl:"M3U by URL",m3uUrlSub:"Direct link to an M3U file",
@@ -797,6 +811,10 @@ var T = {
       spdTesting:"جاري الاختبار…",spdAgain:"أعد الاختبار",
       spd4k:"جيد لـ 4K",spdFhd:"جيد لـ Full HD",spdHd:"جيد لـ HD",spdLow:"سرعة منخفضة",
       spdNote:"مقاسة من خادم هذه القائمة نفسه، لا من خادم آخر",
+      spdCons:"الاتصالات المستخدمة",spdConsFull:"ممتلئ — لهذا لا يعمل على الجهاز الآخر",
+      spdStat:"الحساب",spdExp:"انتهاء الحساب",spdNoExp:"بلا نهاية",
+      spdImg:"ملصق واحد",spdImgMany:"ملصقات معًا",
+      spdImgSlow:"الملصقات بطيئة من خادم المزوّد",spdImgFail:"لم يصل الملصق",
       chooseType:"اختر نوع القائمة",
       xtream:"Xtream (موصى به)",xtreamSub:"النطاق + اسم المستخدم + كلمة السر",
       m3uUrl:"M3U برابط",m3uUrlSub:"رابط مباشر لملف M3U",
@@ -1251,6 +1269,42 @@ function speedVerdict(d, mbps){
   return d.spdLow;
 }
 
+function speedDay(ms){
+  var x = new Date(ms);
+  function two(n){ return (n < 10 ? "0" : "") + n }
+  return "\u2066" + x.getFullYear() + "-" + two(x.getMonth() + 1) + "-" + two(x.getDate()) + "\u2069";
+}
+
+/* The two rows that answer the two questions: is the account already full,
+   and are the posters slow at the far end. They appear as the answers land. */
+function speedExtra(d){
+  var h = "", a = SPEED && SPEED.acc, im = SPEED && SPEED.img;
+  if(a && a !== "none"){
+    var used = parseInt(a.active_cons, 10) || 0, max = parseInt(a.max_connections, 10) || 0;
+    if(max){
+      var full = used >= max;
+      h += '<div class="row"><span class="tx"><b>'+esc(d.spdCons)+'</b>'
+         + (full ? '<s class="wrap">'+esc(d.spdConsFull)+'</s>' : '')
+         + '</span><span class="val"'+(full ? ' style="color:var(--accent2)"' : '')
+         + '>'+esc("\u2066" + used + " / " + max + "\u2069")+'</span></div>';
+    }
+    if(a.status) h += speedRow(d.spdStat, String(a.status));
+    h += speedRow(d.spdExp, a.exp_date ? speedDay(parseInt(a.exp_date, 10) * 1000) : d.spdNoExp);
+  }
+  if(im && im !== "none"){
+    var note = !im.ok ? d.spdImgFail : (im.ms > 1500 ? d.spdImgSlow : "");
+    h += '<div class="row"><span class="tx"><b>'+esc(d.spdImg)+'</b>'
+       + (note ? '<s class="wrap">'+esc(note)+'</s>' : '')
+       + '</span><span class="val">'
+       + esc(im.ok ? ("\u2066" + im.ms + " ms \u00b7 " + im.w + "\u00d7" + im.h + "\u2069") : "\u2014")
+       + '</span></div>';
+    if(im.many)
+      h += speedRow(im.manyN + " " + d.spdImgMany,
+                    "\u2066" + im.many + " ms \u00b7 " + im.manyOk + "/" + im.manyN + "\u2069");
+  }
+  return h;
+}
+
 function speedBody(d){
   var p = activeList();
   var host = "";
@@ -1259,21 +1313,78 @@ function speedBody(d){
   if(SPEED.state === "run"){
     return speedRow(d.spdServer, host)
          + '<div class="row"><span class="tx"><b>'+esc(d.spdTesting)+'</b></span>'
-         + '<span class="val" id="spdGot">'+esc(fmtSize(SPEED.got || 0))+'</span></div>';
+         + '<span class="val" id="spdGot">'+esc(fmtSize(SPEED.got || 0))+'</span></div>'
+         + speedExtra(d);
   }
   if(SPEED.state === "err"){
     return speedRow(d.spdServer, host)
          + '<div class="row"><span class="tx"><b>'+esc(d.loadFail)+'</b>'
-         + '<s class="nat">'+esc(SPEED.msg || "")+'</s></span></div>';
+         + '<s class="nat">'+esc(SPEED.msg || "")+'</s></span></div>'
+         + speedExtra(d)
+         + '<button class="addbtn" onclick="speedTest()">'+esc(d.spdAgain)+'</button>';
   }
   var mbps = SPEED.bps / 1000000;
   return speedRow(d.spdServer, host)
        + speedRow(d.spdAnswer, "\u2066" + Math.round(SPEED.ping) + " ms\u2069")
        + speedRow(d.spdSpeed, fmtRate(SPEED.bps / 8), true)
        + speedRow(d.spdGot, fmtSize(SPEED.bytes))
+       + speedExtra(d)
        + '<div class="row"><span class="tx"><b>'+esc(speedVerdict(d, mbps))+'</b>'
        + '<s class="wrap">'+esc(d.spdNote)+'</s></span></div>'
        + '<button class="addbtn" onclick="speedTest()">'+esc(d.spdAgain)+'</button>';
+}
+
+/* What the panel itself says about this account: how many connections it
+   allows, how many are in use right now, and when it ends. This is the
+   answer to "it plays here but not on the other device". */
+function speedAccount(p){
+  if(p.type !== "xtream" || !window.fetch) return Promise.resolve(null);
+  return fetch(viaApp(xtBase(p)))
+    .then(function(r){ return r.text() })
+    .then(function(t){ var o = JSON.parse(t); return (o && o.user_info) ? o.user_info : null })
+    .catch(function(){ return null });
+}
+
+/* How long one poster really takes from this playlist's own server. Loaded
+   as a picture, not fetched, so nothing blocks it - and with a fresh name
+   each time so a cached copy cannot flatter the number. */
+function speedPosterOne(url){
+  return new Promise(function(res){
+    var t0 = Date.now(), im = new Image(), over = false;
+    var end = function(good){
+      if(over) return;
+      over = true;
+      res({ ms: Date.now() - t0, ok: good, w: im.naturalWidth || 0, h: im.naturalHeight || 0 });
+    };
+    im.onload  = function(){ end(true) };
+    im.onerror = function(){ end(false) };
+    setTimeout(function(){ end(false) }, 20000);
+    /* a new name every time, so a copy already kept cannot flatter the number */
+    im.src = url + (url.indexOf("?") > -1 ? "&" : "?") + "kt="
+           + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  });
+}
+
+/* One poster on its own says how fast the picture server answers. Six at once
+   says whether it answers six people as quickly as one - which is the whole
+   question when a screen full of posters is slow. */
+function speedPoster(){
+  var pool = (DATA.movies || []).concat(DATA.series || [], CH), urls = [];
+  for(var i = 0; i < pool.length && urls.length < 6; i++)
+    if(pool[i] && pool[i].l && urls.indexOf(pool[i].l) < 0) urls.push(pool[i].l);
+  if(!urls.length) return Promise.resolve(null);
+  return speedPosterOne(urls[0]).then(function(one){
+    if(urls.length < 2 || !window.Promise || !Promise.all) return one;
+    var t0 = Date.now();
+    return Promise.all(urls.map(speedPosterOne)).then(function(all){
+      var good = 0;
+      for(var j = 0; j < all.length; j++) if(all[j].ok) good++;
+      one.many = Date.now() - t0;
+      one.manyN = urls.length;
+      one.manyOk = good;
+      return one;
+    }, function(){ return one });
+  });
 }
 
 function speedTest(){
@@ -1281,6 +1392,8 @@ function speedTest(){
   var url = p.type === "xtream" ? (xtBase(p) + "&action=get_live_streams") : (p.url || "");
   SPEED = { state: "run", got: 0 };
   openSheet("speed");
+  speedAccount(p).then(function(u){ if(SPEED){ SPEED.acc = u || "none"; drawSheet() } });
+  speedPoster().then(function(i){ if(SPEED){ SPEED.img = i || "none"; drawSheet() } });
   if(!url || !window.fetch){ SPEED = { state:"err", msg:"—" }; drawSheet(); return }
 
   var t0 = Date.now(), first = 0, got = 0;
@@ -1293,11 +1406,12 @@ function speedTest(){
     var transfer = end - (first || t0);
     var base = Math.max(120, transfer >= 150 ? transfer : (end - t0));
     SPEED = { state:"done", ping: (first || end) - t0, bytes: got, ms: end - t0,
-              bps: got * 8 / (base / 1000) };
+              bps: got * 8 / (base / 1000), acc: SPEED && SPEED.acc, img: SPEED && SPEED.img };
     drawSheet();
   };
   var fail = function(e){
-    SPEED = { state:"err", msg: (e && e.message) ? String(e.message).slice(0,120) : "network" };
+    SPEED = { state:"err", msg: (e && e.message) ? String(e.message).slice(0,120) : "network",
+              acc: SPEED && SPEED.acc, img: SPEED && SPEED.img };
     drawSheet();
   };
   var tick = function(){
@@ -1678,12 +1792,90 @@ function rememberEpisodes(list){
   }catch(e){}
 }
 
+/* ==================== the pictures ====================
+   Posters are by far the heaviest thing the page asks for, and a panel's own
+   picture server is usually the narrow end of the pipe: a browser will open
+   about six doors to one host, so four hundred posters queue up behind each
+   other and the dozen actually on screen wait their turn.
+
+   So: nothing is asked for until it is nearly in view, and never more than a
+   few at a time. The posters the eye is on get the whole line to themselves. */
+var IMG_MAX = 4, imgBusy = 0, imgWait = [], imgEye = null, imgSoon = 0;
+
+function imgStart(el){
+  var u = el.getAttribute("data-src");
+  if(!u || !el.parentNode) return;
+  el.removeAttribute("data-src");
+  imgBusy++;
+  var over = false;
+  var free = function(){ if(over) return; over = true; imgBusy--; imgNext() };
+  el.onload = function(){ free(); el.className = (el.className ? el.className + " " : "") + "rdy" };
+  el.onerror = function(){
+    free();
+    /* one quiet second try - a picture server that is busy often answers the
+       second knock - and only then does the card fall back to its letters */
+    if(el.getAttribute("data-try")){ if(el.parentNode) el.parentNode.removeChild(el); return }
+    el.setAttribute("data-try", "1");
+    setTimeout(function(){
+      if(el.parentNode){ el.setAttribute("data-src", u); imgPush(el) }
+    }, 1500);
+  };
+  /* a picture whose node is taken off the page may answer neither way, and the
+     queue must not be held by it for ever */
+  setTimeout(free, 20000);
+  el.src = u;
+}
+function imgPush(el){ imgWait.push(el); imgNext() }
+function imgNext(){
+  while(imgBusy < IMG_MAX && imgWait.length){
+    var el = imgWait.shift();
+    if(el && el.parentNode && el.getAttribute("data-src")) imgStart(el);
+  }
+}
+function imgEyes(){
+  if(imgEye || !window.IntersectionObserver) return imgEye;
+  imgEye = new IntersectionObserver(function(seen){
+    for(var i = 0; i < seen.length; i++) if(seen[i].isIntersecting){
+      imgEye.unobserve(seen[i].target);
+      imgPush(seen[i].target);
+    }
+  }, { rootMargin: "500px 300px" });
+  return imgEye;
+}
+function imgScan(){
+  var eye = imgEyes(), all = document.querySelectorAll("img[data-src]");
+  for(var i = 0; i < all.length; i++){
+    if(all[i].getAttribute("data-w")) continue;
+    all[i].setAttribute("data-w", "1");
+    if(eye) eye.observe(all[i]); else imgPush(all[i]);   /* an old webview: as before */
+  }
+}
+/* a new screen: the old watch list is thrown away, whatever is still in
+   flight finishes on its own */
+function imgReset(){
+  try{ if(imgEye) imgEye.disconnect() }catch(e){}
+  imgEye = null;
+  imgWait = [];
+}
+/* every way the page draws cards ends in new nodes, so watch for nodes
+   instead of remembering to call this from each of them */
+function imgWatch(){
+  imgScan();
+  try{
+    new MutationObserver(function(){
+      if(imgSoon) return;
+      imgSoon = 1;
+      setTimeout(function(){ imgSoon = 0; imgScan() }, 60);
+    }).observe(document.body, { childList: true, subtree: true });
+  }catch(e){ }
+}
+
 /* ==================== render ==================== */
 function cardHTML(c, forceSquare){
   var square = (forceSquare !== undefined) ? forceSquare : (SECTION === "live");
   var h = hue(c.n);
   var bg = "linear-gradient(145deg,hsl("+h+",42%,34%),hsl("+((h+42)%360)+",48%,20%))";
-  var img = c.l ? '<img src="'+esc(c.l)+'" loading="lazy" onerror="this.remove()" alt="">' : '';
+  var img = c.l ? '<img data-src="'+esc(c.l)+'" decoding="async" alt="">' : '';
 
   var pgv = c.pct;
   if(pgv === undefined){ var sp = getPos(c.u); pgv = sp ? sp.p / sp.d : 0 }
@@ -1829,6 +2021,7 @@ function currentTitle(q){
   return cleanGroup(f);
 }
 function render(){
+  imgReset();
   var q = ($("search").value || "").trim().toLowerCase();
   if(q){ heroStop(); renderSearch(); return }      /* search: channels + films + series */
   $("chips").style.display = "";                   /* the group chips come back after a search */
@@ -3240,7 +3433,7 @@ function histHTML(){
     var hu = hue(x.n || "?");
     var bg = "linear-gradient(145deg,hsl("+hu+",42%,34%),hsl("+((hu+42)%360)+",48%,20%))";
     var poster = x.t !== "live";
-    var img = x.l ? '<img src="'+esc(x.l)+'" loading="lazy" onerror="this.remove()" alt="">' : '';
+    var img = x.l ? '<img data-src="'+esc(x.l)+'" decoding="async" alt="">' : '';
     var sub = [kinds[x.t] || "", clockOf(x.at)];
     var bar = "";
     if(poster){
@@ -3861,6 +4054,7 @@ function actAskAgainQuietly(a){
   drawPins();
   drawNav();
   applyLang();
+  imgWatch();
   loadActive(false);
 })();
 </script>
