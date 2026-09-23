@@ -13,6 +13,7 @@ import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.StateListDrawable
 import android.media.AudioManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -374,6 +375,35 @@ class MainActivity : ComponentActivity() {
         /** the page asks this to show where the remote's focus is from the start */
         @android.webkit.JavascriptInterface
         fun isTv(): Boolean = this@MainActivity.isTv
+
+        /**
+         * "1.0|105" - the name a person reads, and the number that only ever
+         * goes up. The page compares that number with the newest release to
+         * decide whether there is anything to tell the user about.
+         */
+        @android.webkit.JavascriptInterface
+        fun version(): String = try {
+            val p = context.packageManager.getPackageInfo(context.packageName, 0)
+            @Suppress("DEPRECATION")
+            val code = if (Build.VERSION.SDK_INT >= 28) p.longVersionCode else p.versionCode.toLong()
+            (p.versionName ?: "") + "|" + code
+        } catch (e: Exception) { "" }
+
+        /**
+         * Hands a plain web address to whatever the phone opens links with.
+         * Only http and https, so the page can never start something else,
+         * and the download and the install stay where the user can see them.
+         */
+        @android.webkit.JavascriptInterface
+        fun openUrl(url: String) {
+            if (!url.startsWith("http://") && !url.startsWith("https://")) return
+            runOnUiThread {
+                try {
+                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                } catch (e: Exception) { /* nothing on the phone opens links */ }
+            }
+        }
 
         /** the page's language, so the player's own menu speaks it too */
         @android.webkit.JavascriptInterface
