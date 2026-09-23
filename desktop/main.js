@@ -138,8 +138,15 @@ async function play(items, index, startMs) {
 function wire() {
   ipcMain.on("kiptv-istv", e => { e.returnValue = false });
 
+  /* "1.0|120", the same shape the phone answers with.
+     The number is the last part of the version stamped into the app when it
+     was built. It used to be read from the environment, which exists on the
+     machine that BUILDS the app and not on the one that RUNS it - so every
+     copy called itself build 1 and could never tell it was out of date. */
   ipcMain.on("kiptv-version", e => {
-    e.returnValue = app.getVersion() + "|" + (process.env.KIPTV_BUILD || "1");
+    const v = String(app.getVersion() || "");
+    const tail = v.match(/(\d+)\s*$/);
+    e.returnValue = "1.0|" + (tail ? tail[1] : "0");
   });
 
   ipcMain.on("kiptv-lang", () => { /* mpv speaks its own language; nothing to set */ });
