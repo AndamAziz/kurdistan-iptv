@@ -7,6 +7,15 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    # the signing key and its passwords live in the repository's secrets,
+    # never in the code. Without them the build still works, unsigned (debug).
+    env:
+      KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,12 +34,31 @@ jobs:
       - name: Accept Android SDK licences
         run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
 
-      - name: Build debug APK
-        run: gradle assembleDebug --no-daemon --stacktrace
+      - name: Take out the signing key
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            printf '%s' "$KEYSTORE_B64" | tr -d '[:space:]' | base64 -d > "$RUNNER_TEMP/kiptv.jks"
+            echo "KEYSTORE_FILE=$RUNNER_TEMP/kiptv.jks" >> "$GITHUB_ENV"
+            echo "Signed build: the key was found."
+          else
+            echo "No key in the secrets - building the debug APK as before."
+          fi
+
+      - name: Build the APK
+        run: |
+          if [ -n "$KEYSTORE_FILE" ]; then
+            gradle assembleRelease --no-daemon --stacktrace
+          else
+            gradle assembleDebug --no-daemon --stacktrace
+          fi
+
+      - name: Forget the key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/kiptv.jks"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: KURDISTAN-IPTV-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: KURDISTAN-IPTV-apk
+          path: app/build/outputs/apk/*/*.apk
           if-no-files-found: error
