@@ -777,6 +777,37 @@ class MainActivity : ComponentActivity() {
         liveSession = null
     }
 
+    // ---------------- letting go of the line ----------------
+
+    /**
+     * A panel counts one connection for as long as the stream is held open, and
+     * a paused picture still holds it. So an account that allows one or two at a
+     * time stays locked on the other device long after this one was put down.
+     *
+     * Leaving the screen therefore closes the line and remembers where it was;
+     * coming back opens it again at the same place. Radio mode and the small
+     * floating window are the two cases that asked to go on, and are left alone.
+     */
+    private var sleptAt = -1L
+
+    private fun sleepPlayer() {
+        val p = player ?: return
+        if (p.playbackState == Player.STATE_IDLE) return
+        sleptAt = if (isVod(currentUrl ?: "")) p.currentPosition else -1L
+        try { p.stop() } catch (e: Exception) { }
+    }
+
+    private fun wakePlayer() {
+        val p = player ?: return
+        if (p.playbackState != Player.STATE_IDLE || dead) return
+        try {
+            if (sleptAt > 0) p.seekTo(sleptAt)
+            sleptAt = -1L
+            p.prepare()
+            p.playWhenReady = true
+        } catch (e: Exception) { }
+    }
+
     /** true while the sound should carry on after the app leaves the screen */
     private fun keepPlaying(): Boolean =
         radioOn() && !dead && ::playerLayer.isInitialized &&
@@ -1817,7 +1848,10 @@ class MainActivity : ComponentActivity() {
            Radio mode is the one thing the user asked to go on hearing. */
         if (::playerLayer.isInitialized && playerLayer.visibility == View.VISIBLE) {
             reportPosition()
-            if (!radioOn()) player?.playWhenReady = false
+            if (!radioOn()) {
+                player?.playWhenReady = false
+                sleepPlayer()          /* and give the connection back to the account */
+            }
         }
     }
 
@@ -1835,6 +1869,7 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         stopRadio()                                      /* back on screen: no notification */
         if (playerLayer.visibility == View.VISIBLE) {
+            wakePlayer()                                 /* opens the line again where it was */
             player?.playWhenReady = true
             setFullscreen(true)
             handler.removeCallbacks(posTicker)      /* never stack two tickers */
