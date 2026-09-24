@@ -1,39 +1,69 @@
 [en]
-The channel list is now inside the player.
+A channel that will not open now says so, instead of playing another one.
 
-While a channel is playing, the list opens straight over the picture: the
-groups on the left, the channels beside them, each with its own logo and
-number. Nothing is drawn around them - no box, no border, no line; the
-picture only dims enough to read the names by, and the channel never stops.
-It opens on the group the channel belongs to, picking a name switches at
-once, and it puts itself away after eight seconds.
+On Windows the player was given the whole list of channels at once. When one
+would not open it quietly moved on to the next line of that list, so clicking
+one channel started a different one, with nothing said about it.
 
-The previous and next buttons now walk the group the channel was chosen
-from, instead of the whole list.
+Underneath that was the reason the channel would not open at all: the player's
+own way of fetching a stream hands the stream's own list of parts an address
+they are not kept under, so every part comes back missing. FFmpeg's way does
+not have that fault, and a channel that fails is now given exactly that, at
+once. If it still will not open, the player stops and names it.
+
+The channel it used to jump to is now dropped in about a quarter of a second,
+before anything of it is seen or heard.
+
+Two older faults were found while this was traced: one mpv shutting down could
+take the next one's controls away with it, and the app could ask for a film
+through FFmpeg without the player being told it was allowed to - so the ask was
+silently ignored.
+
+Live television, films and episodes that already worked are untouched: the
+first attempt is exactly what it always was.
 
 [ku]
-لیستی کەناڵەکان ئێستا لەناو پلەیەرەکەدایە.
+کەناڵێک کە ناکرێتەوە ئێستا خۆی دەڵێت، لەبری ئەوەی کەناڵێکی تر لێبدات.
 
-لە کاتی پەخشدا، لیستەکە ڕاستەوخۆ لەسەر وێنەکە دەکرێتەوە: پۆلەکان لای چەپ،
-کەناڵەکان لە تەنیشتیان، هەریەکە بە لۆگۆ و ژمارەی خۆیەوە. هیچ شتێک بە دەوریان
-نەکێشراوە — نە چوارچێوە، نە سنوور، نە هێڵ؛ تەنها ڕوونی وێنەکە کەم دەبێتەوە
-بەو ئەندازەیەی ناوەکان بخوێنرێنەوە، و کەناڵەکە هەرگیز ناوەستێت.
+لەسەر Windows هەموو لیستی کەناڵەکان پێکەوە درابوو بە پلەیەرەکە. کاتێک یەکێکیان
+نەدەکرایەوە، بێدەنگ دەچووە سەر دێڕی دواتری ئەو لیستە — بۆیە کرتە لەسەر
+کەناڵێک کەناڵێکی تری دەستپێدەکرد، بەبێ ئەوەی هیچ بوترێت.
 
-لەسەر ئەو پۆلە دەکرێتەوە کە کەناڵەکە سەر بەوەیە، هەڵبژاردنی ناوێک یەکسەر
-دەگۆڕێت، و دوای هەشت چرکە خۆی دادەخات.
+لە ژێر ئەوەوە هۆکاری نەکرانەوەی کەناڵەکە خۆی بوو: ئەو ڕێگایەی پلەیەرەکە بۆ
+هێنانی ستریم بەکاریدەهێنا، ناونیشانێکی هەڵە دەداتە لیستی بەشەکانی ستریمەکە،
+بۆیە هەموو بەشەکان بزر دەبن. ڕێگاکەی FFmpeg ئەو کەموکوڕییەی نییە، و ئێستا
+کەناڵێک کە شکست دەهێنێت یەکسەر بەو ڕێگایە هەوڵدەدرێتەوە. ئەگەر هێشتاش
+نەکرایەوە، پلەیەرەکە دەوەستێت و ناوی کەناڵەکە دەڵێت.
 
-دوگمەکانی پێشوو و دواتر ئێستا بە درێژایی ئەو پۆلە دەڕۆن کە کەناڵەکەت لێوە
-هەڵبژارد، نەک بە درێژایی هەموو لیستەکە.
+ئەو کەناڵەی پێشتر بازی بۆ دەکرد، ئێستا لە نزیکەی چارەکە چرکەیەکدا دەبڕدرێت،
+پێش ئەوەی هیچی لێ ببینرێت یان ببیسترێت.
+
+دوو کەموکوڕی کۆنتریش لەم گەڕانەدا دەرکەوتن: mpvـێک لە کاتی داخستنیدا دەیتوانی
+کۆنتڕۆڵی ئەوی دواتری لەگەڵ خۆی ببات، وە ئەپەکە دەیتوانی داوای فیلمێک بکات بە
+ڕێگای FFmpeg بەبێ ئەوەی پلەیەرەکە بزانێت ڕێگەی پێدراوە — بۆیە داواکەکە بێدەنگ
+پشتگوێ دەخرا.
+
+کەناڵە زیندووەکان و فیلم و سریاڵەکان کە پێشتر کاریان دەکرد دەستیان لێ نەدراوە:
+هەوڵی یەکەم بە تەواوی وەک خۆیەتی.
 
 [ar]
-قائمة القنوات صارت داخل المشغّل.
+القناة التي لا تُفتح تقول ذلك الآن، بدل أن تشتغل قناة أخرى.
 
-أثناء البث تُفتح القائمة فوق الصورة مباشرة: المجموعات على اليسار والقنوات
-بجانبها، ولكل قناة شعارها ورقمها. لا شيء مرسوم حولها — لا إطار ولا حدّ ولا
-خط؛ تخفت الصورة بالقدر الذي يسمح بقراءة الأسماء فقط، والقناة لا تتوقف أبداً.
+على Windows كانت قائمة القنوات كلها تُسلَّم للمشغّل دفعة واحدة. وحين تعجز قناة
+عن الفتح كان ينتقل بصمت إلى السطر التالي، فيبدأ الضغط على قناة تشغيلَ قناة
+أخرى دون أن يُقال شيء.
 
-تُفتح على المجموعة التي تنتمي إليها القناة، واختيار اسم يبدّل فوراً، وتنزوي
-من تلقاء نفسها بعد ثماني ثوانٍ.
+وتحت ذلك كان سبب عجز القناة عن الفتح: طريقة المشغّل في جلب البث تعطي قائمة
+أجزاء البث عنوانًا غير الذي تُحفظ تحته، فتعود كل الأجزاء مفقودة. طريقة FFmpeg
+لا تحمل هذا العيب، والقناة التي تفشل تُجرَّب بها فورًا. وإن بقيت لا تُفتح،
+يتوقف المشغّل ويسمّيها.
 
-زرّا السابق والتالي يتنقّلان الآن داخل المجموعة التي اخترت منها القناة، لا
-داخل القائمة كلها.
+القناة التي كان يقفز إليها تُقطع الآن في نحو ربع ثانية، قبل أن يُرى منها أو
+يُسمع شيء.
+
+كما ظهر عيبان أقدم أثناء التتبّع: مشغّل يُغلق كان قد يأخذ معه تحكّم الذي يليه،
+وكان التطبيق قد يطلب فيلمًا عبر FFmpeg دون أن يُخبَر المشغّل بأن ذلك مسموح —
+فيُتجاهل الطلب بصمت.
+
+القنوات المباشرة والأفلام والحلقات التي كانت تعمل لم تُمس: المحاولة الأولى هي
+نفسها تمامًا.
