@@ -1626,6 +1626,8 @@ class MainActivity : ComponentActivity() {
             isFillViewport = false
             addView(catBox)
         }
+        /* scrolling the groups counts as being there, the same as the channels do */
+        catScroll.setOnScrollChangeListener { _, _, _, _, _ -> armChanHide() }
         catCol.addView(catScroll, LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
         chanLayer.addView(catCol, FrameLayout.LayoutParams(
@@ -2151,12 +2153,15 @@ class MainActivity : ComponentActivity() {
 
     // ---------------- swipe: brightness (left) / volume (right) ----------------
 
-    /** Only while the player is on screen, unlocked, with the ⚙ panel closed.
+    /** Only while the player is on screen, unlocked, with the ⚙ panel and the
+     *  channel list both closed - a list is there to be scrolled, and a finger
+     *  moving up it must not be read as brightness or sound.
      *  Taps, the seek bar and the buttons get every touch exactly as before;
      *  only once a finger clearly moves up or down does the swipe take over. */
     private fun swipeAllowed(): Boolean =
         ::swipe.isInitialized && ::playerLayer.isInitialized && ::panel.isInitialized &&
-            playerLayer.visibility == View.VISIBLE && !locked && !panelOn() && !inPip
+            playerLayer.visibility == View.VISIBLE && !locked && !panelOn() &&
+            !chansOn() && !inPip
 
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
         if (!swipeAllowed()) {
