@@ -7,6 +7,8 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
@@ -20,6 +22,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.provider.Settings
+import android.util.LruCache
 import android.util.Rational
 import android.view.Gravity
 import android.view.MotionEvent
@@ -34,6 +37,7 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.ScrollView
@@ -236,6 +240,7 @@ class MainActivity : ComponentActivity() {
         findViewById<TextView>(R.id.btnClose).setOnClickListener { hideNativePlayer() }
         findViewById<TextView>(R.id.liveBadge).text = getString(R.string.live)
         buildAspectAndLockUi()
+        buildChansUi()
         focusRing(findViewById(R.id.btnClose), round = true)
         focusRing(findViewById(R.id.btnRetry), round = false, radiusDp = 14)
 
@@ -263,6 +268,7 @@ class MainActivity : ComponentActivity() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 when {
+                    playerLayer.visibility == View.VISIBLE && chansOn() -> closeChans()
                     playerLayer.visibility == View.VISIBLE && panelOn() -> closePanel()
                     playerLayer.visibility == View.VISIBLE && locked -> flashUnlock()
                     playerLayer.visibility == View.VISIBLE -> hideNativePlayer()
@@ -409,6 +415,36 @@ class MainActivity : ComponentActivity() {
         @android.webkit.JavascriptInterface
         fun setLang(l: String) {
             runOnUiThread { uiLang = if (l == "ku" || l == "ar") l else "en" }
+        }
+
+        /** The whole live list, so the list inside the player can show every
+         *  group - not only the one the page happens to be showing.
+         *  json: [{"c":..,"n":..,"u":..,"l":..,"ua"?:..,"rf"?:..}, ...] */
+        @android.webkit.JavascriptInterface
+        fun setChannels(json: String) {
+            try {
+                val arr = JSONArray(json)
+                val out = ArrayList<Chan>(arr.length())
+                for (i in 0 until arr.length()) {
+                    val o = arr.getJSONObject(i)
+                    val u = o.optString("u")
+                    if (u.isBlank()) continue
+                    out.add(Chan(
+                        o.optString("c").ifBlank { "Other" },
+                        o.optString("n"),
+                        u,
+                        o.optString("l"),
+                        o.optString("ua").ifBlank { null },
+                        o.optString("rf").ifBlank { null }
+                    ))
+                }
+                runOnUiThread {
+                    chanAll = out
+                    chanCats = out.map { it.c }.distinct()
+                    if (::btnChans.isInitialized && playerLayer.visibility == View.VISIBLE)
+                        applyItemChrome(lastIndex)
+                }
+            } catch (e: Exception) { /* ignore malformed input */ }
         }
 
         /** json: [{"n":..,"u":..,"ua"?:..,"rf"?:..}, ...] - lets next / previous work */
@@ -751,8 +787,11 @@ class MainActivity : ComponentActivity() {
     private fun applyItemChrome(index: Int) {
         txtTitle.text = titles.getOrNull(index) ?: ""
         nowTitle = titles.getOrNull(index) ?: ""
+        val live = !isVod(urls.getOrNull(index) ?: "")
         findViewById<TextView>(R.id.liveBadge).visibility =
-            if (isVod(urls.getOrNull(index) ?: "")) View.GONE else View.VISIBLE
+            if (live) View.VISIBLE else View.GONE
+        if (::btnChans.isInitialized)
+            btnChans.visibility = if (live && chanAll.isNotEmpty()) View.VISIBLE else View.GONE
     }
 
     // ---------------- playing speed ----------------
@@ -1010,6 +1049,22 @@ class MainActivity : ComponentActivity() {
         layer.addView(bar, FrameLayout.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT, dp(60), Gravity.BOTTOM or Gravity.END).apply { marginEnd = dp(4) })
 
+        /* the channel list. Only live television has one, so it comes and goes
+           with whatever is playing - see applyItemChrome. */
+        btnChans = TextView(this).apply {
+            background = roundBg()
+            text = "\u2630"
+            setTextColor(Color.WHITE)
+            textSize = 17f
+            gravity = Gravity.CENTER
+            isClickable = true
+            isFocusable = true
+            visibility = View.GONE
+        }
+        focusRing(btnChans, round = true)
+        bar.addView(btnChans, LinearLayout.LayoutParams(dp(40), dp(40)).apply { marginEnd = dp(10) })
+        btnChans.setOnClickListener { openChans() }
+
         btnAspect = TextView(this).apply {
             background = chipBg()
             setTextColor(Color.WHITE)
@@ -1229,6 +1284,7 @@ class MainActivity : ComponentActivity() {
         lockOverlay.visibility = if (on) View.VISIBLE else View.GONE
         if (on) {
             closePanel()
+            closeChans()
             playerView.hideController()
             playerView.useController = false
             topBar.visibility = View.GONE
@@ -1264,6 +1320,7 @@ class MainActivity : ComponentActivity() {
         setPipAuto(false)
         setWindowBrightness(WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE)
         closePanel()
+        closeChans()
         locked = false
         lockOverlay.visibility = View.GONE
         btnUnlock.removeCallbacks(hideUnlock)
@@ -1276,6 +1333,7 @@ class MainActivity : ComponentActivity() {
     // ---------------- audio / subtitles / quality (⚙) ----------------
 
     private val TX_EN = mapOf(
+        "allCats" to "All",
         "audio" to "Audio", "subs" to "Subtitles", "quality" to "Quality",
         "off" to "Off", "auto" to "Auto", "size" to "Text size",
         "s1" to "Small", "s2" to "Normal", "s3" to "Large", "s4" to "Extra large",
@@ -1286,6 +1344,7 @@ class MainActivity : ComponentActivity() {
         "radio" to "Background", "radioOn" to "Keep the sound playing",
         "radioNote" to "Leave the app and the sound goes on, like a radio. No small window then.")
     private val TX_KU = mapOf(
+        "allCats" to "هەموو",
         "audio" to "دەنگ", "subs" to "ژێرنووس", "quality" to "کوالیتی",
         "off" to "بێ ژێرنووس", "auto" to "خۆکار", "size" to "قەبارەی نووسین",
         "s1" to "بچووک", "s2" to "ئاسایی", "s3" to "گەورە", "s4" to "زۆر گەورە",
@@ -1296,6 +1355,7 @@ class MainActivity : ComponentActivity() {
         "radio" to "لە پشتەوە", "radioOn" to "دەنگ بەردەوام بێت",
         "radioNote" to "لە ئەپەکە دەردەچیت و دەنگەکە بەردەوام دەبێت، وەک ڕادیۆ. ئەوکات پەنجەرە بچووکەکە ناکرێتەوە.")
     private val TX_AR = mapOf(
+        "allCats" to "الكل",
         "audio" to "الصوت", "subs" to "الترجمة", "quality" to "الجودة",
         "off" to "بدون ترجمة", "auto" to "تلقائي", "size" to "حجم الخط",
         "s1" to "صغير", "s2" to "عادي", "s3" to "كبير", "s4" to "كبير جداً",
@@ -1489,10 +1549,393 @@ class MainActivity : ComponentActivity() {
         if (s > 0f) playerView.subtitleView?.setFractionalTextSize(SubtitleView.DEFAULT_TEXT_SIZE_FRACTION * s)
     }
 
+
+    // ---------------- the channel list, over the picture ----------------
+
+    /*
+     * Two columns of names laid straight over the channel that is playing:
+     * the groups on the left, the channels beside them. No box, no border,
+     * no line - only the picture dimmed enough to read them by. The channel
+     * never stops while the list is up, and picking a name switches at once.
+     *
+     * The page hands over the whole live list (setChannels); the player's
+     * own next / previous buttons keep walking the group you chose from.
+     */
+
+    private class Chan(
+        val c: String, val n: String, val u: String,
+        val l: String, val ua: String?, val rf: String?
+    )
+
+    /** the group chip that means "no group at all" */
+    private val ALL_CATS = "\u0000all"
+
+    private var chanAll: List<Chan> = emptyList()
+    private var chanCats: List<String> = emptyList()
+    private var chanCat: String = ALL_CATS
+    /** what the right column is showing: positions inside chanAll */
+    private var chanShown: List<Int> = emptyList()
+    private var chanDrawn = 0
+
+    private lateinit var btnChans: TextView
+    private lateinit var chanLayer: FrameLayout
+    private lateinit var catCol: LinearLayout
+    private lateinit var catBox: LinearLayout
+    private lateinit var chanCol: LinearLayout
+    private lateinit var chanBox: LinearLayout
+    private lateinit var chanScroll: ScrollView
+    private lateinit var btnCols: TextView
+    private var colsOpen = true
+
+    private val hideChans = Runnable { if (chansOn()) closeChans() }
+
+    /** every touch puts the eight seconds back */
+    private fun armChanHide() {
+        handler.removeCallbacks(hideChans)
+        handler.postDelayed(hideChans, 8000)
+    }
+
+    private fun chansOn(): Boolean =
+        ::chanLayer.isInitialized && chanLayer.visibility == View.VISIBLE
+
+    private fun buildChansUi() {
+        val layer = findViewById<FrameLayout>(R.id.playerLayer)
+
+        chanLayer = FrameLayout(this).apply {
+            visibility = View.GONE
+            /* a name, its logo and its number read the same way in every
+               language, so this one layer stays left to right */
+            layoutDirection = View.LAYOUT_DIRECTION_LTR
+        }
+        layer.addView(chanLayer, FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+
+        /* the picture keeps playing underneath; it only dims */
+        val scrim = View(this).apply {
+            setBackgroundColor(0x85000000.toInt())
+            isClickable = true
+            setOnClickListener { closeChans() }
+        }
+        chanLayer.addView(scrim, FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+
+        catCol = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        catCol.addView(colHeader("CATEGORIES"))
+        catBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        val catScroll = ScrollView(this).apply {
+            isFillViewport = false
+            addView(catBox)
+        }
+        catCol.addView(catScroll, LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
+        chanLayer.addView(catCol, FrameLayout.LayoutParams(
+            dp(198), ViewGroup.LayoutParams.MATCH_PARENT, Gravity.START or Gravity.TOP))
+
+        btnCols = TextView(this).apply {
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(0x73909090)
+            }
+            text = "‹"
+            setTextColor(Color.WHITE)
+            textSize = 21f
+            gravity = Gravity.CENTER
+            isClickable = true
+            isFocusable = true
+            contentDescription = "categories"
+        }
+        focusRing(btnCols, round = true)
+        chanLayer.addView(btnCols, FrameLayout.LayoutParams(
+            dp(42), dp(42), Gravity.START or Gravity.CENTER_VERTICAL).apply { marginStart = dp(204) })
+        btnCols.setOnClickListener { toggleCols() }
+
+        chanCol = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        chanCol.addView(colHeader("TV CHANNELS"))
+        chanBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        chanScroll = ScrollView(this).apply {
+            isFillViewport = false
+            addView(chanBox)
+        }
+        chanCol.addView(chanScroll, LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
+        chanLayer.addView(chanCol, FrameLayout.LayoutParams(
+            dp(272), ViewGroup.LayoutParams.MATCH_PARENT, Gravity.START or Gravity.TOP).apply {
+            marginStart = dp(254)
+        })
+
+        /* five hundred names are not built at once: the next forty arrive as
+           the list is scrolled, so opening it is instant on a cheap box */
+        chanScroll.setOnScrollChangeListener { _, _, y, _, _ ->
+            armChanHide()
+            val bottom = chanBox.height - chanScroll.height
+            if (bottom - y < dp(400)) drawMoreChans()
+        }
+    }
+
+    private fun colHeader(t: String): TextView = TextView(this).apply {
+        text = t
+        setTextColor(0xEBFFFFFF.toInt())
+        textSize = 12f
+        letterSpacing = 0.15f
+        gravity = Gravity.CENTER
+        setPadding(0, dp(16), 0, dp(8))
+        setShadowLayer(dp(5).toFloat(), 0f, dp(1).toFloat(), 0xE6000000.toInt())
+    }
+
+    /** the soft grey slab under whichever name is chosen - no border, no line */
+    private fun pickedBg(): GradientDrawable = GradientDrawable().apply {
+        cornerRadius = dp(13).toFloat()
+        setColor(0x6BA8A8A8)
+    }
+
+    private fun toggleCols() {
+        colsOpen = !colsOpen
+        catCol.visibility = if (colsOpen) View.VISIBLE else View.GONE
+        btnCols.text = if (colsOpen) "‹" else "›"
+        (btnCols.layoutParams as FrameLayout.LayoutParams).marginStart =
+            if (colsOpen) dp(204) else dp(8)
+        (chanCol.layoutParams as FrameLayout.LayoutParams).marginStart =
+            if (colsOpen) dp(254) else dp(58)
+        btnCols.requestLayout()
+        chanCol.requestLayout()
+        armChanHide()
+    }
+
+    private fun openChans() {
+        if (locked || chanAll.isEmpty()) return
+        closePanel()
+        /* open on the group the channel now playing belongs to */
+        val here = chanAll.indexOfFirst { it.u == currentUrl }
+        chanCat = if (here >= 0) chanAll[here].c else ALL_CATS
+        colsOpen = true
+        catCol.visibility = View.VISIBLE
+        btnCols.text = "‹"
+        (btnCols.layoutParams as FrameLayout.LayoutParams).marginStart = dp(204)
+        (chanCol.layoutParams as FrameLayout.LayoutParams).marginStart = dp(254)
+        fillCats()
+        fillChans()
+        chanLayer.visibility = View.VISIBLE
+        playerView.hideController()
+        armChanHide()
+        if (!chanLayer.isInTouchMode) chanBox.postDelayed({ focusPlaying() }, 60)
+    }
+
+    private fun closeChans() {
+        if (!::chanLayer.isInitialized) return
+        val was = chansOn()
+        chanLayer.visibility = View.GONE
+        handler.removeCallbacks(hideChans)
+        /* TV remote only: back to the ☰, so the next press has somewhere to go */
+        if (was && !chanLayer.isInTouchMode && !locked && !inPip &&
+            playerLayer.visibility == View.VISIBLE) {
+            playerView.showController()
+            btnChans.requestFocus()
+        }
+    }
+
+    private fun fillCats() {
+        catBox.removeAllViews()
+        val all = ArrayList<Pair<String, String>>()
+        all.add(Pair(ALL_CATS, tx("allCats")))
+        for (c in chanCats) all.add(Pair(c, c))
+        for ((key, label) in all) {
+            val row = TextView(this).apply {
+                text = label
+                setTextColor(Color.WHITE)
+                textSize = 15f
+                setTypeface(typeface, Typeface.BOLD)
+                maxLines = 2
+                ellipsize = android.text.TextUtils.TruncateAt.END
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(dp(13), 0, dp(13), 0)
+                setShadowLayer(dp(5).toFloat(), 0f, dp(1).toFloat(), 0xE6000000.toInt())
+                isClickable = true
+                isFocusable = true
+                background = if (key == chanCat) pickedBg() else null
+                tag = key
+            }
+            focusRing(row, round = false, radiusDp = 13)
+            row.setOnClickListener {
+                chanCat = key
+                armChanHide()
+                fillCats()
+                fillChans()
+            }
+            catBox.addView(row, LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(54)).apply {
+                topMargin = dp(2); leftMargin = dp(8); rightMargin = dp(8)
+            })
+        }
+    }
+
+    private fun fillChans() {
+        chanBox.removeAllViews()
+        chanDrawn = 0
+        chanShown = chanAll.indices.filter { chanCat == ALL_CATS || chanAll[it].c == chanCat }
+        drawMoreChans()
+        chanScroll.scrollTo(0, 0)
+    }
+
+    private fun drawMoreChans() {
+        var added = 0
+        while (chanDrawn < chanShown.size && added < 40) {
+            chanBox.addView(chanRow(chanDrawn), LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(56)).apply {
+                topMargin = dp(2); leftMargin = dp(6); rightMargin = dp(6)
+            })
+            chanDrawn++
+            added++
+        }
+    }
+
+    /** one line: the channel's own logo, its name, its number */
+    private fun chanRow(pos: Int): View {
+        val ch = chanAll[chanShown[pos]]
+        val playing = ch.u == currentUrl
+
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(9), 0, dp(9), 0)
+            isClickable = true
+            isFocusable = true
+            background = if (playing) pickedBg() else null
+            tag = ch.u
+        }
+        focusRing(row, round = false, radiusDp = 13)
+
+        val badge = TextView(this).apply {
+            text = initials(ch.n)
+            setTextColor(Color.WHITE)
+            textSize = 10f
+            setTypeface(typeface, Typeface.BOLD)
+            gravity = Gravity.CENTER
+            background = GradientDrawable().apply {
+                cornerRadius = dp(7).toFloat()
+                setColor(0x29FFFFFF)
+            }
+        }
+        val logo = ImageView(this).apply {
+            scaleType = ImageView.ScaleType.FIT_CENTER
+            visibility = View.GONE
+        }
+        val stack = FrameLayout(this)
+        stack.addView(badge, FrameLayout.LayoutParams(dp(38), dp(38)))
+        stack.addView(logo, FrameLayout.LayoutParams(dp(38), dp(38)))
+        row.addView(stack, LinearLayout.LayoutParams(dp(38), dp(38)).apply { marginEnd = dp(12) })
+
+        val name = TextView(this).apply {
+            text = ch.n
+            setTextColor(Color.WHITE)
+            textSize = 15f
+            setTypeface(typeface, Typeface.BOLD)
+            maxLines = 1
+            ellipsize = android.text.TextUtils.TruncateAt.END
+            setShadowLayer(dp(5).toFloat(), 0f, dp(1).toFloat(), 0xE6000000.toInt())
+        }
+        row.addView(name, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+
+        val no = TextView(this).apply {
+            text = (chanShown[pos] + 1).toString()
+            setTextColor(0xE0FFFFFF.toInt())
+            textSize = 14f
+            setShadowLayer(dp(5).toFloat(), 0f, dp(1).toFloat(), 0xE6000000.toInt())
+        }
+        row.addView(no, LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+            marginStart = dp(10)
+        })
+
+        row.setOnClickListener { pickChan(pos) }
+        loadLogo(logo, badge, ch.l)
+        return row
+    }
+
+    /** what stands in for a logo until the real one arrives, or if none does */
+    private fun initials(n: String): String {
+        val w = n.trim().split(Regex("\\s+")).filter { it.isNotBlank() }
+        if (w.isEmpty()) return "?"
+        val first = w[0]
+        return if (first.length >= 3) first.take(3).uppercase()
+               else w.take(3).joinToString("") { it.take(1) }.uppercase()
+    }
+
+    private fun pickChan(pos: Int) {
+        if (pos !in chanShown.indices) return
+        closeChans()
+        /* the next / previous buttons walk the group this came from */
+        val from = maxOf(0, pos - 150)
+        val to = minOf(chanShown.size, pos + 150)
+        val win = chanShown.subList(from, to).map { chanAll[it] }
+        openQueue(win.map { it.u }, win.map { it.n },
+                  win.map { it.ua }, win.map { it.rf }, pos - from, 0L)
+    }
+
+    /** the remote opens on the channel that is playing */
+    private fun focusPlaying() {
+        var target: View? = null
+        for (i in 0 until chanBox.childCount) {
+            val v = chanBox.getChildAt(i)
+            if (v.tag == currentUrl) { target = v; break }
+        }
+        (target ?: chanBox.getChildAt(0))?.requestFocus()
+    }
+
+    // ---------------- logos ----------------
+
+    /* Kept in memory for as long as the app is up: a panel's logos are small,
+       and asking for the same one twice while scrolling is what makes a list
+       feel slow. A logo that will not come is remembered too, so it is not
+       asked for again and again. */
+    private val logoCache = object : LruCache<String, Bitmap>(4 * 1024 * 1024) {
+        override fun sizeOf(key: String, value: Bitmap): Int = value.byteCount
+    }
+    private val logoBad = java.util.Collections.synchronizedSet(HashSet<String>())
+    private val logoPool = java.util.concurrent.Executors.newFixedThreadPool(3)
+
+    private fun loadLogo(img: ImageView, badge: TextView, url: String) {
+        img.tag = url
+        if (url.isBlank() || !url.startsWith("http", true) || logoBad.contains(url)) return
+        val hit = logoCache.get(url)
+        if (hit != null) {
+            img.setImageBitmap(hit)
+            img.visibility = View.VISIBLE
+            badge.visibility = View.GONE
+            return
+        }
+        logoPool.execute {
+            var bm: Bitmap? = null
+            try {
+                val c = fetchAllowingCloudflare(url)
+                val bytes = c.inputStream.use { it.readBytes() }
+                try { c.disconnect() } catch (e: Exception) { }
+                if (bytes.size in 1..(2 * 1024 * 1024)) {
+                    val probe = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                    BitmapFactory.decodeByteArray(bytes, 0, bytes.size, probe)
+                    var step = 1
+                    while (probe.outWidth / step > 160 || probe.outHeight / step > 160) step *= 2
+                    bm = BitmapFactory.decodeByteArray(bytes, 0, bytes.size,
+                        BitmapFactory.Options().apply { inSampleSize = step })
+                }
+            } catch (e: Exception) { /* a logo is never worth a crash */ }
+            if (bm == null) { logoBad.add(url); return@execute }
+            logoCache.put(url, bm)
+            val ready = bm
+            runOnUiThread {
+                if (img.tag == url) {
+                    img.setImageBitmap(ready)
+                    img.visibility = View.VISIBLE
+                    badge.visibility = View.GONE
+                }
+            }
+        }
+    }
+
     private fun panelOn(): Boolean = panel.visibility == View.VISIBLE
 
     private fun openPanel() {
         if (locked) return
+        closeChans()
         val w = resources.displayMetrics.widthPixels
         panel.layoutParams = (panel.layoutParams as FrameLayout.LayoutParams).apply {
             width = minOf(dp(360), (w * 0.62f).toInt())
