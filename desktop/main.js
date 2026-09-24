@@ -132,7 +132,7 @@ function makePlayer() {
       const say = WONT_OPEN[l] || WONT_OPEN.en;
       run("window.showSync&&showSync(" + JSON.stringify(name ? name + " \u2014 " + say : say) + ",true)");
     }
-  });
+  }, proxied ? proxied.live : null);
 }
 
 function run(js) {

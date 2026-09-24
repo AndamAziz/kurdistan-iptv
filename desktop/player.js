@@ -56,34 +56,43 @@ function isVod(u) {
  * them now works.
  */
 /**
- * Three ways to write the same queue:
+ * Four ways to write the same queue:
  *
- *   "auto"   what has always been written: films and episodes through FFmpeg,
+ *   "proxy"  channels fetched through the app's own go-between, which follows
+ *            wherever the panel sends it and writes the stream's parts out in
+ *            full - the only way a channel whose panel moves it twice can be
+ *            found at all. Films and episodes as in "auto".
+ *   "auto"   what was always written: films and episodes through FFmpeg,
  *            channels the way mpv opens them itself
  *   "plain"  nothing through FFmpeg - the oldest, plainest path
- *   "all"    everything through FFmpeg, which is what a channel needs when
- *            mpv's own way of fetching it cannot find the stream's parts
+ *   "all"    everything through FFmpeg
  */
-function playlistText(items, mode) {
+function playlistText(items, mode, via) {
   /* it used to be a flag; both spellings still mean the same thing */
   const how = (mode === true) ? "auto" : (mode === false || !mode) ? "plain" : mode;
   let out = "#EXTM3U\n";
   for (const it of items) {
     if (!it || !it.u) continue;
     const web = /^https?:/i.test(it.u);
-    const ff = web && (how === "all" || (how === "auto" && isVod(it.u)));
+    const vod = isVod(it.u);
+    let line = it.u;
+    if (web && !vod && how === "proxy" && via) line = via + encodeURIComponent(it.u);
+    else if (web && (how === "all" || ((how === "auto" || how === "proxy") && vod))) line = "lavf://" + it.u;
     out += "#EXTINF:-1," + String(it.n || "").replace(/[\r\n]+/g, " ") + "\n";
-    out += (ff ? "lavf://" : "") + it.u + "\n";
+    out += line + "\n";
   }
   return out;
 }
 
-const QUEUE_FILE = { auto: "kiptv-queue.m3u8", plain: "kiptv-plain.m3u8", all: "kiptv-lavf.m3u8" };
+const QUEUE_FILE = {
+  proxy: "kiptv-via.m3u8", auto: "kiptv-queue.m3u8",
+  plain: "kiptv-plain.m3u8", all: "kiptv-lavf.m3u8"
+};
 
-function writePlaylist(items, dir, mode) {
+function writePlaylist(items, dir, mode, via) {
   const how = (mode === true) ? "auto" : (mode === false || !mode) ? "plain" : mode;
   const file = path.join(dir, QUEUE_FILE[how] || QUEUE_FILE.plain);
-  fs.writeFileSync(file, playlistText(items, how), "utf8");
+  fs.writeFileSync(file, playlistText(items, how, via), "utf8");
   return file;
 }
 
@@ -273,10 +282,12 @@ class Player {
    * @param dir   a folder of our own to leave the queue file in
    * @param hooks { onPosition(url, posMs, durMs), onClosed() }
    */
-  constructor(exe, dir, hooks) {
+  constructor(exe, dir, hooks, via) {
     this.exe = exe;
     this.dir = dir;
     this.hooks = hooks || {};
+    /* where the app's own go-between listens, if it is up */
+    this.via = via || null;
     this.child = null;
     this.link = null;
     this.ticker = null;
@@ -300,18 +311,25 @@ class Player {
       return this.spawn(mpvArgs({
         items: this.items, index: at, startMs, box: withBox ? box : null, log,
         pipe: this.pipe,
-        playlist: writePlaylist(this.items, this.dir, mode)
+        playlist: writePlaylist(this.items, this.dir, mode, this.via)
       }));
     };
 
-    /* ---- first, exactly what the app has always done ---- */
-    if (!go("auto", true)) return this.failed(at);
+    /* ---- Channels go through the go-between, which knows how to follow a
+           panel that moves them. If it is not up, or the channel will not
+           come that way, the old path is still there underneath. ---- */
+    const first = (this.via && !isVod(want)) ? "proxy" : "auto";
+    if (!go(first, true)) return this.failed(at);
     this.listen();                      /* in the background; settling waits on it */
 
     /* Two things can leave mpv with nothing to show: a screen arrangement it
        will not have, and - for a film - the other way of fetching it. Either
        way it is given a second, plainer try rather than left dead. */
     let alive = await this.settled();
+    if (!alive && first !== "auto") {
+      go("auto", true); this.listen();
+      alive = await this.settled();
+    }
     if (!alive) {
       go("plain", true); this.listen();
       alive = await this.settled();
@@ -333,7 +351,7 @@ class Player {
        not have that fault, so that one channel is given exactly that. */
     this.swapping = true;
     await this.close();
-    if (go("all", true)) this.listen();
+    if (go(first === "proxy" ? "all" : (this.via && !isVod(want) ? "proxy" : "all"), true)) this.listen();
     const again = await this.settled();
     this.swapping = false;
     if (!again) return this.failed(at);

@@ -49,13 +49,89 @@ async function fetchAllowingCloudflare(target) {
   return r;
 }
 
+/**
+ * Make every address in a stream's list a whole address.
+ *
+ * A panel answers a channel by sending the player somewhere else - twice, for
+ * some channels: first to https, then to whichever machine actually carries
+ * the stream. The list that finally comes back names its parts in short form
+ * ("tracks-v1a1/mono.m3u8"), and those parts hang off the address the list
+ * came from, NOT the address that was first asked for. The player on Windows
+ * fetches through its own web code, which does not pass the final address on,
+ * so it looks for every part back at the panel and finds nothing.
+ *
+ * Writing the parts out in full, against the address the list really came
+ * from, ends the whole question: there is nothing left to resolve.
+ */
+function inFull(text, base) {
+  const whole = u => { try { return new URL(u, base).toString() } catch (e) { return u } };
+  return text.split(/\r?\n/).map(line => {
+    const t = line.trim();
+    if (!t) return line;
+    /* a key, a sound track, a starting piece: the address sits in URI="..." */
+    if (t.charAt(0) === "#") return line.replace(/URI="([^"]+)"/g, (m, u) => 'URI="' + whole(u) + '"');
+    return whole(t);
+  }).join("\n");
+}
+
+function looksLikeList(type, head) {
+  if (/mpegurl|x-mpegURL|m3u/i.test(type || "")) return true;
+  return head.slice(0, 7).toString("latin1") === "#EXTM3U";
+}
+
+/** the whole first mouthful of the answer, and a way to keep drinking */
+async function firstBite(r) {
+  const reader = r.body ? r.body.getReader() : null;
+  if (!reader) return { head: Buffer.alloc(0), reader: null };
+  const bite = await reader.read();
+  return { head: bite.value ? Buffer.from(bite.value) : Buffer.alloc(0), reader };
+}
+
 function start() {
   const server = http.createServer(async (req, res) => {
     if (req.method === "OPTIONS") { res.writeHead(200, HEAD); res.end(); return }
 
-    let target = null;
-    try { target = new URL(req.url, "http://127.0.0.1").searchParams.get("u") } catch (e) { }
+    let here = null, target = null;
+    try {
+      here = new URL(req.url, "http://127.0.0.1");
+      target = here.searchParams.get("u");
+    } catch (e) { }
     if (!target) { res.writeHead(400, HEAD); res.end("PROXY_ERROR NoTarget"); return }
+
+    /* A channel, rather than something the page is fetching for itself. Only
+       its list passes through here; the stream itself goes straight from
+       wherever it lives to the player. */
+    if (here.pathname === "/live") {
+      try {
+        const r = await fetchAllowingCloudflare(target);
+        const came = r.url || target;
+        const { head, reader } = await firstBite(r);
+        if (looksLikeList(r.headers.get("content-type"), head)) {
+          const parts = [head];
+          for (;;) {
+            const c = await reader.read();
+            if (c.done) break;
+            parts.push(Buffer.from(c.value));
+          }
+          const body = Buffer.from(inFull(Buffer.concat(parts).toString("utf8"), came), "utf8");
+          res.writeHead(200, Object.assign({}, HEAD, {
+            "Content-Type": "application/vnd.apple.mpegurl",
+            "Content-Length": body.length
+          }));
+          res.end(body);
+          return;
+        }
+        /* not a list at all - nothing to put right, so the player is simply
+           pointed at where the channel really is and fetches it itself */
+        try { if (reader) await reader.cancel() } catch (e) { }
+        res.writeHead(302, Object.assign({}, HEAD, { Location: came }));
+        res.end();
+      } catch (e) {
+        res.writeHead(599, HEAD);
+        res.end("PROXY_ERROR " + (e && e.name ? e.name : "Error") + ": " + (e && e.message ? e.message : ""));
+      }
+      return;
+    }
 
     try {
       const r = await fetchAllowingCloudflare(target);
@@ -72,9 +148,13 @@ function start() {
   return new Promise(done => {
     server.listen(0, "127.0.0.1", () => {
       const port = server.address().port;
-      done({ server, port, url: "http://127.0.0.1:" + port + "/p?u=" });
+      done({
+        server, port,
+        url: "http://127.0.0.1:" + port + "/p?u=",
+        live: "http://127.0.0.1:" + port + "/live?u="
+      });
     });
   });
 }
 
-module.exports = { start, UA, BROWSER_UA };
+module.exports = { start, UA, BROWSER_UA, inFull, looksLikeList };
