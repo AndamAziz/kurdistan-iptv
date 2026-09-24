@@ -1,31 +1,35 @@
 [en]
-The Windows app can now tell which version it is.
+Series on Windows: episodes no longer stop and start.
 
-It always called itself build 1, so it never knew a newer one existed and the
-fixes from the last release never reached anyone who was waiting to be told.
-The number now travels inside the app itself instead of being read from the
-machine that built it.
+An episode of a series runs to two gigabytes for forty minutes - seven or
+eight megabits every second, far more than a television channel asks for. The
+player was only reading eight seconds ahead, which is barely seven megabytes,
+so the smallest hesitation on the line emptied the buffer and the picture
+stopped. It now reads a minute ahead and holds one connection open for the
+whole file.
 
-On a wide window, settings and the panels that slide up are no longer stretched
-from edge to edge: they stand in the middle at a readable width.
+Live channels are unaffected: a live stream has no future to send, so it never
+used that room anyway.
 
 [ku]
-ئەپی Windows ئێستا دەزانێت کام وەشانە.
+سریاڵ لەسەر Windows: بەشەکان ئیتر ناوەستن و دەست پێ ناکەنەوە.
 
-هەمیشە خۆی بە بیڵدی ١ دەناساند، بۆیە هەرگیز نەیدەزانی وەشانێکی نوێتر هەیە، و
-ئەو چاککارییانەی وەشانی پێشوو نەگەیشتنە دەستی ئەو کەسانەی چاوەڕێی ئاگادارکردنەوە
-بوون. ئێستا ژمارەکە لەناو خودی ئەپەکەدا دەڕوات، نەک لەو کۆمپیوتەرەوە بخوێندرێتەوە
-کە دروستی کردووە.
+بەشێکی سریاڵ بۆ چل خولەک دەگاتە دوو گیگابایت — حەوت یان هەشت مێگابیت لە
+چرکەیەکدا، زۆر زیاتر لەوەی کەناڵێکی تەلەفیزیۆنی داوای دەکات. پلەیەرەکە تەنها
+هەشت چرکەی بەردەمی دەخوێندەوە، کە بە زەحمەت حەوت مێگابایتە، بۆیە بچووکترین
+وەستانی هێڵەکە پەنجەرەکەی بەتاڵ دەکرد و وێنەکە دەوەستا. ئێستا خولەکێک
+دەخوێنێتەوە و یەک پەیوەندی بۆ هەموو فایلەکە کراوە ڕادەگرێت.
 
-لەسەر پەنجەرەیەکی فراوان، ڕێکخستن و ئەو پەڕانەی لە خوارەوە سەردەکەون ئیتر لە
-لێوارێکەوە بۆ لێوارەکەی تر ڕانەکێشراون: لە ناوەڕاستدا دەوەستن بە پانییەکی خوێندنەوە.
+کەناڵە زیندووەکان کاریگەر نابن: ستریمێکی زیندوو داهاتووی نییە بینێرێت، بۆیە
+هەرگیز ئەو شوێنەی بەکار نەدەهێنا.
 
 [ar]
-تطبيق Windows صار يعرف أي إصدار هو.
+المسلسلات على Windows: الحلقات لم تعد تتوقف وتعاود.
 
-كان يسمّي نفسه دائمًا الإصدار ١، فلم يعرف قط بوجود أحدث منه، ولم تصل إصلاحات
-الإصدار السابق إلى من كان ينتظر إشعارًا. صار الرقم يسافر داخل التطبيق نفسه بدل
-أن يُقرأ من الجهاز الذي بناه.
+حلقة المسلسل تبلغ غيغابايتين لأربعين دقيقة — سبعة أو ثمانية ميغابت كل ثانية،
+أكثر بكثير مما تطلبه قناة تلفزيونية. كان المشغّل يقرأ ثماني ثوانٍ فقط مقدمًا،
+وهي بالكاد سبعة ميغابايت، فكان أدنى تعثّر في الخط يفرغ المخزن فتتوقف الصورة.
+صار الآن يقرأ دقيقة مقدمًا ويبقي اتصالًا واحدًا مفتوحًا للملف كله.
 
-وعلى نافذة عريضة، لم تعد الإعدادات واللوحات التي تصعد من الأسفل ممتدة من حافة
-إلى حافة: تقف في الوسط بعرض مريح للقراءة.
+القنوات المباشرة لا تتأثر: البث المباشر لا يملك مستقبلًا ليرسله، فلم يكن
+يستخدم تلك المساحة أصلًا.
