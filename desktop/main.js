@@ -103,6 +103,18 @@ function mpvPath() {
   return process.platform === "win32" ? "mpv.exe" : "mpv";     /* on the path, if anywhere */
 }
 
+/** what to say when a channel simply will not open, in the app's own language */
+const WONT_OPEN = {
+  en: "this channel would not open",
+  ku: "\u0626\u06d5\u0645 \u06a9\u06d5\u0646\u0627\u06b5\u06d5 \u0646\u0627\u06a9\u0631\u06ce\u062a\u06d5\u0648\u06d5",
+  ar: "\u0647\u0630\u0647 \u0627\u0644\u0642\u0646\u0627\u0629 \u0644\u0627 \u062a\u0641\u062a\u062d"
+};
+
+function pageLang() {
+  if (!win || win.isDestroyed()) return Promise.resolve("en");
+  return win.webContents.executeJavaScript("window.lang||'en'").catch(() => "en");
+}
+
 function makePlayer() {
   return new Player(mpvPath(), app.getPath("userData"), {
     onPosition(u, posMs, durMs) {
@@ -111,6 +123,14 @@ function makePlayer() {
     onClosed() {
       run("window.refreshHome&&refreshHome()");
       if (win && !win.isDestroyed()) win.focus();
+    },
+    /* A channel that will not open used to be hidden: mpv moved on to the
+       next one in the queue and a different channel came up instead. Now it
+       stops, and the name of the channel that failed is said out loud. */
+    async onFailed(name) {
+      const l = await pageLang();
+      const say = WONT_OPEN[l] || WONT_OPEN.en;
+      run("window.showSync&&showSync(" + JSON.stringify(name ? name + " \u2014 " + say : say) + ",true)");
     }
   });
 }

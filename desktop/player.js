@@ -20,6 +20,18 @@ const PIPE = process.platform === "win32"
   ? "\\\\.\\pipe\\kiptv-mpv"
   : path.join(os.tmpdir(), "kiptv-mpv.sock");
 
+/* Every mpv gets a pipe of its own. Two of them share a name only long
+   enough to go wrong: the one shutting down takes the name away from the one
+   starting, and the new one is then deaf - nothing can be asked of it,
+   including which channel it ended up on. */
+let pipeNo = 0;
+function newPipe() {
+  const tag = process.pid + "-" + (++pipeNo);
+  return process.platform === "win32"
+    ? "\\\\.\\pipe\\kiptv-mpv-" + tag
+    : path.join(os.tmpdir(), "kiptv-mpv-" + tag + ".sock");
+}
+
 /* ---------------------------------------------------------------- the queue */
 
 /**
@@ -43,21 +55,47 @@ function isVod(u) {
  * second. Live channels are left alone: they never jump, and what carries
  * them now works.
  */
-function playlistText(items, direct) {
+/**
+ * Three ways to write the same queue:
+ *
+ *   "auto"   what has always been written: films and episodes through FFmpeg,
+ *            channels the way mpv opens them itself
+ *   "plain"  nothing through FFmpeg - the oldest, plainest path
+ *   "all"    everything through FFmpeg, which is what a channel needs when
+ *            mpv's own way of fetching it cannot find the stream's parts
+ */
+function playlistText(items, mode) {
+  /* it used to be a flag; both spellings still mean the same thing */
+  const how = (mode === true) ? "auto" : (mode === false || !mode) ? "plain" : mode;
   let out = "#EXTM3U\n";
   for (const it of items) {
     if (!it || !it.u) continue;
+    const web = /^https?:/i.test(it.u);
+    const ff = web && (how === "all" || (how === "auto" && isVod(it.u)));
     out += "#EXTINF:-1," + String(it.n || "").replace(/[\r\n]+/g, " ") + "\n";
-    out += ((direct && isVod(it.u) && /^https?:/i.test(it.u)) ? "lavf://" : "") + it.u + "\n";
+    out += (ff ? "lavf://" : "") + it.u + "\n";
   }
   return out;
 }
 
-function writePlaylist(items, dir, direct) {
-  const file = path.join(dir, direct ? "kiptv-queue.m3u8" : "kiptv-plain.m3u8");
-  fs.writeFileSync(file, playlistText(items, direct), "utf8");
+const QUEUE_FILE = { auto: "kiptv-queue.m3u8", plain: "kiptv-plain.m3u8", all: "kiptv-lavf.m3u8" };
+
+function writePlaylist(items, dir, mode) {
+  const how = (mode === true) ? "auto" : (mode === false || !mode) ? "plain" : mode;
+  const file = path.join(dir, QUEUE_FILE[how] || QUEUE_FILE.plain);
+  fs.writeFileSync(file, playlistText(items, how), "utf8");
   return file;
 }
+
+/** the address without the "play this through FFmpeg" mark in front of it */
+function bareUrl(u) {
+  const s = String(u || "");
+  return s.startsWith("lavf://") ? s.slice(7) : s;
+}
+
+function sameStream(a, b) { return bareUrl(a) === bareUrl(b); }
+
+const wait = ms => new Promise(r => setTimeout(r, ms));
 
 /* ------------------------------------------------------------- the arguments */
 
@@ -81,7 +119,15 @@ function mpvArgs(opts) {
     "--osc=yes",
     "--osd-bar=yes",
     "--input-default-bindings=yes",
-    "--input-ipc-server=" + PIPE,
+    "--input-ipc-server=" + (opts.pipe || PIPE),
+    /* The queue is written by this app, from addresses the app itself built.
+       mpv will not follow a line in a playlist that names how to open it
+       unless it is told the list can be trusted - and without that, asking
+       for a film or a channel to go through FFmpeg is quietly ignored. */
+    "--load-unsafe-playlists",
+    /* there is no youtube-dl here to ask; without this mpv spends half a
+       second looking for one every time a channel fails */
+    "--ytdl=no",
     /* the name of whatever is playing, which the queue file carries */
     "--title=${media-title}",
     "--hwdec=auto-safe",
@@ -157,12 +203,13 @@ function geometry(b) {
 
 /** mpv answers one JSON object per line over the pipe. */
 class Link {
-  constructor() { this.sock = null; this.id = 0; this.waiting = new Map(); this.buf = "" }
+  constructor() { this.sock = null; this.id = 0; this.waiting = new Map(); this.buf = ""; this.onProp = null }
 
-  connect(tries = 40) {
+  connect(pipe, tries = 40) {
+    const where = pipe || PIPE;
     return new Promise(done => {
       const go = left => {
-        const s = net.connect(PIPE);
+        const s = net.connect(where);
         s.on("connect", () => {
           this.sock = s;
           s.on("data", d => this.read(d));
@@ -189,6 +236,11 @@ class Link {
       if (!line) continue;
       let m = null;
       try { m = JSON.parse(line) } catch (e) { continue }
+      /* mpv speaks first when something it was asked to watch changes */
+      if (m && m.event === "property-change" && this.onProp) {
+        try { this.onProp(m.name, m.data) } catch (e) { /* never on mpv's thread */ }
+        continue;
+      }
       if (m && m.request_id && this.waiting.has(m.request_id)) {
         const done = this.waiting.get(m.request_id);
         this.waiting.delete(m.request_id);
@@ -229,6 +281,8 @@ class Player {
     this.link = null;
     this.ticker = null;
     this.items = [];
+    this.swapping = false;
+    this.pipe = null;
   }
 
   get playing() { return !!this.child }
@@ -237,36 +291,132 @@ class Player {
     await this.close();
     this.items = items || [];
     if (!this.items.length) return false;
+    const at = (index >= 0 && index < this.items.length) ? index : 0;
+    const want = this.items[at].u;
 
     const log = path.join(this.dir, "mpv.log");
-    const playlist = writePlaylist(this.items, this.dir, true);
-    const args = mpvArgs({ items: this.items, index, startMs, playlist, box, log });
+    const go = (mode, withBox) => {
+      this.pipe = newPipe();
+      return this.spawn(mpvArgs({
+        items: this.items, index: at, startMs, box: withBox ? box : null, log,
+        pipe: this.pipe,
+        playlist: writePlaylist(this.items, this.dir, mode)
+      }));
+    };
 
-    const started = this.spawn(args);
-    if (!started) return false;
+    /* ---- first, exactly what the app has always done ---- */
+    if (!go("auto", true)) return this.failed(at);
+    this.listen();                      /* in the background; settling waits on it */
 
     /* Two things can leave mpv with nothing to show: a screen arrangement it
        will not have, and - for a film - the other way of fetching it. Either
        way it is given a second, plainer try rather than left dead. */
     let alive = await this.settled();
     if (!alive) {
-      const plain = writePlaylist(this.items, this.dir, false);
-      this.spawn(mpvArgs({ items: this.items, index, startMs, playlist: plain, box, log }));
+      go("plain", true); this.listen();
       alive = await this.settled();
-      if (!alive && box) {
-        this.spawn(mpvArgs({ items: this.items, index, startMs, playlist: plain, log }));
-        await this.settled();
+      if (!alive && box) { go("plain", false); this.listen(); alive = await this.settled() }
+    }
+    if (!this.child) return this.failed(at);
+
+    await this.linkUp();
+    let how = await this.watch(want);
+    if (how === "ok") { this.tick(); return true }
+
+    /* ---- it opened something else ----
+       mpv moves on to the next line of the queue when a channel will not
+       open, which is why the wrong channel comes up instead of a word about
+       it. The usual reason is that mpv fetched the channel with its own web
+       code, which hands the stream's own list of parts an address they are
+       not under, so every part comes back missing. FFmpeg's web code does
+       not have that fault, so that one channel is given exactly that. */
+    this.swapping = true;
+    await this.close();
+    if (go("all", true)) this.listen();
+    const again = await this.settled();
+    this.swapping = false;
+    if (!again) return this.failed(at);
+
+    await this.linkUp();
+    how = await this.watch(want);
+    if (how === "ok") { this.tick(); return true }
+
+    /* it will not open at all: say so, rather than play something else */
+    await this.close();
+    return this.failed(at);
+  }
+
+  /** open the pipe to mpv; started early so settling can end the moment it answers */
+  listen() {
+    if (this.link) { this.link.close(); this.link = null }
+    const l = new Link();
+    this.link = l;
+    this.linking = l.connect(this.pipe);
+    return this.linking;
+  }
+
+  async linkUp() {
+    try { await this.linking } catch (e) { /* mpv gone; the caller sees that */ }
+  }
+
+  /** the page is told which channel would not open, so it can say so */
+  failed(at) {
+    const it = this.items[at] || {};
+    if (this.hooks.onFailed) this.hooks.onFailed(String(it.n || ""));
+    return false;
+  }
+
+  /**
+   * Is mpv playing what it was asked for?
+   *
+   * "ok"    yes, and the picture has started
+   * "wrong" no - it has moved on to something else
+   * "dead"  mpv is gone
+   *
+   * A channel is given all the time it needs; only a channel that is
+   * plainly no longer the one asked for cuts the wait short, and it has to
+   * read that way twice in a row before it counts.
+   */
+  async watch(want, ms = 25000) {
+    /* No pipe to mpv means no way to ask what it is playing. Rather than
+       hold everything up guessing, the player behaves exactly as it did
+       before any of this was added. */
+    if (!this.child) return "dead";
+    if (!this.link || !this.link.sock) return "ok";
+    let moved = false;
+    if (this.link) {
+      /* mpv says so the instant it moves on, which is the difference between
+         cutting the wrong channel off unseen and watching it start */
+      this.link.onProp = (name, value) => {
+        if (name === "path" && value != null && !sameStream(value, want)) moved = true;
+      };
+      await this.link.send(["observe_property", 1, "path"]);
+    }
+    const until = Date.now() + ms;
+    let asked = 0;
+    while (Date.now() < until) {
+      await wait(120);
+      if (!this.child) return "dead";
+      if (moved) return "wrong";
+      if (!this.link || !this.link.sock) return this.child ? "ok" : "dead";
+      /* a slower check as well, in case the notice never comes */
+      if (++asked % 5 === 0) {
+        const here = await this.link.get("path");
+        if (here != null && !sameStream(here, want)) return "wrong";
+        const t = await this.link.get("time-pos");
+        if (typeof t === "number" && t > 0.4) return "ok";
       }
     }
-    if (!this.child) return false;
-
-    this.link = new Link();
-    await this.link.connect();
-    this.tick();
-    return true;
+    return "ok";        /* still the right channel, only slow: leave it be */
   }
 
   spawn(args) {
+    /* Windows takes its pipe away with the process; elsewhere the name is a
+       file that outlives it, and mpv started on top of a stale one runs deaf.
+       Then nothing can be asked of it - including which channel it is on. */
+    if (process.platform !== "win32" && this.pipe) {
+      try { fs.unlinkSync(this.pipe) } catch (e) { /* not there, which is right */ }
+    }
     let c = null;
     try {
       c = spawn(this.exe, args, { stdio: "ignore", windowsHide: false });
@@ -279,19 +429,37 @@ class Player {
     const gone = () => {
       if (over) return;
       over = true;
+      /* One mpv ending while the next is already up must not take the new
+         one's pipe down with it - everything after that would be talking to
+         a player that is no longer there. */
+      if (this.child !== c) return;
       this.stopTicker();
-      if (this.child === c) this.child = null;
+      this.child = null;
       if (this.link) { this.link.close(); this.link = null }
-      if (this.hooks.onClosed) this.hooks.onClosed();
+      /* a second try for the same channel is not the player closing */
+      if (!this.swapping && this.hooks.onClosed) this.hooks.onClosed();
     };
     c.on("exit", gone);
     c.on("error", gone);
     return true;
   }
 
-  /** true when mpv is still running a moment after it was asked to start */
-  settled(ms = 1600) {
-    return new Promise(done => setTimeout(() => done(!!this.child), ms));
+  /**
+   * True when mpv is still running a moment after it was asked to start.
+   *
+   * It answers the moment it knows: mpv that died is gone at once, and mpv
+   * that opened its pipe has plainly started. Only mpv that has done
+   * neither is waited on for the whole moment - and that wait is what a
+   * channel that will not open used to spend playing a different one.
+   */
+  async settled(ms = 1600) {
+    const until = Date.now() + ms;
+    while (Date.now() < until) {
+      await wait(80);
+      if (!this.child) return false;
+      if (this.link && this.link.sock) return true;
+    }
+    return !!this.child;
   }
 
   /* where the film had got to, so the page can offer to carry on later */
@@ -319,4 +487,5 @@ class Player {
   }
 }
 
-module.exports = { Player, mpvArgs, playlistText, writePlaylist, isVod, geometry, PIPE };
+module.exports = { Player, mpvArgs, playlistText, writePlaylist, isVod, geometry,
+                   bareUrl, sameStream, PIPE };
