@@ -27,19 +27,35 @@ const PIPE = process.platform === "win32"
  * Windows stops a command line at 32767 characters, and a panel's channel
  * list goes well past that on its own.
  */
-function playlistText(items) {
+/** a film or an episode, as opposed to a channel going out live */
+function isVod(u) {
+  const s = String(u || "").toLowerCase().split("?")[0];
+  return /\/(movie|movies|series|vod)\//.test(s) ||
+         /\.(mp4|mkv|avi|mov|webm|flv|m4v|m4a)$/.test(s);
+}
+
+/**
+ * Films and episodes are asked for through FFmpeg's own web code rather than
+ * the player's, because only FFmpeg can be told to keep one connection open
+ * across the jumps such a file needs. A badly made film - one whose sound is
+ * stored at the far end of the file, away from its picture - makes hundreds
+ * of those jumps, and each one that opens a new connection costs a fifth of a
+ * second. Live channels are left alone: they never jump, and what carries
+ * them now works.
+ */
+function playlistText(items, direct) {
   let out = "#EXTM3U\n";
   for (const it of items) {
     if (!it || !it.u) continue;
     out += "#EXTINF:-1," + String(it.n || "").replace(/[\r\n]+/g, " ") + "\n";
-    out += it.u + "\n";
+    out += ((direct && isVod(it.u) && /^https?:/i.test(it.u)) ? "lavf://" : "") + it.u + "\n";
   }
   return out;
 }
 
-function writePlaylist(items, dir) {
-  const file = path.join(dir, "kiptv-queue.m3u8");
-  fs.writeFileSync(file, playlistText(items), "utf8");
+function writePlaylist(items, dir, direct) {
+  const file = path.join(dir, direct ? "kiptv-queue.m3u8" : "kiptv-plain.m3u8");
+  fs.writeFileSync(file, playlistText(items, direct), "utf8");
   return file;
 }
 
@@ -222,19 +238,25 @@ class Player {
     this.items = items || [];
     if (!this.items.length) return false;
 
-    const playlist = writePlaylist(this.items, this.dir);
     const log = path.join(this.dir, "mpv.log");
+    const playlist = writePlaylist(this.items, this.dir, true);
     const args = mpvArgs({ items: this.items, index, startMs, playlist, box, log });
 
     const started = this.spawn(args);
     if (!started) return false;
 
-    /* a screen arrangement mpv will not have leaves it no window at all;
-       without the placing it always opens somewhere */
-    const alive = await this.settled();
-    if (!alive && box) {
-      this.spawn(mpvArgs({ items: this.items, index, startMs, playlist, log }));
-      await this.settled();
+    /* Two things can leave mpv with nothing to show: a screen arrangement it
+       will not have, and - for a film - the other way of fetching it. Either
+       way it is given a second, plainer try rather than left dead. */
+    let alive = await this.settled();
+    if (!alive) {
+      const plain = writePlaylist(this.items, this.dir, false);
+      this.spawn(mpvArgs({ items: this.items, index, startMs, playlist: plain, box, log }));
+      alive = await this.settled();
+      if (!alive && box) {
+        this.spawn(mpvArgs({ items: this.items, index, startMs, playlist: plain, log }));
+        await this.settled();
+      }
     }
     if (!this.child) return false;
 
@@ -297,4 +319,4 @@ class Player {
   }
 }
 
-module.exports = { Player, mpvArgs, playlistText, writePlaylist, geometry, PIPE };
+module.exports = { Player, mpvArgs, playlistText, writePlaylist, isVod, geometry, PIPE };
