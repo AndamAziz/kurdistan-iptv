@@ -1,36 +1,39 @@
 [en]
-Films and episodes are now fetched a different way on Windows.
+The channel list is now inside the player.
 
-Some episodes arrive with their sound stored at the far end of the file, away
-from the picture. Playing a second of such a file means jumping across two
-gigabytes and back, and the player was opening a fresh connection for every
-jump - a fifth of a second each, five times a second. Those files now go
-through FFmpeg's own web code, which keeps one connection open across the
-jumps. Live channels are untouched.
+While a channel is playing, the list opens straight over the picture: the
+groups on the left, the channels beside them, each with its own logo and
+number. Nothing is drawn around them - no box, no border, no line; the
+picture only dims enough to read the names by, and the channel never stops.
+It opens on the group the channel belongs to, picking a name switches at
+once, and it puts itself away after eight seconds.
 
-A file made this way is hard on any player; the lasting fix is for it to be
-stored with its sound and picture together.
+The previous and next buttons now walk the group the channel was chosen
+from, instead of the whole list.
 
 [ku]
-فیلم و بەشەکانی سریاڵ ئێستا بە شێوەیەکی تر دەهێنرێن لەسەر Windows.
+لیستی کەناڵەکان ئێستا لەناو پلەیەرەکەدایە.
 
-هەندێک بەش دەنگەکەیان لە کۆتایی فایلەکەدا هەڵگیراوە، دوور لە وێنەکە. بۆ
-پەخشکردنی یەک چرکە لە فایلێکی وا، پێویستە دوو گیگابایت بازبدرێت و بگەڕێتەوە،
-و پلەیەرەکە بۆ هەر بازێک پەیوەندییەکی نوێی دەکردەوە — پێنج یەکی چرکە بۆ هەر
-یەکێکیان، پێنج جار لە چرکەیەکدا. ئەو فایلانە ئێستا بە کۆدی وێبی خودی FFmpeg
-دەهێنرێن، کە یەک پەیوەندی بە درێژایی بازەکان کراوە ڕادەگرێت. کەناڵە
-زیندووەکان دەستیان لێ نەدراوە.
+لە کاتی پەخشدا، لیستەکە ڕاستەوخۆ لەسەر وێنەکە دەکرێتەوە: پۆلەکان لای چەپ،
+کەناڵەکان لە تەنیشتیان، هەریەکە بە لۆگۆ و ژمارەی خۆیەوە. هیچ شتێک بە دەوریان
+نەکێشراوە — نە چوارچێوە، نە سنوور، نە هێڵ؛ تەنها ڕوونی وێنەکە کەم دەبێتەوە
+بەو ئەندازەیەی ناوەکان بخوێنرێنەوە، و کەناڵەکە هەرگیز ناوەستێت.
 
-فایلێکی بەم شێوەیە بۆ هەر پلەیەرێک قورسە؛ چارەسەری هەمیشەیی ئەوەیە کە
-دەنگ و وێنەی پێکەوە هەڵبگیرێت.
+لەسەر ئەو پۆلە دەکرێتەوە کە کەناڵەکە سەر بەوەیە، هەڵبژاردنی ناوێک یەکسەر
+دەگۆڕێت، و دوای هەشت چرکە خۆی دادەخات.
+
+دوگمەکانی پێشوو و دواتر ئێستا بە درێژایی ئەو پۆلە دەڕۆن کە کەناڵەکەت لێوە
+هەڵبژارد، نەک بە درێژایی هەموو لیستەکە.
 
 [ar]
-الأفلام والحلقات تُجلب الآن بطريقة أخرى على Windows.
+قائمة القنوات صارت داخل المشغّل.
 
-بعض الحلقات يُخزَّن صوتها في آخر الملف، بعيدًا عن الصورة. تشغيل ثانية واحدة من
-ملف كهذا يعني القفز عبر غيغابايتين ذهابًا وإيابًا، وكان المشغّل يفتح اتصالًا
-جديدًا لكل قفزة — خُمس ثانية لكل واحدة، خمس مرات في الثانية. صارت هذه الملفات
-تُجلب عبر شيفرة الويب الخاصة بـ FFmpeg، التي تبقي اتصالًا واحدًا مفتوحًا عبر
-القفزات. القنوات المباشرة لم تُمس.
+أثناء البث تُفتح القائمة فوق الصورة مباشرة: المجموعات على اليسار والقنوات
+بجانبها، ولكل قناة شعارها ورقمها. لا شيء مرسوم حولها — لا إطار ولا حدّ ولا
+خط؛ تخفت الصورة بالقدر الذي يسمح بقراءة الأسماء فقط، والقناة لا تتوقف أبداً.
 
-ملف بهذه الصيغة ثقيل على أي مشغّل؛ والإصلاح الدائم أن يُخزَّن صوته وصورته معًا.
+تُفتح على المجموعة التي تنتمي إليها القناة، واختيار اسم يبدّل فوراً، وتنزوي
+من تلقاء نفسها بعد ثماني ثوانٍ.
+
+زرّا السابق والتالي يتنقّلان الآن داخل المجموعة التي اخترت منها القناة، لا
+داخل القائمة كلها.
