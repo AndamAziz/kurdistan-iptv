@@ -1,69 +1,62 @@
 [en]
-A channel that will not open now says so, instead of playing another one.
+The live channels that would not open on Windows now open.
 
-On Windows the player was given the whole list of channels at once. When one
-would not open it quietly moved on to the next line of that list, so clicking
-one channel started a different one, with nothing said about it.
+A panel does not always hand over a channel where it was asked for. NAT GEO
+is sent on twice - first to https, then to another machine entirely, the one
+that actually carries the stream. Only then does the list of the stream's
+parts come back, and those parts hang off the address the list came from.
 
-Underneath that was the reason the channel would not open at all: the player's
-own way of fetching a stream hands the stream's own list of parts an address
-they are not kept under, so every part comes back missing. FFmpeg's way does
-not have that fault, and a channel that fails is now given exactly that, at
-once. If it still will not open, the player stops and names it.
+The player on Windows fetches over its own web code, which follows the moves
+but never passes the final address on. So it looked for every part back at
+the panel, where they are not, and the channel died - and then, being handed
+the whole queue, quietly started a different channel instead.
 
-The channel it used to jump to is now dropped in about a quarter of a second,
-before anything of it is seen or heard.
+Channels now come through the app's own go-between, the same one the rest of
+the app already used. It follows the moves itself and writes every address in
+the stream's list out in full, so there is nothing left for the player to
+resolve and nowhere left for it to look wrongly. The stream itself still
+comes straight from wherever it lives; only the list passes through.
 
-Two older faults were found while this was traced: one mpv shutting down could
-take the next one's controls away with it, and the app could ask for a film
-through FFmpeg without the player being told it was allowed to - so the ask was
-silently ignored.
-
-Live television, films and episodes that already worked are untouched: the
-first attempt is exactly what it always was.
+If the go-between is not running, or a channel will not come that way, the
+old path is still underneath, unchanged. Films and episodes are untouched.
 
 [ku]
-کەناڵێک کە ناکرێتەوە ئێستا خۆی دەڵێت، لەبری ئەوەی کەناڵێکی تر لێبدات.
+ئەو کەناڵە زیندووانەی لەسەر Windows نەدەکرانەوە، ئێستا دەکرێنەوە.
 
-لەسەر Windows هەموو لیستی کەناڵەکان پێکەوە درابوو بە پلەیەرەکە. کاتێک یەکێکیان
-نەدەکرایەوە، بێدەنگ دەچووە سەر دێڕی دواتری ئەو لیستە — بۆیە کرتە لەسەر
-کەناڵێک کەناڵێکی تری دەستپێدەکرد، بەبێ ئەوەی هیچ بوترێت.
+پانێڵەکە هەمیشە کەناڵەکە لەو شوێنەدا نادات کە داوا کراوە. NAT GEO دوو جار
+دەگوازرێتەوە — یەکەم بۆ https، دواتر بۆ ئامێرێکی تەواو جیاواز، ئەوەی بە
+ڕاستی ستریمەکەی هەڵگرتووە. تەنها ئەوکات لیستی پارچەکانی ستریمەکە دێتەوە، و
+ئەو پارچانە سەر بەو ناونیشانەن کە لیستەکە لێیەوە هات.
 
-لە ژێر ئەوەوە هۆکاری نەکرانەوەی کەناڵەکە خۆی بوو: ئەو ڕێگایەی پلەیەرەکە بۆ
-هێنانی ستریم بەکاریدەهێنا، ناونیشانێکی هەڵە دەداتە لیستی بەشەکانی ستریمەکە،
-بۆیە هەموو بەشەکان بزر دەبن. ڕێگاکەی FFmpeg ئەو کەموکوڕییەی نییە، و ئێستا
-کەناڵێک کە شکست دەهێنێت یەکسەر بەو ڕێگایە هەوڵدەدرێتەوە. ئەگەر هێشتاش
-نەکرایەوە، پلەیەرەکە دەوەستێت و ناوی کەناڵەکە دەڵێت.
+پلەیەرەکە لەسەر Windows بە کۆدی وێبی خۆی دەیهێنێت، کە بەدوای گواستنەوەکاندا
+دەچێت بەڵام ناونیشانی کۆتایی ناگەیەنێت. بۆیە بەدوای هەموو پارچەیەکدا لە
+پانێڵەکە دەگەڕا، کە لەوێ نین، و کەناڵەکە دەمرد — دواتر، چونکە هەموو لیستەکەی
+پێدرابوو، بێدەنگ کەناڵێکی تری دەستپێدەکرد.
 
-ئەو کەناڵەی پێشتر بازی بۆ دەکرد، ئێستا لە نزیکەی چارەکە چرکەیەکدا دەبڕدرێت،
-پێش ئەوەی هیچی لێ ببینرێت یان ببیسترێت.
+ئێستا کەناڵەکان بەناو ناوبژیوانی خودی ئەپەکەدا دێن، هەمان ئەوەی پێشتریش
+بەکاردەهات. خۆی بەدوای گواستنەوەکاندا دەچێت و هەموو ناونیشانێکی ناو لیستی
+ستریمەکە بە تەواوی دەنووسێت، بۆیە هیچ نامێنێتەوە بۆ پلەیەرەکە کە
+دەربخات، و هیچ شوێنێک نامێنێت کە بە هەڵە لێی بگەڕێت. خودی ستریمەکە هەر
+ڕاستەوخۆ لەو شوێنەوە دێت کە لێیەتی؛ تەنها لیستەکە تێدەپەڕێت.
 
-دوو کەموکوڕی کۆنتریش لەم گەڕانەدا دەرکەوتن: mpvـێک لە کاتی داخستنیدا دەیتوانی
-کۆنتڕۆڵی ئەوی دواتری لەگەڵ خۆی ببات، وە ئەپەکە دەیتوانی داوای فیلمێک بکات بە
-ڕێگای FFmpeg بەبێ ئەوەی پلەیەرەکە بزانێت ڕێگەی پێدراوە — بۆیە داواکەکە بێدەنگ
-پشتگوێ دەخرا.
-
-کەناڵە زیندووەکان و فیلم و سریاڵەکان کە پێشتر کاریان دەکرد دەستیان لێ نەدراوە:
-هەوڵی یەکەم بە تەواوی وەک خۆیەتی.
+ئەگەر ناوبژیوانەکە کار نەکات، یان کەناڵێک بەو ڕێگایە نەیەت، ڕێگا کۆنەکە
+هەر لە ژێرەوەیە، بێ گۆڕان. فیلم و سریاڵ دەستیان لێ نەدراوە.
 
 [ar]
-القناة التي لا تُفتح تقول ذلك الآن، بدل أن تشتغل قناة أخرى.
+القنوات المباشرة التي كانت لا تُفتح على Windows صارت تُفتح.
 
-على Windows كانت قائمة القنوات كلها تُسلَّم للمشغّل دفعة واحدة. وحين تعجز قناة
-عن الفتح كان ينتقل بصمت إلى السطر التالي، فيبدأ الضغط على قناة تشغيلَ قناة
-أخرى دون أن يُقال شيء.
+المنصّة لا تسلّم القناة دائمًا حيث طُلبت. NAT GEO تُحوَّل مرّتين: أولًا إلى
+https، ثم إلى جهاز آخر تمامًا، الجهاز الذي يحمل البث فعلًا. عندها فقط تعود
+قائمة أجزاء البث، وتلك الأجزاء تتبع العنوان الذي جاءت منه القائمة.
 
-وتحت ذلك كان سبب عجز القناة عن الفتح: طريقة المشغّل في جلب البث تعطي قائمة
-أجزاء البث عنوانًا غير الذي تُحفظ تحته، فتعود كل الأجزاء مفقودة. طريقة FFmpeg
-لا تحمل هذا العيب، والقناة التي تفشل تُجرَّب بها فورًا. وإن بقيت لا تُفتح،
-يتوقف المشغّل ويسمّيها.
+المشغّل على Windows يجلب عبر شيفرته الخاصة، فيتبع التحويلات لكنه لا ينقل
+العنوان النهائي. فكان يبحث عن كل جزء عند المنصّة، حيث لا وجود لها، فتموت
+القناة — ثم، وقد سُلّمت له القائمة كلها، يبدأ بصمت قناة أخرى.
 
-القناة التي كان يقفز إليها تُقطع الآن في نحو ربع ثانية، قبل أن يُرى منها أو
-يُسمع شيء.
+صارت القنوات تمرّ عبر وسيط التطبيق نفسه، ذاته الذي كان يستعمله أصلًا. يتبع
+التحويلات بنفسه ويكتب كل عنوان في قائمة البث كاملًا، فلا يبقى للمشغّل ما
+يستنتجه ولا مكان يبحث فيه خطأً. البث نفسه ما زال يأتي مباشرة من موضعه؛
+القائمة وحدها هي التي تمرّ.
 
-كما ظهر عيبان أقدم أثناء التتبّع: مشغّل يُغلق كان قد يأخذ معه تحكّم الذي يليه،
-وكان التطبيق قد يطلب فيلمًا عبر FFmpeg دون أن يُخبَر المشغّل بأن ذلك مسموح —
-فيُتجاهل الطلب بصمت.
-
-القنوات المباشرة والأفلام والحلقات التي كانت تعمل لم تُمس: المحاولة الأولى هي
-نفسها تمامًا.
+وإن لم يكن الوسيط يعمل، أو لم تأتِ قناة بتلك الطريقة، فالطريق القديم ما زال
+تحتها دون تغيير. الأفلام والحلقات لم تُمس.
