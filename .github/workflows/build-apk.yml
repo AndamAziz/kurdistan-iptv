@@ -52,6 +52,15 @@ jobs:
             gradle assembleDebug --no-daemon --stacktrace
           fi
 
+      # Google Play takes a bundle rather than an APK. It is built here, from
+      # the same source and the same key, straight after the APK - and if it
+      # fails, it fails alone: the APK is already made and its release goes out
+      # exactly as it always did.
+      - name: Build the bundle for Play
+        if: env.KEYSTORE_FILE != ''
+        continue-on-error: true
+        run: gradle bundleRelease --no-daemon --stacktrace
+
       - name: Forget the key
         if: always()
         run: rm -f "$RUNNER_TEMP/kiptv.jks"
@@ -62,6 +71,15 @@ jobs:
           name: KURDISTAN-IPTV-apk
           path: app/build/outputs/apk/*/*.apk
           if-no-files-found: error
+
+      # kept for the job that sends it to Play. A missing one is only a warning
+      # here: nothing else depends on it.
+      - name: Upload the bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: KURDISTAN-IPTV-aab
+          path: app/build/outputs/bundle/release/*.aab
+          if-no-files-found: warn
 
       # The finished APK goes to a second, public repository that holds nothing
       # but releases. This source stays private; the app asks that public list
@@ -195,3 +213,97 @@ jobs:
           gh release upload "v1.0.${GITHUB_RUN_NUMBER}" "$EXE" \
             --repo "$RELEASE_REPO" --clobber
           echo "Added $(basename "$EXE") to v1.0.${GITHUB_RUN_NUMBER}"
+
+  # ---------------------------------------------------------------------------
+  # Google Play, beside GitHub - not instead of it.
+  #
+  # The release on GitHub is made by the job above and nothing here touches it.
+  # This one takes the same bundle that same build produced and hands it to
+  # Google as well, so a new version lands in both places at once.
+  #
+  # Nothing here can hold up or redden the phone build: it waits for it, and
+  # any trouble of its own is its own. With no PLAY_JSON in the secrets it does
+  # nothing at all and the build ends exactly as it always did.
+  # ---------------------------------------------------------------------------
+  play:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    env:
+      PLAY_JSON: ${{ secrets.PLAY_JSON }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch the bundle the build made
+        if: env.PLAY_JSON != ''
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: KURDISTAN-IPTV-aab
+          path: play
+
+      # An unsigned build makes no bundle. That is not a fault - it just means
+      # there is nothing to send, and everything else carries on.
+      - name: Is there a bundle
+        id: bundle
+        if: env.PLAY_JSON != ''
+        run: |
+          AAB=$(ls play/*.aab 2>/dev/null | head -1)
+          if [ -z "$AAB" ]; then
+            echo "No bundle was built - nothing is sent to Google Play."
+            echo "found=no" >> "$GITHUB_OUTPUT"
+          else
+            echo "bundle: $AAB"
+            echo "found=yes" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Play shows a short "what's new" per language, at most 500 characters.
+      # WHATSNEW.md already holds one in three languages, marked [en] [ku] [ar];
+      # the English one is taken from it, so the same words reach both places.
+      # The file has to be named after the listing's language - en-US unless a
+      # repository variable named PLAY_LANG says otherwise.
+      - name: Take the release notes from WHATSNEW.md
+        if: steps.bundle.outputs.found == 'yes'
+        env:
+          PLAY_LANG: ${{ vars.PLAY_LANG || 'en-US' }}
+        run: |
+          mkdir -p play/whatsnew
+          python3 - <<'PY'
+          import io, os, re
+          text = ""
+          if os.path.exists("WHATSNEW.md"):
+              text = io.open("WHATSNEW.md", encoding="utf-8").read()
+          m = re.search(r"\[en\]\s*(.*?)(?=\n\[(?:ku|ar)\]|\Z)", text, re.S)
+          note = (m.group(1) if m else text).strip()
+          if not note:
+              note = "Bug fixes and improvements."
+          if len(note) > 500:
+              note = note[:497].rstrip() + "..."
+          lang = os.environ.get("PLAY_LANG") or "en-US"
+          io.open("play/whatsnew/whatsnew-" + lang, "w", encoding="utf-8").write(note)
+          print(note)
+          PY
+
+      # The track decides where it lands. A brand new developer account can
+      # only use the testing tracks until Google opens production to it, so
+      # this starts on "internal" and is moved later by setting a repository
+      # variable named PLAY_TRACK to "production" - no change to this file.
+      - name: Send it to Google Play
+        if: steps.bundle.outputs.found == 'yes'
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_JSON }}
+          packageName: com.kurdistan.iptv
+          releaseFiles: play/*.aab
+          releaseName: 1.0 (${{ github.run_number }})
+          track: ${{ vars.PLAY_TRACK || 'internal' }}
+          status: completed
+          whatsNewDirectory: play/whatsnew
+
+      - name: Say what happened
+        if: env.PLAY_JSON == ''
+        run: echo "No PLAY_JSON in the secrets - nothing was sent to Google Play."
