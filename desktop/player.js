@@ -56,16 +56,23 @@ function isVod(u) {
  * them now works.
  */
 /**
- * Four ways to write the same queue:
+ * Three ways to write the same queue, and one last resort:
  *
  *   "proxy"  channels fetched through the app's own go-between, which follows
  *            wherever the panel sends it and writes the stream's parts out in
  *            full - the only way a channel whose panel moves it twice can be
- *            found at all. Films and episodes as in "auto".
- *   "auto"   what was always written: films and episodes through FFmpeg,
- *            channels the way mpv opens them itself
- *   "plain"  nothing through FFmpeg - the oldest, plainest path
- *   "all"    everything through FFmpeg
+ *            found at all. Films and episodes plain, as always.
+ *   "auto"   everything the way mpv opens it itself
+ *   "plain"  the same thing; kept because older code says it
+ *   "all"    everything through FFmpeg - a last resort, never the first try
+ *
+ * A word on FFmpeg and films. Step 24 marked films "lavf://" to have them
+ * fetched by FFmpeg's own web code; mpv quietly refuses such a mark in a
+ * playlist it is not told to trust, so for weeks the mark did nothing and
+ * films played the ordinary way. Step 27 added that permission for another
+ * reason, and the long-dormant mark came to life - and films stopped
+ * playing. So it is gone from the first attempt: what opens a film now is
+ * exactly what opened it before any of this.
  */
 function playlistText(items, mode, via) {
   /* it used to be a flag; both spellings still mean the same thing */
@@ -74,10 +81,9 @@ function playlistText(items, mode, via) {
   for (const it of items) {
     if (!it || !it.u) continue;
     const web = /^https?:/i.test(it.u);
-    const vod = isVod(it.u);
     let line = it.u;
-    if (web && !vod && how === "proxy" && via) line = via + encodeURIComponent(it.u);
-    else if (web && (how === "all" || ((how === "auto" || how === "proxy") && vod))) line = "lavf://" + it.u;
+    if (web && how === "all") line = "lavf://" + it.u;
+    else if (web && !isVod(it.u) && how === "proxy" && via) line = via + encodeURIComponent(it.u);
     out += "#EXTINF:-1," + String(it.n || "").replace(/[\r\n]+/g, " ") + "\n";
     out += line + "\n";
   }
