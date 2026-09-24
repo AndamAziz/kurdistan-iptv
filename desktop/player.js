@@ -319,8 +319,9 @@ class Player {
     }
     if (!this.child) return this.failed(at);
 
+    const others = this.items.map(x => x && x.u).filter((u, k) => u && k !== at);
     await this.linkUp();
-    let how = await this.watch(want);
+    let how = await this.watch(want, others);
     if (how === "ok") { this.tick(); return true }
 
     /* ---- it opened something else ----
@@ -338,7 +339,7 @@ class Player {
     if (!again) return this.failed(at);
 
     await this.linkUp();
-    how = await this.watch(want);
+    how = await this.watch(want, others);
     if (how === "ok") { this.tick(); return true }
 
     /* it will not open at all: say so, rather than play something else */
@@ -377,18 +378,35 @@ class Player {
    * plainly no longer the one asked for cuts the wait short, and it has to
    * read that way twice in a row before it counts.
    */
-  async watch(want, ms = 25000) {
+  async watch(want, others, ms = 25000) {
     /* No pipe to mpv means no way to ask what it is playing. Rather than
        hold everything up guessing, the player behaves exactly as it did
        before any of this was added. */
     if (!this.child) return "dead";
     if (!this.link || !this.link.sock) return "ok";
+
+    /*
+     * What counts as having gone astray.
+     *
+     * Most channels are an address that answers with a list naming where the
+     * stream really is, and mpv follows it. What it says it is playing then
+     * stops being the address that was asked for - and that is perfectly
+     * normal, it is the same channel. Treating any such move as the wrong
+     * channel is what took the working channels down with the broken ones.
+     *
+     * Only one thing is really wrong: mpv playing ANOTHER CHANNEL OF OURS,
+     * which is what it does when the one asked for will not open.
+     */
+    const elsewhere = new Set((others || []).map(bareUrl));
+    elsewhere.delete(bareUrl(want));
+    const astray = v => v != null && elsewhere.has(bareUrl(v));
+
     let moved = false;
     if (this.link) {
       /* mpv says so the instant it moves on, which is the difference between
          cutting the wrong channel off unseen and watching it start */
       this.link.onProp = (name, value) => {
-        if (name === "path" && value != null && !sameStream(value, want)) moved = true;
+        if (name === "path" && astray(value)) moved = true;
       };
       await this.link.send(["observe_property", 1, "path"]);
     }
@@ -402,7 +420,8 @@ class Player {
       /* a slower check as well, in case the notice never comes */
       if (++asked % 5 === 0) {
         const here = await this.link.get("path");
-        if (here != null && !sameStream(here, want)) return "wrong";
+        if (astray(here)) return "wrong";
+        /* running: whatever list it followed to get here, it is playing */
         const t = await this.link.get("time-pos");
         if (typeof t === "number" && t > 0.4) return "ok";
       }
