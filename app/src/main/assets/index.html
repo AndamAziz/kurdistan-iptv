@@ -1654,6 +1654,8 @@ function navTap(name){
 
 /* ==================== state ==================== */
 var CH = [], GROUPS = [], f = "", view = [], shown = 0;
+/* what the player was last told the live list is, so it is not resent */
+var CHAN_STAMP = "";
 
 /* ==================== groups: hide, reorder, lock ====================
    Every choice is kept per playlist. Hidden groups are simply not there;
@@ -2424,6 +2426,26 @@ function playQueue(arr, idx){
                         l:arr[idx].l || "", r:arr[idx].r || "" }]);
   var sp = getPos(arr[idx].u);
   var startMs = (sp && sp.p > 10000 && sp.p < sp.d * 0.95) ? sp.p : 0;
+  /* The whole live list goes over to the player as well, so the list it
+     shows over the picture has every group in it - not only the one on
+     screen. It is sent once, and again only if the channels change. */
+  try{
+    if(window.AndroidPlayer && AndroidPlayer.setChannels && CH && CH.length &&
+       !/\/movie\/|\/series\//.test(arr[idx].u || "")){
+      var stamp = CH.length + "|" + (CH[0] ? CH[0].u : "") +
+                  "|" + (CH[CH.length - 1] ? CH[CH.length - 1].u : "");
+      if(stamp !== CHAN_STAMP){
+        AndroidPlayer.setChannels(JSON.stringify(CH.map(function(c){
+          var o = { c: c.c || "", n: c.n, u: c.u, l: c.l || "" };
+          if(c.ua) o.ua = c.ua;
+          if(c.rf) o.rf = c.rf;
+          return o;
+        })));
+        CHAN_STAMP = stamp;
+      }
+    }
+  }catch(e){}
+
   if(window.AndroidPlayer && AndroidPlayer.playList){
     AndroidPlayer.playList(JSON.stringify(slice.map(function(c){
       var o = { n: c.n, u: c.u };
