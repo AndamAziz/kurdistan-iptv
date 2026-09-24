@@ -1,35 +1,36 @@
 [en]
-Series on Windows: episodes no longer stop and start.
+Films and episodes are now fetched a different way on Windows.
 
-An episode of a series runs to two gigabytes for forty minutes - seven or
-eight megabits every second, far more than a television channel asks for. The
-player was only reading eight seconds ahead, which is barely seven megabytes,
-so the smallest hesitation on the line emptied the buffer and the picture
-stopped. It now reads a minute ahead and holds one connection open for the
-whole file.
+Some episodes arrive with their sound stored at the far end of the file, away
+from the picture. Playing a second of such a file means jumping across two
+gigabytes and back, and the player was opening a fresh connection for every
+jump - a fifth of a second each, five times a second. Those files now go
+through FFmpeg's own web code, which keeps one connection open across the
+jumps. Live channels are untouched.
 
-Live channels are unaffected: a live stream has no future to send, so it never
-used that room anyway.
+A file made this way is hard on any player; the lasting fix is for it to be
+stored with its sound and picture together.
 
 [ku]
-سریاڵ لەسەر Windows: بەشەکان ئیتر ناوەستن و دەست پێ ناکەنەوە.
+فیلم و بەشەکانی سریاڵ ئێستا بە شێوەیەکی تر دەهێنرێن لەسەر Windows.
 
-بەشێکی سریاڵ بۆ چل خولەک دەگاتە دوو گیگابایت — حەوت یان هەشت مێگابیت لە
-چرکەیەکدا، زۆر زیاتر لەوەی کەناڵێکی تەلەفیزیۆنی داوای دەکات. پلەیەرەکە تەنها
-هەشت چرکەی بەردەمی دەخوێندەوە، کە بە زەحمەت حەوت مێگابایتە، بۆیە بچووکترین
-وەستانی هێڵەکە پەنجەرەکەی بەتاڵ دەکرد و وێنەکە دەوەستا. ئێستا خولەکێک
-دەخوێنێتەوە و یەک پەیوەندی بۆ هەموو فایلەکە کراوە ڕادەگرێت.
+هەندێک بەش دەنگەکەیان لە کۆتایی فایلەکەدا هەڵگیراوە، دوور لە وێنەکە. بۆ
+پەخشکردنی یەک چرکە لە فایلێکی وا، پێویستە دوو گیگابایت بازبدرێت و بگەڕێتەوە،
+و پلەیەرەکە بۆ هەر بازێک پەیوەندییەکی نوێی دەکردەوە — پێنج یەکی چرکە بۆ هەر
+یەکێکیان، پێنج جار لە چرکەیەکدا. ئەو فایلانە ئێستا بە کۆدی وێبی خودی FFmpeg
+دەهێنرێن، کە یەک پەیوەندی بە درێژایی بازەکان کراوە ڕادەگرێت. کەناڵە
+زیندووەکان دەستیان لێ نەدراوە.
 
-کەناڵە زیندووەکان کاریگەر نابن: ستریمێکی زیندوو داهاتووی نییە بینێرێت، بۆیە
-هەرگیز ئەو شوێنەی بەکار نەدەهێنا.
+فایلێکی بەم شێوەیە بۆ هەر پلەیەرێک قورسە؛ چارەسەری هەمیشەیی ئەوەیە کە
+دەنگ و وێنەی پێکەوە هەڵبگیرێت.
 
 [ar]
-المسلسلات على Windows: الحلقات لم تعد تتوقف وتعاود.
+الأفلام والحلقات تُجلب الآن بطريقة أخرى على Windows.
 
-حلقة المسلسل تبلغ غيغابايتين لأربعين دقيقة — سبعة أو ثمانية ميغابت كل ثانية،
-أكثر بكثير مما تطلبه قناة تلفزيونية. كان المشغّل يقرأ ثماني ثوانٍ فقط مقدمًا،
-وهي بالكاد سبعة ميغابايت، فكان أدنى تعثّر في الخط يفرغ المخزن فتتوقف الصورة.
-صار الآن يقرأ دقيقة مقدمًا ويبقي اتصالًا واحدًا مفتوحًا للملف كله.
+بعض الحلقات يُخزَّن صوتها في آخر الملف، بعيدًا عن الصورة. تشغيل ثانية واحدة من
+ملف كهذا يعني القفز عبر غيغابايتين ذهابًا وإيابًا، وكان المشغّل يفتح اتصالًا
+جديدًا لكل قفزة — خُمس ثانية لكل واحدة، خمس مرات في الثانية. صارت هذه الملفات
+تُجلب عبر شيفرة الويب الخاصة بـ FFmpeg، التي تبقي اتصالًا واحدًا مفتوحًا عبر
+القفزات. القنوات المباشرة لم تُمس.
 
-القنوات المباشرة لا تتأثر: البث المباشر لا يملك مستقبلًا ليرسله، فلم يكن
-يستخدم تلك المساحة أصلًا.
+ملف بهذه الصيغة ثقيل على أي مشغّل؛ والإصلاح الدائم أن يُخزَّن صوته وصورته معًا.
