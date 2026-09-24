@@ -70,9 +70,22 @@ function mpvArgs(opts) {
     "--title=${media-title}",
     "--hwdec=auto-safe",
     "--force-seekable=yes",
+    /* Room to ride out a bump.
+       An episode of a series runs to two gigabytes for forty minutes - seven
+       or eight megabits every second, far more than a television channel asks
+       for. Eight seconds of it is barely seven megabytes, so the smallest
+       hesitation on the line emptied the buffer and the picture stopped. A
+       minute of reading ahead costs nothing on a live channel, which has no
+       future to send anyway, and it is what carries a heavy film or episode
+       over a slow patch without stopping. */
     "--cache=yes",
-    "--demuxer-max-bytes=64MiB",
-    "--demuxer-readahead-secs=8",
+    "--cache-secs=60",
+    "--demuxer-max-bytes=192MiB",
+    "--demuxer-max-back-bytes=48MiB",
+    "--demuxer-readahead-secs=60",
+    /* one connection held open rather than a new request for every read, which
+       is what a server charges most dearly for on a large file */
+    "--stream-lavf-o-append=multiple_requests=1",
 
     /* Start as the phone starts.
        ffmpeg studies a stream before playing it, and for MPEG-TS it studies
