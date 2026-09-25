@@ -323,10 +323,29 @@ html.tv .gbox h1{font-size:20px;letter-spacing:2.5px}
 html.tv .gbox p{margin-bottom:14px;font-size:12px}
 html.tv .pin{width:42px;height:50px;font-size:19px;border-radius:12px}
 html.tv .pins{gap:7px}
-html.tv .keys{max-width:244px;gap:8px;margin-top:14px}
-html.tv .key{height:44px;font-size:18px;border-radius:13px}
-html.tv .gmsg{height:18px;padding-top:6px;font-size:12px}
-html.tv #gate .gbtn{margin-top:8px;padding:12px;font-size:14.5px}
+html.tv .keys{max-width:244px;gap:8px;margin-top:10px}
+html.tv .key{height:42px;font-size:18px;border-radius:13px}
+html.tv .gmsg{height:16px;padding-top:4px;font-size:12px}
+html.tv #gate .gbtn{margin-top:6px;padding:11px;font-size:14.5px}
+/* how to reach a human when there is no code yet */
+.gcontact{margin-top:20px}
+.gc-lab{display:flex;align-items:center;gap:10px;color:var(--muted2);
+  font-size:11.5px;font-weight:700}
+.gc-lab::before,.gc-lab::after{content:"";flex:1;height:1px;background:var(--line)}
+.gc-row{display:flex;gap:8px;margin-top:12px;direction:ltr}
+.gc{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;
+  padding:11px 4px;border-radius:14px;background:rgba(18,25,36,.8);
+  border:1px solid var(--line);color:var(--muted);font-size:11px;font-weight:700;
+  cursor:pointer;transition:.15s}
+.gc:active{transform:scale(.96);background:var(--surface2)}
+.gc svg{width:19px;height:19px}
+.gc.ok{color:var(--accent2);border-color:rgba(230,62,70,.45)}
+/* a TV screen is short, so the three buttons lie down into one line each */
+html.tv .gcontact{margin-top:8px}
+html.tv .gc-lab{font-size:10px;gap:8px}
+html.tv .gc-row{margin-top:6px;gap:6px}
+html.tv .gc{flex-direction:row;gap:5px;padding:7px 4px;font-size:10px;border-radius:11px}
+html.tv .gc svg{width:14px;height:14px}
 .shake{animation:shake .4s}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-9px)}75%{transform:translateX(9px)}}
 
@@ -623,6 +642,7 @@ html.tv .st-two button{padding:11px 8px;font-size:14px}
     <input id="pininput" type="tel" inputmode="numeric" maxlength="6" autocomplete="off">
     <div class="gmsg" id="gmsg"></div>
     <button class="gbtn" id="gbtn" onclick="submitPin()"></button>
+    <div class="gcontact" id="gcontact"></div>
   </div>
 </div>
 
@@ -730,6 +750,7 @@ var T = {
       tag:"پەخشی ڕاستەوخۆ",ann:"بەخێربێیت بۆ KURDISTAN IPTV — پەخشی ڕاستەوخۆی کەناڵە کوردی و نێودەوڵەتییەکان",
       recent:"بەردەوامبە لە بینین",none:"هیچ کەناڵێک نەدۆزرایەوە",lang:"زمان",
       enter:"کۆدی چالاککردن داخڵ بکە",act:"چالاککردن",wrong:"کۆدەکە هەڵەیە",
+      gcAsk:"کۆدت نییە؟ پەیوەندیمان پێوە بکە",gcMail:"ئیمەیڵ",gcCopied:"کۆپی کرا",
       actChecking:"چاوەڕێ بکە…",actExpired:"ماوەی ئەم کۆدە تەواو بووە",
       actOff:"ئەم کۆدە کوژێنراوەتەوە",actWait:"هەوڵی زۆر درا. ١٥ خولەک چاوەڕێ بکە",
       actNet:"ناتوانرێت پەیوەندی بکرێت. ئینتەرنێتەکەت بپشکنە",
@@ -791,6 +812,7 @@ var T = {
       tag:"LIVE STREAMING",ann:"Welcome to KURDISTAN IPTV — live Kurdish and international channels",
       recent:"Continue watching",none:"No channels found",lang:"Language",
       enter:"Enter your activation code",act:"Activate",wrong:"Wrong code",
+      gcAsk:"No code yet? Get in touch",gcMail:"Email",gcCopied:"Copied",
       actChecking:"Please wait…",actExpired:"This code has ended",
       actOff:"This code has been switched off",actWait:"Too many tries. Wait 15 minutes",
       actNet:"Cannot reach the server. Check your internet",
@@ -852,6 +874,7 @@ var T = {
       tag:"بث مباشر",ann:"مرحباً بك في KURDISTAN IPTV — بث مباشر للقنوات الكردية والعالمية",
       recent:"متابعة المشاهدة",none:"لا توجد قنوات",lang:"اللغة",
       enter:"أدخل رمز التفعيل",act:"تفعيل",wrong:"الرمز غير صحيح",
+      gcAsk:"ليس لديك رمز؟ تواصل معنا",gcMail:"البريد",gcCopied:"تم النسخ",
       actChecking:"يرجى الانتظار…",actExpired:"انتهت صلاحية هذا الرمز",
       actOff:"تم إيقاف هذا الرمز",actWait:"محاولات كثيرة. انتظر ١٥ دقيقة",
       actNet:"تعذّر الاتصال بالخادم. تحقّق من الإنترنت",
@@ -2391,6 +2414,7 @@ function applyLang(){
   $("annText").textContent = d.ann;
   $("search").placeholder = d.search;
   $("gate-sub").textContent = d.enter;
+  gcDraw();
   $("updBarText").textContent = d.updFound;
   $("gbtn").textContent = d.act;
   drawNav();                       /* the bottom bar speaks the new language too */
@@ -4103,6 +4127,59 @@ function pinKey(k){
   if(k === "back") pinSet(PIN.slice(0, -1));
   else if(PIN.length < PIN_LEN) pinSet(PIN + k);
 }
+/* ==================== reaching a human ====================
+   A code comes from a person, not from the app, so the screen that asks for
+   one has to say where that person is. Telegram and WhatsApp are ordinary web
+   addresses, so the phone, the TV box and Windows all open them the same way.
+   An email address is not: it is copied instead, which works everywhere and
+   can never fail for want of a mail app. */
+var GC_MAIL = "info@andam.uk";
+var GC_LINKS = { tg: "https://t.me/AndamAziz", wa: "https://wa.me/447482828237" };
+var GC_ICON = {
+  mail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4.5" width="19" height="15" rx="2.5"/><path d="M3 7l9 6 9-6"/></svg>',
+  tg:   '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.7 3.4 2.9 10.6c-1.1.4-1.1 1.1-.2 1.4l4.7 1.5 1.8 5.4c.2.6.4.8.8.8.4 0 .6-.2.9-.5l2.3-2.2 4.8 3.5c.9.5 1.5.2 1.7-.8l3.1-14.6c.3-1.3-.5-1.9-1.1-1.7zM8.6 13.9l10.3-6.5c.5-.3.9-.1.6.2l-8.8 8-.3 3.6-1.8-5.3z"/></svg>',
+  wa:   '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15L2 22l5.1-1.3A10 10 0 1012 2zm0 18.2a8.2 8.2 0 01-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1112 20.2zm4.6-6.1c-.3-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.2.2-.3.2-.6.1a6.7 6.7 0 01-3.3-2.9c-.2-.4 0-.6.2-.8l.4-.5c.1-.2.1-.3 0-.5l-.7-1.7c-.2-.4-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.4a3 3 0 00-1 2.3 5.3 5.3 0 001.1 2.8 12 12 0 004.6 4c2.2.9 2.2.6 2.6.5.4 0 1.4-.5 1.6-1.1.2-.6.2-1 .1-1.1l-.5-.4z"/></svg>'
+};
+
+function gcDraw(){
+  var box = $("gcontact"); if(!box) return;
+  var d = t();
+  box.innerHTML =
+    '<div class="gc-lab">' + esc(d.gcAsk) + '</div>' +
+    '<div class="gc-row">' +
+      '<button class="gc" id="gc-mail" onclick="gcMail()">' + GC_ICON.mail +
+        '<span id="gc-mail-tx">' + esc(d.gcMail) + '</span></button>' +
+      '<button class="gc" onclick="gcOpen(\'tg\')">' + GC_ICON.tg + '<span>Telegram</span></button>' +
+      '<button class="gc" onclick="gcOpen(\'wa\')">' + GC_ICON.wa + '<span>WhatsApp</span></button>' +
+    '</div>';
+}
+
+/* the same road the update notice already uses */
+function gcOpen(which){
+  var u = GC_LINKS[which]; if(!u) return;
+  try{ if(window.AndroidPlayer && AndroidPlayer.openUrl){ AndroidPlayer.openUrl(u); return } }catch(e){}
+  try{ window.open(u, "_blank") }catch(e){}
+}
+
+/* copied, not opened: a TV box has no mail app, and a phone may not either */
+function gcMail(){
+  var ok = false;
+  try{
+    var ta = document.createElement("textarea");
+    ta.value = GC_MAIL; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+  }catch(e){}
+  try{ if(!ok && navigator.clipboard) navigator.clipboard.writeText(GC_MAIL) }catch(e){}
+  var b = $("gc-mail"), x = $("gc-mail-tx"); if(!b || !x) return;
+  b.classList.add("ok"); x.textContent = t().gcCopied;
+  clearTimeout(gcMail.t);
+  gcMail.t = setTimeout(function(){
+    b.classList.remove("ok"); x.textContent = t().gcMail;
+  }, 1800);
+}
+
 /* ==================== the activation code ====================
    The owner's own code opens the app straight away, with no internet.
    Every other code is asked about once, and the answer is kept: after that
