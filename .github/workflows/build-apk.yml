@@ -103,13 +103,20 @@ jobs:
           fi
           NAME="KURDISTAN-IPTV-${GITHUB_RUN_NUMBER}.apk"
           cp "$APK" "$NAME"
+          # a second copy of the very same APK under a name that never changes,
+          # so one fixed address always points at the newest build:
+          #   .../releases/latest/download/KURDISTAN-IPTV.apk
+          # It is uploaded after the numbered one, which therefore stays the
+          # first .apk in the release - the app picks that one exactly as before.
+          SAME="KURDISTAN-IPTV.apk"
+          cp "$APK" "$SAME"
           if [ -s WHATSNEW.md ]; then
             NOTES=$(cat WHATSNEW.md)
           else
             NOTES=$(git log -1 --pretty=%B)
           fi
           # the app reads the number at the end of the tag as the build number
-          gh release create "v1.0.${GITHUB_RUN_NUMBER}" "$NAME" \
+          gh release create "v1.0.${GITHUB_RUN_NUMBER}" "$NAME" "$SAME" \
             --repo "$RELEASE_REPO" \
             --title "KURDISTAN IPTV 1.0 (${GITHUB_RUN_NUMBER})" \
             --notes "$NOTES"
