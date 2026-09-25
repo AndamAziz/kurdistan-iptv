@@ -14,7 +14,7 @@ android {
         /* every build from GitHub gets a higher number, so a new APK always
            installs over the old one; a build made by hand stays at 1 */
         versionCode = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInt()
-        versionName = "2.0"
+        versionName = "1.0"
     }
 
     /* The same key signs every release build, so an APK installs over the one
