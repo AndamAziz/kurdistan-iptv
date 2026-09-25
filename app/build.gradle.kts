@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace = "com.kurdistan.iptv"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.kurdistan.iptv"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         /* every build from GitHub gets a higher number, so a new APK always
            installs over the old one; a build made by hand stays at 1 */
         versionCode = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInt()
