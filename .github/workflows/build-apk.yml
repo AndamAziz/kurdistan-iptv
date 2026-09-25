@@ -216,10 +216,17 @@ jobs:
             echo "No installer was built - nothing published."
             exit 0
           fi
+          # a second copy of the very same installer under a name that never
+          # changes, so one fixed address always points at the newest build:
+          #   .../releases/latest/download/KURDISTAN-IPTV-Setup.exe
+          # It is uploaded after the numbered one, which therefore stays the
+          # first .exe in the release - the app picks that one exactly as before.
+          SAME="KURDISTAN-IPTV-Setup.exe"
+          cp "$EXE" "$SAME"
           # beside the APK, in the release the phone build made a moment ago
-          gh release upload "v1.0.${GITHUB_RUN_NUMBER}" "$EXE" \
+          gh release upload "v1.0.${GITHUB_RUN_NUMBER}" "$EXE" "$SAME" \
             --repo "$RELEASE_REPO" --clobber
-          echo "Added $(basename "$EXE") to v1.0.${GITHUB_RUN_NUMBER}"
+          echo "Added $(basename "$EXE") and $SAME to v1.0.${GITHUB_RUN_NUMBER}"
 
   # ---------------------------------------------------------------------------
   # Google Play, beside GitHub - not instead of it.
