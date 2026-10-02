@@ -44,22 +44,24 @@ jobs:
             echo "No key in the secrets - building the debug APK as before."
           fi
 
+      # The APK is the "direct" build: the one on GitHub and Uptodown, which
+      # downloads and installs its own updates from inside the app.
       - name: Build the APK
         run: |
           if [ -n "$KEYSTORE_FILE" ]; then
-            gradle assembleRelease --no-daemon --stacktrace
+            gradle assembleDirectRelease --no-daemon --stacktrace
           else
-            gradle assembleDebug --no-daemon --stacktrace
+            gradle assembleDirectDebug --no-daemon --stacktrace
           fi
 
-      # Google Play takes a bundle rather than an APK. It is built here, from
-      # the same source and the same key, straight after the APK - and if it
-      # fails, it fails alone: the APK is already made and its release goes out
-      # exactly as it always did.
+      # Google Play takes a bundle rather than an APK. It is the "play" build:
+      # the same code without the self-install permission (Play refuses it),
+      # which asks Google Play for its updates instead. If it fails, it fails
+      # alone: the APK is already made and its release goes out as always.
       - name: Build the bundle for Play
         if: env.KEYSTORE_FILE != ''
         continue-on-error: true
-        run: gradle bundleRelease --no-daemon --stacktrace
+        run: gradle bundlePlayRelease --no-daemon --stacktrace
 
       - name: Forget the key
         if: always()
@@ -69,7 +71,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: KURDISTAN-IPTV-apk
-          path: app/build/outputs/apk/*/*.apk
+          path: app/build/outputs/apk/*/*/*.apk
           if-no-files-found: error
 
       # kept for the job that sends it to Play. A missing one is only a warning
@@ -78,7 +80,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: KURDISTAN-IPTV-aab
-          path: app/build/outputs/bundle/release/*.aab
+          path: app/build/outputs/bundle/playRelease/*.aab
           if-no-files-found: warn
 
       # The finished APK goes to a second, public repository that holds nothing
@@ -96,7 +98,7 @@ jobs:
             echo "No RELEASE_TOKEN in the secrets - nothing published."
             exit 0
           fi
-          APK=$(ls app/build/outputs/apk/release/*.apk 2>/dev/null | head -1)
+          APK=$(ls app/build/outputs/apk/direct/release/*.apk 2>/dev/null | head -1)
           if [ -z "$APK" ]; then
             echo "No signed APK was built - nothing published."
             exit 0
