@@ -91,6 +91,8 @@ header{position:sticky;top:0;z-index:20;padding:calc(10px + var(--safe-t)) 14px 
 #updBar.on{display:flex}
 #updBar button{background:none;border:0;color:#fff;font:inherit;cursor:pointer;padding:8px 12px;
   font-size:12.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.updProg{height:8px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden;margin:10px 0 8px}
+.updProg i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .2s linear}
 #updBar .x{padding:8px 13px;font-size:15px;opacity:.85}
 #updBar button:active{transform:scale(.97)}
 #sync .sp{width:13px;height:13px;flex:none;border-radius:99px;border:2px solid var(--muted2);
@@ -167,11 +169,48 @@ html.tv .card .epg{font-size:12px}
 .hero .go{display:inline-flex;align-items:center;gap:8px;padding:11px 24px;border-radius:999px;
   background:#fff;color:#0A0E14;font-weight:800;font-size:14px}
 
+/* hero, polished: the picture itself, blurred, is the backdrop; a sharp
+   poster stands in front of it beside the title */
+.heroBox{--hh:clamp(210px,56vw,300px);aspect-ratio:auto;height:var(--hh);border-color:rgba(183,148,255,.22);
+  box-shadow:0 18px 44px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.03) inset}
+.hero{transition:opacity .8s ease,visibility .8s}
+.hero .bg{opacity:.9;filter:blur(22px) saturate(1.25) brightness(.8);transform:scale(1.35)}
+.hero.on .bg{animation:heroKen 9s ease-out both}
+@keyframes heroKen{from{transform:scale(1.5)}to{transform:scale(1.3)}}
+.hero .sc{background:linear-gradient(90deg,rgba(9,6,15,.9) 0%,rgba(9,6,15,.5) 55%,rgba(9,6,15,.25) 100%),
+  linear-gradient(0deg,rgba(9,6,15,.75) 0%,transparent 60%)}
+html[dir=rtl] .hero .sc{background:linear-gradient(270deg,rgba(9,6,15,.9) 0%,rgba(9,6,15,.5) 55%,rgba(9,6,15,.25) 100%),
+  linear-gradient(0deg,rgba(9,6,15,.75) 0%,transparent 60%)}
+.hero .hp{position:absolute;inset-inline-start:16px;top:50%;height:78%;aspect-ratio:2/3;
+  transform:translateY(-50%) scale(.94);border-radius:14px;overflow:hidden;background:rgba(255,255,255,.06);
+  box-shadow:0 14px 34px rgba(0,0,0,.65),0 0 0 1px rgba(255,255,255,.14);
+  opacity:0;transition:transform .8s cubic-bezier(.2,.8,.2,1),opacity .8s ease}
+.hero.on .hp{opacity:1;transform:translateY(-50%) scale(1)}
+.hero .hp img{width:100%;height:100%;object-fit:cover;display:block}
+.hero.sq .hp{aspect-ratio:1/1;height:56%;background:rgba(255,255,255,.94);padding:12px;box-sizing:border-box}
+.hero.sq .hp img{object-fit:contain}
+.hero .in{inset:0;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;
+  padding:18px 18px 18px 18px;gap:0}
+.hero.hasp .in{padding-inline-start:calc(16px + var(--hh) * .52 + 18px)}
+.hero.hasp.sq .in{padding-inline-start:calc(16px + var(--hh) * .56 + 18px)}
+.hero h1{margin:0 0 14px;font-size:clamp(18px,5.2vw,26px);text-shadow:0 2px 14px rgba(0,0,0,.6)}
+.hero .kick{color:var(--accent2);letter-spacing:1.6px}
+.hero .go{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;
+  box-shadow:0 8px 20px rgba(138,107,240,.45);padding:10px 22px}
+.heroDots i{width:7px;height:7px}
+.heroDots i.on{width:24px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+html:not(.tv) .heroBox{height:var(--hh)}
+html.tv .heroBox,html.tv .heroBox.heroBox{--hh:min(38vh,215px);height:var(--hh)}
+@media(min-width:700px){html:not(.tv) .heroBox{--hh:340px}}
+
 .hrow{margin-top:20px}
 .rhead{display:flex;align-items:center;gap:9px;margin-bottom:11px}
 .rhead h3{margin:0;font-size:14.5px;font-weight:800;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rhead .bar{width:3px;height:15px;border-radius:99px;background:linear-gradient(var(--accent),var(--accent2));flex:none}
-.rhead .all{font-size:11.5px;font-weight:800;color:var(--muted2);flex:none;cursor:pointer}
+.rhead .all{font:inherit;font-size:13px;font-weight:800;color:var(--accent2);flex:none;cursor:pointer;background:rgba(138,107,240,.14);border:1px solid rgba(183,148,255,.3);border-radius:999px;padding:8px 14px;margin:-6px 0;min-height:36px;display:inline-flex;align-items:center;gap:4px;-webkit-tap-highlight-color:transparent}
+.rhead .all b{font-size:17px;line-height:1}
+.rhead .all:active{transform:scale(.95);background:rgba(138,107,240,.28)}
+html[dir=rtl] .rhead .all b{display:inline-block;transform:scaleX(-1)}
 .strip{display:flex;gap:11px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;
   padding-bottom:2px;scroll-snap-type:x proximity}
 .strip::-webkit-scrollbar{display:none}
@@ -229,7 +268,6 @@ body.hasnav main{padding-bottom:calc(96px + var(--safe-b))}
    and the rows put more on a line instead. A television is left alone: it has
    its own sizes already, set for a remote and a room away. */
 @media(min-width:900px){
-  html:not(.tv) .heroBox{aspect-ratio:auto;height:min(46vh,380px)}
   html:not(.tv) .grid{grid-template-columns:repeat(8,1fr)}
   html:not(.tv) .grid.posters{grid-template-columns:repeat(7,1fr)}
   html:not(.tv) main{max-width:1500px;margin-inline:auto}
@@ -544,7 +582,7 @@ html.tv #nav button{flex-direction:row;justify-content:center;gap:9px;padding:9p
 html.tv header{top:54px}
 html.tv body.hasnav main{padding-bottom:40px}
 html.tv #favs{padding-top:calc(72px + var(--safe-t))}
-html.tv .heroBox{aspect-ratio:auto;height:min(38vh,215px)}
+html.tv .heroBox{--hh:min(38vh,215px);height:var(--hh)}
 /* room for the ring inside the sideways rows */
 html.kbd .strip{padding:8px 8px 10px;margin:-8px -8px -8px}
 html.kbd .card,html.kbd .row,html.kbd .ep,html.kbd .hi,html.kbd button{scroll-margin-top:170px;scroll-margin-bottom:96px}
@@ -841,7 +879,7 @@ var T = {
       updCheck:"پشکنینی وەشانی نوێ",updCheckSub:"ڕۆژی جارێک خۆی پشکنین دەکات",
       updTitle:"وەشانی ئەپەکە",updNow:"وەشانی ئێستات",updNew:"وەشانی نوێ",updSize:"قەبارە",
       updNone:"نوێترین وەشانت هەیە",updFound:"وەشانێکی نوێ ئامادەیە",
-      updWhat:"چی نوێیە",updGet:"دایبگرە",updSkip:"ئەم وەشانە تێپەڕێنە",
+      updWhat:"چی نوێیە",updGet:"ئەپدەیتی بکە",updDl:"ئەپدەیت دادەبەزێت…",updAllow:"ڕێگە بدە بە ئەپەکە دابمەزرێنێت، پاشان بگەڕێوە — ئەپدەیتەکە بەردەوام دەبێت",updRetry:"ئەپدەیت سەرنەکەوت، دووبارە هەوڵ بدەرەوە",updSkip:"ئەم وەشانە تێپەڕێنە",
       updChecking:"پشکنین…",updFail:"نەتوانرا پشکنین بکرێت",
       favs:"دڵخوازەکان",navFavs:"دڵخواز",favAdded:"زیادکرا بۆ دڵخوازەکان ⭐",favRemoved:"لابرا لە دڵخوازەکان",
       favEmpty:"هێشتا هیچ دڵخوازێکت نییە",favHint:"پەنجە لەسەر هەر کەناڵ، فیلم یان زنجیرەیەک ڕابگرە تا لێرە زیاد بێت. بۆ لابردنیش هەمان کار بکە.",
@@ -904,7 +942,7 @@ var T = {
       updCheck:"Check for updates",updCheckSub:"it looks once a day on its own",
       updTitle:"App version",updNow:"You have",updNew:"Newest",updSize:"Size",
       updNone:"You have the newest version",updFound:"A new version is ready",
-      updWhat:"What's new",updGet:"Download",updSkip:"Skip this version",
+      updWhat:"What's new",updGet:"Update now",updDl:"Downloading update…",updAllow:"Allow the app to install, then come back — the update continues",updRetry:"Update failed, try again",updSkip:"Skip this version",
       updChecking:"Checking…",updFail:"Could not check just now",
       favs:"Favorites",navFavs:"Favorites",favAdded:"Added to favorites ⭐",favRemoved:"Removed from favorites",
       favEmpty:"No favorites yet",favHint:"Press and hold any channel, movie or series to add it here. Do the same to remove it.",
@@ -967,7 +1005,7 @@ var T = {
       updCheck:"البحث عن تحديث",updCheckSub:"يبحث مرة كل يوم من تلقاء نفسه",
       updTitle:"إصدار التطبيق",updNow:"لديك",updNew:"الأحدث",updSize:"الحجم",
       updNone:"لديك أحدث إصدار",updFound:"إصدار جديد جاهز",
-      updWhat:"الجديد",updGet:"تنزيل",updSkip:"تخطَّ هذا الإصدار",
+      updWhat:"الجديد",updGet:"حدّث الآن",updDl:"جارٍ تنزيل التحديث…",updAllow:"اسمح للتطبيق بالتثبيت ثم ارجع — سيتابع التحديث",updRetry:"فشل التحديث، حاول مجددًا",updSkip:"تخطَّ هذا الإصدار",
       updChecking:"جاري البحث…",updFail:"تعذّر البحث الآن",
       favs:"المفضلة",navFavs:"المفضلة",favAdded:"أضيفت إلى المفضلة ⭐",favRemoved:"أزيلت من المفضلة",
       favEmpty:"لا توجد مفضلة بعد",favHint:"اضغط مطولاً على أي قناة أو فيلم أو مسلسل لإضافته هنا، وكرر ذلك لإزالته.",
@@ -1020,6 +1058,34 @@ function tileBg(h, dark){
 }
 /* The provider's own category name, exactly as it sends it - only the
    surrounding whitespace goes. */
+/* Any way a panel or a playlist writes a picture address becomes one that
+   loads: array or list of addresses (first one wins), protocol-relative
+   "//host/x.jpg", a TMDB path "/abc.jpg", a path on the panel itself,
+   stray spaces and backslashes, and inline data: pictures. Anything that is
+   clearly not a picture ("null", "N/A", empty) becomes "". */
+function artURL(u, base){
+  if(u && typeof u === "object"){ u = u.length ? u[0] : "" }
+  u = String(u == null ? "" : u).trim();
+  if(!u) return "";
+  if(/^(null|undefined|n\/a|none|false|0)$/i.test(u)) return "";
+  if(u.charAt(0) === "[" || u.charAt(0) === '"'){
+    try{ var j = JSON.parse(u); return artURL(j, base) }catch(e){ u = u.replace(/^[\["']+|[\]"']+$/g, "") }
+  }
+  if(/^data:image\//i.test(u)) return u;
+  u = u.split(/[|\s]+(?=https?:)/)[0].replace(/\\/g, "/").replace(/ /g, "%20");
+  if(/^https?:\/\//i.test(u)) return u;
+  if(u.slice(0, 2) === "//") return "https:" + u;
+  if(/^\/[A-Za-z0-9_-]{8,}\.(jpe?g|png|webp)$/i.test(u) && !base) return "https://image.tmdb.org/t/p/w500" + u;
+  if(base) return String(base).replace(/\/+$/, "") + "/" + u.replace(/^\/+/, "");
+  return /^[\w-]+(\.[\w-]+)+\//.test(u) ? "http://" + u : "";
+}
+/* the other scheme, tried once if the first one does not load */
+function artAlt(u){
+  if(/^http:\/\//i.test(u)) return u.replace(/^http:/i, "https:");
+  if(/^https:\/\//i.test(u)) return u.replace(/^https:/i, "http:");
+  return "";
+}
+
 function cleanGroup(g){
   return String(g == null ? "" : g).trim() || "Other";
 }
@@ -1088,7 +1154,7 @@ function parseM3U(txt){
         var nm = L.slice(L.lastIndexOf(",") + 1).trim();
         if(nm){
           cur = { c:(lastAttr(L,"group-title") || "Other"), n:nm, u:"",
-                  l:lastAttr(L,"tvg-logo") };
+                  l:artURL(lastAttr(L,"tvg-logo") || lastAttr(L,"tvg-icon") || lastAttr(L,"logo")) };
           /* some channels only answer to their own agent / referrer */
           var ua = firstAttr(L, "http-user-agent") || firstAttr(L, "user-agent");
           var rf = firstAttr(L, "http-referrer") || firstAttr(L, "http-referer");
@@ -1169,7 +1235,7 @@ function loadXtream(p){
           c: map[String(s.category_id)] || "Other",
           n: s.name || ("#" + s.stream_id),
           u: d + "/live/" + live + "/" + s.stream_id + ".ts",
-          l: s.stream_icon || ""
+          l: artURL(s.stream_icon || s.logo, d)
         });
       }
       return out;
@@ -1652,7 +1718,8 @@ function loadVod(p){
           c: map[String(v.category_id)] || "Other",
           n: v.name || ("#" + v.stream_id),
           u: d + "/movie/" + cr + "/" + v.stream_id + "." + (v.container_extension || "mp4"),
-          l: v.stream_icon || v.cover || "",
+          l: artURL(v.stream_icon, d) || artURL(v.cover, d) || artURL(v.movie_image, d) || artURL(v.cover_big, d)
+             || artURL(v.backdrop_path, d),
           r: v.rating || ""
         });
       }
@@ -1663,7 +1730,7 @@ function loadVod(p){
 
 /* series ------------------------------------------------------------ */
 function loadSeries(p){
-  var base = xtBase(p);
+  var base = xtBase(p), d = String(p.domain||"").replace(/\/+$/,"");
   return xtGet(base, "get_series_categories").then(function(cats){
     var map = {};
     if(Object.prototype.toString.call(cats) === "[object Array]")
@@ -1678,7 +1745,7 @@ function loadSeries(p){
           c: map[String(v.category_id)] || "Other",
           n: v.name || ("#" + v.series_id),
           u: "",                       /* series open a detail page, not a stream */
-          l: v.cover || "",
+          l: artURL(v.cover, d) || artURL(v.stream_icon, d) || artURL(v.cover_big, d) || artURL(v.backdrop_path, d),
           r: v.rating || "",
           sid: v.series_id,
           plot: v.plot || ""
@@ -2066,15 +2133,41 @@ function updOpen(){
   if(!UPD || UPD.state !== "done") updCheck(true);
 }
 
-/* the download goes to the phone's own browser, where the user can see what
-   is being downloaded and decide to install it */
+/* Android: the apk is fetched by the app itself and handed straight to the
+   system installer - nothing opens in a browser. Desktop keeps its link. */
+var UPDRUN = null;   /* {st:"run"|"perm"|"fail", done, total} */
 function updGet(){
   var st = updState(), u = (UPD && UPD.r && UPD.r.url) || st.url || "";
   if(!u) return;
+  try{
+    if(window.AndroidPlayer && AndroidPlayer.installUpdate && /\.apk(\?|$)/i.test(u)){
+      UPDRUN = { st: "run", done: 0, total: 0 };
+      drawSheet();
+      AndroidPlayer.installUpdate(u);
+      return;
+    }
+  }catch(e){}
   try{ if(window.AndroidPlayer && AndroidPlayer.openUrl){ AndroidPlayer.openUrl(u); return } }catch(e){}
   try{ window.open(u, "_blank") }catch(e){}
 }
-
+window.kiptvUpd = function(s, done, total){
+  var was = UPDRUN && UPDRUN.st;
+  UPDRUN = { st: s, done: done, total: total };
+  var bar = $("updFill");
+  if(s === "run" && bar && was === "run"){
+    var p = total > 0 ? Math.min(100, Math.round(done * 100 / total)) : 0;
+    bar.style.width = p + "%";
+    var tx = $("updPct"); if(tx) tx.textContent = (total > 0 ? p + "%  ·  " : "") + fmtSize(done);
+    return;
+  }
+  drawSheet();
+};
+/* back from Android's "allow installs" screen: carry on with the saved file */
+document.addEventListener("visibilitychange", function(){
+  if(!document.hidden && UPDRUN && UPDRUN.st === "perm"){
+    try{ if(window.AndroidPlayer && AndroidPlayer.continueInstall){ UPDRUN = null; AndroidPlayer.continueInstall(); drawSheet() } }catch(e){}
+  }
+});
 function updBody(d){
   var head = speedRow(d.updNow, appVerText()), st = updState();
   if(UPD && UPD.state === "run")
@@ -2091,6 +2184,17 @@ function updBody(d){
     return head + '<div class="row"><span class="tx"><b>'+esc(d.updNone)+'</b></span></div>'
          + '<button class="addbtn" onclick="updCheck(true)">'+esc(d.spdAgain)+'</button>';
 
+  if(UPDRUN && UPDRUN.st === 'run'){
+    var pp = UPDRUN.total > 0 ? Math.min(100, Math.round(UPDRUN.done * 100 / UPDRUN.total)) : 0;
+    return head + speedRow(d.updNew, r.name || String(r.build), true)
+      + '<div class="row"><span class="tx"><b>'+esc(d.updDl)+'</b>'
+      + '<div class="updProg"><i id="updFill" style="width:'+pp+'%"></i></div>'
+      + '<s id="updPct">'+(UPDRUN.total > 0 ? pp+'%  ·  ' : '')+fmtSize(UPDRUN.done)+'</s></span></div>';
+  }
+  if(UPDRUN && UPDRUN.st === 'perm')
+    head += '<div class="row"><span class="tx"><b>'+esc(d.updAllow)+'</b></span></div>';
+  if(UPDRUN && UPDRUN.st === 'fail')
+    head += '<div class="row"><span class="tx"><b style="color:#ff6b6b">'+esc(d.updRetry)+'</b></span></div>';
   var h = head + speedRow(d.updNew, r.name || String(r.build), true);
   if(r.size) h += speedRow(d.updSize, fmtSize(r.size));
   var notes = updNotes(r.notes, lang);
@@ -2199,8 +2303,10 @@ function imgStart(el){
     }
     el.setAttribute("data-try", "1");
     /* put the address back at once: that is also what hides the broken
-       picture the browser would otherwise show while the second try waits */
-    el.setAttribute("data-src", u);
+       picture the browser would otherwise show while the second try waits.
+       The second knock uses the other scheme (http <-> https): many panels
+       serve their pictures on only one of them. */
+    el.setAttribute("data-src", artAlt(u) || u);
     el.removeAttribute("src");
     setTimeout(function(){ if(el.parentNode) imgPush(el) }, 1500);
   };
@@ -2271,7 +2377,7 @@ function cardHTML(c, forceSquare){
   var square = (forceSquare !== undefined) ? forceSquare : (SECTION === "live");
   var h = hue(c.n);
   var bg = tileBg(h);
-  var img = c.l ? '<img data-src="'+esc(c.l)+'" decoding="async" alt="">' : '';
+  var img = c.l ? '<img data-src="'+esc(c.l)+'" decoding="async" referrerpolicy="no-referrer" alt="">' : '';
 
   var pgv = c.pct;
   if(pgv === undefined){ var sp = getPos(c.u); pgv = sp ? sp.p / sp.d : 0 }
@@ -2298,18 +2404,18 @@ function cardHTML(c, forceSquare){
 /* ---------- home: hero + horizontal rows ---------- */
 /* Up to HERO_N items for the banner, spread across different groups so the
    same category does not fill it. Picture first, then anything. */
-var HERO_N = 6, HERO_MS = 6000;
+var HERO_N = 8, HERO_MS = 4500;
 
+/* The banner follows the section the person is in - live channels, films or
+   series - and always starts from different items. */
 function heroPicks(){
-  var pool = (DATA.movies && DATA.movies.length) ? DATA.movies
-           : (DATA.series && DATA.series.length) ? DATA.series : CH;
-  pool = catVisible(pool);
+  var pool = catVisible(items());
   if(!pool.length) return [];
   var withArt = pool.filter(function(c){ return c.l });
   var src = withArt.length >= HERO_N ? withArt : pool;
 
-  /* start somewhere new each hour so the banner is not always the same */
-  var start = Math.floor(Date.now() / 3600000) % src.length;
+  /* a fresh starting point on every visit, so the banner is never the same */
+  var start = Math.floor(Math.random() * src.length);
   var out = [], usedGroup = {}, seen = {};
 
   for(var pass = 0; pass < 2 && out.length < HERO_N; pass++)
@@ -2322,16 +2428,30 @@ function heroPicks(){
   return out;
 }
 
+/* a banner picture that fails: the other scheme once, then the slide simply
+   goes without it (letters and colour stay) */
+function heroImgErr(im){
+  var u = im.getAttribute("src") || "";
+  if(!im.getAttribute("data-t") && artAlt(u)){ im.setAttribute("data-t", "1"); im.src = artAlt(u); return }
+  var s = im.parentNode;
+  while(s && !(s.classList && s.classList.contains("hero"))) s = s.parentNode;
+  if(im.parentNode && im.parentNode.className === "hp"){ im.parentNode.remove(); if(s) s.classList.remove("hasp") }
+  else im.remove();
+}
+
 function slideHTML(c, first){
   var h = hue(c.n);
   var bg = tileBg(h, true);
-  var img = c.l ? '<img class="bg" src="'+esc(c.l)+'" onerror="this.remove()" alt="">' : '';
+  var sq = SECTION === "live";
+  var art = c.l ? esc(c.l) : "";
+  var img = art ? '<img class="bg" src="'+art+'" referrerpolicy="no-referrer" onerror="heroImgErr(this)" alt="">' : '';
+  var pst = art ? '<div class="hp"><img src="'+art+'" referrerpolicy="no-referrer" onerror="heroImgErr(this)" alt=""></div>' : '';
   var attrs = c.sid ? ' data-sid="'+esc(c.sid)+'"' : ' data-u="'+esc(c.u)+'"';
   var sub = [];
   if(c.r) sub.push("★ " + String(c.r).slice(0,3));
   if(c.c) sub.push(cleanGroup(c.c));
-  return '<div class="hero'+(first ? " on" : "")+'"'+attrs+' data-n="'+esc(c.n)+'" style="background:'+bg+'">'
-       +   img + '<div class="mono">'+esc(initials(c.n))+'</div><div class="sc"></div>'
+  return '<div class="hero'+(first ? " on" : "")+(sq ? " sq" : "")+(art ? " hasp" : "")+'"'+attrs+' data-n="'+esc(c.n)+'" style="background:'+bg+'">'
+       +   img + '<div class="mono">'+esc(initials(c.n))+'</div><div class="sc"></div>' + pst
        +   '<div class="in"><div class="kick">'+esc(sub.length ? sub.join("  ·  ") : t().featured)+'</div>'
        +     '<h1>'+esc(c.n)+'</h1>'
        +     '<span class="go">&#9654;&#65038; '+esc(t().playNow)+'</span></div>'
@@ -2388,10 +2508,10 @@ function heroStart(){
   }, HERO_MS);
 }
 
-function rowHTML(title, list, square){
+function rowHTML(title, list, square, gi){
   if(!list || !list.length) return "";
   return '<div class="hrow"><div class="rhead"><span class="bar"></span><h3>'+esc(title)+'</h3>'
-       + '<span class="all" data-go="'+esc(title)+'">'+esc(t().seeAll)+' &#8250;</span></div>'
+       + '<button type="button" class="all" data-gi="'+gi+'">'+esc(t().seeAll)+' <b>&#8250;</b></button></div>'
        + '<div class="strip'+(square ? "" : " big")+'">'
        + list.slice(0,16).map(function(c){ return cardHTML(c, square) }).join("")
        + '</div></div>';
@@ -2407,7 +2527,7 @@ function homeHTML(){
   var src = items(), byGroup = {};
   for(var i = 0; i < src.length; i++) (byGroup[src[i].c] = byGroup[src[i].c] || []).push(src[i]);
   for(var g = 0; g < GROUPS.length && g < 12; g++)
-    html += rowHTML(cleanGroup(GROUPS[g]), byGroup[GROUPS[g]], square);
+    html += rowHTML(cleanGroup(GROUPS[g]), byGroup[GROUPS[g]], square, g);
   return html;
 }
 
@@ -2603,10 +2723,10 @@ $("main").addEventListener("click", function(e){
 
 $("main").addEventListener("click", function(e){
   if(e.target.getAttribute && e.target.getAttribute("data-hd") !== null) return;
-  var go = e.target.getAttribute && e.target.getAttribute("data-go");
-  if(go){
-    for(var k = 0; k < GROUPS.length; k++) if(cleanGroup(GROUPS[k]) === go){ f = GROUPS[k]; break }
-    renderChips(); render(); return;
+  var ab = e.target.closest ? e.target.closest("[data-gi]") : null;
+  if(ab && GROUPS[+ab.getAttribute("data-gi")] !== undefined){
+    f = GROUPS[+ab.getAttribute("data-gi")]; $("search").value = "";
+    renderChips(); render(); window.scrollTo(0, 0); return;
   }
   var el = e.target;
   while(el && el !== this && !(el.getAttribute && (el.getAttribute("data-u") || el.getAttribute("data-sid"))))
@@ -3950,7 +4070,7 @@ $("favs").addEventListener("click", function(e){
    here runs for touches: a phone behaves exactly as before. */
 var TV = false;
 try{ TV = !!(window.AndroidPlayer && AndroidPlayer.isTv && AndroidPlayer.isTv()) }catch(e){}
-var NAV_SEL = 'button, input, .card, .row, .ep, .hi, .hero.on, #pins';
+var NAV_SEL = 'button, input, .card, .row, .ep, .hi, .hero.on, #pins, .rhead .all';
 var tvMem = {};                    /* last highlighted item, per page */
 var okDown = 0, okTimer = null, okFired = false;
 
