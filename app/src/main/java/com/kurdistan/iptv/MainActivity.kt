@@ -411,6 +411,73 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        /**
+         * In-app update: downloads the apk into the app's own cache (progress
+         * goes back to the page as window.kiptvUpd(state, done, total)), then
+         * opens the system installer on it. The user never leaves the app to
+         * fetch a file; Android's own "Update" confirmation is the only step.
+         */
+        @android.webkit.JavascriptInterface
+        fun installUpdate(url: String) {
+            if (!url.startsWith("https://") && !url.startsWith("http://")) return
+            Thread {
+                fun say(st: String, a: Long, b: Long) = runOnUiThread {
+                    webView.evaluateJavascript(
+                        "window.kiptvUpd&&window.kiptvUpd('$st',$a,$b)", null)
+                }
+                try {
+                    val dir = java.io.File(cacheDir, "updates").apply { mkdirs() }
+                    dir.listFiles()?.forEach { it.delete() }
+                    val f = java.io.File(dir, "update.apk")
+                    val c = openFollowingRedirects(url, UA)
+                    val total = c.contentLengthLong
+                    var done = 0L
+                    var lastTick = 0L
+                    c.inputStream.use { inp ->
+                        f.outputStream().use { out ->
+                            val buf = ByteArray(64 * 1024)
+                            while (true) {
+                                val n = inp.read(buf)
+                                if (n < 0) break
+                                out.write(buf, 0, n)
+                                done += n
+                                val now = SystemClock.uptimeMillis()
+                                if (now - lastTick > 150) { lastTick = now; say("run", done, total) }
+                            }
+                        }
+                    }
+                    c.disconnect()
+                    say("run", done, done)
+                    runOnUiThread {
+                        if (Build.VERSION.SDK_INT >= 26 && !packageManager.canRequestPackageInstalls()) {
+                            // one-time switch in Android's settings; the download is kept
+                            say("perm", 0, 0)
+                            try {
+                                startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                                    Uri.parse("package:$packageName")))
+                            } catch (e: Exception) { }
+                        } else launchInstaller()
+                    }
+                } catch (e: Exception) { say("fail", 0, 0) }
+            }.start()
+        }
+
+        /** after the user allowed installs, the page asks to carry on with the saved file */
+        @android.webkit.JavascriptInterface
+        fun continueInstall() { runOnUiThread { launchInstaller() } }
+
+        private fun launchInstaller() {
+            val f = java.io.File(java.io.File(cacheDir, "updates"), "update.apk")
+            if (!f.exists()) return
+            try {
+                val uri = androidx.core.content.FileProvider.getUriForFile(
+                    this@MainActivity, "$packageName.fileprovider", f)
+                startActivity(Intent(Intent.ACTION_VIEW)
+                    .setDataAndType(uri, "application/vnd.android.package-archive")
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK))
+            } catch (e: Exception) { }
+        }
+
         /** the page's language, so the player's own menu speaks it too */
         @android.webkit.JavascriptInterface
         fun setLang(l: String) {
