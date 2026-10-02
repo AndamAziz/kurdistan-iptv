@@ -17,6 +17,19 @@ android {
         versionName = "1.0"
     }
 
+    /* Two builds from the same code, differing only in how they update:
+         direct - the APK for GitHub / Uptodown. It downloads its own update
+                  and hands it to Android's installer (app/src/direct/ adds
+                  the permission for that).
+         play   - the bundle for Google Play. Play forbids an app installing
+                  itself, so this one asks Google Play for its update instead.
+       Same applicationId, same key, same version number. */
+    flavorDimensions += "store"
+    productFlavors {
+        create("direct") { dimension = "store" }
+        create("play") { dimension = "store" }
+    }
+
     /* The same key signs every release build, so an APK installs over the one
        before it and keeps the playlists, favourites and history. The key never
        lives in this repository: the build gets it from the GitHub secrets. */
@@ -78,4 +91,8 @@ dependencies {
 
     // FFmpeg audio decoders (AC3, EAC3, DTS, TrueHD ...); version must start with the Media3 version
     implementation("io.github.anilbeesetti:nextlib-media3ext:1.7.1-0.9.0")
+
+    // Google Play's own in-app update screen (used only by the Play build;
+    // the GitHub build carries it too but never calls it)
+    implementation("com.google.android.play:app-update:2.1.0")
 }

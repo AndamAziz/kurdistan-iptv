@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Only the GitHub / Uptodown build (the "direct" flavour) gets this file.
+     It lets that build hand its own downloaded update to Android's installer.
+     The Google Play build never has it - Play refuses the permission and
+     updates the app itself. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+</manifest>

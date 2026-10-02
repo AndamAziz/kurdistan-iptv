@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
-    <!-- in-app update: lets the app hand its own downloaded update to the installer -->
-    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+    <!-- REQUEST_INSTALL_PACKAGES is NOT here on purpose: Google Play refuses it.
+         Only the GitHub / Uptodown build adds it, from app/src/direct/. -->
     <!-- radio mode: the sound goes on after the app leaves the screen -->
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
