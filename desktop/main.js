@@ -60,6 +60,8 @@ function makeWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
+      /* the welcome sound plays itself, as it does inside the phone's WebView */
+      autoplayPolicy: "no-user-gesture-required",
       /* the page reads the proxy's address from here, as MainActivity's
          WebView reads it from a constant */
       additionalArguments: ["--kiptv-proxy=" + (proxied ? proxied.url : "")]
