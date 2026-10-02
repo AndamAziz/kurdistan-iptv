@@ -115,6 +115,53 @@ class MainActivity : ComponentActivity() {
 
     private val handler = Handler(Looper.getMainLooper())
 
+    /* ---------- updating from inside the app ----------
+       Two builds come out of the same code. The one from GitHub / Uptodown
+       may install its own update (it carries REQUEST_INSTALL_PACKAGES); the
+       one from Google Play may not - Play forbids it - so it asks Google
+       Play for its own full-screen update instead. Either way the person
+       never leaves the app to fetch a file. */
+    private val playUpdates by lazy {
+        com.google.android.play.core.appupdate.AppUpdateManagerFactory.create(this)
+    }
+    private val playUpdateLauncher = registerForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.StartIntentSenderForResult()
+    ) { r -> if (r.resultCode != RESULT_OK) updToPage("cancel", 0, 0) }
+
+    /** progress and outcome back to the page: window.kiptvUpd(state, done, total) */
+    private fun updToPage(st: String, a: Long, b: Long) = runOnUiThread {
+        if (::webView.isInitialized)
+            webView.evaluateJavascript("window.kiptvUpd&&window.kiptvUpd('$st',$a,$b)", null)
+    }
+
+    /** true for the GitHub / Uptodown build, false for the Google Play one */
+    private fun canSelfInstall(): Boolean = try {
+        @Suppress("DEPRECATION")
+        val p = packageManager.getPackageInfo(packageName, PackageManager.GET_PERMISSIONS)
+        p.requestedPermissions?.contains("android.permission.REQUEST_INSTALL_PACKAGES") == true
+    } catch (e: Exception) { false }
+
+    private fun playUpdate(resumeOnly: Boolean = false) {
+        playUpdates.appUpdateInfo
+            .addOnSuccessListener { info ->
+                val avail = info.updateAvailability()
+                val go = avail == com.google.android.play.core.install.model.UpdateAvailability.UPDATE_AVAILABLE ||
+                    avail == com.google.android.play.core.install.model.UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS
+                if (resumeOnly && avail != com.google.android.play.core.install.model.UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS)
+                    return@addOnSuccessListener
+                if (go && info.isUpdateTypeAllowed(com.google.android.play.core.install.model.AppUpdateType.IMMEDIATE)) {
+                    try {
+                        playUpdates.startUpdateFlowForResult(
+                            info, playUpdateLauncher,
+                            com.google.android.play.core.appupdate.AppUpdateOptions
+                                .newBuilder(com.google.android.play.core.install.model.AppUpdateType.IMMEDIATE).build()
+                        )
+                    } catch (e: Exception) { updToPage("noplay", 0, 0) }
+                } else if (!resumeOnly) updToPage("noplay", 0, 0)
+            }
+            .addOnFailureListener { if (!resumeOnly) updToPage("noplay", 0, 0) }
+    }
+
     private lateinit var topBar: View
 
     private var player: ExoPlayer? = null
@@ -412,19 +459,19 @@ class MainActivity : ComponentActivity() {
         }
 
         /**
-         * In-app update: downloads the apk into the app's own cache (progress
-         * goes back to the page as window.kiptvUpd(state, done, total)), then
-         * opens the system installer on it. The user never leaves the app to
-         * fetch a file; Android's own "Update" confirmation is the only step.
+         * In-app update.
+         * Google Play build: Play's own full-screen update, inside the app.
+         * GitHub / Uptodown build: the apk is downloaded into the app's own
+         * cache (progress goes back to the page as window.kiptvUpd(state,
+         * done, total)), then Android's installer opens on it. Either way the
+         * person never leaves the app to fetch a file.
          */
         @android.webkit.JavascriptInterface
         fun installUpdate(url: String) {
+            if (!canSelfInstall()) { runOnUiThread { playUpdate() }; return }
             if (!url.startsWith("https://") && !url.startsWith("http://")) return
             Thread {
-                fun say(st: String, a: Long, b: Long) = runOnUiThread {
-                    webView.evaluateJavascript(
-                        "window.kiptvUpd&&window.kiptvUpd('$st',$a,$b)", null)
-                }
+                fun say(st: String, a: Long, b: Long) = updToPage(st, a, b)
                 try {
                     val dir = java.io.File(cacheDir, "updates").apply { mkdirs() }
                     dir.listFiles()?.forEach { it.delete() }
@@ -464,7 +511,13 @@ class MainActivity : ComponentActivity() {
 
         /** after the user allowed installs, the page asks to carry on with the saved file */
         @android.webkit.JavascriptInterface
-        fun continueInstall() { runOnUiThread { launchInstaller() } }
+        fun continueInstall() {
+            runOnUiThread {
+                if (Build.VERSION.SDK_INT >= 26 && !packageManager.canRequestPackageInstalls())
+                    updToPage("perm", 0, 0)              /* still not allowed: say so again */
+                else launchInstaller()
+            }
+        }
 
         private fun launchInstaller() {
             val f = java.io.File(java.io.File(cacheDir, "updates"), "update.apk")
@@ -475,7 +528,10 @@ class MainActivity : ComponentActivity() {
                 startActivity(Intent(Intent.ACTION_VIEW)
                     .setDataAndType(uri, "application/vnd.android.package-archive")
                     .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK))
-            } catch (e: Exception) { }
+                /* the file is kept: if the installer is closed, the button
+                   opens it again without downloading anything */
+                updToPage("ready", 0, 0)
+            } catch (e: Exception) { updToPage("fail", 0, 0) }
         }
 
         /** the page's language, so the player's own menu speaks it too */
@@ -2426,6 +2482,9 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         stopRadio()                                      /* back on screen: no notification */
+        /* a Google Play update that was under way when the app went away
+           carries on where it was */
+        if (!canSelfInstall()) try { playUpdate(resumeOnly = true) } catch (e: Exception) { }
         if (playerLayer.visibility == View.VISIBLE) {
             wakePlayer()                                 /* opens the line again where it was */
             player?.playWhenReady = true
