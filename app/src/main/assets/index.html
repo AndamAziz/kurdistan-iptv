@@ -145,75 +145,75 @@ html.tv .card .epg{font-size:12px}
 .empty p{margin:0;font-size:14px;font-weight:600}
 
 /* ---------- home: hero + horizontal rows ----------
-   One layout for every slide, whatever it carries: the picture itself,
-   blurred, fills the back; the sharp poster stands in the middle; the title
-   and the Play button sit under it. Everything is in normal flow, so nothing
-   can ever land on top of anything else, and a slide without a picture keeps
-   exactly the same shape (its letters take the poster's place). */
+   A compact banner, the same shape on every slide: the poster on one side,
+   the words and the Play button beside it, the picture itself blurred behind.
+   Everything sits in normal flow, so nothing can land on top of anything
+   else, and a slide without a picture keeps exactly the same shape (its
+   letters take the poster's place). */
 .heroWrap{position:relative;margin:4px 0 6px}
 .heroBox{
-  --hh:clamp(380px,116vw,500px);
+  --hh:clamp(188px,50vw,230px);
   position:relative;height:var(--hh);border-radius:var(--r-lg);overflow:hidden;
   background:var(--surface);border:1px solid rgba(183,148,255,.18);
-  box-shadow:0 18px 44px rgba(0,0,0,.6);touch-action:pan-y;
+  box-shadow:0 14px 34px rgba(0,0,0,.55);touch-action:pan-y;
 }
-@media(min-width:700px){.heroBox{--hh:440px}}
+@media(min-width:700px){.heroBox{--hh:250px}}
+html.tv .heroBox{--hh:min(40vh,230px)}
 .hero{
   position:absolute;inset:0;cursor:pointer;opacity:0;visibility:hidden;
-  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
-  padding:22px 18px 20px;box-sizing:border-box;text-align:center;
+  display:flex;flex-direction:row;align-items:center;gap:16px;
+  padding:14px 18px;box-sizing:border-box;text-align:start;
   transition:opacity .8s ease,visibility .8s;
 }
 .hero.on{opacity:1;visibility:visible}
 .hero .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
-  filter:blur(26px) saturate(1.3) brightness(.75);transform:scale(1.4);opacity:.95}
+  filter:blur(24px) saturate(1.3) brightness(.7);transform:scale(1.4);opacity:.95}
 .hero.on .bg{animation:heroKen 10s ease-out both}
 @keyframes heroKen{from{transform:scale(1.55)}to{transform:scale(1.35)}}
 .hero .sc{position:absolute;inset:0;
-  background:radial-gradient(120% 80% at 50% 30%,transparent 0%,rgba(9,6,15,.35) 60%,rgba(9,6,15,.75) 100%),
-             linear-gradient(0deg,rgba(9,6,15,.97) 0%,rgba(9,6,15,.7) 28%,transparent 55%)}
+  background:linear-gradient(0deg,rgba(9,6,15,.8) 0%,rgba(9,6,15,.35) 60%,rgba(9,6,15,.25) 100%)}
 
 /* the poster */
-.hero .hp{position:relative;flex:none;height:calc(var(--hh) * .6);aspect-ratio:2/3;
-  border-radius:14px;overflow:hidden;
-  box-shadow:0 18px 40px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.12);
-  transform:translateY(8px) scale(.96);opacity:0;
+.hero .hp{position:relative;flex:none;height:calc(var(--hh) - 28px);aspect-ratio:2/3;
+  border-radius:12px;overflow:hidden;
+  box-shadow:0 12px 28px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.12);
+  transform:scale(.95);opacity:0;
   transition:transform .9s cubic-bezier(.2,.8,.2,1),opacity .9s ease}
 .hero.on .hp{transform:none;opacity:1}
 .hero .hp .mono{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  font-size:clamp(30px,10vw,52px);font-weight:900;color:rgba(255,255,255,.55);letter-spacing:1px}
+  font-size:26px;font-weight:900;color:rgba(255,255,255,.55);letter-spacing:1px}
 .hero .hp img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 /* a live channel: its logo on a clean plate, square */
-.hero.sq .hp{height:calc(var(--hh) * .42);aspect-ratio:1/1;border-radius:22px;background:#fff!important}
-.hero.sq .hp img{object-fit:contain;inset:14%;width:72%;height:72%}
+.hero.sq .hp{height:calc(var(--hh) * .58);aspect-ratio:1/1;border-radius:18px;background:#fff!important}
+.hero.sq .hp img{object-fit:contain;inset:12%;width:76%;height:76%}
 .hero.sq .hp .mono{color:rgba(20,14,40,.35)}
 
-/* the words under it */
-.hero .in{position:relative;flex:none;width:100%;margin-top:16px;
-  display:flex;flex-direction:column;align-items:center}
-.hero .kick{max-width:100%;font-size:10.5px;font-weight:800;letter-spacing:1.8px;color:var(--accent2);
+/* the words beside it */
+.hero .in{position:relative;flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start}
+.hero .kick{max-width:100%;font-size:10px;font-weight:800;letter-spacing:1.6px;color:var(--accent2);
   margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hero h1{max-width:100%;margin:0 0 14px;font-size:clamp(18px,5.4vw,24px);font-weight:800;line-height:1.25;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 2px 14px rgba(0,0,0,.6)}
-.hero .go{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:150px;
-  padding:12px 28px;border-radius:999px;font-weight:800;font-size:14.5px;color:#fff;
+.hero h1{max-width:100%;margin:0 0 12px;font-size:clamp(16px,4.6vw,21px);font-weight:800;line-height:1.3;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  text-shadow:0 2px 12px rgba(0,0,0,.6)}
+.hero .go{display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  padding:9px 20px;border-radius:999px;font-weight:800;font-size:13px;color:#fff;
   background:linear-gradient(135deg,var(--accent),var(--accent2));
-  box-shadow:0 10px 24px rgba(138,107,240,.45)}
+  box-shadow:0 8px 20px rgba(138,107,240,.45)}
 
 .heroDots{display:flex;justify-content:center;gap:6px;margin-top:10px}
 .heroDots i{width:7px;height:7px;border-radius:99px;background:rgba(255,255,255,.22);
   transition:width .3s ease,background .3s ease;cursor:pointer}
 .heroDots i.on{width:24px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
 
-/* TV: the screen is wide and short, so the poster stands beside the words -
-   still in normal flow, on the same side every time */
-html.tv .heroBox{--hh:min(42vh,240px)}
-html.tv .hero{flex-direction:row;justify-content:flex-start;align-items:center;text-align:start;
-  gap:22px;padding:16px 26px}
-html.tv .hero .hp{height:calc(var(--hh) - 32px)}
-html.tv .hero.sq .hp{height:calc(var(--hh) - 64px)}
-html.tv .hero .in{flex:1;min-width:0;margin:0;align-items:flex-start}
-html.tv .hero .sc{background:linear-gradient(0deg,rgba(9,6,15,.85),rgba(9,6,15,.45))}
+/* the search box at the top of the category list */
+.pksearch{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:10px;
+  margin:0 0 8px;padding:0 14px;height:46px;border-radius:14px;
+  background:var(--surface2);border:1px solid var(--line);color:var(--muted)}
+.pksearch svg{width:18px;height:18px;flex:none}
+.pksearch input{flex:1;min-width:0;height:100%;background:none;border:0;outline:0;
+  color:var(--text);font:inherit;font-size:14.5px}
+.pksearch:focus-within{border-color:var(--accent)}
+.pknone{padding:18px;text-align:center;color:var(--muted);font-size:13px}
 .hrow{margin-top:20px}
 .rhead{display:flex;align-items:center;gap:9px;margin-bottom:11px}
 .rhead h3{margin:0;font-size:14.5px;font-weight:800;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -849,7 +849,7 @@ var T = {
       noVod:"هیچ فیلمێک نییە",noSer:"هیچ زنجیرەیەک نییە",onlyXtream:"تەنها بۆ لیستی Xtream",
       tag:"پەخشی ڕاستەوخۆ",ann:"بەخێربێیت بۆ KURDISTAN IPTV — پەخشی ڕاستەوخۆی کەناڵە کوردی و نێودەوڵەتییەکان",
       recent:"بەردەوامبە لە بینین",none:"هیچ کەناڵێک نەدۆزرایەوە",lang:"زمان",
-      catLabel:"پۆل",
+      catLabel:"پۆل",catSearch:"گەڕان لە پۆلەکان…",
       enter:"کۆدی چالاککردن داخڵ بکە",act:"چالاککردن",wrong:"کۆدەکە هەڵەیە",
       gcAsk:"کۆدت نییە؟ پەیوەندیمان پێوە بکە",gcMail:"ئیمەیڵ",gcCopied:"کۆپی کرا",
       actChecking:"چاوەڕێ بکە…",actExpired:"ماوەی ئەم کۆدە تەواو بووە",
@@ -912,7 +912,7 @@ var T = {
       noVod:"No movies here",noSer:"No series here",onlyXtream:"Xtream playlists only",
       tag:"LIVE STREAMING",ann:"Welcome to KURDISTAN IPTV — live Kurdish and international channels",
       recent:"Continue watching",none:"No channels found",lang:"Language",
-      catLabel:"Category",
+      catLabel:"Category",catSearch:"Search categories…",
       enter:"Enter your activation code",act:"Activate",wrong:"Wrong code",
       gcAsk:"No code yet? Get in touch",gcMail:"Email",gcCopied:"Copied",
       actChecking:"Please wait…",actExpired:"This code has ended",
@@ -975,7 +975,7 @@ var T = {
       noVod:"لا توجد أفلام",noSer:"لا توجد مسلسلات",onlyXtream:"لقوائم Xtream فقط",
       tag:"بث مباشر",ann:"مرحباً بك في KURDISTAN IPTV — بث مباشر للقنوات الكردية والعالمية",
       recent:"متابعة المشاهدة",none:"لا توجد قنوات",lang:"اللغة",
-      catLabel:"الفئة",
+      catLabel:"الفئة",catSearch:"ابحث في الفئات…",
       enter:"أدخل رمز التفعيل",act:"تفعيل",wrong:"الرمز غير صحيح",
       gcAsk:"ليس لديك رمز؟ تواصل معنا",gcMail:"البريد",gcCopied:"تم النسخ",
       actChecking:"يرجى الانتظار…",actExpired:"انتهت صلاحية هذا الرمز",
@@ -2618,7 +2618,14 @@ function renderChips(){
 function pickBody(d){
   var src = items(), n = {};
   for(var i = 0; i < src.length; i++) n[src[i].c] = (n[src[i].c] || 0) + 1;
-  var h = '<div class="row'+(f==="ALL"?" on":"")+'" onclick="pickGroup(\'ALL\')">'
+  /* a long list gets its own search box; typing hides the rows that do not
+     match, without redrawing, so the keyboard stays open */
+  var h = GROUPS.length > 6
+    ? '<div class="pksearch">' + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>'
+      + '<input id="pkq" type="search" autocomplete="off" placeholder="'+esc(d.catSearch)+'" oninput="pickFilter(this.value)">'
+      + '</div>'
+    : '';
+  h += '<div class="row'+(f==="ALL"?" on":"")+'" onclick="pickGroup(\'ALL\')">'
         +   '<span class="tx"><b>'+esc(d.all)+'</b></span>'
         +   '<span class="cs-n">'+src.length+'</span><span class="tick">&#10003;</span></div>';
   if(anyLocked())
@@ -2626,10 +2633,22 @@ function pickBody(d){
       +    '<span class="ic">'+(PLOCK_OPEN ? ICON.unlock : ICON.lock)+'</span>'
       +    '<span class="tx"><b>'+esc(d.lockedW)+'</b></span></div>';
   for(var g = 0; g < GROUPS.length; g++)
-    h += '<div class="row'+(f===GROUPS[g]?" on":"")+'" data-pick="'+esc(GROUPS[g])+'">'
+    h += '<div class="row'+(f===GROUPS[g]?" on":"")+'" data-pick="'+esc(GROUPS[g])+'" data-q="'+esc(cleanGroup(GROUPS[g]).toLowerCase())+'">'
       +    '<span class="tx"><b>'+esc(cleanGroup(GROUPS[g]))+'</b></span>'
       +    '<span class="cs-n">'+(n[GROUPS[g]]||0)+'</span><span class="tick">&#10003;</span></div>';
+  h += '<div class="pknone" id="pknone" style="display:none">'+esc(d.none)+'</div>';
   return h;
+}
+function pickFilter(q){
+  q = String(q || "").trim().toLowerCase();
+  var rows = document.querySelectorAll("#sheet [data-q]"), shown = 0;
+  for(var i = 0; i < rows.length; i++){
+    var hit = !q || rows[i].getAttribute("data-q").indexOf(q) > -1;
+    rows[i].style.display = hit ? "" : "none";
+    if(hit) shown++;
+  }
+  var none = $("pknone");
+  if(none) none.style.display = (q && !shown) ? "" : "none";
 }
 function pickGroup(g){
   f = g; $("search").value = "";
