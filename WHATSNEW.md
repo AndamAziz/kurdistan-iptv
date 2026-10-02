@@ -1,28 +1,39 @@
 [en]
-The activation screen now shows how to reach us.
+Updates now happen inside the app.
 
-If you do not have a code yet, there are three buttons under Activate: Email,
-Telegram and WhatsApp. Telegram and WhatsApp open straight in their own apps.
-The email address is copied to the clipboard instead of opened, so it works on
-a TV box too, where there is no mail app.
+Tap "Update now": the new version downloads inside the app with a progress
+bar, then Android asks once to install it. No browser, no other page.
+On Google Play the app uses Google Play's own update screen.
 
-Nothing else changed. Live channels, films and series play exactly as before.
+The banner on the home page is redesigned: a clear poster in the middle, the
+name and the Play button underneath. It changes by itself every few seconds,
+separately for live channels, films and series.
+
+More posters now load, and "See all" on each row works.
 
 [ku]
-پەڕەی کۆدی چالاککردن ئێستا ڕێگای پەیوەندی پیشان دەدات.
+ئەپدەیت ئێستا لەناو خودی ئەپەکەدا دەبێت.
 
-ئەگەر کۆدت نەبێت، لە ژێر دوگمەی Activate سێ دوگمە هەیە: ئیمەیڵ و Telegram و
-WhatsApp. Telegram و WhatsApp ڕاستەوخۆ لە ئەپی خۆیان دەکرێنەوە. ناونیشانی
-ئیمەیڵ کۆپی دەکرێت لە جیاتی کردنەوە، بۆیە لەسەر بۆکسی تیڤیش کاردەکات، کە ئەپی
-ئیمەیڵی نییە.
+«ئەپدەیتی بکە» دابگرە: وەشانی نوێ لەناو ئەپەکەدا دادەبەزێت و ڕێژەکەی
+دەبینیت، پاشان ئەندرۆید یەک جار دەپرسێت بۆ دامەزراندن. نە براوزەر، نە
+پەیجێکی تر. لە Google Play ئەپەکە پەنجەرەی ئەپدەیتی خودی Google Play
+بەکاردەهێنێت.
 
-هیچی تر نەگۆڕاوە. کەناڵی زیندوو و فیلم و سریاڵ وەک خۆیان کاردەکەن.
+هێرۆی پەڕەی سەرەکی نوێ کرایەوە: پۆستەرێکی ڕوون لە ناوەڕاست، ناو و دوگمەی
+بینین لە ژێریدا. هەر چەند چرکەیەک خۆی دەگۆڕێت، جیاجیا بۆ کەناڵی زیندوو،
+فیلم و سریاڵ.
+
+پۆستەری زیاتر پیشان دەدرێت، و «هەمووی» لە هەر ڕیزێک کاردەکات.
 
 [ar]
-شاشة رمز التفعيل تعرض الآن طريقة التواصل معنا.
+التحديث يتم الآن داخل التطبيق نفسه.
 
-إن لم يكن لديك رمز بعد، تجد تحت زر التفعيل ثلاثة أزرار: البريد وTelegram
-وWhatsApp. يفتح Telegram وWhatsApp مباشرة في تطبيقيهما. أما عنوان البريد
-فيُنسخ بدل أن يُفتح، فيعمل أيضًا على جهاز التلفاز حيث لا يوجد تطبيق بريد.
+اضغط «حدّث الآن»: يُنزَّل الإصدار الجديد داخل التطبيق مع شريط تقدّم، ثم
+يطلب أندرويد التثبيت مرة واحدة. لا متصفح ولا صفحة أخرى. وعلى Google Play
+يستخدم التطبيق شاشة التحديث الخاصة بـ Google Play.
 
-لم يتغيّر شيء آخر. القنوات المباشرة والأفلام والمسلسلات تعمل كما كانت.
+أُعيد تصميم البانر في الصفحة الرئيسية: ملصق واضح في الوسط، والاسم وزر
+التشغيل تحته. يتغيّر تلقائيًا كل بضع ثوانٍ، لكلٍّ من القنوات المباشرة
+والأفلام والمسلسلات.
+
+تظهر الآن ملصقات أكثر، وزر «الكل» في كل صف يعمل.
