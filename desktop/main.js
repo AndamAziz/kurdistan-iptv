@@ -51,7 +51,7 @@ function makeWindow() {
     height: (b && b.height) || 760,
     x: b && b.x, y: b && b.y,
     minWidth: 420, minHeight: 480,
-    backgroundColor: "#080B10",
+    backgroundColor: "#070A0E",
     title: "KURDISTAN IPTV",
     autoHideMenuBar: true,
     icon: path.join(__dirname, "build", "icon.png"),
