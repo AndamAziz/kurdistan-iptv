@@ -2,7 +2,7 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#080B10">
+    android:background="#070A0E">
 
     <WebView
         android:id="@+id/webView"
@@ -84,7 +84,7 @@
             android:layout_width="52dp"
             android:layout_height="52dp"
             android:layout_gravity="center"
-            android:indeterminateTint="#E63E46" />
+            android:indeterminateTint="#E8B33C" />
 
         <LinearLayout
             android:id="@+id/errorBox"
@@ -101,7 +101,7 @@
                 android:layout_height="wrap_content"
                 android:text="⚠"
                 android:textSize="40sp"
-                android:textColor="#E63E46" />
+                android:textColor="#E0353B" />
 
             <TextView
                 android:id="@+id/txtError"
