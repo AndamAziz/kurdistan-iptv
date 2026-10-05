@@ -247,18 +247,6 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
 
-    # Google Play hands out one edit at a time. Four files uploaded one after
-    # the other start four builds, their four play jobs reach for the same
-    # edit at the same moment, and three of them come away empty-handed -
-    # which is exactly what happened on the day the colours changed.
-    #
-    # They queue now. If several are waiting, GitHub keeps the newest and
-    # drops the ones it has overtaken - which is the right one to keep: the
-    # newest build is the version that should be on Play.
-    concurrency:
-      group: play-upload
-      cancel-in-progress: false
-
     env:
       PLAY_JSON: ${{ secrets.PLAY_JSON }}
 
