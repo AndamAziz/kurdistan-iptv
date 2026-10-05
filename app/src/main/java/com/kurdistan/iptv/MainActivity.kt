@@ -338,7 +338,7 @@ class MainActivity : ComponentActivity() {
             allowContentAccess = true
             cacheMode = WebSettings.LOAD_DEFAULT
         }
-        webView.setBackgroundColor(0xFF080B10.toInt())
+        webView.setBackgroundColor(0xFF070A0E.toInt())
         webView.overScrollMode = View.OVER_SCROLL_NEVER
         WebView.setWebContentsDebuggingEnabled(false)
         webView.webChromeClient = WebChromeClient()
@@ -1557,8 +1557,8 @@ class MainActivity : ComponentActivity() {
 
     private fun panelBg(on: Boolean): GradientDrawable = GradientDrawable().apply {
         cornerRadius = dp(12).toFloat()
-        setColor(if (on) 0x338A6BF0 else 0x14FFFFFF)
-        setStroke(dp(1), if (on) 0xFF8A6BF0.toInt() else 0x1FFFFFFF)
+        setColor(if (on) 0x33E8B33C else 0x14FFFFFF)
+        setStroke(dp(1), if (on) 0xFFE8B33C.toInt() else 0x1FFFFFFF)
     }
 
     private fun sectionTitle(t: String): TextView = TextView(this).apply {
@@ -1578,7 +1578,7 @@ class MainActivity : ComponentActivity() {
 
     private fun optionRow(label: String, on: Boolean, action: () -> Unit): TextView = TextView(this).apply {
         text = (if (on) "✓   " else "") + label
-        setTextColor(if (on) 0xFFB794FF.toInt() else Color.WHITE)
+        setTextColor(if (on) 0xFFFFD277.toInt() else Color.WHITE)
         textSize = 14f
         if (on) setTypeface(typeface, Typeface.BOLD)
         background = panelBg(on)
@@ -1603,7 +1603,7 @@ class MainActivity : ComponentActivity() {
             val b = TextView(this).apply {
                 text = tx("s" + (k + 1))
                 gravity = Gravity.CENTER
-                setTextColor(if (on) 0xFFB794FF.toInt() else Color.WHITE)
+                setTextColor(if (on) 0xFFFFD277.toInt() else Color.WHITE)
                 textSize = 12f
                 if (on) setTypeface(typeface, Typeface.BOLD)
                 background = panelBg(on)
@@ -1645,7 +1645,7 @@ class MainActivity : ComponentActivity() {
             val b = TextView(this).apply {
                 text = (if (abs(s - 1f) < 0.01f) tx("normalSpeed") else speedLabel(s))
                 gravity = Gravity.CENTER
-                setTextColor(if (on) 0xFFB794FF.toInt() else Color.WHITE)
+                setTextColor(if (on) 0xFFFFD277.toInt() else Color.WHITE)
                 textSize = 12.5f
                 if (on) setTypeface(typeface, Typeface.BOLD)
                 background = panelBg(on)
