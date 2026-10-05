@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#080B10">
+<meta name="theme-color" content="#070A0E">
 <title>KURDISTAN IPTV</title>
 <style>
 :root{
-  --bg:#09060F; --bg2:#0D0918; --surface:#161027; --surface2:#1E1733;
-  --line:#271F3D; --text:#F1EEF8; --muted:#9A93AE; --muted2:#6A6381;
-  --accent:#8A6BF0; --accent2:#B794FF; --live:#36D399;
+  --bg:#070A0E; --bg2:#0B0F15; --surface:#111822; --surface2:#19212D;
+  --line:#222C38; --text:#EDF2F7; --muted:#98A5B3; --muted2:#67737F;
+  --accent:#E8B33C; --accent2:#FFD277; --live:#2FBF71;
   --r-lg:24px; --r-md:16px; --r-sm:12px;
   --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
 }
@@ -18,39 +18,44 @@ html,body{overscroll-behavior:none}
 body{margin:0;background:var(--bg);color:var(--text);
   font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased}
 body::before{content:"";position:fixed;inset:0 0 auto;height:340px;z-index:0;pointer-events:none;
-  background:radial-gradient(120% 100% at 50% 0%,rgba(138,107,240,.16),transparent 62%)}
+  background:radial-gradient(130% 100% at 50% 0%,rgba(232,179,60,.07),transparent 60%)}
 
 /* ---------- header ---------- */
 header{position:sticky;top:0;z-index:20;padding:calc(10px + var(--safe-t)) 14px 10px;
-  background:rgba(8,11,16,.82);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  background:rgba(7,10,14,.82);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
   border-bottom:1px solid var(--line)}
 .top{display:flex;align-items:center;gap:10px}
 .iconbtn{width:44px;height:44px;flex:none;display:grid;place-items:center;border-radius:14px;
   border:1px solid var(--line);background:var(--surface);color:var(--text);cursor:pointer;transition:.18s}
 .iconbtn:active{transform:scale(.92);background:var(--surface2)}
 .iconbtn svg{display:block}
-.brand{flex:1;text-align:center;line-height:1;user-select:none}
-.brand .w1{font-size:20px;font-weight:800;letter-spacing:4px;color:#fff}
-.brand .w2{font-size:20px;font-weight:800;letter-spacing:4px;
-  background:linear-gradient(100deg,var(--accent),var(--accent2));
-  -webkit-background-clip:text;background-clip:text;color:transparent}
-.brand small{display:block;margin-top:5px;font-size:9px;letter-spacing:2.5px;color:var(--muted2);
+/* The name is white, as a wordmark should be. What marks it as ours is the
+   hairline under it: red, white, green - the flag, three pixels tall. */
+.brand{flex:1;min-width:0;text-align:center;line-height:1;user-select:none}
+.brand .wm{display:inline-block;max-width:100%;padding-bottom:5px;position:relative}
+.brand .w1,.brand .w2{font-size:19.5px;font-weight:800;letter-spacing:3.6px;color:#fff;
+  text-shadow:0 1px 10px rgba(0,0,0,.5)}
+.brand .w2{font-weight:600;color:rgba(255,255,255,.72)}
+.brand .wm::after{content:"";position:absolute;inset-inline:6%;bottom:0;height:2px;border-radius:2px;
+  background:linear-gradient(90deg,#ED2024 0 33.33%,#FFFFFF 33.33% 66.66%,#2AA14B 66.66% 100%);
+  opacity:.9}
+.brand small{display:block;margin-top:6px;font-size:8.5px;letter-spacing:2.4px;color:var(--muted2);
   font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 .ann{margin-top:11px;display:flex;align-items:center;gap:9px;
-  background:linear-gradient(90deg,rgba(138,107,240,.14),rgba(138,107,240,.04));
-  border:1px solid rgba(138,107,240,.28);border-radius:var(--r-sm);padding:8px 11px;font-size:12px;overflow:hidden}
+  background:rgba(255,255,255,.035);
+  border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 11px;font-size:12px;overflow:hidden}
 .ann i{font-style:normal;flex:none;display:flex}
 .ann-wrap{flex:1;overflow:hidden;white-space:nowrap}
 .ann-wrap span{display:inline-block;white-space:nowrap;animation:marq 26s linear infinite;
-  animation-delay:-13s;color:#F4C9C9;font-weight:600}
+  animation-delay:-13s;color:var(--muted);font-weight:600}
 @keyframes marq{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
 
 .searchbox{display:none;margin-top:10px;position:relative}
 .searchbox.on{display:block}
 .searchbox input{width:100%;padding:13px 42px 13px 14px;background:var(--surface);
   border:1px solid var(--line);border-radius:var(--r-sm);color:var(--text);font-size:15px;outline:none}
-.searchbox input:focus{border-color:rgba(138,107,240,.55)}
+.searchbox input:focus{border-color:rgba(232,179,60,.55)}
 .searchbox b{position:absolute;inset-inline-end:14px;top:50%;transform:translateY(-50%);color:var(--muted2);display:flex}
 
 /* one line instead of a row of chips: a hundred groups do not fit in chips */
@@ -75,7 +80,7 @@ header{position:sticky;top:0;z-index:20;padding:calc(10px + var(--safe-t)) 14px 
   border-radius:999px;padding:8px 15px;font-size:13px;font-weight:700;cursor:pointer;transition:.18s;flex:none}
 .chip:active{transform:scale(.94)}
 .chip.on{background:linear-gradient(100deg,var(--accent),var(--accent2));border-color:transparent;
-  color:#fff;box-shadow:0 5px 16px rgba(138,107,240,.35)}
+  color:#fff;box-shadow:0 5px 16px rgba(232,179,60,.35)}
 
 #sync{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + var(--safe-b));z-index:40;
   display:none;align-items:center;gap:9px;padding:9px 16px;border-radius:999px;
@@ -87,12 +92,12 @@ header{position:sticky;top:0;z-index:20;padding:calc(10px + var(--safe-t)) 14px 
 #updBar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + var(--safe-b));z-index:41;
   display:none;align-items:center;gap:2px;padding:4px 4px 4px 6px;border-radius:999px;
   background:linear-gradient(100deg,var(--accent),var(--accent2));color:#fff;
-  box-shadow:0 12px 30px rgba(138,107,240,.38);max-width:92vw}
+  box-shadow:0 12px 30px rgba(232,179,60,.38);max-width:92vw}
 #updBar.on{display:flex}
 #updBar button{background:none;border:0;color:#fff;font:inherit;cursor:pointer;padding:8px 12px;
   font-size:12.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .addbtn.updgo,#settings .addbtn.updgo{border:0;color:#fff;font-weight:800;font-size:15px;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 10px 24px rgba(138,107,240,.4)}
+  background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 10px 24px rgba(232,179,60,.4)}
 .updProg{height:8px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden;margin:10px 0 8px}
 .updProg i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .2s linear}
 #updBar .x{padding:8px 13px;font-size:15px;opacity:.85}
@@ -100,7 +105,7 @@ header{position:sticky;top:0;z-index:20;padding:calc(10px + var(--safe-t)) 14px 
 #sync .sp{width:13px;height:13px;flex:none;border-radius:99px;border:2px solid var(--muted2);
   border-top-color:var(--accent2);animation:spin .8s linear infinite}
 #sync.err .sp{display:none}
-#sync.err{border-color:rgba(138,107,240,.5);color:#FF9B9B}
+#sync.err{border-color:rgba(224,53,59,.55);color:#FF9B9B}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ---------- main ---------- */
@@ -125,11 +130,15 @@ html.tv .card .epg{font-size:12px}
   border:1px solid var(--line);box-shadow:0 10px 24px rgba(0,0,0,.45)}
 .tile::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
   background:linear-gradient(160deg,rgba(255,255,255,.07),transparent 46%)}
-.mono{position:absolute;inset:0;display:grid;place-items:center;direction:ltr;font-weight:900;
-  font-size:clamp(15px,5.4vw,25px);letter-spacing:.5px;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.45)}
-.tile img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:14%;background:#0E141C}
+.mono{position:absolute;inset:0;display:grid;place-items:center;direction:ltr;font-weight:800;
+  font-size:clamp(14px,4.9vw,22px);letter-spacing:1.4px;color:rgba(255,255,255,.74);
+  text-shadow:0 2px 10px rgba(0,0,0,.45)}
+/* Channel logos arrive as their own little pictures, most of them on their
+   own white paper. The less dark frame left around that paper, the more
+   the logo reads as the face of the tile instead of a sticker on it. */
+.tile img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:11%;background:#0D131B}
 .dot{position:absolute;top:9px;inset-inline-start:9px;width:7px;height:7px;border-radius:99px;
-  background:var(--live);box-shadow:0 0 0 3px rgba(54,211,153,.18);animation:pulse 2.1s infinite}
+  background:var(--live);box-shadow:0 0 0 3px rgba(47,191,113,.18);animation:pulse 2.1s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 .name{font-size:11.5px;font-weight:700;color:var(--muted);text-align:center;padding:9px 2px 0;
   line-height:1.35;min-height:41px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -145,65 +154,110 @@ html.tv .card .epg{font-size:12px}
 .empty p{margin:0;font-size:14px;font-weight:600}
 
 /* ---------- home: hero + horizontal rows ----------
-   A compact banner, the same shape on every slide: the poster on one side,
-   the words and the Play button beside it, the picture itself blurred behind.
-   Everything sits in normal flow, so nothing can land on top of anything
-   else, and a slide without a picture keeps exactly the same shape (its
-   letters take the poster's place). */
-.heroWrap{position:relative;margin:4px 0 6px}
+   The artwork itself, blurred, is the background. Over it: the art again,
+   sharp, on one side; the words and the Play button on the other. Everything
+   is in normal flow, so nothing can land on top of anything else, and a slide
+   with no picture keeps exactly the same shape - its letters take the art's
+   place on a plate of its own colour. */
+.heroWrap{position:relative;margin:2px 0 4px}
 .heroBox{
-  --hh:clamp(188px,50vw,230px);
+  --hh:clamp(196px,54vw,246px);
   position:relative;height:var(--hh);border-radius:var(--r-lg);overflow:hidden;
-  background:var(--surface);border:1px solid rgba(183,148,255,.18);
-  box-shadow:0 14px 34px rgba(0,0,0,.55);touch-action:pan-y;
+  background:var(--bg2);border:1px solid rgba(255,255,255,.06);
+  box-shadow:0 18px 40px rgba(0,0,0,.5);touch-action:pan-y;
 }
-@media(min-width:700px){.heroBox{--hh:250px}}
-html.tv .heroBox{--hh:min(40vh,230px)}
+@media(min-width:700px){.heroBox{--hh:286px}}
+@media(min-width:1100px){.heroBox{--hh:340px}}
+@media(min-width:860px){
+  .hero{padding-inline:clamp(30px,5vw,66px)}
+  .hero .in{max-width:620px}
+  .hero .go{padding:12px 26px;font-size:15px}
+}
+
+html.tv .heroBox{--hh:min(44vh,252px)}
+html.tv .hero{padding:18px clamp(30px,4vw,54px);gap:clamp(24px,3vw,38px)}
+html.tv .hero.sq .hp{height:calc(var(--hh) * .74)}
+html.tv .hero .in{max-width:580px}
+html.tv .hero .go{padding:11px 24px;font-size:14px}
 .hero{
   position:absolute;inset:0;cursor:pointer;opacity:0;visibility:hidden;
-  display:flex;flex-direction:row;align-items:center;gap:16px;
-  padding:14px 18px;box-sizing:border-box;text-align:start;
-  transition:opacity .8s ease,visibility .8s;
+  display:flex;flex-direction:row;align-items:center;gap:clamp(14px,4vw,26px);
+  padding:16px clamp(16px,4.6vw,30px);box-sizing:border-box;text-align:start;
+  transition:opacity .7s ease,visibility .7s;
 }
 .hero.on{opacity:1;visibility:visible}
 .hero .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
-  filter:blur(24px) saturate(1.3) brightness(.7);transform:scale(1.4);opacity:.95}
-.hero.on .bg{animation:heroKen 10s ease-out both}
-@keyframes heroKen{from{transform:scale(1.55)}to{transform:scale(1.35)}}
+  filter:blur(28px) saturate(1.3) brightness(.52);transform:scale(1.4);opacity:1}
+.hero.on .bg{animation:heroKen 11s ease-out both}
+@keyframes heroKen{from{transform:scale(1.5)}to{transform:scale(1.32)}}
+/* darkest where the words are, so the title reads over any picture */
 .hero .sc{position:absolute;inset:0;
-  background:linear-gradient(0deg,rgba(9,6,15,.8) 0%,rgba(9,6,15,.35) 60%,rgba(9,6,15,.25) 100%)}
+  background:linear-gradient(to left,rgba(7,10,14,.92) 0%,rgba(7,10,14,.74) 34%,rgba(7,10,14,.22) 70%,transparent 100%),
+             linear-gradient(0deg,rgba(7,10,14,.55),transparent 56%),
+             radial-gradient(140% 96% at 50% 50%,transparent 58%,rgba(7,10,14,.42) 100%)}
+html[dir=rtl] .hero .sc{
+  background:linear-gradient(to right,rgba(7,10,14,.92) 0%,rgba(7,10,14,.74) 34%,rgba(7,10,14,.22) 70%,transparent 100%),
+             linear-gradient(0deg,rgba(7,10,14,.55),transparent 56%),
+             radial-gradient(140% 96% at 50% 50%,transparent 58%,rgba(7,10,14,.42) 100%)}
 
-/* the poster */
-.hero .hp{position:relative;flex:none;height:calc(var(--hh) - 28px);aspect-ratio:2/3;
-  border-radius:12px;overflow:hidden;
-  box-shadow:0 12px 28px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.12);
-  transform:scale(.95);opacity:0;
+/* the art */
+.hero .hp{position:relative;flex:none;height:calc(var(--hh) - 36px);aspect-ratio:2/3;
+  border-radius:14px;overflow:hidden;
+  box-shadow:0 16px 34px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.14);
+  transform:scale(.96);opacity:0;
   transition:transform .9s cubic-bezier(.2,.8,.2,1),opacity .9s ease}
 .hero.on .hp{transform:none;opacity:1}
 .hero .hp .mono{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  font-size:26px;font-weight:900;color:rgba(255,255,255,.55);letter-spacing:1px}
+  font-size:clamp(22px,6vw,34px);font-weight:900;color:rgba(255,255,255,.5);letter-spacing:1px}
 .hero .hp img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
-/* a live channel: its logo on a clean plate, square */
-.hero.sq .hp{height:calc(var(--hh) * .58);aspect-ratio:1/1;border-radius:18px;background:#fff!important}
-.hero.sq .hp img{object-fit:contain;inset:12%;width:76%;height:76%}
-.hero.sq .hp .mono{color:rgba(20,14,40,.35)}
+/* a live channel: its logo on a soft plate, square. Channel logos are drawn
+   for white paper, so the plate is light - but a warm off-white, not a hole
+   punched in the screen. */
+.hero.sq .hp{height:calc(var(--hh) * .55);aspect-ratio:1/1;border-radius:20px;
+  background:linear-gradient(160deg,#FCFDFE,#E6EAEF)!important;
+  box-shadow:0 16px 34px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.3)}
+.hero.sq .hp img{object-fit:contain;inset:13%;width:74%;height:74%}
+.hero.sq .hp .mono{color:rgba(17,24,34,.3)}
+
+/* Nothing to show. A white plate only makes sense under a logo drawn for
+   white paper - with no logo it is a blank sheet, and on a wide screen the
+   banner beside it is a hole. So the plate turns dark with the name in gold,
+   and the banner lights itself. */
+.hero.noart .hp,.hero.sq.noart .hp{
+  background:linear-gradient(155deg,#17202C,#0A1018)!important;
+  box-shadow:0 16px 34px rgba(0,0,0,.55),0 0 0 1px rgba(232,179,60,.22)}
+.hero.noart .hp .mono{color:var(--accent);opacity:.92;letter-spacing:2px}
+.hero.noart .sc{
+  background:radial-gradient(78% 120% at 16% 50%,rgba(232,179,60,.16),transparent 62%),
+             radial-gradient(70% 110% at 92% 50%,rgba(47,191,113,.07),transparent 64%),
+             linear-gradient(0deg,rgba(7,10,14,.5),transparent 60%)}
+html[dir=rtl] .hero.noart .sc{
+  background:radial-gradient(78% 120% at 84% 50%,rgba(232,179,60,.16),transparent 62%),
+             radial-gradient(70% 110% at 8% 50%,rgba(47,191,113,.07),transparent 64%),
+             linear-gradient(0deg,rgba(7,10,14,.5),transparent 60%)}
 
 /* the words beside it */
 .hero .in{position:relative;flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start}
-.hero .kick{max-width:100%;font-size:10px;font-weight:800;letter-spacing:1.6px;color:var(--accent2);
-  margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hero h1{max-width:100%;margin:0 0 12px;font-size:clamp(16px,4.6vw,21px);font-weight:800;line-height:1.3;
+.hero .kick{display:flex;align-items:center;gap:7px;max-width:100%;
+  font-size:10px;font-weight:800;letter-spacing:1.7px;color:var(--accent2);
+  margin-bottom:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hero .kick i{flex:none;width:5px;height:5px;border-radius:99px;background:var(--live);
+  box-shadow:0 0 0 3px rgba(47,191,113,.2)}
+.hero .kick s{min-width:0;text-decoration:none;overflow:hidden;text-overflow:ellipsis}
+.hero h1{max-width:100%;margin:0 0 13px;font-size:clamp(17px,5vw,27px);font-weight:800;line-height:1.26;
+  letter-spacing:-.2px;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
-  text-shadow:0 2px 12px rgba(0,0,0,.6)}
-.hero .go{display:inline-flex;align-items:center;justify-content:center;gap:7px;
-  padding:9px 20px;border-radius:999px;font-weight:800;font-size:13px;color:#fff;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
-  box-shadow:0 8px 20px rgba(138,107,240,.45)}
+  text-shadow:0 2px 16px rgba(0,0,0,.75)}
+.hero .go{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:10px 22px;border-radius:999px;font-weight:800;font-size:13.5px;
+  color:#0C1118;background:#fff;
+  box-shadow:0 10px 24px rgba(0,0,0,.45)}
+.hero .go svg{display:block;margin-inline-end:-1px}
 
-.heroDots{display:flex;justify-content:center;gap:6px;margin-top:10px}
-.heroDots i{width:7px;height:7px;border-radius:99px;background:rgba(255,255,255,.22);
+.heroDots{display:flex;justify-content:center;gap:5px;margin-top:11px}
+.heroDots i{width:5px;height:5px;border-radius:99px;background:rgba(255,255,255,.2);
   transition:width .3s ease,background .3s ease;cursor:pointer}
-.heroDots i.on{width:24px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.heroDots i.on{width:18px;background:var(--accent)}
 
 /* the search box at the top of the category list */
 .pksearch{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:10px;
@@ -214,14 +268,22 @@ html.tv .heroBox{--hh:min(40vh,230px)}
   color:var(--text);font:inherit;font-size:14.5px}
 .pksearch:focus-within{border-color:var(--accent)}
 .pknone{padding:18px;text-align:center;color:var(--muted);font-size:13px}
-.hrow{margin-top:20px}
-.rhead{display:flex;align-items:center;gap:9px;margin-bottom:11px}
-.rhead h3{margin:0;font-size:14.5px;font-weight:800;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rhead .bar{width:3px;height:15px;border-radius:99px;background:linear-gradient(var(--accent),var(--accent2));flex:none}
-.rhead .all{font:inherit;font-size:13px;font-weight:800;color:var(--accent2);flex:none;cursor:pointer;background:rgba(138,107,240,.14);border:1px solid rgba(183,148,255,.3);border-radius:999px;padding:8px 14px;margin:-6px 0;min-height:36px;display:inline-flex;align-items:center;gap:4px;-webkit-tap-highlight-color:transparent}
-.rhead .all b{font-size:17px;line-height:1}
-.rhead .all:active{transform:scale(.95);background:rgba(138,107,240,.28)}
-html[dir=rtl] .rhead .all b{display:inline-block;transform:scaleX(-1)}
+.hrow{margin-top:22px}
+.rhead{display:flex;align-items:center;gap:9px;margin-bottom:12px}
+.rhead h3{margin:0;font-size:15px;font-weight:800;letter-spacing:-.1px;flex:1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rhead .bar{width:3px;height:14px;border-radius:99px;background:var(--accent);flex:none}
+/* "See all" is a quiet sign-post, not a button competing with the row below
+   it. The padding keeps a finger-sized target; nothing of it is drawn. */
+.rhead .all{font:inherit;font-size:12px;font-weight:700;letter-spacing:.2px;color:var(--muted);
+  flex:none;cursor:pointer;background:none;border:0;border-radius:10px;
+  padding:9px 2px 9px 8px;margin:-9px -2px;display:inline-flex;align-items:center;gap:3px;
+  -webkit-tap-highlight-color:transparent;transition:color .15s}
+html[dir=rtl] .rhead .all{padding:9px 8px 9px 2px}
+.rhead .all svg{display:block;opacity:.8}
+html[dir=rtl] .rhead .all svg{transform:scaleX(-1)}
+.rhead .all:active{color:var(--accent2)}
+@media(hover:hover){.rhead .all:hover{color:var(--text)}}
 .strip{display:flex;gap:11px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;
   padding-bottom:2px;scroll-snap-type:x proximity}
 .strip::-webkit-scrollbar{display:none}
@@ -251,13 +313,13 @@ html[dir=rtl] .rhead .all b{display:inline-block;transform:scaleX(-1)}
 .dfacts span{color:var(--muted);min-width:0}
 .dplay{display:inline-flex;align-items:center;gap:8px;margin-top:12px;padding:12px 26px;border-radius:999px;
   border:0;background:linear-gradient(100deg,var(--accent),var(--accent2));color:#fff;
-  font-weight:800;font-size:14.5px;cursor:pointer;box-shadow:0 10px 24px rgba(138,107,240,.34)}
+  font-weight:800;font-size:14.5px;cursor:pointer;box-shadow:0 10px 24px rgba(232,179,60,.34)}
 .dplay:active{transform:scale(.97)}
 
 /* ---------- bottom nav ---------- */
 #nav{
   position:fixed;inset-inline:0;bottom:0;z-index:30;display:none;
-  background:rgba(8,11,16,.94);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  background:rgba(7,10,14,.94);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
   border-top:1px solid var(--line);padding:6px 8px calc(6px + var(--safe-b));
 }
 #nav.on{display:flex}
@@ -310,15 +372,18 @@ body.hasnav main{padding-bottom:calc(96px + var(--safe-b))}
 img[data-src],img[data-gone]{opacity:0!important;background:transparent!important}
 img.rdy{animation:imgIn .25s ease both}
 @keyframes imgIn{from{opacity:0}to{opacity:1}}
-.poster .mono{font-size:clamp(13px,4.4vw,20px);padding:6px;text-align:center;line-height:1.2}
-.poster .rt{position:absolute;top:7px;inset-inline-end:7px;background:rgba(0,0,0,.72);
-  border-radius:7px;padding:2px 7px;font-size:10.5px;font-weight:800;color:#FFD466}
+.poster .mono{font-size:clamp(12px,4vw,18px);padding:12px 10px;text-align:center;line-height:1.3;
+  display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;
+  place-items:unset;align-self:center}
+.poster .rt{position:absolute;top:7px;inset-inline-end:7px;background:rgba(7,10,14,.78);
+  border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  border-radius:8px;padding:3px 7px;font-size:10.5px;font-weight:800;color:var(--accent2)}
 
 /* ---------- series detail ---------- */
 #detail{position:fixed;inset:0;z-index:70;background:var(--bg);overflow-y:auto;display:none}
 #detail.on{display:block}
 .dhero{position:relative;padding:calc(16px + var(--safe-t)) 16px 16px;display:flex;gap:14px;
-  background:linear-gradient(180deg,rgba(138,107,240,.16),transparent)}
+  background:linear-gradient(180deg,rgba(232,179,60,.09),transparent)}
 .dhero .pw{width:104px;flex:none;aspect-ratio:2/3;border-radius:var(--r-md);overflow:hidden;
   background:var(--surface);border:1px solid var(--line)}
 .dhero .pw img{width:100%;height:100%;object-fit:cover}
@@ -327,7 +392,7 @@ img.rdy{animation:imgIn .25s ease both}
 .dhero p{margin:0;font-size:12.5px;color:var(--muted);line-height:1.6;
   display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
 #dclose{position:absolute;top:calc(12px + var(--safe-t));inset-inline-end:14px;width:36px;height:36px;
-  border-radius:12px;border:1px solid var(--line);background:rgba(8,11,16,.8);color:#fff;
+  border-radius:12px;border:1px solid var(--line);background:rgba(7,10,14,.8);color:#fff;
   display:grid;place-items:center;font-size:17px;cursor:pointer;z-index:2}
 .dbody{padding:4px 16px calc(28px + var(--safe-b))}
 .ep{display:flex;align-items:center;gap:12px;padding:13px;border-radius:var(--r-md);
@@ -344,19 +409,25 @@ img.rdy{animation:imgIn .25s ease both}
   display:grid;place-items:center;overflow:hidden;transition:opacity .45s ease}
 #splash.gone{opacity:0;pointer-events:none}
 #splash::before{content:"";position:absolute;inset:-22% -32% auto;height:58%;pointer-events:none;
-  background:radial-gradient(60% 80% at 50% 8%,rgba(138,107,240,.30),transparent 70%)}
+  background:radial-gradient(60% 80% at 50% 8%,rgba(232,179,60,.30),transparent 70%)}
 #splash::after{content:"";position:absolute;inset:auto -36% -26% -36%;height:52%;pointer-events:none;
-  background:radial-gradient(50% 70% at 50% 100%,rgba(183,148,255,.10),transparent 70%)}
+  background:radial-gradient(50% 70% at 50% 100%,rgba(255,210,119,.10),transparent 70%)}
 .sp-in{position:relative;z-index:1;text-align:center;animation:spIn .7s cubic-bezier(.2,.8,.2,1)}
 @keyframes spIn{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
 .sp-logo{width:148px;height:126px;margin:0 auto 20px;position:relative;
   filter:drop-shadow(0 18px 34px rgba(0,0,0,.75))}
 .sp-logo::before{content:"";position:absolute;inset:-24% -14%;border-radius:50%;z-index:-1;
-  background:radial-gradient(closest-side,rgba(183,148,255,.20),transparent 74%)}
+  background:radial-gradient(closest-side,rgba(255,210,119,.20),transparent 74%)}
 .sp-logo svg{display:block;width:100%;height:100%}
-#splash h1{margin:0 0 9px;font-size:26px;font-weight:800;letter-spacing:4.5px}
-#splash h1 em{font-style:normal;background:linear-gradient(100deg,var(--accent),var(--accent2));
-  -webkit-background-clip:text;background-clip:text;color:transparent}
+/* The name is white here too, with the same flag hairline under it. One
+   wordmark, drawn the same way wherever it appears. */
+#splash h1,.gbox h1{position:relative;display:inline-block;padding-bottom:9px;
+  margin:0 0 9px;font-weight:800;color:#fff}
+#splash h1{font-size:26px;letter-spacing:4.5px}
+#splash h1 em,.gbox h1 em{font-style:normal;font-weight:600;color:rgba(255,255,255,.72)}
+#splash h1::after,.gbox h1::after{content:"";position:absolute;inset-inline:7%;bottom:0;
+  height:2.5px;border-radius:3px;opacity:.92;
+  background:linear-gradient(90deg,#ED2024 0 33.33%,#FFFFFF 33.33% 66.66%,#2AA14B 66.66% 100%)}
 #splash p{margin:0;color:var(--muted2);font-size:10.5px;font-weight:800;letter-spacing:3.4px}
 .sp-bar{position:absolute;left:50%;transform:translateX(-50%);bottom:94px;
   width:124px;height:3px;border-radius:3px;background:var(--surface2);overflow:hidden}
@@ -372,25 +443,23 @@ html.tv #splash h1{font-size:23px}
 #gate.hide{display:none}
 /* two soft lights behind everything, the way a good sign-in screen looks */
 #gate::before{content:"";position:absolute;inset:-25% -35% auto;height:62%;pointer-events:none;
-  background:radial-gradient(60% 80% at 50% 0%,rgba(138,107,240,.26),transparent 70%)}
+  background:radial-gradient(60% 80% at 50% 0%,rgba(232,179,60,.26),transparent 70%)}
 #gate::after{content:"";position:absolute;inset:auto -40% -28% -40%;height:56%;pointer-events:none;
-  background:radial-gradient(50% 70% at 50% 100%,rgba(54,211,153,.09),transparent 70%)}
+  background:radial-gradient(50% 70% at 50% 100%,rgba(47,191,113,.09),transparent 70%)}
 .gbox{position:relative;z-index:1;width:min(340px,100%);text-align:center}
 .glogo{width:132px;height:112px;margin:0 auto 10px;position:relative;
   filter:drop-shadow(0 14px 26px rgba(0,0,0,.7))}
 .glogo::before{content:"";position:absolute;inset:-18% -10%;border-radius:50%;z-index:-1;
   background:radial-gradient(closest-side,rgba(240,168,28,.16),transparent 75%)}
 .glogo svg{display:block;width:100%;height:100%}
-.gbox h1{margin:0 0 6px;font-size:23px;font-weight:800;letter-spacing:3px}
-.gbox h1 em{font-style:normal;background:linear-gradient(100deg,var(--accent),var(--accent2));
-  -webkit-background-clip:text;background-clip:text;color:transparent}
+.gbox h1{font-size:23px;letter-spacing:3px;margin-bottom:12px}
 .gbox p{margin:0 0 24px;color:var(--muted);font-size:13px;font-weight:600}
 .pins{display:flex;gap:8px;justify-content:center;direction:ltr}
 .pin{width:46px;height:60px;border-radius:14px;background:rgba(18,25,36,.85);border:1.5px solid var(--line);
   display:grid;place-items:center;font-size:23px;font-weight:800;transition:.2s;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
-.pin.fill{border-color:rgba(138,107,240,.5);background:var(--surface2)}
-.pin.cur{border-color:var(--accent2);box-shadow:0 0 0 4px rgba(138,107,240,.16)}
+.pin.fill{border-color:rgba(232,179,60,.5);background:var(--surface2)}
+.pin.cur{border-color:var(--accent2);box-shadow:0 0 0 4px rgba(232,179,60,.16)}
 /* the keypad: a remote reaches it, and no system keyboard covers the screen */
 .keys{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:24px auto 0;
   max-width:266px;direction:ltr}
@@ -404,10 +473,10 @@ html.tv #splash h1{font-size:23px}
 .gmsg{height:24px;padding-top:12px;color:#FF7B7B;font-size:13px;font-weight:700}
 .gbtn{width:100%;margin-top:6px;padding:15px;border:0;border-radius:var(--r-md);
   background:linear-gradient(100deg,var(--accent),var(--accent2));color:#fff;font-weight:800;font-size:15px;
-  cursor:pointer;box-shadow:0 12px 28px rgba(138,107,240,.32)}
+  cursor:pointer;box-shadow:0 12px 28px rgba(232,179,60,.32)}
 .gbtn:active{transform:scale(.97)}
 #gate .gbtn{margin-top:14px;padding:16px;border-radius:16px;font-size:15.5px;
-  box-shadow:0 14px 30px rgba(138,107,240,.32);transition:.2s}
+  box-shadow:0 14px 30px rgba(232,179,60,.32);transition:.2s}
 #gate .gbtn.off{background:var(--surface2);color:var(--muted2);box-shadow:none;cursor:default}
 /* a TV screen is short: the whole code screen has to fit without scrolling */
 html.tv .glogo{width:106px;height:82px;margin-bottom:6px}
@@ -431,7 +500,7 @@ html.tv #gate .gbtn{margin-top:6px;padding:11px;font-size:14.5px}
   cursor:pointer;transition:.15s}
 .gc:active{transform:scale(.96);background:var(--surface2)}
 .gc svg{width:19px;height:19px}
-.gc.ok{color:var(--accent2);border-color:rgba(138,107,240,.45)}
+.gc.ok{color:var(--accent2);border-color:rgba(232,179,60,.45)}
 /* a TV screen is short, so the three buttons lie down into one line each */
 html.tv .gcontact{margin-top:8px}
 html.tv .gc-lab{font-size:10px;gap:8px}
@@ -462,7 +531,7 @@ html.tv .gc svg{width:14px;height:14px}
 .row .tx{flex:1;min-width:0}
 .row .tx b{display:block;font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row .tx s{display:block;text-decoration:none;font-size:11.5px;font-weight:600;color:var(--muted2);
-  margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;direction:ltr;text-align:start}
+  margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;direction:ltr;text-align:start}
 .row .tick{flex:none;color:var(--accent2);font-size:17px;opacity:0}
 .row.on .tick{opacity:1}
 .row .del{flex:none;padding:6px 10px;border-radius:9px;border:1px solid var(--line);
@@ -476,7 +545,7 @@ html.tv .gc svg{width:14px;height:14px}
 .fld label{display:block;font-size:11.5px;font-weight:800;color:var(--muted2);margin-bottom:6px}
 .fld input{width:100%;padding:13px 14px;background:var(--surface);border:1px solid var(--line);
   border-radius:var(--r-sm);color:var(--text);font-size:15px;outline:none;direction:ltr;text-align:start}
-.fld input:focus{border-color:rgba(138,107,240,.55)}
+.fld input:focus{border-color:rgba(232,179,60,.55)}
 .hint{font-size:11.5px;color:var(--muted2);line-height:1.6;margin:2px 0 14px}
 .formErr{color:#FF8A8A;font-size:12.5px;font-weight:700;min-height:20px;margin-bottom:6px}
 
@@ -484,17 +553,17 @@ html.tv .gc svg{width:14px;height:14px}
 .segs{display:flex;gap:7px;margin-bottom:13px}
 .seg{flex:1;padding:10px 4px;border-radius:12px;border:1px solid var(--line);background:var(--surface);
   color:var(--muted);font-size:12.5px;font-weight:800;cursor:pointer}
-.seg.on{border-color:rgba(138,107,240,.55);background:var(--surface2);color:var(--text)}
+.seg.on{border-color:rgba(232,179,60,.55);background:var(--surface2);color:var(--text)}
 .seg[disabled]{opacity:.35;cursor:default}
 .catrow{display:flex;align-items:center;gap:7px;padding:9px 11px;border-radius:14px;background:var(--surface);
   border:1px solid var(--line);margin-bottom:7px}
 .catrow.off{opacity:.48}
-.catrow.lk{border-color:rgba(138,107,240,.4)}
+.catrow.lk{border-color:rgba(232,179,60,.4)}
 .catrow .nm{flex:1;min-width:0}
 .catrow .nm b{display:block;font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .catrow .nm s{display:block;text-decoration:none;font-size:10.5px;font-weight:700;color:var(--muted2);margin-top:2px}
 .catrow .mini{width:32px;height:32px;flex:none}
-.catrow .mini.on{color:var(--accent2);border-color:rgba(138,107,240,.5);background:rgba(138,107,240,.1)}
+.catrow .mini.on{color:var(--accent2);border-color:rgba(232,179,60,.5);background:rgba(232,179,60,.1)}
 .catbar{display:flex;gap:8px;margin:13px 0 2px}
 .catbar button{flex:1;padding:12px 8px;border-radius:13px;border:1px solid var(--line);background:transparent;
   color:var(--muted);font-size:12.5px;font-weight:800;cursor:pointer}
@@ -502,7 +571,7 @@ html.tv .gc svg{width:14px;height:14px}
 .cathint{font-size:11.5px;color:var(--muted2);line-height:1.6;margin:0 0 12px}
 .chips .chip.lk{display:inline-flex;align-items:center;gap:5px;flex:none;padding-inline:12px}
 /* open, but still clearly the lock - never mistaken for the chosen group */
-.chips .chip.lk.open{color:var(--accent2);border-color:rgba(138,107,240,.55);background:rgba(138,107,240,.12)}
+.chips .chip.lk.open{color:var(--accent2);border-color:rgba(232,179,60,.55);background:rgba(232,179,60,.12)}
 /* the code keypad, inside a sheet this time */
 .pinwrap{text-align:center;padding:2px 0}
 .pinwrap .pin{width:54px;height:62px;font-size:23px;border-radius:15px}
@@ -540,7 +609,7 @@ html.tv .pinwrap .keys{max-width:230px;margin-top:12px}
 
 /* star next to ✕ on the film / series page */
 #dfav{position:absolute;top:calc(12px + var(--safe-t));inset-inline-end:58px;width:36px;height:36px;
-  border-radius:12px;border:1px solid var(--line);background:rgba(8,11,16,.8);color:#fff;
+  border-radius:12px;border:1px solid var(--line);background:rgba(7,10,14,.8);color:#fff;
   display:grid;place-items:center;cursor:pointer;z-index:2;padding:0}
 #dfav.on{color:#FFD466;border-color:rgba(255,212,102,.45)}
 #dfav:active{transform:scale(.92)}
@@ -552,7 +621,7 @@ html.tv .pinwrap .keys{max-width:230px;margin-top:12px}
   border-radius:var(--r-sm);border:1px solid var(--line);background:var(--surface);color:var(--muted);
   font-size:13.5px;font-weight:800;cursor:pointer;font-family:inherit}
 .seg button.on{background:linear-gradient(100deg,var(--accent),var(--accent2));border-color:transparent;color:#fff;
-  box-shadow:0 5px 16px rgba(138,107,240,.3)}
+  box-shadow:0 5px 16px rgba(232,179,60,.3)}
 .seg button:active{transform:scale(.97)}
 .hday{display:flex;align-items:center;gap:9px;margin:22px 0 10px;font-size:12.5px;font-weight:800;color:var(--muted2)}
 .hday .bar{width:3px;height:14px;border-radius:99px;background:linear-gradient(var(--accent),var(--accent2));flex:none}
@@ -562,7 +631,7 @@ html.tv .pinwrap .keys{max-width:230px;margin-top:12px}
 .hi .th{position:relative;flex:none;width:54px;height:54px;border-radius:13px;overflow:hidden;display:grid;
   place-items:center;direction:ltr;font-weight:900;font-size:14px;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.4)}
 .hi .th.pt{width:44px;height:64px;border-radius:10px;font-size:11px}
-.hi .th img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:12%;background:#0E141C}
+.hi .th img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:10%;background:#0D131B}
 .hi .th.pt img{object-fit:cover;padding:0}
 .hi .tx{flex:1;min-width:0}
 .hi .tx b{display:block;font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -582,6 +651,11 @@ html.kbd button:focus,html.kbd input:focus,html.kbd .row:focus,html.kbd .ep:focu
 html.kbd .all:focus,html.kbd #pins:focus{outline:3px solid #fff;outline-offset:2px}
 html.kbd .chip:focus{outline:3px solid #fff;outline-offset:2px}
 html.kbd .hero.on:focus{outline:4px solid #fff;outline-offset:-4px}
+/* With a remote, the picture that comes up must be able to take the highlight
+   at once. A slide that is still fading in is still visibility:hidden, and
+   nothing can put the focus on something hidden - so on a TV the slides swap
+   their visibility straight away and only the opacity fades. */
+html.kbd .hero{transition:opacity .45s ease}
 /* with a remote, a new banner picture can take the highlight at once */
 html.kbd #nav button:focus{outline-offset:-3px;border-radius:12px}
 /* on a TV the tab bar sits at the top, where Up always reaches it */
@@ -631,28 +705,53 @@ html.kbd .card,html.kbd .row,html.kbd .ep,html.kbd .hi,html.kbd button{scroll-ma
 .stat b{display:block;font-size:18px;font-weight:800;direction:ltr}
 .stat s{display:block;text-decoration:none;font-size:11px;color:var(--muted2);font-weight:700;margin-top:4px}
 
-/* ---------- settings: one card for the playlist in use, plain rows for the rest ---------- */
-#settings .st-g{text-transform:uppercase;font-size:11px;letter-spacing:1.4px}
-.plcard{border-radius:20px;padding:14px;border:1px solid rgba(138,107,240,.36);
-  background:linear-gradient(180deg,rgba(138,107,240,.13),rgba(138,107,240,.03)),var(--surface);
-  box-shadow:0 12px 30px rgba(0,0,0,.45)}
+/* ---------- settings ----------
+   Rows that belong together are drawn as one card with hairlines between
+   them, the way a settings screen is drawn everywhere else. A dozen separate
+   floating pills was what made this page look unfinished. */
+#settings .st-g{text-transform:uppercase;font-size:10.5px;letter-spacing:1.5px}
+#settings .sgroup{background:var(--surface);border:1px solid var(--line);border-radius:18px;
+  overflow:hidden;box-shadow:0 8px 22px rgba(0,0,0,.3)}
+#settings .sgroup .row{background:none;border:0;border-radius:0;margin:0;padding:11px 13px;
+  border-top:1px solid var(--line)}
+#settings .sgroup .row:first-child{border-top:0}
+#settings .sgroup .row:active{background:var(--surface2)}
+#settings .sgroup .row .ic{width:32px;height:32px;flex:none;border-radius:10px;
+  display:grid;place-items:center;background:var(--surface2);color:var(--muted)}
+#settings .sgroup .row .ic svg{display:block}
+#settings .sgroup + .addbtn{margin-top:9px}
+
+.plcard{border-radius:18px;padding:13px;border:1px solid var(--line);
+  background:var(--surface);box-shadow:0 10px 26px rgba(0,0,0,.34)}
 .plcard .t{display:flex;align-items:center;gap:11px}
-.plcard .ic{width:42px;height:42px;flex:none;border-radius:13px;display:grid;place-items:center;
-  background:rgba(138,107,240,.16);color:var(--accent2)}
+.plcard .ic{width:38px;height:38px;flex:none;border-radius:12px;display:grid;place-items:center;
+  background:rgba(232,179,60,.12);color:var(--accent)}
 .plcard .tx{flex:1;min-width:0}
 .plcard .tx b{display:block;font-size:16px;font-weight:800}
 .plcard .tx s{display:block;text-decoration:none;font-size:11px;color:var(--muted2);font-weight:600;
   margin-top:2px;direction:ltr;text-align:start;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pill{flex:none;font-size:9.5px;font-weight:800;letter-spacing:.8px;padding:5px 9px;border-radius:8px;
-  background:rgba(54,211,153,.14);color:var(--live);border:1px solid rgba(54,211,153,.3)}
+  background:rgba(47,191,113,.14);color:var(--live);border:1px solid rgba(47,191,113,.3)}
 .pill.grey{background:rgba(139,151,166,.14);color:var(--muted);border-color:rgba(139,151,166,.3)}
-.nums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
-.num{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:13px;padding:8px 4px;text-align:center}
-.num b{display:block;font-size:16px;font-weight:800;direction:ltr}
+.nums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.num{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:12px;padding:7px 4px;text-align:center}
+.num b{display:block;font-size:15px;font-weight:800;direction:ltr}
 .num s{display:block;text-decoration:none;font-size:9.5px;color:var(--muted2);font-weight:700;margin-top:2px}
-.upd{display:flex;align-items:center;gap:7px;margin-top:11px}
-.upd span{flex:1;min-width:0;font-size:11px;color:var(--muted2);font-weight:700;
+/* the line about the last download sits on its own, above the buttons -
+   three things fighting for one line is what made this corner feel cramped */
+/* Two lines, always the same two: what was downloaded and when, then the
+   buttons. Three things sharing one line is what made this corner cramped,
+   and letting them wrap however they liked is what left a button stranded
+   on a line of its own. */
+.upd{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px;
+  padding-top:10px;border-top:1px solid var(--line)}
+.upd span.when{flex:0 0 100%;min-width:0;order:-2;
+  font-size:11px;color:var(--muted2);font-weight:700;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* "BUILT-IN" belongs with that line, not wedged beside a button */
+.upd .badge{order:-1;flex:none;margin-bottom:2px}
+.upd .chip{flex:none}
+.upd .chip:first-of-type{flex:1 1 auto;justify-content:center}
 .chip{display:flex;align-items:center;gap:6px;padding:8px 13px;border-radius:11px;border:1px solid var(--line);
   background:rgba(255,255,255,.04);font-size:11.5px;font-weight:800;color:var(--text);cursor:pointer}
 .chip.sq{padding:8px 10px;color:var(--muted)}
@@ -662,9 +761,11 @@ html.kbd .card,html.kbd .row,html.kbd .ep,html.kbd .hi,html.kbd button{scroll-ma
 .row .tx s.wrap{white-space:normal;line-height:1.5;margin-top:4px}
 .chip:active{transform:scale(.95)}
 #settings .row .val{flex:none;font-size:11.5px;color:var(--muted);font-weight:700;direction:ltr}
-#settings .row .ch{flex:none;color:var(--muted2);font-size:15px;line-height:1}
-#settings .addbtn{border-radius:16px;border:1px dashed rgba(183,148,255,.42);background:rgba(138,107,240,.05);
-  padding:12px;font-size:13px;margin-top:2px}
+#settings .row .ch{flex:none;color:var(--muted2);display:flex}
+#settings .row .ch svg{display:block}
+html[dir=rtl] #settings .row .ch svg{transform:scaleX(-1)}
+#settings .addbtn{border-radius:16px;border:1px dashed var(--line);background:transparent;
+  color:var(--accent2);padding:11px;font-size:13px;margin-top:2px}
 #settings .st-foot .lg{width:24px;height:24px;display:inline-block;vertical-align:-6px;margin-inline-end:7px}
 #settings .st-foot .lg svg{display:block;width:100%;height:100%}
 #settings .st-foot b{color:var(--muted);letter-spacing:1px}
@@ -672,8 +773,8 @@ html.kbd .card,html.kbd .row,html.kbd .ep,html.kbd .hi,html.kbd button{scroll-ma
 /* the settings page holds a lot: keep every line tight so it fits one screen */
 #settings .st-h{margin:0 0 2px}
 #settings .st-h h1{font-size:21px}
-#settings .st-g{margin:15px 0 8px}
-#settings .row{padding:10px 12px;margin-bottom:7px}
+#settings .st-g{margin:11px 0 6px}
+#settings .row{padding:10px 12px;margin-bottom:6px}
 #settings .row .tx b{font-size:13.5px}
 #settings .row .tx s{font-size:10.5px;margin-top:1px}
 #settings .mini{width:31px;height:31px}
@@ -687,7 +788,7 @@ html.kbd .card,html.kbd .row,html.kbd .ep,html.kbd .hi,html.kbd button{scroll-ma
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .st-two button.solid{border-style:solid;background:var(--surface);color:var(--text)}
 .st-two button:active{transform:scale(.98)}
-.st-foot{text-align:center;font-size:11px;font-weight:700;color:var(--muted2);line-height:1.8;padding:2px 0 4px}
+.st-foot{text-align:center;font-size:11px;font-weight:700;color:var(--muted2);line-height:1.6;padding:2px 0 2px}
 /* ---------- a TV is watched from across the room, and its edges can be cut off ---------- */
 html.tv header{padding:8px 3% 8px}
 html.tv main{padding:6px 3% calc(40px + var(--safe-b))}
@@ -750,14 +851,14 @@ html.tv .st-two button{padding:11px 8px;font-size:14px}
   <div class="top">
     <button class="iconbtn" onclick="toggleSearch()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg></button>
     <div class="brand">
-      <span class="w1">KURDISTAN</span> <span class="w2">IPTV</span>
+      <span class="wm"><span class="w1">KURDISTAN</span> <span class="w2">IPTV</span></span>
       <small id="tagline"></small>
     </div>
     <button class="iconbtn" onclick="openSettings()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   </div>
 
   <div class="ann">
-    <i><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#B794FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10v4a1 1 0 001 1h3l5 4V5L7 9H4a1 1 0 00-1 1z"/><path d="M16.5 8.5a5 5 0 010 7"/><path d="M19.5 5.5a9 9 0 010 13"/></svg></i>
+    <i><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#E8B33C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10v4a1 1 0 001 1h3l5 4V5L7 9H4a1 1 0 00-1 1z"/><path d="M16.5 8.5a5 5 0 010 7"/><path d="M19.5 5.5a9 9 0 010 13"/></svg></i>
     <div class="ann-wrap"><span id="annText"></span></div>
   </div>
 
@@ -1057,12 +1158,13 @@ function hue(s){ var h=0; for(var i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))%3
 
 /* A channel with no logo gets a tile, and a thousand of them sit side by side.
    Random hues turned that into a patchwork quilt, so every tile now comes from
-   the same narrow band around the app's own purple - near enough to read as one
-   surface, far enough apart that two neighbours are still telling apart. */
+   one narrow band of cool slate - near enough to read as a single surface, far
+   enough apart that two neighbours are still telling apart. It stays out of
+   the way of the gold, and out of the way of the posters' own colours. */
 function tileBg(h, dark){
-  var b = 252 + (h % 46) - 23;                 /* 229deg .. 275deg */
-  var l1 = dark ? 19 : 22, l2 = dark ? 11 : 13;
-  return "linear-gradient(150deg,hsl("+b+",30%,"+l1+"%),hsl("+((b+16)%360)+",34%,"+l2+"%))";
+  var b = 211 + (h % 30) - 15;                 /* 196deg .. 226deg */
+  var l1 = dark ? 15 : 17, l2 = dark ? 9 : 10;
+  return "linear-gradient(150deg,hsl("+b+",15%,"+l1+"%),hsl("+(b+14)+",19%,"+l2+"%))";
 }
 /* The provider's own category name, exactly as it sends it - only the
    surrounding whitespace goes. */
@@ -1080,10 +1182,15 @@ function artURL(u, base){
     try{ var j = JSON.parse(u); return artURL(j, base) }catch(e){ u = u.replace(/^[\["']+|[\]"']+$/g, "") }
   }
   if(/^data:image\//i.test(u)) return u;
+  /* M3U and XMLTV files are XML underneath, so an address with a query in it
+     arrives written as &amp; - and a browser asks for a different picture than
+     the one the provider meant. Put the characters back. */
+  if(u.indexOf("&") >= 0)
+    u = u.replace(/&amp;/gi, "&").replace(/&#0*38;/g, "&").replace(/&quot;/gi, '"').replace(/&#0*39;/g, "'");
   u = u.split(/[|\s]+(?=https?:)/)[0].replace(/\\/g, "/").replace(/ /g, "%20");
   if(/^https?:\/\//i.test(u)) return u;
   if(u.slice(0, 2) === "//") return "https:" + u;
-  if(/^\/[A-Za-z0-9_-]{8,}\.(jpe?g|png|webp)$/i.test(u) && !base) return "https://image.tmdb.org/t/p/w500" + u;
+  if(/^\/[A-Za-z0-9_-]{8,}\.(jpe?g|jfif|png|apng|webp|avif|gif|svg|bmp)(\?.*)?$/i.test(u) && !base) return "https://image.tmdb.org/t/p/w500" + u;
   if(base) return String(base).replace(/\/+$/, "") + "/" + u.replace(/^\/+/, "");
   return /^[\w-]+(\.[\w-]+)+\//.test(u) ? "http://" + u : "";
 }
@@ -2424,6 +2531,11 @@ function cardHTML(c, forceSquare){
    same category does not fill it. Picture first, then anything. */
 var HERO_N = 8, HERO_MS = 4500;
 
+/* one triangle, drawn rather than typed: the ▶ character comes out a
+   different size and weight on every device, and on some it is a tofu box */
+var PLAY_TRI = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.2a1 1 0 011.5-.87l9 6.8a1 1 0 010 1.74l-9 6.8A1 1 0 018 18.8z"/></svg>';
+var CHEV = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+
 /* The banner follows the section the person is in - live channels, films or
    series - and always starts from different items. */
 function heroPicks(){
@@ -2451,6 +2563,10 @@ function heroPicks(){
 function heroImgErr(im){
   var u = im.getAttribute("src") || "";
   if(!im.getAttribute("data-t") && artAlt(u)){ im.setAttribute("data-t", "1"); im.src = artAlt(u); return }
+  /* mark the slide BEFORE the picture goes - afterwards it has no parent
+     left to walk up from, and the banner would keep the white plate */
+  for(var e = im.parentNode; e; e = e.parentNode)
+    if(e.classList && e.classList.contains("hero")){ e.classList.add("noart"); break }
   im.remove();   /* the poster box stays; its letters show through */
 }
 
@@ -2459,21 +2575,22 @@ function slideHTML(c, first){
   var bg = tileBg(h, true);
   var sq = SECTION === "live";
   var art = c.l ? esc(c.l) : "";
-  var img = art ? '<img class="bg" src="'+art+'" referrerpolicy="no-referrer" onerror="heroImgErr(this)" alt="">' : '';
+  var img = art ? '<img class="bg" src="'+art+'" decoding="async" referrerpolicy="no-referrer" onerror="heroImgErr(this)" alt="">' : '';
   /* the poster box is always there, picture or not, so every slide has the
      very same shape */
   var pst = '<div class="hp" style="background:'+tileBg(h)+'"><div class="mono">'+esc(initials(c.n))+'</div>'
-          + (art ? '<img src="'+art+'" referrerpolicy="no-referrer" onerror="heroImgErr(this)" alt="">' : '')
+          + (art ? '<img src="'+art+'" decoding="async" referrerpolicy="no-referrer" onerror="heroImgErr(this)" alt="">' : '')
           + '</div>';
   var attrs = c.sid ? ' data-sid="'+esc(c.sid)+'"' : ' data-u="'+esc(c.u)+'"';
   var sub = [];
   if(c.r) sub.push("★ " + String(c.r).slice(0,3));
   if(c.c) sub.push(cleanGroup(c.c));
-  return '<div class="hero'+(first ? " on" : "")+(sq ? " sq" : "")+'"'+attrs+' data-n="'+esc(c.n)+'" style="background:'+bg+'">'
+  return '<div class="hero'+(first ? " on" : "")+(sq ? " sq" : "")+(art ? "" : " noart")+'"'+attrs+' data-n="'+esc(c.n)+'" style="background:'+bg+'">'
        +   img + '<div class="sc"></div>' + pst
-       +   '<div class="in"><div class="kick">'+esc(sub.length ? sub.join("  ·  ") : t().featured)+'</div>'
+       +   '<div class="in"><div class="kick">'+(sq ? '<i></i>' : '')
+       +       '<s>'+esc(sub.length ? sub.join("  ·  ") : t().featured)+'</s></div>'
        +     '<h1>'+esc(c.n)+'</h1>'
-       +     '<span class="go">&#9654;&#65038; '+esc(t().playNow)+'</span></div>'
+       +     '<span class="go">'+PLAY_TRI+esc(t().playNow)+'</span></div>'
        + '</div>';
 }
 
@@ -2531,7 +2648,7 @@ function heroStart(){
 function rowHTML(title, list, square, gi){
   if(!list || !list.length) return "";
   return '<div class="hrow"><div class="rhead"><span class="bar"></span><h3>'+esc(title)+'</h3>'
-       + '<button type="button" class="all" data-gi="'+gi+'">'+esc(t().seeAll)+' <b>&#8250;</b></button></div>'
+       + '<button type="button" class="all" data-gi="'+gi+'">'+esc(t().seeAll)+CHEV+'</button></div>'
        + '<div class="strip'+(square ? "" : " big")+'">'
        + list.slice(0,16).map(function(c){ return cardHTML(c, square) }).join("")
        + '</div></div>';
@@ -3547,7 +3664,7 @@ function setRow(icon, title, sub, onclick, natural, value){
        +   '<span class="tx"><b>'+esc(title)+'</b>'
        +     (sub ? '<s'+(natural ? ' class="nat"' : '')+'>'+esc(sub)+'</s>' : '')+'</span>'
        +   (value ? '<span class="val">'+esc(value)+'</span>' : '')
-       +   (onclick ? '<span class="ch">&#8250;</span>' : '')
+       +   (onclick ? '<span class="ch">'+CHEV+'</span>' : '')
        + '</div>';
 }
 function setGroup(title){ return '<div class="st-g"><span class="bar"></span>'+esc(title)+'</div>' }
@@ -3592,7 +3709,7 @@ function drawSettings(){
      +     '<div class="num"><b>'+nMov+'</b><s>'+esc(d.movies)+'</s></div>'
      +     '<div class="num"><b>'+nSer+'</b><s>'+esc(d.series)+'</s></div>'
      +   '</div>'
-     +   '<div class="upd"><span>'+esc(updLine(d, upd[cur]))+'</span>'
+     +   '<div class="upd"><span class="when">'+esc(updLine(d, upd[cur]))+'</span>'
      +     (SYNCING
         ? '<button class="chip busy">'+ICON.refresh+' '+esc(d.updating)+'</button>'
         : '<button class="chip" onclick="refreshList()">'+ICON.refresh+' '+esc(d.refreshShort)+'</button>')
@@ -3606,6 +3723,7 @@ function drawSettings(){
   /* the other playlists: one tap switches to it */
   var others = getLists().filter(function(p){ return p.id !== cur });
   h += setGroup(d.otherLists);
+  if(others.length) h += '<div class="sgroup">';
   h += others.map(function(p){
     var sub = p.type === "xtream" ? (p.domain || "") : (p.url || "");
     var mine = p.id !== DEFAULT_PLAYLIST.id;
@@ -3618,19 +3736,22 @@ function drawSettings(){
               +   '<button class="mini red" onclick="event.stopPropagation();removeList(\''+esc(p.id)+'\')">'+ICON.trash+'</button>'
               + '</span>'
               : '<span class="val">'+esc(d.builtIn)+'</span>')
-         +   '<span class="ch">&#8250;</span>'
+         +   '<span class="ch">'+CHEV+'</span>'
          + '</div>';
   }).join("");
+  if(others.length) h += '</div>';
   h += '<button class="addbtn" onclick="openSheet(\'type\')">+ '+esc(d.addList)+'</button>';
 
   /* general */
   h += setGroup(d.general);
+  h += '<div class="sgroup">';
   h += setRow(ICON.globe, d.lang, "", "openSheet('lang')", true, T[lang].name);
   h += setRow(ICON.layers, d.cats, catsLine(d), "openSheet('cats')", true);
   if(act.type === "xtream") h += setRow(ICON.tv, d.epgTest, d.epgTestSub, "epgProbe()", true);
   h += setRow(ICON.gauge, d.speedTest, d.speedTestSub, "speedTest()", true);
   h += setRow(ICON.disk, d.clearCache, "", "clearCache()", true, cacheSize());
   h += setRow(ICON.down, d.updCheck, d.updCheckSub, "updOpen()", true, appVerText());
+  h += '</div>';
 
   h += '<div class="st-foot"><span class="lg">'+LOGO_ICON+'</span><b>KURDISTAN IPTV</b><br>'
      +   esc(d.version + " " + appVerText())+'</div>';
@@ -4159,6 +4280,14 @@ function navArea(el){
 function navNext(from, dir, items){
   var area = navArea(from);
   var same = items.filter(function(el){ return navArea(el) === area });
+  /* Up or Down from a channel means the row above or below, not the little
+     "See all" sitting on that row's title line. It is still reached from the
+     left or the right; it just never steals a jump between rows. */
+  if((dir === "up" || dir === "down") && from.classList.contains("card")){
+    var cards = same.filter(function(el){ return el.classList.contains("card") });
+    var c = navPick(from, dir, cards);
+    if(c) return c;
+  }
   var hit = navPick(from, dir, same);
   if(hit) return hit;
   var others = items.filter(function(el){ return navArea(el) !== area });
@@ -4277,7 +4406,15 @@ document.addEventListener("keydown", function(e){
     if(onHero){
       var back = (t().dir === "rtl") ? (dir === "right") : (dir === "left");
       heroGo(heroI + (back ? -1 : 1)); heroStop();
-      setTimeout(function(){ var on = document.querySelector("#heroBox .hero.on"); if(on) navFocus(on) }, 0);
+      setTimeout(function(){
+        var on = document.querySelector("#heroBox .hero.on");
+        if(!on) return;
+        navFocus(on);
+        /* if it could not take the highlight yet, try once more after the
+           swap - never leave the ring on a picture that is no longer showing */
+        if(document.activeElement !== on)
+          setTimeout(function(){ if(document.querySelector("#heroBox .hero.on") === on) navFocus(on) }, 120);
+      }, 0);
     } else if(next) navFocus(next);
     e.preventDefault();
     return;
@@ -4719,7 +4856,7 @@ function actAskAgainQuietly(a){
    Nothing waits for it: the page behind is already being built, and a tap -
    or a remote key - sends it away early. If the sound will not play, or the
    file is not there, the picture carries on alone. */
-var SPLASH_MS = 5000;
+var SPLASH_MS = 2300;
 
 function splashGo(){
   var box = $("splash"); if(!box) return;
