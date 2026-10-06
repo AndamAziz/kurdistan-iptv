@@ -166,13 +166,35 @@ html.tv .card .epg{font-size:12px}
   background:var(--bg2);border:1px solid rgba(255,255,255,.06);
   box-shadow:0 18px 40px rgba(0,0,0,.5);touch-action:pan-y;
 }
-@media(min-width:700px){.heroBox{--hh:300px}}
-@media(min-width:1100px){.heroBox{--hh:340px}}
+/* In a window the banner shares the screen with the rows under it, and a
+   banner that fills half the window is not a banner, it is the page. */
+@media(min-width:700px){.heroBox{--hh:252px}}
+@media(min-width:1100px){.heroBox{--hh:274px}}
+/* A light behind the picture, and a little more darkness at the rim. On a
+   wide screen a flat field is what reads as unfinished; this is what gives
+   the banner a middle and an edge. */
+@media(min-width:700px){
+  .hero .sc{
+    background:radial-gradient(40% 150% at 76% 48%,rgba(255,255,255,.085),transparent 72%),
+               linear-gradient(to right,rgba(7,10,14,.88) 0%,rgba(7,10,14,.58) 27%,rgba(7,10,14,.1) 60%,transparent 82%),
+               linear-gradient(0deg,rgba(7,10,14,.46),transparent 52%),
+               radial-gradient(152% 104% at 50% 50%,transparent 50%,rgba(7,10,14,.52) 100%)}
+  .hero.wide .sc{
+    background:radial-gradient(40% 150% at 76% 48%,rgba(255,255,255,.06),transparent 72%),
+               linear-gradient(to right,rgba(7,10,14,.84) 0%,rgba(7,10,14,.5) 28%,rgba(7,10,14,.08) 62%,transparent 86%),
+               linear-gradient(0deg,rgba(7,10,14,.44),transparent 52%),
+               radial-gradient(152% 104% at 50% 50%,transparent 54%,rgba(7,10,14,.46) 100%)}
+}
 @media(min-width:860px){
   .hero{padding-inline:clamp(30px,5vw,66px)}
-  .hero .in{max-width:460px}
-  .hero .go{padding:9px 20px;font-size:13px}
-  .hero.sq .hp{height:calc(var(--hh) * .6)}
+  /* on a big screen the words can hold their own corner instead of
+     disappearing into it */
+  .hero .in{max-width:540px}
+  .hero .kick{font-size:10px;letter-spacing:1.6px}
+  .hero h1{font-size:22px;margin-bottom:11px}
+  .hero .go{padding:10px 22px;font-size:13.5px}
+  .hero.sq .hp{height:calc(var(--hh) * .66)}
+  .hero .hp{height:calc(var(--hh) - 34px)}
 }
 
 /* A television screen is wide but not tall, and whatever the banner takes,
@@ -180,7 +202,8 @@ html.tv .card .epg{font-size:12px}
    picture can be small without the banner looking empty. */
 html.tv .heroBox{--hh:min(46vh,248px)}
 html.tv .hero{padding:12px clamp(30px,4vw,54px);gap:9px}
-html.tv .hero.sq .hp{height:calc(var(--hh) * .66)}
+html.tv .hero.sq .hp{height:calc(var(--hh) * .7)}
+html.tv .hero .hp{height:calc(var(--hh) - 32px)}
 html.tv .hero .in{max-width:580px}
 html.tv .hero .go{padding:9px 19px;font-size:12.5px}
 /* The picture sits on the right and the words beside it on the left, in every
@@ -203,8 +226,8 @@ html[dir=rtl] .hero{flex-direction:row}
    A poster cropped into a letterbox does, and the wider the screen the
    narrower the slice of it that shows, so the blur grows with the screen. */
 .hero.wide .bg{object-position:50% 46%;filter:blur(1px) saturate(1.2) brightness(.68);transform:scale(1.01)}
-@media(min-width:700px){ .hero:not(.wide) .bg{filter:blur(10px) saturate(1.25) brightness(.62);transform:scale(1.14)} }
-@media(min-width:1100px){ .hero:not(.wide) .bg{filter:blur(14px) saturate(1.3) brightness(.64);transform:scale(1.22)} }
+@media(min-width:700px){ .hero:not(.wide) .bg{filter:blur(34px) saturate(1.5) brightness(.6);transform:scale(1.5)} }
+@media(min-width:1100px){ .hero:not(.wide) .bg{filter:blur(48px) saturate(1.6) brightness(.62);transform:scale(1.62)} }
 .hero.on .bg{animation:heroKen 11s ease-out both}
 @keyframes heroKen{from{transform:scale(1.5)}to{transform:scale(1.32)}}
 /* darkest where the words are, so the title reads over any picture */
