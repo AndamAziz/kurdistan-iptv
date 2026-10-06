@@ -161,7 +161,7 @@ html.tv .card .epg{font-size:12px}
    place on a plate of its own colour. */
 .heroWrap{position:relative;margin:2px 0 4px}
 .heroBox{
-  --hh:clamp(244px,70vw,286px);
+  --hh:clamp(212px,58vw,250px);
   position:relative;height:var(--hh);border-radius:var(--r-lg);overflow:hidden;
   background:var(--bg2);border:1px solid rgba(255,255,255,.06);
   box-shadow:0 18px 40px rgba(0,0,0,.5);touch-action:pan-y;
@@ -172,8 +172,7 @@ html.tv .card .epg{font-size:12px}
   .hero{padding-inline:clamp(30px,5vw,66px)}
   .hero .in{max-width:460px}
   .hero .go{padding:9px 20px;font-size:13px}
-  .hero .hp{max-width:30%}
-  .hero.sq .hp{max-width:34%}
+  .hero.sq .hp{height:calc(var(--hh) * .6)}
 }
 
 /* A television screen is wide but not tall, and whatever the banner takes,
@@ -181,24 +180,21 @@ html.tv .card .epg{font-size:12px}
    picture can be small without the banner looking empty. */
 html.tv .heroBox{--hh:min(46vh,248px)}
 html.tv .hero{padding:12px clamp(30px,4vw,54px);gap:9px}
-html.tv .hero.sq .hp{max-width:40%}
-html.tv .hero .hp{max-width:34%}
+html.tv .hero.sq .hp{height:calc(var(--hh) * .66)}
 html.tv .hero .in{max-width:580px}
 html.tv .hero .go{padding:9px 19px;font-size:12.5px}
-/* The poster and the words are one column down the left-hand side, in every
-   language - a person reading Kurdish still wants the picture where the
-   picture goes. Everything to the right of that column is the artwork, which
-   is the whole point of having artwork. */
+/* The picture sits on the right and the words beside it on the left, in every
+   language. A row follows the reading direction by itself, so the two
+   directions need opposite rules to end up looking the same: reversed where
+   the text runs left to right, plain where it runs right to left. */
 .hero{
   position:absolute;inset:0;cursor:pointer;opacity:0;visibility:hidden;
-  display:flex;flex-direction:column;align-items:flex-start;justify-content:center;
-  gap:9px;
-  padding:12px clamp(16px,4.6vw,30px);box-sizing:border-box;text-align:start;
+  display:flex;flex-direction:row-reverse;align-items:center;justify-content:space-between;
+  gap:clamp(14px,4vw,26px);
+  padding:14px clamp(16px,4.6vw,30px);box-sizing:border-box;text-align:start;
   transition:opacity .7s ease,visibility .7s;
 }
-/* down a column the cross axis is the horizontal one, and in Arabic script it
-   starts on the right - so the left edge is its end */
-html[dir=rtl] .hero{align-items:flex-end}
+html[dir=rtl] .hero{flex-direction:row}
 .hero.on{opacity:1;visibility:visible}
 .hero .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
   object-position:50% 26%;
@@ -213,20 +209,15 @@ html[dir=rtl] .hero{align-items:flex-end}
 @keyframes heroKen{from{transform:scale(1.5)}to{transform:scale(1.32)}}
 /* darkest where the words are, so the title reads over any picture */
 .hero .sc{position:absolute;inset:0;
-  background:linear-gradient(to left,rgba(7,10,14,.84) 0%,rgba(7,10,14,.6) 36%,rgba(7,10,14,.2) 72%,transparent 100%),
-             linear-gradient(0deg,rgba(7,10,14,.42),transparent 54%),
-             radial-gradient(140% 96% at 50% 50%,transparent 60%,rgba(7,10,14,.34) 100%)}
-html[dir=rtl] .hero .sc{
-  background:linear-gradient(to right,rgba(7,10,14,.84) 0%,rgba(7,10,14,.6) 36%,rgba(7,10,14,.2) 72%,transparent 100%),
+  background:linear-gradient(to right,rgba(7,10,14,.86) 0%,rgba(7,10,14,.56) 26%,rgba(7,10,14,.12) 58%,transparent 78%),
              linear-gradient(0deg,rgba(7,10,14,.42),transparent 54%),
              radial-gradient(140% 96% at 50% 50%,transparent 60%,rgba(7,10,14,.34) 100%)}
 
 /* the art */
-/* The picture is given the height the words do not use, and its width
-   follows from its own shape. No number to keep in step with the height of
-   the banner, on any screen, in any language. */
-.hero .hp{position:relative;flex:1 1 auto;min-height:0;width:auto;max-width:46%;aspect-ratio:2/3;
-  border-radius:12px;overflow:hidden;
+/* Beside the words the picture is free to be as tall as the banner allows,
+   which is the size a poster is meant to be seen at. */
+.hero .hp{position:relative;flex:none;height:calc(var(--hh) - 42px);width:auto;aspect-ratio:2/3;
+  border-radius:13px;overflow:hidden;
   box-shadow:0 16px 34px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.14);
   transform:scale(.96);opacity:0;
   transition:transform .9s cubic-bezier(.2,.8,.2,1),opacity .9s ease}
@@ -237,7 +228,7 @@ html[dir=rtl] .hero .sc{
 /* a live channel: its logo on a soft plate, square. Channel logos are drawn
    for white paper, so the plate is light - but a warm off-white, not a hole
    punched in the screen. */
-.hero.sq .hp{max-width:54%;aspect-ratio:1/1;border-radius:18px;
+.hero.sq .hp{height:calc(var(--hh) * .62);aspect-ratio:1/1;border-radius:18px;
   background:linear-gradient(160deg,#FCFDFE,#E6EAEF)!important;
   box-shadow:0 16px 34px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.3)}
 .hero.sq .hp img{object-fit:contain;inset:13%;width:74%;height:74%}
@@ -261,22 +252,15 @@ html[dir=rtl] .hero.noart .sc{
              linear-gradient(0deg,rgba(7,10,14,.5),transparent 60%)}
 
 /* the words beside it */
-.hero .in{position:relative;flex:none;max-width:min(76%,420px);min-width:0;
+.hero .in{position:relative;flex:1 1 auto;min-width:0;
   display:flex;flex-direction:column;align-items:flex-start}
-/* the words line up with the poster's left edge, not with the far side of
-   their own box - otherwise the title drifts away from the picture it names */
-html[dir=rtl] .hero .in{align-items:flex-end;text-align:left}
 /* The radial alone leaves a straight edge where its box ends, which on a wide
    banner shows as a faint rectangle. The mask fades the two sides out, so the
    halo has no edge of its own anywhere. */
-.hero .in::before{content:"";position:absolute;inset:-22px -44px -24px -24px;pointer-events:none;
-  background:radial-gradient(78% 74% at 36% 50%,rgba(7,10,14,.72),rgba(7,10,14,.34) 54%,transparent 84%);
-  -webkit-mask-image:linear-gradient(to right,transparent 0,#000 16%,#000 68%,transparent 100%);
-          mask-image:linear-gradient(to right,transparent 0,#000 16%,#000 68%,transparent 100%)}
-html[dir=rtl] .hero .in::before{
-  background:radial-gradient(78% 74% at 64% 50%,rgba(7,10,14,.72),rgba(7,10,14,.34) 54%,transparent 84%);
-  -webkit-mask-image:linear-gradient(to left,transparent 0,#000 16%,#000 68%,transparent 100%);
-          mask-image:linear-gradient(to left,transparent 0,#000 16%,#000 68%,transparent 100%)}
+.hero .in::before{content:"";position:absolute;inset:-22px -30px -24px -40px;pointer-events:none;
+  background:radial-gradient(80% 76% at 34% 50%,rgba(7,10,14,.7),rgba(7,10,14,.32) 54%,transparent 84%);
+  -webkit-mask-image:linear-gradient(to right,#000 0,#000 62%,transparent 100%);
+          mask-image:linear-gradient(to right,#000 0,#000 62%,transparent 100%)}
 .hero .in > *{position:relative;z-index:1}
 .hero .kick{display:flex;align-items:center;gap:6px;max-width:100%;
   font-size:9px;font-weight:800;letter-spacing:1.4px;color:var(--accent2);
