@@ -171,14 +171,14 @@ html.tv .card .epg{font-size:12px}
 @media(min-width:860px){
   .hero{padding-inline:clamp(30px,5vw,66px)}
   .hero .in{max-width:620px}
-  .hero .go{padding:12px 26px;font-size:15px}
+  .hero .go{padding:9px 20px;font-size:13px}
 }
 
 html.tv .heroBox{--hh:min(44vh,252px)}
 html.tv .hero{padding:18px clamp(30px,4vw,54px);gap:clamp(24px,3vw,38px)}
 html.tv .hero.sq .hp{height:calc(var(--hh) * .74)}
 html.tv .hero .in{max-width:580px}
-html.tv .hero .go{padding:11px 24px;font-size:14px}
+html.tv .hero .go{padding:9px 19px;font-size:12.5px}
 .hero{
   position:absolute;inset:0;cursor:pointer;opacity:0;visibility:hidden;
   display:flex;flex-direction:row;align-items:center;gap:clamp(14px,4vw,26px);
@@ -187,18 +187,18 @@ html.tv .hero .go{padding:11px 24px;font-size:14px}
 }
 .hero.on{opacity:1;visibility:visible}
 .hero .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
-  filter:blur(28px) saturate(1.3) brightness(.52);transform:scale(1.4);opacity:1}
+  filter:blur(22px) saturate(1.3) brightness(.68);transform:scale(1.35);opacity:1}
 .hero.on .bg{animation:heroKen 11s ease-out both}
 @keyframes heroKen{from{transform:scale(1.5)}to{transform:scale(1.32)}}
 /* darkest where the words are, so the title reads over any picture */
 .hero .sc{position:absolute;inset:0;
-  background:linear-gradient(to left,rgba(7,10,14,.92) 0%,rgba(7,10,14,.74) 34%,rgba(7,10,14,.22) 70%,transparent 100%),
-             linear-gradient(0deg,rgba(7,10,14,.55),transparent 56%),
-             radial-gradient(140% 96% at 50% 50%,transparent 58%,rgba(7,10,14,.42) 100%)}
+  background:linear-gradient(to left,rgba(7,10,14,.84) 0%,rgba(7,10,14,.6) 36%,rgba(7,10,14,.2) 72%,transparent 100%),
+             linear-gradient(0deg,rgba(7,10,14,.42),transparent 54%),
+             radial-gradient(140% 96% at 50% 50%,transparent 60%,rgba(7,10,14,.34) 100%)}
 html[dir=rtl] .hero .sc{
-  background:linear-gradient(to right,rgba(7,10,14,.92) 0%,rgba(7,10,14,.74) 34%,rgba(7,10,14,.22) 70%,transparent 100%),
-             linear-gradient(0deg,rgba(7,10,14,.55),transparent 56%),
-             radial-gradient(140% 96% at 50% 50%,transparent 58%,rgba(7,10,14,.42) 100%)}
+  background:linear-gradient(to right,rgba(7,10,14,.84) 0%,rgba(7,10,14,.6) 36%,rgba(7,10,14,.2) 72%,transparent 100%),
+             linear-gradient(0deg,rgba(7,10,14,.42),transparent 54%),
+             radial-gradient(140% 96% at 50% 50%,transparent 60%,rgba(7,10,14,.34) 100%)}
 
 /* the art */
 .hero .hp{position:relative;flex:none;height:calc(var(--hh) - 36px);aspect-ratio:2/3;
@@ -238,20 +238,32 @@ html[dir=rtl] .hero.noart .sc{
 
 /* the words beside it */
 .hero .in{position:relative;flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start}
-.hero .kick{display:flex;align-items:center;gap:7px;max-width:100%;
-  font-size:10px;font-weight:800;letter-spacing:1.7px;color:var(--accent2);
-  margin-bottom:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* The radial alone leaves a straight edge where its box ends, which on a wide
+   banner shows as a faint rectangle. The mask fades the two sides out, so the
+   halo has no edge of its own anywhere. */
+.hero .in::before{content:"";position:absolute;inset:-24px -40px -22px -22px;pointer-events:none;
+  background:radial-gradient(74% 88% at 38% 50%,rgba(7,10,14,.76),rgba(7,10,14,.4) 52%,transparent 86%);
+  -webkit-mask-image:linear-gradient(to right,transparent 0,#000 16%,#000 68%,transparent 100%);
+          mask-image:linear-gradient(to right,transparent 0,#000 16%,#000 68%,transparent 100%)}
+html[dir=rtl] .hero .in::before{
+  background:radial-gradient(74% 88% at 62% 50%,rgba(7,10,14,.76),rgba(7,10,14,.4) 52%,transparent 86%);
+  -webkit-mask-image:linear-gradient(to left,transparent 0,#000 16%,#000 68%,transparent 100%);
+          mask-image:linear-gradient(to left,transparent 0,#000 16%,#000 68%,transparent 100%)}
+.hero .in > *{position:relative;z-index:1}
+.hero .kick{display:flex;align-items:center;gap:6px;max-width:100%;
+  font-size:9px;font-weight:800;letter-spacing:1.4px;color:var(--accent2);
+  margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hero .kick i{flex:none;width:5px;height:5px;border-radius:99px;background:var(--live);
   box-shadow:0 0 0 3px rgba(47,191,113,.2)}
 .hero .kick s{min-width:0;text-decoration:none;overflow:hidden;text-overflow:ellipsis}
-.hero h1{max-width:100%;margin:0 0 13px;font-size:clamp(17px,5vw,27px);font-weight:800;line-height:1.26;
+.hero h1{max-width:100%;margin:0 0 11px;font-size:clamp(14.5px,4.1vw,21px);font-weight:800;line-height:1.28;
   letter-spacing:-.2px;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
-  text-shadow:0 2px 16px rgba(0,0,0,.75)}
-.hero .go{display:inline-flex;align-items:center;justify-content:center;gap:8px;
-  padding:10px 22px;border-radius:999px;font-weight:800;font-size:13.5px;
+  text-shadow:0 1px 3px rgba(0,0,0,.7),0 2px 18px rgba(0,0,0,.8)}
+.hero .go{display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:8px 17px;border-radius:999px;font-weight:800;font-size:12px;
   color:#0C1118;background:#fff;
-  box-shadow:0 10px 24px rgba(0,0,0,.45)}
+  box-shadow:0 8px 20px rgba(0,0,0,.45)}
 .hero .go svg{display:block;margin-inline-end:-1px}
 
 .heroDots{display:flex;justify-content:center;gap:5px;margin-top:11px}
@@ -432,7 +444,7 @@ img.rdy{animation:imgIn .25s ease both}
 .sp-bar{position:absolute;left:50%;transform:translateX(-50%);bottom:94px;
   width:124px;height:3px;border-radius:3px;background:var(--surface2);overflow:hidden}
 .sp-bar i{display:block;width:30%;height:100%;border-radius:3px;
-  background:linear-gradient(90deg,var(--accent),var(--accent2));animation:spBar 2.1s ease-in-out forwards}
+  background:linear-gradient(90deg,var(--accent),var(--accent2));animation:spBar 4.7s ease-in-out forwards}
 @keyframes spBar{from{width:8%}to{width:100%}}
 html.tv .sp-logo{width:124px;height:105px;margin-bottom:14px}
 html.tv #splash h1{font-size:23px}
@@ -799,8 +811,8 @@ html.tv .ann{margin-top:7px;padding:5px 10px;font-size:11px}
 html.tv .catsel{margin-top:8px;padding:9px 12px}
 html.tv .chips{padding-top:8px}
 html.tv .chip{padding:6px 13px;font-size:12px}
-html.tv .hero h1{font-size:22px;margin:0 0 8px}
-html.tv .hero .go{padding:8px 18px;font-size:12.5px}
+html.tv .hero h1{font-size:18px;margin:0 0 8px}
+html.tv .hero .go{padding:7px 16px;font-size:11.5px}
 html.tv .heroDots{margin-top:6px}
 html.tv .hrow{margin-top:14px}
 html.tv .rhead{margin-bottom:8px}
@@ -4856,7 +4868,7 @@ function actAskAgainQuietly(a){
    Nothing waits for it: the page behind is already being built, and a tap -
    or a remote key - sends it away early. If the sound will not play, or the
    file is not there, the picture carries on alone. */
-var SPLASH_MS = 2300;
+var SPLASH_MS = 5000;
 
 function splashGo(){
   var box = $("splash"); if(!box) return;
