@@ -172,8 +172,8 @@ html.tv .card .epg{font-size:12px}
   .hero{padding-inline:clamp(30px,5vw,66px)}
   .hero .in{max-width:460px}
   .hero .go{padding:9px 20px;font-size:13px}
-  .hero .hp{width:118px}
-  .hero.sq .hp{width:132px}
+  .hero .hp{max-width:30%}
+  .hero.sq .hp{max-width:34%}
 }
 
 /* A television screen is wide but not tall, and whatever the banner takes,
@@ -181,8 +181,8 @@ html.tv .card .epg{font-size:12px}
    picture can be small without the banner looking empty. */
 html.tv .heroBox{--hh:min(46vh,248px)}
 html.tv .hero{padding:12px clamp(30px,4vw,54px);gap:9px}
-html.tv .hero.sq .hp{width:94px}
-html.tv .hero .hp{width:82px}
+html.tv .hero.sq .hp{max-width:40%}
+html.tv .hero .hp{max-width:34%}
 html.tv .hero .in{max-width:580px}
 html.tv .hero .go{padding:9px 19px;font-size:12.5px}
 /* The poster and the words are one column down the left-hand side, in every
@@ -192,8 +192,8 @@ html.tv .hero .go{padding:9px 19px;font-size:12.5px}
 .hero{
   position:absolute;inset:0;cursor:pointer;opacity:0;visibility:hidden;
   display:flex;flex-direction:column;align-items:flex-start;justify-content:center;
-  gap:clamp(8px,2.4vw,12px);
-  padding:14px clamp(16px,4.6vw,30px);box-sizing:border-box;text-align:start;
+  gap:9px;
+  padding:12px clamp(16px,4.6vw,30px);box-sizing:border-box;text-align:start;
   transition:opacity .7s ease,visibility .7s;
 }
 /* down a column the cross axis is the horizontal one, and in Arabic script it
@@ -202,13 +202,13 @@ html[dir=rtl] .hero{align-items:flex-end}
 .hero.on{opacity:1;visibility:visible}
 .hero .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
   object-position:50% 26%;
-  filter:blur(9px) saturate(1.2) brightness(.6);transform:scale(1.08);opacity:1}
+  filter:blur(6px) saturate(1.2) brightness(.6);transform:scale(1.06);opacity:1}
 /* A picture made to be wide needs almost no blur - it fits the shape already.
    A poster cropped into a letterbox does, and the wider the screen the
    narrower the slice of it that shows, so the blur grows with the screen. */
-.hero.wide .bg{object-position:50% 46%;filter:blur(2px) saturate(1.2) brightness(.68);transform:scale(1.02)}
-@media(min-width:700px){ .hero:not(.wide) .bg{filter:blur(14px) saturate(1.25) brightness(.62);transform:scale(1.18)} }
-@media(min-width:1100px){ .hero:not(.wide) .bg{filter:blur(20px) saturate(1.3) brightness(.64);transform:scale(1.3)} }
+.hero.wide .bg{object-position:50% 46%;filter:blur(1px) saturate(1.2) brightness(.68);transform:scale(1.01)}
+@media(min-width:700px){ .hero:not(.wide) .bg{filter:blur(10px) saturate(1.25) brightness(.62);transform:scale(1.14)} }
+@media(min-width:1100px){ .hero:not(.wide) .bg{filter:blur(14px) saturate(1.3) brightness(.64);transform:scale(1.22)} }
 .hero.on .bg{animation:heroKen 11s ease-out both}
 @keyframes heroKen{from{transform:scale(1.5)}to{transform:scale(1.32)}}
 /* darkest where the words are, so the title reads over any picture */
@@ -222,7 +222,10 @@ html[dir=rtl] .hero .sc{
              radial-gradient(140% 96% at 50% 50%,transparent 60%,rgba(7,10,14,.34) 100%)}
 
 /* the art */
-.hero .hp{position:relative;flex:none;width:clamp(74px,21vw,98px);height:auto;aspect-ratio:2/3;
+/* The picture is given the height the words do not use, and its width
+   follows from its own shape. No number to keep in step with the height of
+   the banner, on any screen, in any language. */
+.hero .hp{position:relative;flex:1 1 auto;min-height:0;width:auto;max-width:46%;aspect-ratio:2/3;
   border-radius:12px;overflow:hidden;
   box-shadow:0 16px 34px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.14);
   transform:scale(.96);opacity:0;
@@ -234,7 +237,7 @@ html[dir=rtl] .hero .sc{
 /* a live channel: its logo on a soft plate, square. Channel logos are drawn
    for white paper, so the plate is light - but a warm off-white, not a hole
    punched in the screen. */
-.hero.sq .hp{width:clamp(84px,24vw,112px);height:auto;aspect-ratio:1/1;border-radius:18px;
+.hero.sq .hp{max-width:54%;aspect-ratio:1/1;border-radius:18px;
   background:linear-gradient(160deg,#FCFDFE,#E6EAEF)!important;
   box-shadow:0 16px 34px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.3)}
 .hero.sq .hp img{object-fit:contain;inset:13%;width:74%;height:74%}
@@ -285,7 +288,7 @@ html[dir=rtl] .hero .in::before{
    something that was not here yesterday has earned it */
 .hero .kick .nwb{flex:none;padding:2px 7px;border-radius:5px;letter-spacing:1.2px;
   font-size:8.5px;font-weight:900;color:#1A1203;background:var(--accent)}
-.hero h1{max-width:100%;margin:0 0 9px;font-size:clamp(13px,3.6vw,17.5px);font-weight:800;line-height:1.26;
+.hero h1{max-width:100%;margin:0 0 8px;font-size:clamp(13px,3.6vw,17.5px);font-weight:800;line-height:1.24;
   letter-spacing:-.2px;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
   text-shadow:0 1px 3px rgba(0,0,0,.7),0 2px 18px rgba(0,0,0,.8)}
