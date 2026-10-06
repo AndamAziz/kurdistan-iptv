@@ -1400,7 +1400,7 @@ function loadXtream(p){
         out.push({
           c: map[String(s.category_id)] || "Other",
           n: s.name || ("#" + s.stream_id),
-          u: d + "/live/" + live + "/" + s.stream_id + ".ts",
+          u: streamURL(s.direct_source, d + "/live/" + live + "/" + s.stream_id + ".ts", d),
           l: artURL(s.stream_icon || s.logo, d)
         });
       }
@@ -1860,6 +1860,34 @@ var SERIES_CACHE = {};
 
 function isXtream(){ return activeList().type === "xtream" }
 
+/* ---------- where a channel's stream really is ----------
+   A classic Xtream panel keeps the streams itself, and the address is built
+   from the panel's own domain: .../live/user/pass/1234.ts
+
+   Some panels do not keep anything. They answer the same questions, but every
+   channel comes back with "direct_source" - the broadcaster's own address,
+   somewhere else entirely. Build the usual address for one of those and it
+   points at a door that was never there, which is why nothing played.
+
+   So the panel's own word is taken when it is plainly pointing elsewhere:
+   a real address, for something that looks like a stream, and either on
+   another host or on a panel whose address has a path of its own (a real
+   Xtream panel is a bare host and port). A panel that keeps its own streams
+   is not touched by any of this. */
+function streamURL(direct, built, domain){
+  var u = String(direct == null ? "" : direct).trim();
+  if(!/^https?:\/\//i.test(u)) return built;
+  if(!/\.(m3u8|ts|mp4|mkv|avi|mov|flv)(\?|$)/i.test(u) && u.indexOf("/hls/") < 0) return built;
+  var hostOf = function(x){
+    var m = String(x).match(/^https?:\/\/([^\/?#]+)/i);
+    return m ? m[1].toLowerCase() : "";
+  };
+  var panel = String(domain || "");
+  var sameHost = hostOf(u) === hostOf(panel);
+  var panelHasPath = /^https?:\/\/[^\/?#]+\/./i.test(panel);
+  return (!sameHost || panelHasPath) ? u : built;
+}
+
 function xtBase(p){
   var d = String(p.domain||"").replace(/\/+$/,"");
   return d + "/player_api.php?username=" + encodeURIComponent(p.user)
@@ -1883,7 +1911,7 @@ function loadVod(p){
         out.push({
           c: map[String(v.category_id)] || "Other",
           n: v.name || ("#" + v.stream_id),
-          u: d + "/movie/" + cr + "/" + v.stream_id + "." + (v.container_extension || "mp4"),
+          u: streamURL(v.direct_source, d + "/movie/" + cr + "/" + v.stream_id + "." + (v.container_extension || "mp4"), d),
           l: artURL(v.stream_icon, d) || artURL(v.cover, d) || artURL(v.movie_image, d) || artURL(v.cover_big, d)
              || artURL(v.backdrop_path, d),
           /* a panel that gets its data from TMDB also sends the wide picture
@@ -3332,7 +3360,7 @@ function pickSeason(k){
   var memo = [];
   $("dEps").innerHTML = eps.map(function(e, idx){
     var ext = e.container_extension || "mp4";
-    var url = d + "/series/" + cr + "/" + e.id + "." + ext;
+    var url = streamURL(e.direct_source || (e.info && e.info.direct_source), d + "/series/" + cr + "/" + e.id + "." + ext, d);
     var inf = e.info || {};
     var sub = [];
     if(inf.duration) sub.push(inf.duration);
