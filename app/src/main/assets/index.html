@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#080B10">
+<meta name="theme-color" content="#070A0E">
 <title>KURDISTAN IPTV</title>
 <style>
 :root{
-  --bg:#09060F; --bg2:#0D0918; --surface:#161027; --surface2:#1E1733;
-  --line:#271F3D; --text:#F1EEF8; --muted:#9A93AE; --muted2:#6A6381;
-  --accent:#8A6BF0; --accent2:#B794FF; --live:#36D399;
+  --bg:#070A0E; --bg2:#0B0F15; --surface:#111822; --surface2:#19212D;
+  --line:#222C38; --text:#EDF2F7; --muted:#98A5B3; --muted2:#67737F;
+  --accent:#E8B33C; --accent2:#FFD277; --live:#2FBF71;
   --r-lg:24px; --r-md:16px; --r-sm:12px;
   --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
 }
@@ -18,39 +18,44 @@ html,body{overscroll-behavior:none}
 body{margin:0;background:var(--bg);color:var(--text);
   font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased}
 body::before{content:"";position:fixed;inset:0 0 auto;height:340px;z-index:0;pointer-events:none;
-  background:radial-gradient(120% 100% at 50% 0%,rgba(138,107,240,.16),transparent 62%)}
+  background:radial-gradient(130% 100% at 50% 0%,rgba(232,179,60,.07),transparent 60%)}
 
 /* ---------- header ---------- */
 header{position:sticky;top:0;z-index:20;padding:calc(10px + var(--safe-t)) 14px 10px;
-  background:rgba(8,11,16,.82);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  background:rgba(7,10,14,.82);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
   border-bottom:1px solid var(--line)}
 .top{display:flex;align-items:center;gap:10px}
 .iconbtn{width:44px;height:44px;flex:none;display:grid;place-items:center;border-radius:14px;
   border:1px solid var(--line);background:var(--surface);color:var(--text);cursor:pointer;transition:.18s}
 .iconbtn:active{transform:scale(.92);background:var(--surface2)}
 .iconbtn svg{display:block}
-.brand{flex:1;text-align:center;line-height:1;user-select:none}
-.brand .w1{font-size:20px;font-weight:800;letter-spacing:4px;color:#fff}
-.brand .w2{font-size:20px;font-weight:800;letter-spacing:4px;
-  background:linear-gradient(100deg,var(--accent),var(--accent2));
-  -webkit-background-clip:text;background-clip:text;color:transparent}
-.brand small{display:block;margin-top:5px;font-size:9px;letter-spacing:2.5px;color:var(--muted2);
+/* The name is white, as a wordmark should be. What marks it as ours is the
+   hairline under it: red, white, green - the flag, three pixels tall. */
+.brand{flex:1;min-width:0;text-align:center;line-height:1;user-select:none}
+.brand .wm{display:inline-block;max-width:100%;padding-bottom:5px;position:relative}
+.brand .w1,.brand .w2{font-size:19.5px;font-weight:800;letter-spacing:3.6px;color:#fff;
+  text-shadow:0 1px 10px rgba(0,0,0,.5)}
+.brand .w2{font-weight:600;color:rgba(255,255,255,.72)}
+.brand .wm::after{content:"";position:absolute;inset-inline:6%;bottom:0;height:2px;border-radius:2px;
+  background:linear-gradient(90deg,#ED2024 0 33.33%,#FFFFFF 33.33% 66.66%,#2AA14B 66.66% 100%);
+  opacity:.9}
+.brand small{display:block;margin-top:6px;font-size:8.5px;letter-spacing:2.4px;color:var(--muted2);
   font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 .ann{margin-top:11px;display:flex;align-items:center;gap:9px;
-  background:linear-gradient(90deg,rgba(138,107,240,.14),rgba(138,107,240,.04));
-  border:1px solid rgba(138,107,240,.28);border-radius:var(--r-sm);padding:8px 11px;font-size:12px;overflow:hidden}
+  background:rgba(255,255,255,.035);
+  border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 11px;font-size:12px;overflow:hidden}
 .ann i{font-style:normal;flex:none;display:flex}
 .ann-wrap{flex:1;overflow:hidden;white-space:nowrap}
 .ann-wrap span{display:inline-block;white-space:nowrap;animation:marq 26s linear infinite;
-  animation-delay:-13s;color:#F4C9C9;font-weight:600}
+  animation-delay:-13s;color:var(--muted);font-weight:600}
 @keyframes marq{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
 
 .searchbox{display:none;margin-top:10px;position:relative}
 .searchbox.on{display:block}
 .searchbox input{width:100%;padding:13px 42px 13px 14px;background:var(--surface);
   border:1px solid var(--line);border-radius:var(--r-sm);color:var(--text);font-size:15px;outline:none}
-.searchbox input:focus{border-color:rgba(138,107,240,.55)}
+.searchbox input:focus{border-color:rgba(232,179,60,.55)}
 .searchbox b{position:absolute;inset-inline-end:14px;top:50%;transform:translateY(-50%);color:var(--muted2);display:flex}
 
 /* one line instead of a row of chips: a hundred groups do not fit in chips */
@@ -75,7 +80,7 @@ header{position:sticky;top:0;z-index:20;padding:calc(10px + var(--safe-t)) 14px 
   border-radius:999px;padding:8px 15px;font-size:13px;font-weight:700;cursor:pointer;transition:.18s;flex:none}
 .chip:active{transform:scale(.94)}
 .chip.on{background:linear-gradient(100deg,var(--accent),var(--accent2));border-color:transparent;
-  color:#fff;box-shadow:0 5px 16px rgba(138,107,240,.35)}
+  color:#fff;box-shadow:0 5px 16px rgba(232,179,60,.35)}
 
 #sync{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + var(--safe-b));z-index:40;
   display:none;align-items:center;gap:9px;padding:9px 16px;border-radius:999px;
@@ -87,12 +92,12 @@ header{position:sticky;top:0;z-index:20;padding:calc(10px + var(--safe-t)) 14px 
 #updBar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + var(--safe-b));z-index:41;
   display:none;align-items:center;gap:2px;padding:4px 4px 4px 6px;border-radius:999px;
   background:linear-gradient(100deg,var(--accent),var(--accent2));color:#fff;
-  box-shadow:0 12px 30px rgba(138,107,240,.38);max-width:92vw}
+  box-shadow:0 12px 30px rgba(232,179,60,.38);max-width:92vw}
 #updBar.on{display:flex}
 #updBar button{background:none;border:0;color:#fff;font:inherit;cursor:pointer;padding:8px 12px;
   font-size:12.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .addbtn.updgo,#settings .addbtn.updgo{border:0;color:#fff;font-weight:800;font-size:15px;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 10px 24px rgba(138,107,240,.4)}
+  background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 10px 24px rgba(232,179,60,.4)}
 .updProg{height:8px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden;margin:10px 0 8px}
 .updProg i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .2s linear}
 #updBar .x{padding:8px 13px;font-size:15px;opacity:.85}
@@ -100,7 +105,7 @@ header{position:sticky;top:0;z-index:20;padding:calc(10px + var(--safe-t)) 14px 
 #sync .sp{width:13px;height:13px;flex:none;border-radius:99px;border:2px solid var(--muted2);
   border-top-color:var(--accent2);animation:spin .8s linear infinite}
 #sync.err .sp{display:none}
-#sync.err{border-color:rgba(138,107,240,.5);color:#FF9B9B}
+#sync.err{border-color:rgba(224,53,59,.55);color:#FF9B9B}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ---------- main ---------- */
@@ -125,11 +130,15 @@ html.tv .card .epg{font-size:12px}
   border:1px solid var(--line);box-shadow:0 10px 24px rgba(0,0,0,.45)}
 .tile::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
   background:linear-gradient(160deg,rgba(255,255,255,.07),transparent 46%)}
-.mono{position:absolute;inset:0;display:grid;place-items:center;direction:ltr;font-weight:900;
-  font-size:clamp(15px,5.4vw,25px);letter-spacing:.5px;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.45)}
-.tile img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:14%;background:#0E141C}
+.mono{position:absolute;inset:0;display:grid;place-items:center;direction:ltr;font-weight:800;
+  font-size:clamp(14px,4.9vw,22px);letter-spacing:1.4px;color:rgba(255,255,255,.74);
+  text-shadow:0 2px 10px rgba(0,0,0,.45)}
+/* Channel logos arrive as their own little pictures, most of them on their
+   own white paper. The less dark frame left around that paper, the more
+   the logo reads as the face of the tile instead of a sticker on it. */
+.tile img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:11%;background:#0D131B}
 .dot{position:absolute;top:9px;inset-inline-start:9px;width:7px;height:7px;border-radius:99px;
-  background:var(--live);box-shadow:0 0 0 3px rgba(54,211,153,.18);animation:pulse 2.1s infinite}
+  background:var(--live);box-shadow:0 0 0 3px rgba(47,191,113,.18);animation:pulse 2.1s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 .name{font-size:11.5px;font-weight:700;color:var(--muted);text-align:center;padding:9px 2px 0;
   line-height:1.35;min-height:41px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -145,65 +154,161 @@ html.tv .card .epg{font-size:12px}
 .empty p{margin:0;font-size:14px;font-weight:600}
 
 /* ---------- home: hero + horizontal rows ----------
-   A compact banner, the same shape on every slide: the poster on one side,
-   the words and the Play button beside it, the picture itself blurred behind.
-   Everything sits in normal flow, so nothing can land on top of anything
-   else, and a slide without a picture keeps exactly the same shape (its
-   letters take the poster's place). */
-.heroWrap{position:relative;margin:4px 0 6px}
+   The artwork itself, blurred, is the background. Over it: the art again,
+   sharp, on one side; the words and the Play button on the other. Everything
+   is in normal flow, so nothing can land on top of anything else, and a slide
+   with no picture keeps exactly the same shape - its letters take the art's
+   place on a plate of its own colour. */
+.heroWrap{position:relative;margin:2px 0 4px}
 .heroBox{
-  --hh:clamp(188px,50vw,230px);
+  --hh:clamp(212px,58vw,250px);
   position:relative;height:var(--hh);border-radius:var(--r-lg);overflow:hidden;
-  background:var(--surface);border:1px solid rgba(183,148,255,.18);
-  box-shadow:0 14px 34px rgba(0,0,0,.55);touch-action:pan-y;
+  background:var(--bg2);border:1px solid rgba(255,255,255,.06);
+  box-shadow:0 18px 40px rgba(0,0,0,.5);touch-action:pan-y;
 }
-@media(min-width:700px){.heroBox{--hh:250px}}
-html.tv .heroBox{--hh:min(40vh,230px)}
+/* In a window the banner shares the screen with the rows under it, and a
+   banner that fills half the window is not a banner, it is the page. */
+@media(min-width:700px){.heroBox{--hh:252px}}
+@media(min-width:1100px){.heroBox{--hh:274px}}
+/* A light behind the picture, and a little more darkness at the rim. On a
+   wide screen a flat field is what reads as unfinished; this is what gives
+   the banner a middle and an edge. */
+@media(min-width:700px){
+  .hero .sc{
+    background:radial-gradient(40% 150% at 76% 48%,rgba(255,255,255,.085),transparent 72%),
+               linear-gradient(to right,rgba(7,10,14,.88) 0%,rgba(7,10,14,.58) 27%,rgba(7,10,14,.1) 60%,transparent 82%),
+               linear-gradient(0deg,rgba(7,10,14,.46),transparent 52%),
+               radial-gradient(152% 104% at 50% 50%,transparent 50%,rgba(7,10,14,.52) 100%)}
+  .hero.wide .sc{
+    background:radial-gradient(40% 150% at 76% 48%,rgba(255,255,255,.06),transparent 72%),
+               linear-gradient(to right,rgba(7,10,14,.84) 0%,rgba(7,10,14,.5) 28%,rgba(7,10,14,.08) 62%,transparent 86%),
+               linear-gradient(0deg,rgba(7,10,14,.44),transparent 52%),
+               radial-gradient(152% 104% at 50% 50%,transparent 54%,rgba(7,10,14,.46) 100%)}
+}
+@media(min-width:860px){
+  .hero{padding-inline:clamp(30px,5vw,66px)}
+  /* on a big screen the words can hold their own corner instead of
+     disappearing into it */
+  .hero .in{max-width:540px}
+  .hero .kick{font-size:10px;letter-spacing:1.6px}
+  .hero h1{font-size:22px;margin-bottom:11px}
+  .hero .go{padding:10px 22px;font-size:13.5px}
+  .hero.sq .hp{height:calc(var(--hh) * .66)}
+  .hero .hp{height:calc(var(--hh) - 34px)}
+}
+
+/* A television screen is wide but not tall, and whatever the banner takes,
+   the first row of channels loses. The artwork fills the width, so the
+   picture can be small without the banner looking empty. */
+html.tv .heroBox{--hh:min(46vh,248px)}
+html.tv .hero{padding:12px clamp(30px,4vw,54px);gap:9px}
+html.tv .hero.sq .hp{height:calc(var(--hh) * .7)}
+html.tv .hero .hp{height:calc(var(--hh) - 32px)}
+html.tv .hero .in{max-width:580px}
+html.tv .hero .go{padding:9px 19px;font-size:12.5px}
+/* The picture sits on the right and the words beside it on the left, in every
+   language. A row follows the reading direction by itself, so the two
+   directions need opposite rules to end up looking the same: reversed where
+   the text runs left to right, plain where it runs right to left. */
 .hero{
   position:absolute;inset:0;cursor:pointer;opacity:0;visibility:hidden;
-  display:flex;flex-direction:row;align-items:center;gap:16px;
-  padding:14px 18px;box-sizing:border-box;text-align:start;
-  transition:opacity .8s ease,visibility .8s;
+  display:flex;flex-direction:row-reverse;align-items:center;justify-content:space-between;
+  gap:clamp(14px,4vw,26px);
+  padding:14px clamp(16px,4.6vw,30px);box-sizing:border-box;text-align:start;
+  transition:opacity .7s ease,visibility .7s;
 }
+html[dir=rtl] .hero{flex-direction:row}
 .hero.on{opacity:1;visibility:visible}
 .hero .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
-  filter:blur(24px) saturate(1.3) brightness(.7);transform:scale(1.4);opacity:.95}
-.hero.on .bg{animation:heroKen 10s ease-out both}
-@keyframes heroKen{from{transform:scale(1.55)}to{transform:scale(1.35)}}
+  object-position:50% 26%;
+  filter:blur(6px) saturate(1.2) brightness(.6);transform:scale(1.06);opacity:1}
+/* A picture made to be wide needs almost no blur - it fits the shape already.
+   A poster cropped into a letterbox does, and the wider the screen the
+   narrower the slice of it that shows, so the blur grows with the screen. */
+.hero.wide .bg{object-position:50% 46%;filter:blur(1px) saturate(1.2) brightness(.68);transform:scale(1.01)}
+@media(min-width:700px){ .hero:not(.wide) .bg{filter:blur(34px) saturate(1.5) brightness(.6);transform:scale(1.5)} }
+@media(min-width:1100px){ .hero:not(.wide) .bg{filter:blur(48px) saturate(1.6) brightness(.62);transform:scale(1.62)} }
+.hero.on .bg{animation:heroKen 11s ease-out both}
+@keyframes heroKen{from{transform:scale(1.5)}to{transform:scale(1.32)}}
+/* darkest where the words are, so the title reads over any picture */
 .hero .sc{position:absolute;inset:0;
-  background:linear-gradient(0deg,rgba(9,6,15,.8) 0%,rgba(9,6,15,.35) 60%,rgba(9,6,15,.25) 100%)}
+  background:linear-gradient(to right,rgba(7,10,14,.86) 0%,rgba(7,10,14,.56) 26%,rgba(7,10,14,.12) 58%,transparent 78%),
+             linear-gradient(0deg,rgba(7,10,14,.42),transparent 54%),
+             radial-gradient(140% 96% at 50% 50%,transparent 60%,rgba(7,10,14,.34) 100%)}
 
-/* the poster */
-.hero .hp{position:relative;flex:none;height:calc(var(--hh) - 28px);aspect-ratio:2/3;
-  border-radius:12px;overflow:hidden;
-  box-shadow:0 12px 28px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.12);
-  transform:scale(.95);opacity:0;
+/* the art */
+/* Beside the words the picture is free to be as tall as the banner allows,
+   which is the size a poster is meant to be seen at. */
+.hero .hp{position:relative;flex:none;height:calc(var(--hh) - 42px);width:auto;aspect-ratio:2/3;
+  border-radius:13px;overflow:hidden;
+  box-shadow:0 16px 34px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.14);
+  transform:scale(.96);opacity:0;
   transition:transform .9s cubic-bezier(.2,.8,.2,1),opacity .9s ease}
 .hero.on .hp{transform:none;opacity:1}
 .hero .hp .mono{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  font-size:26px;font-weight:900;color:rgba(255,255,255,.55);letter-spacing:1px}
+  font-size:clamp(22px,6vw,34px);font-weight:900;color:rgba(255,255,255,.5);letter-spacing:1px}
 .hero .hp img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
-/* a live channel: its logo on a clean plate, square */
-.hero.sq .hp{height:calc(var(--hh) * .58);aspect-ratio:1/1;border-radius:18px;background:#fff!important}
-.hero.sq .hp img{object-fit:contain;inset:12%;width:76%;height:76%}
-.hero.sq .hp .mono{color:rgba(20,14,40,.35)}
+/* a live channel: its logo on a soft plate, square. Channel logos are drawn
+   for white paper, so the plate is light - but a warm off-white, not a hole
+   punched in the screen. */
+.hero.sq .hp{height:calc(var(--hh) * .62);aspect-ratio:1/1;border-radius:18px;
+  background:linear-gradient(160deg,#FCFDFE,#E6EAEF)!important;
+  box-shadow:0 16px 34px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.3)}
+.hero.sq .hp img{object-fit:contain;inset:13%;width:74%;height:74%}
+.hero.sq .hp .mono{color:rgba(17,24,34,.3)}
+
+/* Nothing to show. A white plate only makes sense under a logo drawn for
+   white paper - with no logo it is a blank sheet, and on a wide screen the
+   banner beside it is a hole. So the plate turns dark with the name in gold,
+   and the banner lights itself. */
+.hero.noart .hp,.hero.sq.noart .hp{
+  background:linear-gradient(155deg,#17202C,#0A1018)!important;
+  box-shadow:0 16px 34px rgba(0,0,0,.55),0 0 0 1px rgba(232,179,60,.22)}
+.hero.noart .hp .mono{color:var(--accent);opacity:.92;letter-spacing:2px}
+.hero.noart .sc{
+  background:radial-gradient(78% 120% at 16% 50%,rgba(232,179,60,.16),transparent 62%),
+             radial-gradient(70% 110% at 92% 50%,rgba(47,191,113,.07),transparent 64%),
+             linear-gradient(0deg,rgba(7,10,14,.5),transparent 60%)}
+html[dir=rtl] .hero.noart .sc{
+  background:radial-gradient(78% 120% at 84% 50%,rgba(232,179,60,.16),transparent 62%),
+             radial-gradient(70% 110% at 8% 50%,rgba(47,191,113,.07),transparent 64%),
+             linear-gradient(0deg,rgba(7,10,14,.5),transparent 60%)}
 
 /* the words beside it */
-.hero .in{position:relative;flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start}
-.hero .kick{max-width:100%;font-size:10px;font-weight:800;letter-spacing:1.6px;color:var(--accent2);
-  margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hero h1{max-width:100%;margin:0 0 12px;font-size:clamp(16px,4.6vw,21px);font-weight:800;line-height:1.3;
+.hero .in{position:relative;flex:1 1 auto;min-width:0;
+  display:flex;flex-direction:column;align-items:flex-start}
+/* The radial alone leaves a straight edge where its box ends, which on a wide
+   banner shows as a faint rectangle. The mask fades the two sides out, so the
+   halo has no edge of its own anywhere. */
+.hero .in::before{content:"";position:absolute;inset:-22px -30px -24px -40px;pointer-events:none;
+  background:radial-gradient(80% 76% at 34% 50%,rgba(7,10,14,.7),rgba(7,10,14,.32) 54%,transparent 84%);
+  -webkit-mask-image:linear-gradient(to right,#000 0,#000 62%,transparent 100%);
+          mask-image:linear-gradient(to right,#000 0,#000 62%,transparent 100%)}
+.hero .in > *{position:relative;z-index:1}
+.hero .kick{display:flex;align-items:center;gap:6px;max-width:100%;
+  font-size:9px;font-weight:800;letter-spacing:1.4px;color:var(--accent2);
+  margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hero .kick i{flex:none;width:5px;height:5px;border-radius:99px;background:var(--live);
+  box-shadow:0 0 0 3px rgba(47,191,113,.2)}
+.hero .kick s{min-width:0;text-decoration:none;overflow:hidden;text-overflow:ellipsis}
+/* the one place gold is used as a filled badge rather than as lettering:
+   something that was not here yesterday has earned it */
+.hero .kick .nwb{flex:none;padding:2px 7px;border-radius:5px;letter-spacing:1.2px;
+  font-size:8.5px;font-weight:900;color:#1A1203;background:var(--accent)}
+.hero h1{max-width:100%;margin:0 0 8px;font-size:clamp(13px,3.6vw,17.5px);font-weight:800;line-height:1.24;
+  letter-spacing:-.2px;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
-  text-shadow:0 2px 12px rgba(0,0,0,.6)}
-.hero .go{display:inline-flex;align-items:center;justify-content:center;gap:7px;
-  padding:9px 20px;border-radius:999px;font-weight:800;font-size:13px;color:#fff;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
-  box-shadow:0 8px 20px rgba(138,107,240,.45)}
+  text-shadow:0 1px 3px rgba(0,0,0,.7),0 2px 18px rgba(0,0,0,.8)}
+.hero .go{display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:8px 17px;border-radius:999px;font-weight:800;font-size:12px;
+  color:#0C1118;background:#fff;
+  box-shadow:0 8px 20px rgba(0,0,0,.45)}
+.hero .go svg{display:block;margin-inline-end:-1px}
 
-.heroDots{display:flex;justify-content:center;gap:6px;margin-top:10px}
-.heroDots i{width:7px;height:7px;border-radius:99px;background:rgba(255,255,255,.22);
+.heroDots{display:flex;justify-content:center;gap:5px;margin-top:11px}
+.heroDots i{width:5px;height:5px;border-radius:99px;background:rgba(255,255,255,.2);
   transition:width .3s ease,background .3s ease;cursor:pointer}
-.heroDots i.on{width:24px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.heroDots i.on{width:18px;background:var(--accent)}
 
 /* the search box at the top of the category list */
 .pksearch{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:10px;
@@ -214,14 +319,22 @@ html.tv .heroBox{--hh:min(40vh,230px)}
   color:var(--text);font:inherit;font-size:14.5px}
 .pksearch:focus-within{border-color:var(--accent)}
 .pknone{padding:18px;text-align:center;color:var(--muted);font-size:13px}
-.hrow{margin-top:20px}
-.rhead{display:flex;align-items:center;gap:9px;margin-bottom:11px}
-.rhead h3{margin:0;font-size:14.5px;font-weight:800;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rhead .bar{width:3px;height:15px;border-radius:99px;background:linear-gradient(var(--accent),var(--accent2));flex:none}
-.rhead .all{font:inherit;font-size:13px;font-weight:800;color:var(--accent2);flex:none;cursor:pointer;background:rgba(138,107,240,.14);border:1px solid rgba(183,148,255,.3);border-radius:999px;padding:8px 14px;margin:-6px 0;min-height:36px;display:inline-flex;align-items:center;gap:4px;-webkit-tap-highlight-color:transparent}
-.rhead .all b{font-size:17px;line-height:1}
-.rhead .all:active{transform:scale(.95);background:rgba(138,107,240,.28)}
-html[dir=rtl] .rhead .all b{display:inline-block;transform:scaleX(-1)}
+.hrow{margin-top:22px}
+.rhead{display:flex;align-items:center;gap:9px;margin-bottom:12px}
+.rhead h3{margin:0;font-size:15px;font-weight:800;letter-spacing:-.1px;flex:1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rhead .bar{width:3px;height:14px;border-radius:99px;background:var(--accent);flex:none}
+/* "See all" is a quiet sign-post, not a button competing with the row below
+   it. The padding keeps a finger-sized target; nothing of it is drawn. */
+.rhead .all{font:inherit;font-size:12px;font-weight:700;letter-spacing:.2px;color:var(--muted);
+  flex:none;cursor:pointer;background:none;border:0;border-radius:10px;
+  padding:9px 2px 9px 8px;margin:-9px -2px;display:inline-flex;align-items:center;gap:3px;
+  -webkit-tap-highlight-color:transparent;transition:color .15s}
+html[dir=rtl] .rhead .all{padding:9px 8px 9px 2px}
+.rhead .all svg{display:block;opacity:.8}
+html[dir=rtl] .rhead .all svg{transform:scaleX(-1)}
+.rhead .all:active{color:var(--accent2)}
+@media(hover:hover){.rhead .all:hover{color:var(--text)}}
 .strip{display:flex;gap:11px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;
   padding-bottom:2px;scroll-snap-type:x proximity}
 .strip::-webkit-scrollbar{display:none}
@@ -251,13 +364,13 @@ html[dir=rtl] .rhead .all b{display:inline-block;transform:scaleX(-1)}
 .dfacts span{color:var(--muted);min-width:0}
 .dplay{display:inline-flex;align-items:center;gap:8px;margin-top:12px;padding:12px 26px;border-radius:999px;
   border:0;background:linear-gradient(100deg,var(--accent),var(--accent2));color:#fff;
-  font-weight:800;font-size:14.5px;cursor:pointer;box-shadow:0 10px 24px rgba(138,107,240,.34)}
+  font-weight:800;font-size:14.5px;cursor:pointer;box-shadow:0 10px 24px rgba(232,179,60,.34)}
 .dplay:active{transform:scale(.97)}
 
 /* ---------- bottom nav ---------- */
 #nav{
   position:fixed;inset-inline:0;bottom:0;z-index:30;display:none;
-  background:rgba(8,11,16,.94);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  background:rgba(7,10,14,.94);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
   border-top:1px solid var(--line);padding:6px 8px calc(6px + var(--safe-b));
 }
 #nav.on{display:flex}
@@ -310,15 +423,18 @@ body.hasnav main{padding-bottom:calc(96px + var(--safe-b))}
 img[data-src],img[data-gone]{opacity:0!important;background:transparent!important}
 img.rdy{animation:imgIn .25s ease both}
 @keyframes imgIn{from{opacity:0}to{opacity:1}}
-.poster .mono{font-size:clamp(13px,4.4vw,20px);padding:6px;text-align:center;line-height:1.2}
-.poster .rt{position:absolute;top:7px;inset-inline-end:7px;background:rgba(0,0,0,.72);
-  border-radius:7px;padding:2px 7px;font-size:10.5px;font-weight:800;color:#FFD466}
+.poster .mono{font-size:clamp(12px,4vw,18px);padding:12px 10px;text-align:center;line-height:1.3;
+  display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;
+  place-items:unset;align-self:center}
+.poster .rt{position:absolute;top:7px;inset-inline-end:7px;background:rgba(7,10,14,.78);
+  border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  border-radius:8px;padding:3px 7px;font-size:10.5px;font-weight:800;color:var(--accent2)}
 
 /* ---------- series detail ---------- */
 #detail{position:fixed;inset:0;z-index:70;background:var(--bg);overflow-y:auto;display:none}
 #detail.on{display:block}
 .dhero{position:relative;padding:calc(16px + var(--safe-t)) 16px 16px;display:flex;gap:14px;
-  background:linear-gradient(180deg,rgba(138,107,240,.16),transparent)}
+  background:linear-gradient(180deg,rgba(232,179,60,.09),transparent)}
 .dhero .pw{width:104px;flex:none;aspect-ratio:2/3;border-radius:var(--r-md);overflow:hidden;
   background:var(--surface);border:1px solid var(--line)}
 .dhero .pw img{width:100%;height:100%;object-fit:cover}
@@ -327,7 +443,7 @@ img.rdy{animation:imgIn .25s ease both}
 .dhero p{margin:0;font-size:12.5px;color:var(--muted);line-height:1.6;
   display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
 #dclose{position:absolute;top:calc(12px + var(--safe-t));inset-inline-end:14px;width:36px;height:36px;
-  border-radius:12px;border:1px solid var(--line);background:rgba(8,11,16,.8);color:#fff;
+  border-radius:12px;border:1px solid var(--line);background:rgba(7,10,14,.8);color:#fff;
   display:grid;place-items:center;font-size:17px;cursor:pointer;z-index:2}
 .dbody{padding:4px 16px calc(28px + var(--safe-b))}
 .ep{display:flex;align-items:center;gap:12px;padding:13px;border-radius:var(--r-md);
@@ -344,24 +460,30 @@ img.rdy{animation:imgIn .25s ease both}
   display:grid;place-items:center;overflow:hidden;transition:opacity .45s ease}
 #splash.gone{opacity:0;pointer-events:none}
 #splash::before{content:"";position:absolute;inset:-22% -32% auto;height:58%;pointer-events:none;
-  background:radial-gradient(60% 80% at 50% 8%,rgba(138,107,240,.30),transparent 70%)}
+  background:radial-gradient(60% 80% at 50% 8%,rgba(232,179,60,.30),transparent 70%)}
 #splash::after{content:"";position:absolute;inset:auto -36% -26% -36%;height:52%;pointer-events:none;
-  background:radial-gradient(50% 70% at 50% 100%,rgba(183,148,255,.10),transparent 70%)}
+  background:radial-gradient(50% 70% at 50% 100%,rgba(255,210,119,.10),transparent 70%)}
 .sp-in{position:relative;z-index:1;text-align:center;animation:spIn .7s cubic-bezier(.2,.8,.2,1)}
 @keyframes spIn{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
 .sp-logo{width:148px;height:126px;margin:0 auto 20px;position:relative;
   filter:drop-shadow(0 18px 34px rgba(0,0,0,.75))}
 .sp-logo::before{content:"";position:absolute;inset:-24% -14%;border-radius:50%;z-index:-1;
-  background:radial-gradient(closest-side,rgba(183,148,255,.20),transparent 74%)}
+  background:radial-gradient(closest-side,rgba(255,210,119,.20),transparent 74%)}
 .sp-logo svg{display:block;width:100%;height:100%}
-#splash h1{margin:0 0 9px;font-size:26px;font-weight:800;letter-spacing:4.5px}
-#splash h1 em{font-style:normal;background:linear-gradient(100deg,var(--accent),var(--accent2));
-  -webkit-background-clip:text;background-clip:text;color:transparent}
+/* The name is white here too, with the same flag hairline under it. One
+   wordmark, drawn the same way wherever it appears. */
+#splash h1,.gbox h1{position:relative;display:inline-block;padding-bottom:9px;
+  margin:0 0 9px;font-weight:800;color:#fff}
+#splash h1{font-size:26px;letter-spacing:4.5px}
+#splash h1 em,.gbox h1 em{font-style:normal;font-weight:600;color:rgba(255,255,255,.72)}
+#splash h1::after,.gbox h1::after{content:"";position:absolute;inset-inline:7%;bottom:0;
+  height:2.5px;border-radius:3px;opacity:.92;
+  background:linear-gradient(90deg,#ED2024 0 33.33%,#FFFFFF 33.33% 66.66%,#2AA14B 66.66% 100%)}
 #splash p{margin:0;color:var(--muted2);font-size:10.5px;font-weight:800;letter-spacing:3.4px}
 .sp-bar{position:absolute;left:50%;transform:translateX(-50%);bottom:94px;
   width:124px;height:3px;border-radius:3px;background:var(--surface2);overflow:hidden}
 .sp-bar i{display:block;width:30%;height:100%;border-radius:3px;
-  background:linear-gradient(90deg,var(--accent),var(--accent2));animation:spBar 2.1s ease-in-out forwards}
+  background:linear-gradient(90deg,var(--accent),var(--accent2));animation:spBar 4.7s ease-in-out forwards}
 @keyframes spBar{from{width:8%}to{width:100%}}
 html.tv .sp-logo{width:124px;height:105px;margin-bottom:14px}
 html.tv #splash h1{font-size:23px}
@@ -372,25 +494,23 @@ html.tv #splash h1{font-size:23px}
 #gate.hide{display:none}
 /* two soft lights behind everything, the way a good sign-in screen looks */
 #gate::before{content:"";position:absolute;inset:-25% -35% auto;height:62%;pointer-events:none;
-  background:radial-gradient(60% 80% at 50% 0%,rgba(138,107,240,.26),transparent 70%)}
+  background:radial-gradient(60% 80% at 50% 0%,rgba(232,179,60,.26),transparent 70%)}
 #gate::after{content:"";position:absolute;inset:auto -40% -28% -40%;height:56%;pointer-events:none;
-  background:radial-gradient(50% 70% at 50% 100%,rgba(54,211,153,.09),transparent 70%)}
+  background:radial-gradient(50% 70% at 50% 100%,rgba(47,191,113,.09),transparent 70%)}
 .gbox{position:relative;z-index:1;width:min(340px,100%);text-align:center}
 .glogo{width:132px;height:112px;margin:0 auto 10px;position:relative;
   filter:drop-shadow(0 14px 26px rgba(0,0,0,.7))}
 .glogo::before{content:"";position:absolute;inset:-18% -10%;border-radius:50%;z-index:-1;
   background:radial-gradient(closest-side,rgba(240,168,28,.16),transparent 75%)}
 .glogo svg{display:block;width:100%;height:100%}
-.gbox h1{margin:0 0 6px;font-size:23px;font-weight:800;letter-spacing:3px}
-.gbox h1 em{font-style:normal;background:linear-gradient(100deg,var(--accent),var(--accent2));
-  -webkit-background-clip:text;background-clip:text;color:transparent}
+.gbox h1{font-size:23px;letter-spacing:3px;margin-bottom:12px}
 .gbox p{margin:0 0 24px;color:var(--muted);font-size:13px;font-weight:600}
 .pins{display:flex;gap:8px;justify-content:center;direction:ltr}
 .pin{width:46px;height:60px;border-radius:14px;background:rgba(18,25,36,.85);border:1.5px solid var(--line);
   display:grid;place-items:center;font-size:23px;font-weight:800;transition:.2s;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
-.pin.fill{border-color:rgba(138,107,240,.5);background:var(--surface2)}
-.pin.cur{border-color:var(--accent2);box-shadow:0 0 0 4px rgba(138,107,240,.16)}
+.pin.fill{border-color:rgba(232,179,60,.5);background:var(--surface2)}
+.pin.cur{border-color:var(--accent2);box-shadow:0 0 0 4px rgba(232,179,60,.16)}
 /* the keypad: a remote reaches it, and no system keyboard covers the screen */
 .keys{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:24px auto 0;
   max-width:266px;direction:ltr}
@@ -404,10 +524,10 @@ html.tv #splash h1{font-size:23px}
 .gmsg{height:24px;padding-top:12px;color:#FF7B7B;font-size:13px;font-weight:700}
 .gbtn{width:100%;margin-top:6px;padding:15px;border:0;border-radius:var(--r-md);
   background:linear-gradient(100deg,var(--accent),var(--accent2));color:#fff;font-weight:800;font-size:15px;
-  cursor:pointer;box-shadow:0 12px 28px rgba(138,107,240,.32)}
+  cursor:pointer;box-shadow:0 12px 28px rgba(232,179,60,.32)}
 .gbtn:active{transform:scale(.97)}
 #gate .gbtn{margin-top:14px;padding:16px;border-radius:16px;font-size:15.5px;
-  box-shadow:0 14px 30px rgba(138,107,240,.32);transition:.2s}
+  box-shadow:0 14px 30px rgba(232,179,60,.32);transition:.2s}
 #gate .gbtn.off{background:var(--surface2);color:var(--muted2);box-shadow:none;cursor:default}
 /* a TV screen is short: the whole code screen has to fit without scrolling */
 html.tv .glogo{width:106px;height:82px;margin-bottom:6px}
@@ -431,7 +551,7 @@ html.tv #gate .gbtn{margin-top:6px;padding:11px;font-size:14.5px}
   cursor:pointer;transition:.15s}
 .gc:active{transform:scale(.96);background:var(--surface2)}
 .gc svg{width:19px;height:19px}
-.gc.ok{color:var(--accent2);border-color:rgba(138,107,240,.45)}
+.gc.ok{color:var(--accent2);border-color:rgba(232,179,60,.45)}
 /* a TV screen is short, so the three buttons lie down into one line each */
 html.tv .gcontact{margin-top:8px}
 html.tv .gc-lab{font-size:10px;gap:8px}
@@ -462,7 +582,7 @@ html.tv .gc svg{width:14px;height:14px}
 .row .tx{flex:1;min-width:0}
 .row .tx b{display:block;font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row .tx s{display:block;text-decoration:none;font-size:11.5px;font-weight:600;color:var(--muted2);
-  margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;direction:ltr;text-align:start}
+  margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;direction:ltr;text-align:start}
 .row .tick{flex:none;color:var(--accent2);font-size:17px;opacity:0}
 .row.on .tick{opacity:1}
 .row .del{flex:none;padding:6px 10px;border-radius:9px;border:1px solid var(--line);
@@ -476,7 +596,7 @@ html.tv .gc svg{width:14px;height:14px}
 .fld label{display:block;font-size:11.5px;font-weight:800;color:var(--muted2);margin-bottom:6px}
 .fld input{width:100%;padding:13px 14px;background:var(--surface);border:1px solid var(--line);
   border-radius:var(--r-sm);color:var(--text);font-size:15px;outline:none;direction:ltr;text-align:start}
-.fld input:focus{border-color:rgba(138,107,240,.55)}
+.fld input:focus{border-color:rgba(232,179,60,.55)}
 .hint{font-size:11.5px;color:var(--muted2);line-height:1.6;margin:2px 0 14px}
 .formErr{color:#FF8A8A;font-size:12.5px;font-weight:700;min-height:20px;margin-bottom:6px}
 
@@ -484,17 +604,17 @@ html.tv .gc svg{width:14px;height:14px}
 .segs{display:flex;gap:7px;margin-bottom:13px}
 .seg{flex:1;padding:10px 4px;border-radius:12px;border:1px solid var(--line);background:var(--surface);
   color:var(--muted);font-size:12.5px;font-weight:800;cursor:pointer}
-.seg.on{border-color:rgba(138,107,240,.55);background:var(--surface2);color:var(--text)}
+.seg.on{border-color:rgba(232,179,60,.55);background:var(--surface2);color:var(--text)}
 .seg[disabled]{opacity:.35;cursor:default}
 .catrow{display:flex;align-items:center;gap:7px;padding:9px 11px;border-radius:14px;background:var(--surface);
   border:1px solid var(--line);margin-bottom:7px}
 .catrow.off{opacity:.48}
-.catrow.lk{border-color:rgba(138,107,240,.4)}
+.catrow.lk{border-color:rgba(232,179,60,.4)}
 .catrow .nm{flex:1;min-width:0}
 .catrow .nm b{display:block;font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .catrow .nm s{display:block;text-decoration:none;font-size:10.5px;font-weight:700;color:var(--muted2);margin-top:2px}
 .catrow .mini{width:32px;height:32px;flex:none}
-.catrow .mini.on{color:var(--accent2);border-color:rgba(138,107,240,.5);background:rgba(138,107,240,.1)}
+.catrow .mini.on{color:var(--accent2);border-color:rgba(232,179,60,.5);background:rgba(232,179,60,.1)}
 .catbar{display:flex;gap:8px;margin:13px 0 2px}
 .catbar button{flex:1;padding:12px 8px;border-radius:13px;border:1px solid var(--line);background:transparent;
   color:var(--muted);font-size:12.5px;font-weight:800;cursor:pointer}
@@ -502,7 +622,7 @@ html.tv .gc svg{width:14px;height:14px}
 .cathint{font-size:11.5px;color:var(--muted2);line-height:1.6;margin:0 0 12px}
 .chips .chip.lk{display:inline-flex;align-items:center;gap:5px;flex:none;padding-inline:12px}
 /* open, but still clearly the lock - never mistaken for the chosen group */
-.chips .chip.lk.open{color:var(--accent2);border-color:rgba(138,107,240,.55);background:rgba(138,107,240,.12)}
+.chips .chip.lk.open{color:var(--accent2);border-color:rgba(232,179,60,.55);background:rgba(232,179,60,.12)}
 /* the code keypad, inside a sheet this time */
 .pinwrap{text-align:center;padding:2px 0}
 .pinwrap .pin{width:54px;height:62px;font-size:23px;border-radius:15px}
@@ -540,7 +660,7 @@ html.tv .pinwrap .keys{max-width:230px;margin-top:12px}
 
 /* star next to ✕ on the film / series page */
 #dfav{position:absolute;top:calc(12px + var(--safe-t));inset-inline-end:58px;width:36px;height:36px;
-  border-radius:12px;border:1px solid var(--line);background:rgba(8,11,16,.8);color:#fff;
+  border-radius:12px;border:1px solid var(--line);background:rgba(7,10,14,.8);color:#fff;
   display:grid;place-items:center;cursor:pointer;z-index:2;padding:0}
 #dfav.on{color:#FFD466;border-color:rgba(255,212,102,.45)}
 #dfav:active{transform:scale(.92)}
@@ -552,7 +672,7 @@ html.tv .pinwrap .keys{max-width:230px;margin-top:12px}
   border-radius:var(--r-sm);border:1px solid var(--line);background:var(--surface);color:var(--muted);
   font-size:13.5px;font-weight:800;cursor:pointer;font-family:inherit}
 .seg button.on{background:linear-gradient(100deg,var(--accent),var(--accent2));border-color:transparent;color:#fff;
-  box-shadow:0 5px 16px rgba(138,107,240,.3)}
+  box-shadow:0 5px 16px rgba(232,179,60,.3)}
 .seg button:active{transform:scale(.97)}
 .hday{display:flex;align-items:center;gap:9px;margin:22px 0 10px;font-size:12.5px;font-weight:800;color:var(--muted2)}
 .hday .bar{width:3px;height:14px;border-radius:99px;background:linear-gradient(var(--accent),var(--accent2));flex:none}
@@ -562,7 +682,7 @@ html.tv .pinwrap .keys{max-width:230px;margin-top:12px}
 .hi .th{position:relative;flex:none;width:54px;height:54px;border-radius:13px;overflow:hidden;display:grid;
   place-items:center;direction:ltr;font-weight:900;font-size:14px;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.4)}
 .hi .th.pt{width:44px;height:64px;border-radius:10px;font-size:11px}
-.hi .th img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:12%;background:#0E141C}
+.hi .th img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:10%;background:#0D131B}
 .hi .th.pt img{object-fit:cover;padding:0}
 .hi .tx{flex:1;min-width:0}
 .hi .tx b{display:block;font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -582,6 +702,11 @@ html.kbd button:focus,html.kbd input:focus,html.kbd .row:focus,html.kbd .ep:focu
 html.kbd .all:focus,html.kbd #pins:focus{outline:3px solid #fff;outline-offset:2px}
 html.kbd .chip:focus{outline:3px solid #fff;outline-offset:2px}
 html.kbd .hero.on:focus{outline:4px solid #fff;outline-offset:-4px}
+/* With a remote, the picture that comes up must be able to take the highlight
+   at once. A slide that is still fading in is still visibility:hidden, and
+   nothing can put the focus on something hidden - so on a TV the slides swap
+   their visibility straight away and only the opacity fades. */
+html.kbd .hero{transition:opacity .45s ease}
 /* with a remote, a new banner picture can take the highlight at once */
 html.kbd #nav button:focus{outline-offset:-3px;border-radius:12px}
 /* on a TV the tab bar sits at the top, where Up always reaches it */
@@ -631,28 +756,53 @@ html.kbd .card,html.kbd .row,html.kbd .ep,html.kbd .hi,html.kbd button{scroll-ma
 .stat b{display:block;font-size:18px;font-weight:800;direction:ltr}
 .stat s{display:block;text-decoration:none;font-size:11px;color:var(--muted2);font-weight:700;margin-top:4px}
 
-/* ---------- settings: one card for the playlist in use, plain rows for the rest ---------- */
-#settings .st-g{text-transform:uppercase;font-size:11px;letter-spacing:1.4px}
-.plcard{border-radius:20px;padding:14px;border:1px solid rgba(138,107,240,.36);
-  background:linear-gradient(180deg,rgba(138,107,240,.13),rgba(138,107,240,.03)),var(--surface);
-  box-shadow:0 12px 30px rgba(0,0,0,.45)}
+/* ---------- settings ----------
+   Rows that belong together are drawn as one card with hairlines between
+   them, the way a settings screen is drawn everywhere else. A dozen separate
+   floating pills was what made this page look unfinished. */
+#settings .st-g{text-transform:uppercase;font-size:10.5px;letter-spacing:1.5px}
+#settings .sgroup{background:var(--surface);border:1px solid var(--line);border-radius:18px;
+  overflow:hidden;box-shadow:0 8px 22px rgba(0,0,0,.3)}
+#settings .sgroup .row{background:none;border:0;border-radius:0;margin:0;padding:11px 13px;
+  border-top:1px solid var(--line)}
+#settings .sgroup .row:first-child{border-top:0}
+#settings .sgroup .row:active{background:var(--surface2)}
+#settings .sgroup .row .ic{width:32px;height:32px;flex:none;border-radius:10px;
+  display:grid;place-items:center;background:var(--surface2);color:var(--muted)}
+#settings .sgroup .row .ic svg{display:block}
+#settings .sgroup + .addbtn{margin-top:9px}
+
+.plcard{border-radius:18px;padding:13px;border:1px solid var(--line);
+  background:var(--surface);box-shadow:0 10px 26px rgba(0,0,0,.34)}
 .plcard .t{display:flex;align-items:center;gap:11px}
-.plcard .ic{width:42px;height:42px;flex:none;border-radius:13px;display:grid;place-items:center;
-  background:rgba(138,107,240,.16);color:var(--accent2)}
+.plcard .ic{width:38px;height:38px;flex:none;border-radius:12px;display:grid;place-items:center;
+  background:rgba(232,179,60,.12);color:var(--accent)}
 .plcard .tx{flex:1;min-width:0}
 .plcard .tx b{display:block;font-size:16px;font-weight:800}
 .plcard .tx s{display:block;text-decoration:none;font-size:11px;color:var(--muted2);font-weight:600;
   margin-top:2px;direction:ltr;text-align:start;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pill{flex:none;font-size:9.5px;font-weight:800;letter-spacing:.8px;padding:5px 9px;border-radius:8px;
-  background:rgba(54,211,153,.14);color:var(--live);border:1px solid rgba(54,211,153,.3)}
+  background:rgba(47,191,113,.14);color:var(--live);border:1px solid rgba(47,191,113,.3)}
 .pill.grey{background:rgba(139,151,166,.14);color:var(--muted);border-color:rgba(139,151,166,.3)}
-.nums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
-.num{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:13px;padding:8px 4px;text-align:center}
-.num b{display:block;font-size:16px;font-weight:800;direction:ltr}
+.nums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.num{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:12px;padding:7px 4px;text-align:center}
+.num b{display:block;font-size:15px;font-weight:800;direction:ltr}
 .num s{display:block;text-decoration:none;font-size:9.5px;color:var(--muted2);font-weight:700;margin-top:2px}
-.upd{display:flex;align-items:center;gap:7px;margin-top:11px}
-.upd span{flex:1;min-width:0;font-size:11px;color:var(--muted2);font-weight:700;
+/* the line about the last download sits on its own, above the buttons -
+   three things fighting for one line is what made this corner feel cramped */
+/* Two lines, always the same two: what was downloaded and when, then the
+   buttons. Three things sharing one line is what made this corner cramped,
+   and letting them wrap however they liked is what left a button stranded
+   on a line of its own. */
+.upd{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px;
+  padding-top:10px;border-top:1px solid var(--line)}
+.upd span.when{flex:0 0 100%;min-width:0;order:-2;
+  font-size:11px;color:var(--muted2);font-weight:700;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* "BUILT-IN" belongs with that line, not wedged beside a button */
+.upd .badge{order:-1;flex:none;margin-bottom:2px}
+.upd .chip{flex:none}
+.upd .chip:first-of-type{flex:1 1 auto;justify-content:center}
 .chip{display:flex;align-items:center;gap:6px;padding:8px 13px;border-radius:11px;border:1px solid var(--line);
   background:rgba(255,255,255,.04);font-size:11.5px;font-weight:800;color:var(--text);cursor:pointer}
 .chip.sq{padding:8px 10px;color:var(--muted)}
@@ -662,9 +812,11 @@ html.kbd .card,html.kbd .row,html.kbd .ep,html.kbd .hi,html.kbd button{scroll-ma
 .row .tx s.wrap{white-space:normal;line-height:1.5;margin-top:4px}
 .chip:active{transform:scale(.95)}
 #settings .row .val{flex:none;font-size:11.5px;color:var(--muted);font-weight:700;direction:ltr}
-#settings .row .ch{flex:none;color:var(--muted2);font-size:15px;line-height:1}
-#settings .addbtn{border-radius:16px;border:1px dashed rgba(183,148,255,.42);background:rgba(138,107,240,.05);
-  padding:12px;font-size:13px;margin-top:2px}
+#settings .row .ch{flex:none;color:var(--muted2);display:flex}
+#settings .row .ch svg{display:block}
+html[dir=rtl] #settings .row .ch svg{transform:scaleX(-1)}
+#settings .addbtn{border-radius:16px;border:1px dashed var(--line);background:transparent;
+  color:var(--accent2);padding:11px;font-size:13px;margin-top:2px}
 #settings .st-foot .lg{width:24px;height:24px;display:inline-block;vertical-align:-6px;margin-inline-end:7px}
 #settings .st-foot .lg svg{display:block;width:100%;height:100%}
 #settings .st-foot b{color:var(--muted);letter-spacing:1px}
@@ -672,8 +824,8 @@ html.kbd .card,html.kbd .row,html.kbd .ep,html.kbd .hi,html.kbd button{scroll-ma
 /* the settings page holds a lot: keep every line tight so it fits one screen */
 #settings .st-h{margin:0 0 2px}
 #settings .st-h h1{font-size:21px}
-#settings .st-g{margin:15px 0 8px}
-#settings .row{padding:10px 12px;margin-bottom:7px}
+#settings .st-g{margin:11px 0 6px}
+#settings .row{padding:10px 12px;margin-bottom:6px}
 #settings .row .tx b{font-size:13.5px}
 #settings .row .tx s{font-size:10.5px;margin-top:1px}
 #settings .mini{width:31px;height:31px}
@@ -687,7 +839,7 @@ html.kbd .card,html.kbd .row,html.kbd .ep,html.kbd .hi,html.kbd button{scroll-ma
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .st-two button.solid{border-style:solid;background:var(--surface);color:var(--text)}
 .st-two button:active{transform:scale(.98)}
-.st-foot{text-align:center;font-size:11px;font-weight:700;color:var(--muted2);line-height:1.8;padding:2px 0 4px}
+.st-foot{text-align:center;font-size:11px;font-weight:700;color:var(--muted2);line-height:1.6;padding:2px 0 2px}
 /* ---------- a TV is watched from across the room, and its edges can be cut off ---------- */
 html.tv header{padding:8px 3% 8px}
 html.tv main{padding:6px 3% calc(40px + var(--safe-b))}
@@ -698,8 +850,8 @@ html.tv .ann{margin-top:7px;padding:5px 10px;font-size:11px}
 html.tv .catsel{margin-top:8px;padding:9px 12px}
 html.tv .chips{padding-top:8px}
 html.tv .chip{padding:6px 13px;font-size:12px}
-html.tv .hero h1{font-size:22px;margin:0 0 8px}
-html.tv .hero .go{padding:8px 18px;font-size:12.5px}
+html.tv .hero h1{font-size:17px;margin:0 0 7px}
+html.tv .hero .go{padding:7px 16px;font-size:11.5px}
 html.tv .heroDots{margin-top:6px}
 html.tv .hrow{margin-top:14px}
 html.tv .rhead{margin-bottom:8px}
@@ -750,14 +902,14 @@ html.tv .st-two button{padding:11px 8px;font-size:14px}
   <div class="top">
     <button class="iconbtn" onclick="toggleSearch()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg></button>
     <div class="brand">
-      <span class="w1">KURDISTAN</span> <span class="w2">IPTV</span>
+      <span class="wm"><span class="w1">KURDISTAN</span> <span class="w2">IPTV</span></span>
       <small id="tagline"></small>
     </div>
     <button class="iconbtn" onclick="openSettings()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   </div>
 
   <div class="ann">
-    <i><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#B794FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10v4a1 1 0 001 1h3l5 4V5L7 9H4a1 1 0 00-1 1z"/><path d="M16.5 8.5a5 5 0 010 7"/><path d="M19.5 5.5a9 9 0 010 13"/></svg></i>
+    <i><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#E8B33C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10v4a1 1 0 001 1h3l5 4V5L7 9H4a1 1 0 00-1 1z"/><path d="M16.5 8.5a5 5 0 010 7"/><path d="M19.5 5.5a9 9 0 010 13"/></svg></i>
     <div class="ann-wrap"><span id="annText"></span></div>
   </div>
 
@@ -843,7 +995,7 @@ var PAGE_SIZE = 48;
 /* ==================== i18n ==================== */
 var T = {
   ku:{name:"کوردی سۆرانی",dir:"rtl",all:"هەموو",search:"گەڕان بۆ کەنال...",
-      featured:"پێشنیارکراو",playNow:"بینین",resume:"بەردەوامبوون",seeAll:"هەمووی",
+      featured:"پێشنیارکراو",isNew:"نوێ",playNow:"بینین",resume:"بەردەوامبوون",seeAll:"هەمووی",
       fromStart:"لە سەرەتاوە",left:"%s ماوە",director:"دەرهێنەر",cast:"ئەکتەران",
       live:"کەناڵ",movies:"فیلم",series:"زنجیرە",seasonN:"وەرزی",episodeN:"ئیپسۆد",
       noVod:"هیچ فیلمێک نییە",noSer:"هیچ زنجیرەیەک نییە",onlyXtream:"تەنها بۆ لیستی Xtream",
@@ -906,7 +1058,7 @@ var T = {
       pinOffAsk:"کۆدەکە لابدرێت؟ هەموو پۆلە قفڵکراوەکانیش دەکرێنەوە.",
       lockOpened:"پۆلە قفڵکراوەکان کرانەوە",lockClosed:"پۆلە قفڵکراوەکان داخران"},
   en:{name:"English",dir:"ltr",all:"All",search:"Search channels...",
-      featured:"FEATURED",playNow:"Play",resume:"Resume",seeAll:"See all",
+      featured:"FEATURED",isNew:"NEW",playNow:"Play",resume:"Resume",seeAll:"See all",
       fromStart:"From start",left:"%s left",director:"Director",cast:"Cast",
       live:"Live TV",movies:"Movies",series:"Series",seasonN:"Season",episodeN:"Episode",
       noVod:"No movies here",noSer:"No series here",onlyXtream:"Xtream playlists only",
@@ -969,7 +1121,7 @@ var T = {
       pinOffAsk:"Remove the code? Every locked group opens again.",
       lockOpened:"Locked groups are open",lockClosed:"Locked groups are closed"},
   ar:{name:"العربية",dir:"rtl",all:"الكل",search:"ابحث عن قناة...",
-      featured:"مميّز",playNow:"تشغيل",resume:"متابعة",seeAll:"الكل",
+      featured:"مميّز",isNew:"جديد",playNow:"تشغيل",resume:"متابعة",seeAll:"الكل",
       fromStart:"من البداية",left:"باقٍ %s",director:"المخرج",cast:"الأبطال",
       live:"القنوات",movies:"أفلام",series:"مسلسلات",seasonN:"الموسم",episodeN:"حلقة",
       noVod:"لا توجد أفلام",noSer:"لا توجد مسلسلات",onlyXtream:"لقوائم Xtream فقط",
@@ -1057,12 +1209,13 @@ function hue(s){ var h=0; for(var i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))%3
 
 /* A channel with no logo gets a tile, and a thousand of them sit side by side.
    Random hues turned that into a patchwork quilt, so every tile now comes from
-   the same narrow band around the app's own purple - near enough to read as one
-   surface, far enough apart that two neighbours are still telling apart. */
+   one narrow band of cool slate - near enough to read as a single surface, far
+   enough apart that two neighbours are still telling apart. It stays out of
+   the way of the gold, and out of the way of the posters' own colours. */
 function tileBg(h, dark){
-  var b = 252 + (h % 46) - 23;                 /* 229deg .. 275deg */
-  var l1 = dark ? 19 : 22, l2 = dark ? 11 : 13;
-  return "linear-gradient(150deg,hsl("+b+",30%,"+l1+"%),hsl("+((b+16)%360)+",34%,"+l2+"%))";
+  var b = 211 + (h % 30) - 15;                 /* 196deg .. 226deg */
+  var l1 = dark ? 15 : 17, l2 = dark ? 9 : 10;
+  return "linear-gradient(150deg,hsl("+b+",15%,"+l1+"%),hsl("+(b+14)+",19%,"+l2+"%))";
 }
 /* The provider's own category name, exactly as it sends it - only the
    surrounding whitespace goes. */
@@ -1173,10 +1326,6 @@ function parseM3U(txt){
           var rf = firstAttr(L, "http-referrer") || firstAttr(L, "http-referer");
           if(ua) cur.ua = ua;
           if(rf) cur.rf = rf;
-          /* a playlist that says what each line is: a channel, a film, an
-             episode. Several tools write it, under slightly different names. */
-          var ty = firstAttr(L, "tvg-type") || firstAttr(L, "media-type") || firstAttr(L, "type");
-          if(ty) cur.vt = String(ty).toLowerCase();
         } else cur = null;
       }
       /* VLC-style options on their own line, above the URL */
@@ -1204,100 +1353,11 @@ function parseM3U(txt){
             else if(k === "referer" || k === "referrer") cur.rf = v;
           });
         }
-        cur.u = u; cur.vt = m3uKind(cur.vt, u); out.push(cur); cur = null;
+        cur.u = u; out.push(cur); cur = null;
       }
     }
   }
   return out;
-}
-
-/* ---------- a playlist that holds more than channels ----------
-   An M3U line can say what it is. Most say nothing, and everything in them is
-   a channel, which is how this app has always treated them. Some say
-   tvg-type="movie" or tvg-type="series", and then a film belongs under Films
-   and an episode under its series - the same three sections an Xtream panel
-   gets, from a plain text file.
-
-   Where nothing is declared, the address is allowed to answer, but only in
-   the one shape that cannot mean anything else: the .../movie/user/pass/12.mkv
-   that an Xtream account exports to. A live address with the word "movie"
-   somewhere in a CDN path is not that shape and stays a channel. */
-function m3uKind(declared, url){
-  var t = String(declared || "").toLowerCase();
-  if(/serie|show|episode/.test(t)) return "series";
-  if(/movie|film|vod/.test(t))     return "movie";
-  if(/live|channel|tv/.test(t))    return "live";
-  var u = String(url || "");
-  if(/\/series\/[^\/]+\/[^\/]+\/[^\/]+\.[A-Za-z0-9]{2,5}(\?|$)/.test(u)) return "series";
-  if(/\/(movie|vod)\/[^\/]+\/[^\/]+\/[^\/]+\.[A-Za-z0-9]{2,5}(\?|$)/.test(u)) return "movie";
-  return "live";
-}
-
-/* "Name - S01E07 (anything)" and "Name 1x07" both mean the same thing.
-   What comes back is the series' own name, the season and the episode. */
-function epParts(name){
-  var n = String(name || "").trim();
-  var m = n.match(/^(.*?)[\s._\-]*[sS](\d{1,3})[\s._\-]*[eE](\d{1,4})\b(.*)$/);
-  if(!m) m = n.match(/^(.*?)[\s._\-]+(\d{1,2})[xX](\d{1,4})\b(.*)$/);
-  if(!m) return null;
-  var base = m[1].replace(/[\s._\-]+$/, "").trim();
-  return { base: base || n, se: parseInt(m[2],10) || 1, ep: parseInt(m[3],10) || 1,
-           tail: (m[4] || "").replace(/^[\s._\-]+/, "").trim() };
-}
-
-/* a short, steady id for a series: its name, not where it happens to sit */
-function sidOf(key){
-  var h = 5381, k = String(key);
-  for(var i = 0; i < k.length; i++) h = ((h * 33) ^ k.charCodeAt(i)) >>> 0;
-  return "m3u:" + h.toString(36);
-}
-
-/* One pass over a parsed playlist: channels stay channels, films go to their
-   own list, and episodes gather into the series they belong to. A playlist
-   that declares nothing comes back exactly as it went in. */
-function splitM3U(list){
-  var live = [], movies = [], series = [], byName = {};
-  for(var i = 0; i < (list || []).length; i++){
-    var c = list[i];
-    if(!c) continue;
-    if(c.vt === "movie"){ movies.push(c); continue }
-    if(c.vt !== "series"){ live.push(c); continue }
-
-    var pr = epParts(c.n), base = pr ? pr.base : c.n;
-    var se = pr ? pr.se : 1, ep = pr ? pr.ep : 0;
-    var key = (c.c || "") + "\u0000" + base;
-    var sh = byName[key];
-    if(!sh){
-      sh = { c: c.c || "Other", n: base, u: "", l: c.l || "", sid: sidOf(key), eps: {}, nEp: 0 };
-      byName[key] = sh; series.push(sh);
-    }
-    if(!sh.l && c.l) sh.l = c.l;
-    var arr = sh.eps[se] || (sh.eps[se] = []);
-    sh.nEp++;
-    arr.push({ id: sh.sid + ":" + se + ":" + arr.length,
-               /* what is left of the name once the series and the SxxEyy are
-                  taken off it. Nothing left means the page says "Episode 3". */
-               title: pr ? (pr.tail || "") : c.n,
-               episode_num: ep || arr.length + 1,
-               direct_source: c.u, ua: c.ua || "", rf: c.rf || "",
-               info: {} });
-  }
-  /* inside a season, the order a person expects is the episode number */
-  for(var k = 0; k < series.length; k++)
-    for(var se2 in series[k].eps)
-      if(series[k].eps.hasOwnProperty(se2))
-        series[k].eps[se2].sort(function(a,b){ return (a.episode_num||0) - (b.episode_num||0) });
-  return { live: live, movies: movies, series: series };
-}
-
-/* The series page reads from this cache before it asks a panel for anything.
-   Filling it here is what lets a playlist's own episodes open the same page. */
-function seriesCacheFill(list){
-  for(var i = 0; i < (list || []).length; i++){
-    var sh = list[i];
-    if(!sh || !sh.sid) continue;
-    SERIES_CACHE[sh.sid] = { info: { name: sh.n, cover: sh.l || "" }, episodes: sh.eps || {} };
-  }
 }
 
 /* ==================== xtream api ====================
@@ -1804,16 +1864,16 @@ function isXtream(){ return activeList().type === "xtream" }
    A classic Xtream panel keeps the streams itself, and the address is built
    from the panel's own domain: .../live/user/pass/1234.ts
 
-   Some panels keep nothing. They answer the same questions, but every channel
-   comes back with "direct_source" - the broadcaster's own address, somewhere
-   else entirely. Build the usual address for one of those and it points at a
-   door that was never there, which is why a playlist could list its channels,
-   pass the connection test, show every logo, and still play nothing.
+   Some panels do not keep anything. They answer the same questions, but every
+   channel comes back with "direct_source" - the broadcaster's own address,
+   somewhere else entirely. Build the usual address for one of those and it
+   points at a door that was never there, which is why nothing played.
 
-   The panel's own word is taken when it is plainly pointing elsewhere: a real
-   address, for something that looks like a stream, and either on another host
-   or on a panel whose address has a path of its own (a real Xtream panel is a
-   bare host and port). A panel that keeps its own streams is not touched. */
+   So the panel's own word is taken when it is plainly pointing elsewhere:
+   a real address, for something that looks like a stream, and either on
+   another host or on a panel whose address has a path of its own (a real
+   Xtream panel is a bare host and port). A panel that keeps its own streams
+   is not touched by any of this. */
 function streamURL(direct, built, domain){
   var u = String(direct == null ? "" : direct).trim();
   if(!/^https?:\/\//i.test(u)) return built;
@@ -1854,6 +1914,10 @@ function loadVod(p){
           u: streamURL(v.direct_source, d + "/movie/" + cr + "/" + v.stream_id + "." + (v.container_extension || "mp4"), d),
           l: artURL(v.stream_icon, d) || artURL(v.cover, d) || artURL(v.movie_image, d) || artURL(v.cover_big, d)
              || artURL(v.backdrop_path, d),
+          /* a panel that gets its data from TMDB also sends the wide picture
+             the film was shot for. That is the one a banner wants: a tall
+             poster has to be cropped to fit and a wide one does not. */
+          bd: artURL(v.backdrop_path, d),
           r: v.rating || ""
         });
       }
@@ -1880,6 +1944,7 @@ function loadSeries(p){
           n: v.name || ("#" + v.series_id),
           u: "",                       /* series open a detail page, not a stream */
           l: artURL(v.cover, d) || artURL(v.stream_icon, d) || artURL(v.cover_big, d) || artURL(v.backdrop_path, d),
+          bd: artURL(v.backdrop_path, d),
           r: v.rating || "",
           sid: v.series_id,
           plot: v.plot || ""
@@ -1890,6 +1955,43 @@ function loadSeries(p){
   });
 }
 
+/* ---------- what the provider has added since the app last looked ----------
+   Providers do not agree on dates. An Xtream panel sends "added" for films
+   and nothing useful for channels; an M3U sends nothing at all. So the app
+   does not trust a field - it remembers what it saw the previous time and
+   calls anything it has not seen before new.
+
+   The first time it ever looks at a list, nothing is new: there is nothing
+   to compare against, and twenty thousand films are not twenty thousand
+   arrivals. What is remembered is a short fingerprint per item rather than
+   its address, so even a very large list costs little to keep. */
+var FP_W = 7;
+function fingerprint(c){
+  var s = c.sid ? ("s" + c.sid) : (c.u || c.n || "");
+  var h = 5381;
+  for(var i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0;
+  s = h.toString(36);
+  while(s.length < FP_W) s = "0" + s;
+  return s;
+}
+function markNew(list, sec){
+  if(!list || !list.length) return list || [];
+  var key = "kiptv_seen_" + activeId() + "_" + sec;
+  var prev = lsGet(key, ""), had = null;
+  if(prev && prev.length >= FP_W){
+    had = {};
+    for(var i = 0; i + FP_W <= prev.length; i += FP_W) had[prev.substr(i, FP_W)] = 1;
+  }
+  var buf = [];
+  for(var j = 0; j < list.length; j++){
+    var fp = fingerprint(list[j]);
+    buf.push(fp);
+    if(had && !had[fp]) list[j].nw = 1;
+  }
+  try{ lsSet(key, buf.join("")) }catch(e){}   /* out of room: just never new */
+  return list;
+}
+
 function loadSection(name){
   if(LOADED[name] || name === "live") return Promise.resolve();
   var p = activeList();
@@ -1897,7 +1999,7 @@ function loadSection(name){
   showSync(t().sync + " · " + (name === "movies" ? t().movies : t().series), false);
   return (name === "movies" ? loadVod(p) : loadSeries(p))
     .then(function(list){
-      DATA[name] = list || [];
+      DATA[name] = markNew(list || [], name);
       LOADED[name] = true;
       hideSync();
     })
@@ -1928,7 +2030,7 @@ function drawNav(){
     var sName = btns[i].getAttribute("data-s");
     if(sName === "favs"){ btns[i].className = favOn ? "on" : ""; continue }
     btns[i].className = (!favOn && SECTION === sName ? "on" : "");
-    btns[i].style.display = (sName !== "live" && !x && !(DATA[sName] || []).length) ? "none" : "";
+    btns[i].style.display = (sName !== "live" && !x) ? "none" : "";
   }
   $("nav").className = "on";
   document.body.className = "hasnav";
@@ -2550,6 +2652,11 @@ function cardHTML(c, forceSquare){
    same category does not fill it. Picture first, then anything. */
 var HERO_N = 8, HERO_MS = 4500;
 
+/* one triangle, drawn rather than typed: the ▶ character comes out a
+   different size and weight on every device, and on some it is a tofu box */
+var PLAY_TRI = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.2a1 1 0 011.5-.87l9 6.8a1 1 0 010 1.74l-9 6.8A1 1 0 018 18.8z"/></svg>';
+var CHEV = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+
 /* The banner follows the section the person is in - live channels, films or
    series - and always starts from different items. */
 function heroPicks(){
@@ -2558,18 +2665,43 @@ function heroPicks(){
   var withArt = pool.filter(function(c){ return c.l });
   var src = withArt.length >= HERO_N ? withArt : pool;
 
+  var out = [], usedGroup = {}, seen = {};
+  var key = function(c){ return c.sid ? "s" + c.sid : (c.u || c.n) };
+
+  /* What the provider has just added leads the banner - that is what someone
+     opening the app wants to find. Providers add to the end of a list, so the
+     end is where the newest tend to be. When nothing is new, not one line of
+     this runs and the banner fills exactly as it always did. */
+  for(var k = src.length - 1; k >= 0 && out.length < HERO_N; k--){
+    var fc = src[k];
+    if(!fc.nw || seen[key(fc)]) continue;
+    seen[key(fc)] = 1; usedGroup[fc.c] = 1; out.push(fc);
+  }
+
   /* a fresh starting point on every visit, so the banner is never the same */
   var start = Math.floor(Math.random() * src.length);
-  var out = [], usedGroup = {}, seen = {};
-
   for(var pass = 0; pass < 2 && out.length < HERO_N; pass++)
     for(var i = 0; i < src.length && out.length < HERO_N; i++){
       var c = src[(start + i) % src.length];
-      if(seen[c.u]) continue;
+      if(seen[key(c)]) continue;
       if(pass === 0 && usedGroup[c.c]) continue;   /* one per group first */
-      seen[c.u] = 1; usedGroup[c.c] = 1; out.push(c);
+      seen[key(c)] = 1; usedGroup[c.c] = 1; out.push(c);
     }
   return out;
+}
+
+/* The wide picture is the one thing in the banner that can be missing without
+   anything being wrong: not every panel has one, and a stale address is
+   common. It steps aside for the poster rather than leaving a hole. */
+function heroBgErr(im){
+  var slide = im.parentNode;
+  while(slide && !(slide.classList && slide.classList.contains("hero"))) slide = slide.parentNode;
+  if(slide && slide.classList.contains("wide")){
+    var pst = slide.querySelector(".hp img");
+    slide.classList.remove("wide");
+    if(pst && pst.getAttribute("src")){ im.src = pst.getAttribute("src"); return }
+  }
+  heroImgErr(im);
 }
 
 /* a banner picture that fails: the other scheme once, then the slide simply
@@ -2577,6 +2709,10 @@ function heroPicks(){
 function heroImgErr(im){
   var u = im.getAttribute("src") || "";
   if(!im.getAttribute("data-t") && artAlt(u)){ im.setAttribute("data-t", "1"); im.src = artAlt(u); return }
+  /* mark the slide BEFORE the picture goes - afterwards it has no parent
+     left to walk up from, and the banner would keep the white plate */
+  for(var e = im.parentNode; e; e = e.parentNode)
+    if(e.classList && e.classList.contains("hero")){ e.classList.add("noart"); break }
   im.remove();   /* the poster box stays; its letters show through */
 }
 
@@ -2585,21 +2721,28 @@ function slideHTML(c, first){
   var bg = tileBg(h, true);
   var sq = SECTION === "live";
   var art = c.l ? esc(c.l) : "";
-  var img = art ? '<img class="bg" src="'+art+'" referrerpolicy="no-referrer" onerror="heroImgErr(this)" alt="">' : '';
+  /* the wide picture behind, the poster in front - and when there is no wide
+     picture, the poster does both jobs */
+  var wide = c.bd && c.bd !== c.l ? esc(c.bd) : "";
+  var img = (wide || art)
+    ? '<img class="bg" src="'+(wide || art)+'" decoding="async" referrerpolicy="no-referrer" onerror="heroBgErr(this)" alt="">'
+    : '';
   /* the poster box is always there, picture or not, so every slide has the
      very same shape */
   var pst = '<div class="hp" style="background:'+tileBg(h)+'"><div class="mono">'+esc(initials(c.n))+'</div>'
-          + (art ? '<img src="'+art+'" referrerpolicy="no-referrer" onerror="heroImgErr(this)" alt="">' : '')
+          + (art ? '<img src="'+art+'" decoding="async" referrerpolicy="no-referrer" onerror="heroImgErr(this)" alt="">' : '')
           + '</div>';
   var attrs = c.sid ? ' data-sid="'+esc(c.sid)+'"' : ' data-u="'+esc(c.u)+'"';
   var sub = [];
   if(c.r) sub.push("★ " + String(c.r).slice(0,3));
   if(c.c) sub.push(cleanGroup(c.c));
-  return '<div class="hero'+(first ? " on" : "")+(sq ? " sq" : "")+'"'+attrs+' data-n="'+esc(c.n)+'" style="background:'+bg+'">'
+  return '<div class="hero'+(first ? " on" : "")+(sq ? " sq" : "")+(art ? "" : " noart")+(wide ? " wide" : "")+'"'+attrs+' data-n="'+esc(c.n)+'" style="background:'+bg+'">'
        +   img + '<div class="sc"></div>' + pst
-       +   '<div class="in"><div class="kick">'+esc(sub.length ? sub.join("  ·  ") : t().featured)+'</div>'
+       +   '<div class="in"><div class="kick">'+(sq ? '<i></i>' : '')
+       +       (c.nw ? '<b class="nwb">'+esc(t().isNew)+'</b>' : '')
+       +       '<s>'+esc(sub.length ? sub.join("  ·  ") : t().featured)+'</s></div>'
        +     '<h1>'+esc(c.n)+'</h1>'
-       +     '<span class="go">&#9654;&#65038; '+esc(t().playNow)+'</span></div>'
+       +     '<span class="go">'+PLAY_TRI+esc(t().playNow)+'</span></div>'
        + '</div>';
 }
 
@@ -2657,7 +2800,7 @@ function heroStart(){
 function rowHTML(title, list, square, gi){
   if(!list || !list.length) return "";
   return '<div class="hrow"><div class="rhead"><span class="bar"></span><h3>'+esc(title)+'</h3>'
-       + '<button type="button" class="all" data-gi="'+gi+'">'+esc(t().seeAll)+' <b>&#8250;</b></button></div>'
+       + '<button type="button" class="all" data-gi="'+gi+'">'+esc(t().seeAll)+CHEV+'</button></div>'
        + '<div class="strip'+(square ? "" : " big")+'">'
        + list.slice(0,16).map(function(c){ return cardHTML(c, square) }).join("")
        + '</div></div>';
@@ -3067,8 +3210,7 @@ var curSeries = null, curSeason = null, curMovie = null;
 
 function openSeries(sid, name){
   var p = activeList();
-  /* a series that came out of a playlist carries its episodes with it */
-  if(p.type !== "xtream" && !SERIES_CACHE[sid]) return;
+  if(p.type !== "xtream") return;
   curMovie = null;
   detailFav("series", sid, name);
   if(!$("detail").classList.contains("on")) layerOpen("detail");   /* phone Back closes it */
@@ -3225,10 +3367,7 @@ function pickSeason(k){
     if(inf.release_date) sub.push(String(inf.release_date).slice(0,10));
     var sp = getPos(url);
     if(sp) sub.unshift(t().resume + " " + fmtTime(sp.p));
-    var mo = { c:"SERIES", n:(curSeries.info && curSeries.info.name ? curSeries.info.name + " · " : "") + (e.title || ""), u:url, l:(curSeries.info && curSeries.info.cover) || "" };
-    if(e.ua) mo.ua = e.ua;          /* an episode may need its own agent */
-    if(e.rf) mo.rf = e.rf;          /* and its own referrer */
-    memo.push(mo);
+    memo.push({ c:"SERIES", n:(curSeries.info && curSeries.info.name ? curSeries.info.name + " · " : "") + (e.title || ""), u:url, l:(curSeries.info && curSeries.info.cover) || "" });
     return '<div class="ep" data-u="'+esc(url)+'" data-n="'+esc((curSeries.info && curSeries.info.name ? curSeries.info.name + " · " : "") + (e.title || (t().episodeN + " " + (idx+1))))+'">'
          +   '<span class="no">'+(e.episode_num || (idx+1))+'</span>'
          +   '<span class="tx"><b>'+esc(e.title || (t().episodeN + " " + (idx+1)))+'</b>'
@@ -3410,7 +3549,7 @@ var CATSEC = "live";
 
 function catSecOk(s){
   if(s === "live") return true;
-  return LOADED[s] && (DATA[s] || []).length > 0;
+  return isXtream() && LOADED[s] && (DATA[s] || []).length > 0;
 }
 function catSec(s){ if(catSecOk(s)){ CATSEC = s; drawSheet() } }
 function catAt(i){ return catOrder(allGroups(CATSEC))[i] }
@@ -3677,7 +3816,7 @@ function setRow(icon, title, sub, onclick, natural, value){
        +   '<span class="tx"><b>'+esc(title)+'</b>'
        +     (sub ? '<s'+(natural ? ' class="nat"' : '')+'>'+esc(sub)+'</s>' : '')+'</span>'
        +   (value ? '<span class="val">'+esc(value)+'</span>' : '')
-       +   (onclick ? '<span class="ch">&#8250;</span>' : '')
+       +   (onclick ? '<span class="ch">'+CHEV+'</span>' : '')
        + '</div>';
 }
 function setGroup(title){ return '<div class="st-g"><span class="bar"></span>'+esc(title)+'</div>' }
@@ -3722,7 +3861,7 @@ function drawSettings(){
      +     '<div class="num"><b>'+nMov+'</b><s>'+esc(d.movies)+'</s></div>'
      +     '<div class="num"><b>'+nSer+'</b><s>'+esc(d.series)+'</s></div>'
      +   '</div>'
-     +   '<div class="upd"><span>'+esc(updLine(d, upd[cur]))+'</span>'
+     +   '<div class="upd"><span class="when">'+esc(updLine(d, upd[cur]))+'</span>'
      +     (SYNCING
         ? '<button class="chip busy">'+ICON.refresh+' '+esc(d.updating)+'</button>'
         : '<button class="chip" onclick="refreshList()">'+ICON.refresh+' '+esc(d.refreshShort)+'</button>')
@@ -3736,6 +3875,7 @@ function drawSettings(){
   /* the other playlists: one tap switches to it */
   var others = getLists().filter(function(p){ return p.id !== cur });
   h += setGroup(d.otherLists);
+  if(others.length) h += '<div class="sgroup">';
   h += others.map(function(p){
     var sub = p.type === "xtream" ? (p.domain || "") : (p.url || "");
     var mine = p.id !== DEFAULT_PLAYLIST.id;
@@ -3748,19 +3888,22 @@ function drawSettings(){
               +   '<button class="mini red" onclick="event.stopPropagation();removeList(\''+esc(p.id)+'\')">'+ICON.trash+'</button>'
               + '</span>'
               : '<span class="val">'+esc(d.builtIn)+'</span>')
-         +   '<span class="ch">&#8250;</span>'
+         +   '<span class="ch">'+CHEV+'</span>'
          + '</div>';
   }).join("");
+  if(others.length) h += '</div>';
   h += '<button class="addbtn" onclick="openSheet(\'type\')">+ '+esc(d.addList)+'</button>';
 
   /* general */
   h += setGroup(d.general);
+  h += '<div class="sgroup">';
   h += setRow(ICON.globe, d.lang, "", "openSheet('lang')", true, T[lang].name);
   h += setRow(ICON.layers, d.cats, catsLine(d), "openSheet('cats')", true);
   if(act.type === "xtream") h += setRow(ICON.tv, d.epgTest, d.epgTestSub, "epgProbe()", true);
   h += setRow(ICON.gauge, d.speedTest, d.speedTestSub, "speedTest()", true);
   h += setRow(ICON.disk, d.clearCache, "", "clearCache()", true, cacheSize());
   h += setRow(ICON.down, d.updCheck, d.updCheckSub, "updOpen()", true, appVerText());
+  h += '</div>';
 
   h += '<div class="st-foot"><span class="lg">'+LOGO_ICON+'</span><b>KURDISTAN IPTV</b><br>'
      +   esc(d.version + " " + appVerText())+'</div>';
@@ -4289,6 +4432,14 @@ function navArea(el){
 function navNext(from, dir, items){
   var area = navArea(from);
   var same = items.filter(function(el){ return navArea(el) === area });
+  /* Up or Down from a channel means the row above or below, not the little
+     "See all" sitting on that row's title line. It is still reached from the
+     left or the right; it just never steals a jump between rows. */
+  if((dir === "up" || dir === "down") && from.classList.contains("card")){
+    var cards = same.filter(function(el){ return el.classList.contains("card") });
+    var c = navPick(from, dir, cards);
+    if(c) return c;
+  }
   var hit = navPick(from, dir, same);
   if(hit) return hit;
   var others = items.filter(function(el){ return navArea(el) !== area });
@@ -4407,7 +4558,15 @@ document.addEventListener("keydown", function(e){
     if(onHero){
       var back = (t().dir === "rtl") ? (dir === "right") : (dir === "left");
       heroGo(heroI + (back ? -1 : 1)); heroStop();
-      setTimeout(function(){ var on = document.querySelector("#heroBox .hero.on"); if(on) navFocus(on) }, 0);
+      setTimeout(function(){
+        var on = document.querySelector("#heroBox .hero.on");
+        if(!on) return;
+        navFocus(on);
+        /* if it could not take the highlight yet, try once more after the
+           swap - never leave the ring on a picture that is no longer showing */
+        if(document.activeElement !== on)
+          setTimeout(function(){ if(document.querySelector("#heroBox .hero.on") === on) navFocus(on) }, 120);
+      }, 0);
     } else if(next) navFocus(next);
     e.preventDefault();
     return;
@@ -4704,19 +4863,13 @@ function viaApp(u){
   return window.AndroidPlayer ? "https://kiptv.local/p?u=" + encodeURIComponent(u) : u;
 }
 
-function setData(list){
-  var s = splitM3U(list);
-  CH = s.live;
-  /* A panel's films and series come down their own road and are left alone.
-     A playlist's come down this one - and this is also where they go away
-     again, on the day a playlist stops carrying any. */
-  if(!isXtream()){
-    DATA.movies = s.movies;
-    DATA.series = s.series;
-    LOADED.movies = true; LOADED.series = true;
-    seriesCacheFill(s.series);
-  }
-  epgReset(); buildGroups(); renderChips(); render(); drawNav();
+/* Only a list that came from the provider just now is worth remembering.
+   The cached copy and the built-in fallback are what the app already knew,
+   so comparing against them would call the whole playlist new the first time
+   it is really fetched. */
+function setData(list, fromProvider){
+  CH = fromProvider ? markNew(list, "live") : list;
+  epgReset(); buildGroups(); renderChips(); render();
 }
 function showSync(text, isErr){
   var el = $("sync");
@@ -4786,7 +4939,7 @@ function loadActive(force){
     .then(function(list){
       if(!list || !list.length) throw new Error("NO CHANNELS");
       f = "";
-      setData(list);
+      setData(list, true);
       saveCache(p.id, list);
       hideSync();
       markUpdated(p.id);
@@ -4862,7 +5015,7 @@ function actAskAgainQuietly(a){
    Nothing waits for it: the page behind is already being built, and a tap -
    or a remote key - sends it away early. If the sound will not play, or the
    file is not there, the picture carries on alone. */
-var SPLASH_MS = 2300;
+var SPLASH_MS = 5000;
 
 function splashGo(){
   var box = $("splash"); if(!box) return;
