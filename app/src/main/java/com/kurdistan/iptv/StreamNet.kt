@@ -41,18 +41,26 @@ data class Way(
     val ua: String,
     val lenient: Boolean = false,
     val doh: Boolean = false,
-    val swap: Int = 0
+    val swap: Int = 0,
+    /** ask the way VLC and mpv do: HTTP/1.1, nothing compressed */
+    val h1: Boolean = false
 ) {
-    fun key(): String = "$ua|$lenient|$doh|$swap"
+    fun key(): String = "$ua|$lenient|$doh|$swap|$h1"
 
     companion object {
         fun parse(s: String?): Way? {
             if (s.isNullOrBlank()) return null
             val p = s.split('|')
-            if (p.size < 4) return null
             return try {
-                Way(p.dropLast(3).joinToString("|"), p[p.size - 3].toBoolean(),
-                    p[p.size - 2].toBoolean(), p[p.size - 1].toInt())
+                /* written with the HTTP/1.1 flag, or by a build from before it */
+                if (p.size >= 5 && p[p.size - 2].toIntOrNull() != null &&
+                    (p.last() == "true" || p.last() == "false"))
+                    Way(p.dropLast(4).joinToString("|"), p[p.size - 4].toBoolean(),
+                        p[p.size - 3].toBoolean(), p[p.size - 2].toInt(), p.last().toBoolean())
+                else if (p.size >= 4)
+                    Way(p.dropLast(3).joinToString("|"), p[p.size - 3].toBoolean(),
+                        p[p.size - 2].toBoolean(), p[p.size - 1].toInt())
+                else null
             } catch (e: Exception) { null }
         }
     }
@@ -79,6 +87,10 @@ class StreamNet(context: Context) {
             "(KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
         const val SMARTERS_UA = "IPTVSmartersPlayer"
         const val LAVF_UA = "Lavf/60.16.100"
+
+        /* every request carries what VLC, mpv and the Windows app send: some
+           film servers answer a request without them with 400 Bad Request */
+        val PLAYER_HEADERS = mapOf("Accept" to "*/*", "Accept-Language" to "en-US,en;q=0.9")
 
         const val SWAP_EXT = 1
         const val SWAP_SCHEME = 2
@@ -162,12 +174,10 @@ class StreamNet(context: Context) {
 
     fun client(w: Way, follow: Boolean = true): OkHttpClient {
         val lenient = w.lenient && lenientOk
-        return clients.getOrPut("$lenient|${w.doh}|$follow") {
+        return clients.getOrPut("$lenient|${w.doh}|${w.h1}|$follow") {
             val b = base.newBuilder()
-            if (lenient) {
-                Lenient.apply(b)
-                b.protocols(listOf(Protocol.HTTP_1_1))
-            }
+            if (lenient) Lenient.apply(b)
+            if (lenient || w.h1) b.protocols(listOf(Protocol.HTTP_1_1))
             if (w.doh) b.dns(smartDns)
             if (!follow) b.followRedirects(false).followSslRedirects(false)
             b.build()
@@ -187,7 +197,10 @@ class StreamNet(context: Context) {
         val r = referer
         factories.getOrPut(w.key() + "|" + (r ?: "")) {
             OkHttpDataSource.Factory(client(w)).setUserAgent(w.ua).also { f ->
-                if (r != null) f.setDefaultRequestProperties(mapOf("Referer" to r))
+                val h = HashMap(PLAYER_HEADERS)
+                if (w.h1) h["Accept-Encoding"] = "identity"
+                if (r != null) h["Referer"] = r
+                f.setDefaultRequestProperties(h)
             }
         }.createDataSource()
     }
@@ -211,9 +224,11 @@ class StreamNet(context: Context) {
         remembered(url)?.let { add(it) }          /* what worked on this server last time */
         add(Way(u0))
         add(Way(BROWSER_UA))
+        add(Way(u0, h1 = true))                   /* exactly what mpv on Windows sends */
         add(Way(u0, doh = true))
         add(Way(SMARTERS_UA))
         add(Way(BROWSER_UA, doh = true))
+        add(Way(BROWSER_UA, h1 = true, doh = true))
         add(Way(u0, doh = true, swap = SWAP_EXT))
         add(Way(u0, lenient = true, doh = true))
         add(Way(BROWSER_UA, lenient = true, doh = true))
@@ -305,7 +320,9 @@ class StreamNet(context: Context) {
                 val rb = Request.Builder().url(target)
                     .header("User-Agent", w.ua)
                     .header("Accept", "*/*")
+                    .header("Accept-Language", "en-US,en;q=0.9")
                     .header("Connection", "close")
+                if (w.h1) rb.header("Accept-Encoding", "identity")
                 if (ref != null) rb.header("Referer", ref)
                 val resp = cl.newCall(rb.build()).execute()
                 val code = resp.code

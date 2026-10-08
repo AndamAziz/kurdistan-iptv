@@ -566,7 +566,7 @@ class MainActivity : ComponentActivity() {
                 val t0 = SystemClock.elapsedRealtime()
                 val o = JSONObject()
                 try {
-                    val (found, code) = net.find(url, ua.ifBlank { null }, ref.ifBlank { null }, isVod(url), 6)
+                    val (found, code) = net.find(url, ua.ifBlank { null }, ref.ifBlank { null }, isVod(url), 12)
                     o.put("ok", found != null)
                     o.put("ms", found?.ms ?: (SystemClock.elapsedRealtime() - t0))
                     o.put("kind", found?.kind ?: "")
@@ -1180,6 +1180,9 @@ class MainActivity : ComponentActivity() {
         try { player?.playWhenReady = false } catch (e: Exception) {}
         loading.visibility = View.GONE
         val why = when {
+            /* a film's own server (not the panel) turning this phone away is
+               most often its network: a VPN, or a country it does not serve */
+            isVod(currentUrl ?: "") && lastHttp in listOf(400, 403, 451) -> tx("errVpn")
             lastHttp in listOf(401, 403, 407, 458, 509) || code.contains("NO_PERMISSION") -> tx("errRefused")
             lastHttp == 404 || code.contains("FILE_NOT_FOUND") -> tx("errGone")
             code.contains("TIMEOUT") -> tx("errSlow")
@@ -1585,6 +1588,7 @@ class MainActivity : ComponentActivity() {
         "errCodec" to "This device cannot decode the picture or sound of this stream.",
         "errFormat" to "What the server sent is not a video.",
         "retry" to "Try again",
+        "errVpn" to "The film's server refused this connection. If a VPN is on, turn it off and try again.",
         "audio" to "Audio", "subs" to "Subtitles", "quality" to "Quality",
         "off" to "Off", "auto" to "Auto", "size" to "Text size",
         "s1" to "Small", "s2" to "Normal", "s3" to "Large", "s4" to "Extra large",
@@ -1604,6 +1608,7 @@ class MainActivity : ComponentActivity() {
         "errCodec" to "ئەم ئامێرە ناتوانێت وێنە یان دەنگی ئەم پەخشە بخوێنێتەوە.",
         "errFormat" to "ئەوەی سێرڤەرەکە ناردی ڤیدیۆ نییە.",
         "retry" to "هەوڵدانەوە",
+        "errVpn" to "سێرڤەری فیلمەکە ئەم پەیوەندییەی ڕەتکردەوە. ئەگەر VPN هەڵکراوە، بیکوژێنەوە و دووبارە هەوڵ بدەرەوە.",
         "audio" to "دەنگ", "subs" to "ژێرنووس", "quality" to "کوالیتی",
         "off" to "بێ ژێرنووس", "auto" to "خۆکار", "size" to "قەبارەی نووسین",
         "s1" to "بچووک", "s2" to "ئاسایی", "s3" to "گەورە", "s4" to "زۆر گەورە",
@@ -1623,6 +1628,7 @@ class MainActivity : ComponentActivity() {
         "errCodec" to "هذا الجهاز لا يستطيع فك ترميز صورة أو صوت هذا البث.",
         "errFormat" to "ما أرسله الخادم ليس فيديو.",
         "retry" to "إعادة المحاولة",
+        "errVpn" to "رفض خادم الفيلم هذا الاتصال. إذا كان VPN مفعّلاً فأوقفه وحاول مجدداً.",
         "audio" to "الصوت", "subs" to "الترجمة", "quality" to "الجودة",
         "off" to "بدون ترجمة", "auto" to "تلقائي", "size" to "حجم الخط",
         "s1" to "صغير", "s2" to "عادي", "s3" to "كبير", "s4" to "كبير جداً",
