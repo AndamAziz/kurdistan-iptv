@@ -195,6 +195,9 @@ class StreamNet(private val context: Context) {
     }
 
     private val base: OkHttpClient = OkHttpClient.Builder()
+        /* certificates checked as a browser checks them: a server that leaves
+           out its middle certificate is completed, then fully checked */
+        .sslSocketFactory(AiaTrust.shared.socketFactory, AiaTrust.shared)
         .dns(v4First)
         .connectTimeout(8, TimeUnit.SECONDS)
         .readTimeout(20, TimeUnit.SECONDS)
