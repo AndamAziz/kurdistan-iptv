@@ -116,6 +116,8 @@ class MainActivity : ComponentActivity() {
     private var ways: List<Way> = emptyList()
     private var wayIdx = 0
     private val waysTried = HashSet<String>()
+    /** every way tried for the item on screen and what it got - shown with an error */
+    private val waysTrail = ArrayList<String>()
     /** when the item on screen was first asked for: a server that is truly
      *  down gets its error in well under a minute, not after every way */
     private var itemStartAt = 0L
@@ -784,6 +786,7 @@ class MainActivity : ComponentActivity() {
     /** the ways to ask for this item, best first; the player starts on the first */
     private fun startWays(link: String) {
         itemStartAt = SystemClock.elapsedRealtime()
+        waysTrail.clear()
         ways = net.waysFor(link, curUa, isVod(link))
         wayIdx = 0
         waysTried.clear()
@@ -971,6 +974,16 @@ class MainActivity : ComponentActivity() {
                        container cannot fix that - another way of asking can. */
                     val netErr = error.errorCode in 2000..2999
                     val late = SystemClock.elapsedRealtime() - itemStartAt > WAYS_BUDGET_MS
+                    if (!hasPlayed) ways.getOrNull(wayIdx)?.let { w ->
+                        val what = when {
+                            lastHttp > 0 -> lastHttp.toString()
+                            error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED -> "conn"
+                            error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT -> "timeout"
+                            netErr -> "io"
+                            else -> "format"
+                        }
+                        if (waysTrail.size < 24) waysTrail.add(w.label() + ":" + what)
+                    }
                     when {
                         netErr && !hasPlayed && !late && nextWay(net.why(error)) -> switchWay(p, i)
                         // the container guess was wrong - try the next one for this item
@@ -1195,7 +1208,9 @@ class MainActivity : ComponentActivity() {
             else -> ""
         }
         txtError.text = tx("errMain") + (if (why.isNotEmpty()) "\n$why" else "") + "\n\n" + code +
-            (if (lastHttp > 0) "  (HTTP $lastHttp)" else "")
+            (if (lastHttp > 0) "  (HTTP $lastHttp)" else "") +
+            /* what each way got, so a screenshot says exactly what the server did */
+            (if (waysTrail.isNotEmpty()) "\n\n" + waysTrail.joinToString("  ·  ") else "")
         findViewById<TextView>(R.id.btnRetry).text = tx("retry")
         errorBox.visibility = View.VISIBLE
     }

@@ -5,6 +5,10 @@ import android.os.SystemClock
 import androidx.media3.common.MimeTypes
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.cronet.CronetDataSource
+import androidx.media3.datasource.cronet.CronetUtil
+import org.chromium.net.CronetEngine
+import java.util.concurrent.Executors
 import androidx.media3.datasource.HttpDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import okhttp3.Cookie
@@ -50,9 +54,11 @@ data class Way(
      *  play with - so a server that dislikes OkHttp itself still answers */
     val sys: Boolean = false,
     /** "Range: bytes=0-" on the first request, as VLC and FFmpeg always send */
-    val range: Boolean = false
+    val range: Boolean = false,
+    /** Chrome's own network code (Cronet): its TLS, its HTTP - a browser */
+    val cr: Boolean = false
 ) {
-    fun key(): String = "$ua|$lenient|$doh|$swap|$h1|$sys|$range"
+    fun key(): String = "$ua|$lenient|$doh|$swap|$h1|$sys|$range|$cr"
 
     /** a few letters for the health check: which way got which answer */
     fun label(): String {
@@ -61,7 +67,7 @@ data class Way(
             ua.startsWith("IPTVSmarters") -> "Smarters"; ua.startsWith("Lavf") -> "Lavf"
             else -> "UA"
         }
-        return who + (if (sys) "+sys" else "") + (if (range) "+range" else "") + (if (h1) "+h1" else "") +
+        return who + (if (cr) "+chrome" else "") + (if (sys) "+sys" else "") + (if (range) "+range" else "") + (if (h1) "+h1" else "") +
             (if (doh) "+dns" else "") + (if (lenient) "+cert" else "") +
             (if (swap == 1) "+ext" else if (swap == 2) "+scheme" else "")
     }
@@ -74,7 +80,12 @@ data class Way(
                 fun b(x: String) = x == "true" || x == "false"
                 /* written with every flag, with the HTTP/1.1 flag only, or by an
                    older build - each reads back */
-                if (p.size >= 7 && p[p.size - 4].toIntOrNull() != null && b(p[p.size - 3]) && b(p[p.size - 2]) && b(p.last()))
+                if (p.size >= 8 && p[p.size - 5].toIntOrNull() != null && b(p[p.size - 4]) && b(p[p.size - 3]) &&
+                    b(p[p.size - 2]) && b(p.last()))
+                    Way(p.dropLast(7).joinToString("|"), p[p.size - 7].toBoolean(), p[p.size - 6].toBoolean(),
+                        p[p.size - 5].toInt(), p[p.size - 4].toBoolean(), p[p.size - 3].toBoolean(),
+                        p[p.size - 2].toBoolean(), p.last().toBoolean())
+                else if (p.size >= 7 && p[p.size - 4].toIntOrNull() != null && b(p[p.size - 3]) && b(p[p.size - 2]) && b(p.last()))
                     Way(p.dropLast(6).joinToString("|"), p[p.size - 6].toBoolean(), p[p.size - 5].toBoolean(),
                         p[p.size - 4].toInt(), p[p.size - 3].toBoolean(), p[p.size - 2].toBoolean(), p.last().toBoolean())
                 else if (p.size >= 5 && p[p.size - 2].toIntOrNull() != null && b(p.last()))
@@ -103,7 +114,7 @@ enum class Why { DNS, CONNECT, SSL, REFUSED, DROPPED, OTHER }
  * the next way that can help with the failure it actually saw, and remembers
  * per server which way worked, so the next channel there opens at once.
  */
-class StreamNet(context: Context) {
+class StreamNet(private val context: Context) {
     companion object {
         const val VLC_UA = "VLC/3.0.20 LibVLC/3.0.20"
         const val BROWSER_UA = "Mozilla/5.0 (Linux; Android 13; SM-S918B) AppleWebKit/537.36 " +
@@ -126,6 +137,35 @@ class StreamNet(context: Context) {
     }
 
     private val prefs = context.getSharedPreferences("kiptv_net", Context.MODE_PRIVATE)
+
+    /* Chrome's network code, from Google Play Services when the device has
+       them. Built once, the first time a way needs it, off the main thread. */
+    private val crExec = Executors.newFixedThreadPool(4)
+    @Volatile private var crTried = false
+    @Volatile private var crEngine: CronetEngine? = null
+    private fun cronet(): CronetEngine? {
+        if (crTried) return crEngine
+        synchronized(this) {
+            if (!crTried) {
+                crEngine = try {
+                    CronetUtil.buildCronetEngine(context.applicationContext, null, true)
+                } catch (e: Throwable) { null }
+                crTried = true
+            }
+        }
+        return crEngine
+    }
+    init {
+        /* ask Play Services for its Cronet early, so it is ready when needed */
+        try {
+            com.google.android.gms.net.CronetProviderInstaller.installProvider(context.applicationContext)
+        } catch (e: Throwable) { }
+    }
+    /** whether the Chrome ways can be offered on this device at all */
+    val cronetOk: Boolean get() = try {
+        com.google.android.gms.common.GoogleApiAvailability.getInstance()
+            .isGooglePlayServicesAvailable(context) == com.google.android.gms.common.ConnectionResult.SUCCESS
+    } catch (e: Throwable) { false }
 
     /** false in the Google Play build, which always checks certificates */
     val lenientOk: Boolean = Lenient.apply(OkHttpClient.Builder())
@@ -221,7 +261,15 @@ class StreamNet(context: Context) {
         factories.getOrPut(w.key() + "|" + (r ?: "")) {
             val h = HashMap(PLAYER_HEADERS)
             if (r != null) h["Referer"] = r
-            if (w.sys) {
+            val eng = if (w.cr) cronet() else null
+            if (eng != null) {
+                CronetDataSource.Factory(eng, crExec)
+                    .setUserAgent(w.ua)
+                    .setConnectionTimeoutMs(10000)
+                    .setReadTimeoutMs(20000)
+                    .setHandleSetCookieRequests(true)
+                    .setDefaultRequestProperties(h)
+            } else if (w.sys || w.cr) {
                 /* Android's own HTTP code. Its range header is set after these,
                    so a seek still asks for the right place */
                 if (w.range) h["Range"] = "bytes=0-"
@@ -244,7 +292,9 @@ class StreamNet(context: Context) {
     fun waysFor(url: String, ua: String?, vod: Boolean): List<Way> {
         val u0 = ua ?: VLC_UA
         val out = LinkedHashMap<String, Way>()
+        val crOk = cronetOk
         fun add(w: Way) {
+            if (w.cr && !crOk) return
             val e = if (w.lenient && !lenientOk) w.copy(lenient = false) else w
             if (e.swap == SWAP_EXT && (vod || !canSwapExt(url))) return
             out.putIfAbsent(e.key(), e)
@@ -258,6 +308,8 @@ class StreamNet(context: Context) {
         remembered(url)?.let { add(it) }          /* what worked on this server last time */
         add(Way(u0))
         add(Way(BROWSER_UA))
+        add(Way(BROWSER_UA, cr = true))           /* a browser, exactly: Chrome's own network code */
+        add(Way(u0, cr = true))
         add(Way(u0, sys = true, range = true))    /* what VLC sends, through Android's own HTTP code */
         add(Way(u0, h1 = true))                   /* exactly what mpv on Windows sends */
         add(Way(BROWSER_UA, sys = true))          /* what an ordinary IPTV app sends */
@@ -278,8 +330,8 @@ class StreamNet(context: Context) {
     /** whether trying [w] can help with a failure of this kind */
     fun helps(w: Way, why: Why): Boolean = when (why) {
         Why.DNS -> w.doh
-        Why.CONNECT -> w.doh || w.swap == SWAP_SCHEME || w.sys
-        Why.SSL -> w.doh || (w.lenient && lenientOk) || w.swap == SWAP_SCHEME
+        Why.CONNECT -> w.doh || w.swap == SWAP_SCHEME || w.sys || w.cr
+        Why.SSL -> w.doh || (w.lenient && lenientOk) || w.swap == SWAP_SCHEME || w.cr
         else -> true
     }
 
@@ -349,7 +401,7 @@ class StreamNet(context: Context) {
     /** Follows every redirect itself and reads the first bytes that come back:
      *  where the stream really is, and what it really is. Then lets go. */
     private fun attempt(url: String, w: Way, ref: String?): Tried {
-        if (w.sys) return attemptSys(url, w, ref)
+        if (w.sys || w.cr) return attemptSys(url, w, ref)
         val t0 = SystemClock.elapsedRealtime()
         var target = linkFor(url, w)
         val cl = client(w, follow = false)
@@ -397,7 +449,10 @@ class StreamNet(context: Context) {
         try {
             var hop = 0
             while (hop++ < 8) {
-                val c = URL(target).openConnection() as HttpURLConnection
+                val eng = if (w.cr) cronet() else null
+                if (w.cr && eng == null) return Tried(null, Why.OTHER, 0)
+                val c = (if (eng != null) eng.openConnection(URL(target)) else URL(target).openConnection())
+                    as HttpURLConnection
                 c.instanceFollowRedirects = false
                 c.connectTimeout = 10000
                 c.readTimeout = 15000
