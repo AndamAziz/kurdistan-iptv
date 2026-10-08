@@ -775,14 +775,15 @@ html.kbd .card,html.kbd .row,html.kbd .ep,html.kbd .hi,html.kbd button{scroll-ma
 #settings{padding:0 0 calc(34px + var(--safe-b))}
 #settings .st-in{max-width:640px;margin:0 auto;padding:0 16px}
 .st-top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;
-  padding:calc(12px + var(--safe-t)) 16px 12px;margin-bottom:4px;
+  padding:calc(10px + var(--safe-t)) 16px 10px;margin-bottom:6px;
   background:rgba(7,10,14,.95);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
   border-bottom:1px solid transparent;transition:border-color .2s}
 .st-top.sh{border-bottom-color:var(--line)}
-.st-top h1{margin:0;font-size:22px;font-weight:800;letter-spacing:-.3px;flex:1;min-width:0}
+.st-top h1{margin:0;font-size:20px;font-weight:800;letter-spacing:-.2px;flex:1;min-width:0}
+.st-top .iconbtn{width:40px;height:40px;border-radius:13px}
 .st-top .iconbtn svg{display:block}
 html[dir=rtl] .st-top .iconbtn svg{transform:scaleX(-1)}
-#settings .st-g{display:flex;align-items:center;gap:9px;margin:26px 2px 11px;font-size:11px;font-weight:800;
+#settings .st-g{display:flex;align-items:center;gap:9px;margin:24px 4px 10px;font-size:11px;font-weight:800;
   letter-spacing:1.6px;text-transform:uppercase;color:var(--muted2)}
 #settings .st-g .bar{display:none}
 #settings .st-g em{margin-inline-start:auto;font-style:normal;letter-spacing:.4px;text-transform:none;
@@ -790,7 +791,7 @@ html[dir=rtl] .st-top .iconbtn svg{transform:scaleX(-1)}
 
 /* who: the app, the version, the code it was opened with */
 .st-hero{position:relative;overflow:hidden;display:flex;align-items:center;gap:14px;
-  padding:16px;border-radius:22px;border:1px solid rgba(232,179,60,.22);
+  padding:13px 14px 15px;border-radius:20px;border:1px solid rgba(232,179,60,.2);
   background:radial-gradient(120% 140% at 0% 0%,rgba(232,179,60,.16),transparent 55%),
              radial-gradient(90% 120% at 100% 100%,rgba(42,161,75,.10),transparent 60%),
              linear-gradient(160deg,#141C27,#0D131B);
@@ -800,13 +801,13 @@ html[dir=rtl] .st-hero{background:radial-gradient(120% 140% at 100% 0%,rgba(232,
              linear-gradient(200deg,#141C27,#0D131B)}
 .st-hero::after{content:"";position:absolute;inset-inline:18px;bottom:0;height:2px;border-radius:2px;opacity:.75;
   background:linear-gradient(90deg,#ED2024 0 33.33%,#FFFFFF 33.33% 66.66%,#2AA14B 66.66% 100%)}
-.st-hero .lg{width:56px;height:56px;flex:none;border-radius:17px;display:grid;place-items:center;
-  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);padding:7px}
+.st-hero .lg{width:46px;height:46px;flex:none;border-radius:14px;display:grid;place-items:center;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);padding:6px}
 .st-hero .lg svg{display:block;width:100%;height:100%}
 .st-hero .tx{flex:1;min-width:0}
-.st-hero .tx b{display:block;font-size:16.5px;font-weight:800;letter-spacing:1.4px;color:#fff;
+.st-hero .tx b{display:block;font-size:15px;font-weight:800;letter-spacing:1.2px;color:#fff;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.st-hero .tx s{display:block;text-decoration:none;margin-top:4px;font-size:12px;font-weight:700;color:var(--muted)}
+.st-hero .tx s{display:block;text-decoration:none;margin-top:3px;font-size:12px;font-weight:600;color:var(--muted2)}
 .st-hero .tx i{display:flex;align-items:center;gap:6px;margin-top:7px;font-style:normal;font-size:11.5px;
   font-weight:700;color:var(--muted2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .st-hero .tx i::before{content:"";flex:none;width:7px;height:7px;border-radius:99px;background:var(--live);
@@ -828,35 +829,41 @@ html[dir=rtl] .st-hero{background:radial-gradient(120% 140% at 100% 0%,rgba(232,
 .st-hero + .hc{margin-top:14px}
 .hc{border-radius:22px;background:var(--surface);border:1px solid var(--line);overflow:hidden;
   box-shadow:0 12px 30px rgba(0,0,0,.36)}
-.hc-h{display:flex;align-items:center;gap:13px;padding:15px 15px 14px}
-.ibox{width:44px;height:44px;flex:none;border-radius:14px;display:grid;place-items:center;
+.hc-h{display:flex;align-items:center;gap:12px;padding:14px}
+.ibox{width:40px;height:40px;flex:none;border-radius:13px;display:grid;place-items:center;
   color:#6FB1FF;background:rgba(77,155,255,.13);border:1px solid rgba(77,155,255,.18)}
-.ibox svg{display:block;width:21px;height:21px}
+.ibox svg{display:block;width:20px;height:20px}
 .ibox.red{color:#FF6B6E;background:rgba(237,32,36,.13);border-color:rgba(237,32,36,.2)}
 .ibox.green{color:#46D486;background:rgba(42,161,75,.14);border-color:rgba(42,161,75,.22)}
 .ibox.gold{color:var(--accent2);background:rgba(232,179,60,.13);border-color:rgba(232,179,60,.22)}
 .ibox.tg{color:#3FA8F0;background:rgba(42,158,232,.14);border-color:rgba(42,158,232,.22)}
 .hc-h .tx,.acc-h .tx{flex:1;min-width:0}
-.hc-h .tx b,.acc-h .tx b{display:block;font-size:15.5px;font-weight:800;
+.hc-h .tx b,.acc-h .tx b{display:block;font-size:15px;font-weight:800;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hc-h .tx s,.acc-h .tx s{display:block;text-decoration:none;margin-top:3px;font-size:12px;font-weight:600;
   color:var(--muted2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hc-rows{border-top:1px solid var(--line);padding:4px 0}
-.hr{display:flex;align-items:flex-start;gap:11px;padding:11px 15px}
+.hr{display:flex;align-items:center;gap:11px;padding:10px 14px;min-height:50px}
 .hr+.hr{border-top:1px solid rgba(34,44,56,.6)}
-.hr i{flex:none;width:8px;height:8px;margin-top:6px;border-radius:99px;background:var(--muted2)}
+.hr i{flex:none;width:8px;height:8px;border-radius:99px;background:var(--muted2)}
 .hr.ok i{background:var(--live);box-shadow:0 0 0 3px rgba(47,191,113,.16)}
 .hr.warn i{background:var(--accent);box-shadow:0 0 0 3px rgba(232,179,60,.16)}
 .hr.bad i{background:#ED2024;box-shadow:0 0 0 3px rgba(237,32,36,.16)}
 .hr.run i{background:transparent;border:2px solid var(--muted2);border-top-color:var(--accent2);
-  width:10px;height:10px;margin-top:5px;animation:spin .8s linear infinite}
-.hr b{flex:0 0 38%;min-width:0;font-size:13.5px;font-weight:800;line-height:1.4}
-.hr span{flex:1;min-width:0;text-align:end;font-size:12.5px;font-weight:600;line-height:1.45;color:var(--muted);
-  overflow-wrap:anywhere}
-.hr.bad span{color:#FF9B9B}
-.hc-f{display:flex;gap:8px;padding:12px 15px 15px;border-top:1px solid var(--line)}
+  width:10px;height:10px;animation:spin .8s linear infinite}
+.hr .hl{flex:1;min-width:0}
+.hr .hl b{display:block;font-size:13.5px;font-weight:700;line-height:1.35;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hr .hl s{display:block;text-decoration:none;margin-top:2px;font-size:11.5px;font-weight:600;color:var(--muted2);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hr em{flex:none;max-width:46%;font-style:normal;font-size:13px;font-weight:800;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;direction:ltr}
+.hr.warn em{color:var(--accent2)}
+.hr.bad em{color:#FF8A8A}
+.hr.run em{color:var(--muted2)}
+.hc-f{display:flex;gap:8px;padding:12px 14px 14px;border-top:1px solid var(--line)}
 .hbtn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:0;
-  padding:12px 14px;border-radius:14px;border:0;cursor:pointer;font:inherit;font-size:13.5px;font-weight:800;
+  padding:11px 14px;border-radius:13px;border:0;cursor:pointer;font:inherit;font-size:13.5px;font-weight:800;
   color:#1A1203;background:linear-gradient(100deg,var(--accent),var(--accent2));
   box-shadow:0 8px 20px rgba(232,179,60,.26);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hbtn svg{flex:none;display:block}
@@ -865,7 +872,7 @@ html[dir=rtl] .st-hero{background:radial-gradient(120% 140% at 100% 0%,rgba(232,
 .hbtn:active{transform:scale(.97)}
 
 /* one card per account */
-.acc{border-radius:22px;background:var(--surface);border:1px solid var(--line);padding:15px;
+.acc{border-radius:20px;background:var(--surface);border:1px solid var(--line);padding:14px;
   box-shadow:0 12px 30px rgba(0,0,0,.34);cursor:pointer;transition:border-color .2s,transform .15s}
 .acc+.acc{margin-top:12px}
 .acc:active{transform:scale(.99)}
@@ -878,17 +885,18 @@ html[dir=rtl] .acc-h .tx s{text-align:end}
 .acc-big{flex:none;text-align:end;line-height:1.1}
 .acc-big b{display:block;font-size:22px;font-weight:800;direction:ltr}
 .acc-big s{display:block;text-decoration:none;font-size:11.5px;font-weight:700;color:var(--muted2);margin-top:3px}
-.acc-n{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:14px}
-.acc-n div{min-width:0;padding:12px 11px 11px;border-radius:16px;background:rgba(255,255,255,.035);
+.acc-n{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:13px}
+.acc-n.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.acc-n div{min-width:0;padding:11px 11px 10px;border-radius:14px;background:rgba(255,255,255,.035);
   border:1px solid rgba(255,255,255,.05)}
-.acc-n svg{display:block;width:22px;height:22px;margin-bottom:9px}
+.acc-n svg{display:block;width:19px;height:19px;margin-bottom:8px}
 .acc-n .c1 svg{color:#FF6B6E}
 .acc-n .c2 svg{color:var(--accent2)}
 .acc-n .c3 svg{color:#46D486}
-.acc-n b{display:block;font-size:19px;font-weight:800;line-height:1.1;direction:ltr;text-align:start;
+.acc-n b{display:block;font-size:18px;font-weight:800;line-height:1.1;direction:ltr;text-align:start;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 html[dir=rtl] .acc-n b{text-align:end}
-.acc-n span{display:block;margin-top:3px;font-size:12.5px;font-weight:800;color:var(--muted)}
+.acc-n span{display:block;margin-top:3px;font-size:12px;font-weight:700;color:var(--muted)}
 .acc-n s{display:block;text-decoration:none;margin-top:2px;font-size:10.5px;font-weight:600;color:var(--muted2);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .acc-f{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px;margin-top:13px;padding-top:12px;
@@ -913,23 +921,49 @@ html[dir=rtl] #settings .st-g{letter-spacing:0;font-size:12.5px}
 .acc-sw svg{display:block}
 html[dir=rtl] .acc-sw svg{transform:scaleX(-1)}
 
+/* the facts of the account in use: label over value, side by side */
+.acc-kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:10px 12px;margin-top:13px;
+  padding:12px 2px 0;border-top:1px solid var(--line)}
+.acc-kv div{min-width:0}
+.acc-kv s{display:block;text-decoration:none;font-size:11px;font-weight:700;color:var(--muted2);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acc-kv b{display:block;margin-top:3px;font-size:13px;font-weight:800;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acc-kv b.red{color:#FF8A8A}
+/* what can be done with it, each with its own word */
+.acc-a{display:flex;gap:8px;margin-top:13px}
+.acc-a .abtn{flex:1;min-width:0;height:40px}
+.acc-a .abtn span{overflow:hidden;text-overflow:ellipsis}
+/* another account's status, in a word beside its name */
+.stx{flex:none;display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;color:var(--live)}
+.stx::before{content:"";width:6px;height:6px;border-radius:99px;background:currentColor}
+.stx.red{color:#FF8A8A}
+.stx.grey{color:var(--muted2)}
+.stx.grey::before{display:none}
+.stx .sp{width:10px;height:10px;border-radius:99px;border:2px solid currentColor;border-top-color:transparent;
+  animation:spin .8s linear infinite}
+#settings .mini.more{width:34px;height:34px;flex:none;border:0;background:transparent;color:var(--muted)}
+#settings .mini.more:active{background:var(--surface2)}
+#settings .sgroup .row.addrow b{color:var(--accent2)}
+html[dir=rtl] #settings .row .tx s{text-align:right}
+
 /* plain rows, gathered into one card */
 #settings .sgroup{background:var(--surface);border:1px solid var(--line);border-radius:20px;
   overflow:hidden;box-shadow:0 10px 26px rgba(0,0,0,.3)}
-#settings .sgroup .row{background:none;border:0;border-radius:0;margin:0;padding:12px 14px;gap:13px;
+#settings .sgroup .row{background:none;border:0;border-radius:0;margin:0;padding:11px 14px;gap:12px;min-height:60px;
   border-top:1px solid var(--line)}
 #settings .sgroup .row:first-child{border-top:0}
 #settings .sgroup .row:active{background:var(--surface2)}
-#settings .sgroup .row .ic{width:38px;height:38px;flex:none;border-radius:12px;
+#settings .sgroup .row .ic{width:36px;height:36px;flex:none;border-radius:11px;
   display:grid;place-items:center;background:var(--surface2);color:var(--muted)}
-#settings .sgroup .row .ic svg{display:block;width:19px;height:19px}
+#settings .sgroup .row .ic svg{display:block;width:18px;height:18px}
 #settings .sgroup .row .ic.c-blue{color:#6FB1FF;background:rgba(77,155,255,.13)}
 #settings .sgroup .row .ic.c-gold{color:var(--accent2);background:rgba(232,179,60,.13)}
 #settings .sgroup .row .ic.c-green{color:#46D486;background:rgba(42,161,75,.14)}
 #settings .sgroup .row .ic.c-red{color:#FF6B6E;background:rgba(237,32,36,.13)}
 #settings .sgroup .row .ic.c-violet{color:#B79CFF;background:rgba(150,120,255,.13)}
 #settings .sgroup .row .ic.c-tg{color:#3FA8F0;background:rgba(42,158,232,.14)}
-#settings .row .tx b{font-size:14.5px}
+#settings .row .tx b{font-size:14px;font-weight:700}
 #settings .row .tx s{font-size:11.5px;margin-top:2px}
 .row .val{flex:none;max-width:45%;font-size:12px;color:var(--muted);font-weight:700;direction:ltr;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -940,8 +974,8 @@ html[dir=rtl] #settings .row .ch svg{transform:scaleX(-1)}
   border-radius:18px;border:1.5px dashed rgba(232,179,60,.34);background:rgba(232,179,60,.04);
   color:var(--accent2);padding:14px;font-size:13.5px}
 #settings .addbtn.updgo{border:0}
-.st-foot{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:30px;text-align:center;
-  font-size:11.5px;font-weight:700;color:var(--muted2);line-height:1.6}
+.st-foot{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:28px;text-align:center;
+  font-size:11px;font-weight:700;letter-spacing:.6px;color:var(--muted2);line-height:1.6}
 .st-foot .lg{width:34px;height:34px;display:block;opacity:.85}
 .st-foot .lg svg{display:block;width:100%;height:100%}
 .st-foot b{color:var(--muted);letter-spacing:1.6px;font-size:12px}
@@ -1159,7 +1193,7 @@ var T = {
       pinSaved:"کۆدەکە پاشەکەوتکرا 🔒",pinChange:"گۆڕینی کۆد",pinOff:"لابردنی کۆد",
       pinOffAsk:"کۆدەکە لابدرێت؟ هەموو پۆلە قفڵکراوەکانیش دەکرێنەوە.",
       lockOpened:"پۆلە قفڵکراوەکان کرانەوە",lockClosed:"پۆلە قفڵکراوەکان داخران",
-      hcTitle:"سێرڤەر و تاقیکردنەوەی خێرایی",hcIdle:"دوگمەکە دابگرە بۆ پشکنینی هەموو شتێک",hcGood:"هەموو شتێک کاردەکات",hcSome:"%s شت پێویستی بە سەرنجە",pAll:"هەمووی باشە",pRun:"پشکنین",pIssue:"کێشە",pReady:"ئامادە",hcStart:"دەستپێکردنی پشکنین",hcDetails:"وردەکاری",hNet:"خێرایی ئینتەرنێت",hProv:"سێرڤەری پرۆڤایدەر",hLive:"پەخشی ڕاستەوخۆ",hVod:"پەخشی فیلم",hHevc:"ڤیدیۆی H.265 (HEVC)",hAudio:"دەنگی Dolby (AC3)",hSup:"پشتگیری دەکرێت",hNoSup:"پشتگیری ناکرێت",hOnline:"سەرهێڵ",hOff:"وەڵام ناداتەوە",hAns:"لە %s وەڵامی دایەوە",hFirst:"یەکەم بایت %s",hFail:"ناکرێتەوە",hNoItem:"هیچ نییە بۆ تاقیکردنەوە",hLast:"دوایین پشکنین %s",accounts:"ئەکاونتەکانم",aActive:"چالاک",aExpired:"بەسەرچووە",aBanned:"ڕاگیراوە",aUse:"بەکاری بهێنە",aCats:"%s پۆل",aExp:"کۆتایی %s",aCons:"پەیوەندی %s",aPlaylist:"لیستی IPTV",help:"یارمەتی و پەیوەندی",actOn:"چالاککراوە",actUntil:"چالاککراوە · تا %s",actOwner:"کلیلی خاوەن · بێ کۆتایی"},
+      hcTitle:"سێرڤەر و تاقیکردنەوەی خێرایی",aEdit:"دەستکاری",aExpL:"کۆتایی",aConsL:"پەیوەندی",hUpTo4k:"تا 4K",hcIdle:"ئینتەرنێت، سێرڤەر و پەخش بە یەک دەست لێدان",hcGood:"هەموو شتێک کاردەکات",hcSome:"%s شت پێویستی بە سەرنجە",pAll:"هەمووی باشە",pRun:"پشکنین",pIssue:"کێشە",pReady:"ئامادە",hcStart:"دەستپێکردنی پشکنین",hcDetails:"وردەکاری",hNet:"خێرایی ئینتەرنێت",hProv:"سێرڤەری پرۆڤایدەر",hLive:"پەخشی ڕاستەوخۆ",hVod:"پەخشی فیلم",hHevc:"ڤیدیۆی H.265 (HEVC)",hAudio:"دەنگی Dolby (AC3)",hSup:"پشتگیری دەکرێت",hNoSup:"پشتگیری ناکرێت",hOnline:"سەرهێڵ",hOff:"وەڵام ناداتەوە",hAns:"لە %s وەڵامی دایەوە",hFirst:"یەکەم بایت %s",hFail:"ناکرێتەوە",hNoItem:"هیچ نییە بۆ تاقیکردنەوە",hLast:"دوایین پشکنین %s",accounts:"ئەکاونتەکانم",aActive:"چالاک",aExpired:"بەسەرچووە",aBanned:"ڕاگیراوە",aUse:"بەکاری بهێنە",aCats:"%s پۆل",aExp:"کۆتایی %s",aCons:"پەیوەندی %s",aPlaylist:"لیستی IPTV",help:"یارمەتی و پەیوەندی",actOn:"چالاککراوە",actUntil:"چالاککراوە · تا %s",actOwner:"کلیلی خاوەن · بێ کۆتایی"},
   en:{name:"English",dir:"ltr",all:"All",search:"Search channels...",
       featured:"FEATURED",isNew:"NEW",playNow:"Play",resume:"Resume",seeAll:"See all",
       fromStart:"From start",left:"%s left",director:"Director",cast:"Cast",
@@ -1223,7 +1257,7 @@ var T = {
       pinSaved:"Code saved 🔒",pinChange:"Change code",pinOff:"Remove code",
       pinOffAsk:"Remove the code? Every locked group opens again.",
       lockOpened:"Locked groups are open",lockClosed:"Locked groups are closed",
-      hcTitle:"Server & speed test",hcIdle:"Tap the button to check everything",hcGood:"Everything is working",hcSome:"%s need attention",pAll:"All good",pRun:"Testing",pIssue:"Issue",pReady:"Ready",hcStart:"Run test",hcDetails:"Details",hNet:"Internet speed",hProv:"Provider server",hLive:"Live stream",hVod:"Movie stream",hHevc:"H.265 (HEVC) video",hAudio:"Dolby audio (AC3)",hSup:"Supported",hNoSup:"Not supported",hOnline:"Online",hOff:"No answer",hAns:"answered in %s",hFirst:"first byte %s",hFail:"does not open",hNoItem:"nothing to test",hLast:"Last check %s",accounts:"My accounts",aActive:"Active",aExpired:"Expired",aBanned:"Disabled",aUse:"Use",aCats:"%s categories",aExp:"Expires %s",aCons:"Connections %s",aPlaylist:"IPTV playlist",help:"Help & contact",actOn:"Activated",actUntil:"Activated · until %s",actOwner:"Owner key · no end date"},
+      hcTitle:"Server & speed test",aEdit:"Edit",aExpL:"Expires",aConsL:"Connections",hUpTo4k:"up to 4K",hcIdle:"Internet, server and streams in one tap",hcGood:"Everything is working",hcSome:"%s need attention",pAll:"All good",pRun:"Testing",pIssue:"Issue",pReady:"Ready",hcStart:"Run test",hcDetails:"Details",hNet:"Internet speed",hProv:"Provider server",hLive:"Live stream",hVod:"Movie stream",hHevc:"H.265 (HEVC) video",hAudio:"Dolby audio (AC3)",hSup:"Supported",hNoSup:"Not supported",hOnline:"Online",hOff:"No answer",hAns:"answered in %s",hFirst:"first byte %s",hFail:"does not open",hNoItem:"nothing to test",hLast:"Last check %s",accounts:"My accounts",aActive:"Active",aExpired:"Expired",aBanned:"Disabled",aUse:"Use",aCats:"%s categories",aExp:"Expires %s",aCons:"Connections %s",aPlaylist:"IPTV playlist",help:"Help & contact",actOn:"Activated",actUntil:"Activated · until %s",actOwner:"Owner key · no end date"},
   ar:{name:"العربية",dir:"rtl",all:"الكل",search:"ابحث عن قناة...",
       featured:"مميّز",isNew:"جديد",playNow:"تشغيل",resume:"متابعة",seeAll:"الكل",
       fromStart:"من البداية",left:"باقٍ %s",director:"المخرج",cast:"الأبطال",
@@ -1287,7 +1321,7 @@ var T = {
       pinSaved:"تم حفظ الرمز 🔒",pinChange:"تغيير الرمز",pinOff:"إزالة الرمز",
       pinOffAsk:"إزالة الرمز؟ ستُفتح كل الفئات المقفلة.",
       lockOpened:"الفئات المقفلة مفتوحة",lockClosed:"الفئات المقفلة مغلقة",
-      hcTitle:"الخادم واختبار السرعة",hcIdle:"اضغط الزر لفحص كل شيء",hcGood:"كل شيء يعمل",hcSome:"%s تحتاج إلى انتباه",pAll:"كله جيد",pRun:"فحص",pIssue:"مشكلة",pReady:"جاهز",hcStart:"ابدأ الفحص",hcDetails:"التفاصيل",hNet:"سرعة الإنترنت",hProv:"خادم المزوّد",hLive:"البث المباشر",hVod:"بث الأفلام",hHevc:"فيديو H.265 (HEVC)",hAudio:"صوت Dolby (AC3)",hSup:"مدعوم",hNoSup:"غير مدعوم",hOnline:"متصل",hOff:"لا يوجد رد",hAns:"رد خلال %s",hFirst:"أول بايت %s",hFail:"لا يفتح",hNoItem:"لا شيء للاختبار",hLast:"آخر فحص %s",accounts:"حساباتي",aActive:"نشط",aExpired:"منتهي",aBanned:"معطّل",aUse:"استخدم",aCats:"%s فئة",aExp:"ينتهي %s",aCons:"الاتصالات %s",aPlaylist:"قائمة IPTV",help:"المساعدة والتواصل",actOn:"مفعّل",actUntil:"مفعّل · حتى %s",actOwner:"مفتاح المالك · بلا نهاية"}
+      hcTitle:"الخادم واختبار السرعة",aEdit:"تعديل",aExpL:"الانتهاء",aConsL:"الاتصالات",hUpTo4k:"حتى 4K",hcIdle:"الإنترنت والخادم والبث بلمسة واحدة",hcGood:"كل شيء يعمل",hcSome:"%s تحتاج إلى انتباه",pAll:"كله جيد",pRun:"فحص",pIssue:"مشكلة",pReady:"جاهز",hcStart:"ابدأ الفحص",hcDetails:"التفاصيل",hNet:"سرعة الإنترنت",hProv:"خادم المزوّد",hLive:"البث المباشر",hVod:"بث الأفلام",hHevc:"فيديو H.265 (HEVC)",hAudio:"صوت Dolby (AC3)",hSup:"مدعوم",hNoSup:"غير مدعوم",hOnline:"متصل",hOff:"لا يوجد رد",hAns:"رد خلال %s",hFirst:"أول بايت %s",hFail:"لا يفتح",hNoItem:"لا شيء للاختبار",hLast:"آخر فحص %s",accounts:"حساباتي",aActive:"نشط",aExpired:"منتهي",aBanned:"معطّل",aUse:"استخدم",aCats:"%s فئة",aExp:"ينتهي %s",aCons:"الاتصالات %s",aPlaylist:"قائمة IPTV",help:"المساعدة والتواصل",actOn:"مفعّل",actUntil:"مفعّل · حتى %s",actOwner:"مفتاح المالك · بلا نهاية"}
 };
 var LANG_ORDER = ["en", "ku", "ar"];
 var lang = localStorage.kiptv_lang || "en";
@@ -3550,6 +3584,11 @@ function drawSheet(){
          + '</div>'
          ;
   }
+  else if(v === "accm"){
+    var ap = findList(ACCM_ID);
+    title = ap ? ap.name : "";
+    body = accMenuBody(d);
+  }
   else if(v === "epgtest"){
     title = d.epgTest;
     body = '<div class="row"><span class="tx"><s class="nat" style="white-space:pre-wrap">'
@@ -3890,7 +3929,7 @@ function openSettings(){
   /* every Xtream account is asked how it stands; the health check runs by
      itself the first time the page is opened, after that only when asked */
   getLists().forEach(function(p){ accAsk(p) });
-  if(!HC_AUTO){ HC_AUTO = true; setTimeout(function(){ if(settingsOn()) hcRun() }, 350) }
+  if(!HC){ setTimeout(function(){ if(settingsOn() && !HC) hcRun() }, 350) }
 }
 function closeSettings(){ layerClose("settings") }
 
@@ -3962,6 +4001,7 @@ var SICON = {
   plus:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
   play:'<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.2a1 1 0 011.5-.87l9 6.8a1 1 0 010 1.74l-9 6.8A1 1 0 018 18.8z"/></svg>',
   chev:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>',
+  dots:'<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>',
   mail:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4.5" width="19" height="15" rx="2.5"/><path d="M3 7l9 6 9-6"/></svg>'
 };
 
@@ -4050,60 +4090,94 @@ function pillHTML(s){
   return '<span class="spill'+(s.cls ? " " + s.cls : "")+'">'+(s.spin ? '<span class="sp"></span>' : "")+esc(s.txt)+'</span>';
 }
 
-function accCard(p, on){
-  var d = t(), st = statsOf(p.id), a = ACCI[p.id] || {}, ui = a.ui;
+/* the numbers a playlist holds: what is in memory for the one in use,
+   the remembered ones for the rest */
+function accNums(p, on){
+  var st = statsOf(p.id);
   var num = function(sec, key){
-    if(on && sec === "live") return [CH.length, allGroups("live").list.length];
+    if(on && sec === "live" && CH.length) return [CH.length, allGroups("live").list.length];
     if(on && LOADED[sec] && (DATA[sec] || []).length) return [DATA[sec].length, allGroups(sec).list.length];
     return st[key] || [null, 0];
   };
-  var L = num("live", "l"), M = num("movies", "m"), S = num("series", "s");
-  var host = hostOf(p), click = on ? "" : ' onclick="pickList(\''+esc(p.id)+'\')" tabindex="0"';
-  var h = '<div class="acc'+(on ? " on" : "")+'"'+click+'>';
+  return { L: num("live", "l"), M: num("movies", "m"), S: num("series", "s") };
+}
 
-  if(p.type !== "xtream"){
-    h += '<div class="acc-h"><span class="ibox green">'+SICON.wifi+'</span>'
-       +   '<span class="tx"><b>'+esc(p.name)+'</b><s class="nat">'+esc(d.aPlaylist)
-       +     (L[1] ? " · " + d.aCats.replace("%s", nfmt(L[1])) : "")+'</s></span>'
-       +   '<span class="acc-big"><b>'+nfmt(L[0])+'</b><s>'+esc(d.channels)+'</s></span></div>';
+/* the playlist in use: one card - what it holds, the facts that matter, and
+   the three things that can be done with it, each with its own word */
+function accCard(p){
+  var d = t(), a = ACCI[p.id] || {}, ui = a.ui, x = p.type === "xtream", n = accNums(p, true);
+  var sub = x ? hostOf(p) + (a.ms ? "  ·  " + msTxt(a.ms) : "") : d.aPlaylist;
+  var h = '<div class="acc on"><div class="acc-h">'
+        +   '<span class="ibox '+(x ? "red" : "green")+'">'+(x ? SICON.server : SICON.wifi)+'</span>'
+        +   '<span class="tx"><b>'+esc(p.name)+'</b><s>'+esc(sub)+'</s></span>'
+        +   (x ? pillHTML(accState(p)) : '<span class="spill grey">M3U</span>') + '</div>';
+
+  var tile = function(cls, icon, num, label, sub2){
+    return '<div class="'+cls+'">'+icon+'<b>'+nfmt(num)+'</b><span>'+esc(label)+'</span>'
+         + (sub2 ? '<s>'+esc(sub2)+'</s>' : '')+'</div>';
+  };
+  var cats = function(v){ return v[1] ? d.aCats.replace("%s", nfmt(v[1])) : "" };
+  if(x){
+    h += '<div class="acc-n">'
+       +   tile("c1", SICON.live, n.L[0], d.live, cats(n.L))
+       +   tile("c2", SICON.film, n.M[0], d.movies, cats(n.M))
+       +   tile("c3", SICON.screen, n.S[0], d.series, cats(n.S))
+       + '</div>';
   } else {
-    var sub = host + (a.ms ? "  ·  " + d.hAns.replace("%s", msTxt(a.ms)) : "");
-    h += '<div class="acc-h"><span class="ibox red">'+SICON.server+'</span>'
-       +   '<span class="tx"><b>'+esc(p.name)+'</b><s>'+esc(sub)+'</s></span>'
-       +   pillHTML(accState(p)) + '</div>'
-       + '<div class="acc-n">'
-       +   '<div class="c1">'+SICON.live+'<b>'+nfmt(L[0])+'</b><span>'+esc(d.live)+'</span><s>'+esc(d.aCats.replace("%s", nfmt(L[1])))+'</s></div>'
-       +   '<div class="c2">'+SICON.film+'<b>'+nfmt(M[0])+'</b><span>'+esc(d.movies)+'</span><s>'+esc(d.aCats.replace("%s", nfmt(M[1])))+'</s></div>'
-       +   '<div class="c3">'+SICON.screen+'<b>'+nfmt(S[0])+'</b><span>'+esc(d.series)+'</span><s>'+esc(d.aCats.replace("%s", nfmt(S[1])))+'</s></div>'
+    h += '<div class="acc-n two">'
+       +   tile("c1", SICON.live, n.L[0], d.channels, "")
+       +   tile("c2", ICON.layers, n.L[1] || null, d.catLabel, "")
        + '</div>';
   }
 
-  /* the bottom line: when it ends, how full it is, and what can be done */
-  var meta = [];
+  /* the facts, as label over value */
+  var kv = [];
   if(ui){
-    meta.push(d.aExp.replace("%s", dayOf(ui.exp_date) || d.spdNoExp));
+    kv.push([d.aExpL, dayOf(ui.exp_date) || d.spdNoExp, ""]);
     var used = parseInt(ui.active_cons, 10) || 0, max = parseInt(ui.max_connections, 10) || 0;
-    if(max) meta.push('<em'+(used >= max ? ' class="red"' : '')+'>'+esc(d.aCons.replace("%s", "⁦" + used + "/" + max + "⁩"))+'</em>');
+    if(max) kv.push([d.aConsL, "⁦" + used + " / " + max + "⁩", used >= max ? "red" : ""]);
   }
-  var metaH = meta.map(function(m){ return m.charAt(0) === "<" ? m : esc(m) }).join("  ·  ");
-  if(on) metaH += (metaH ? "<br>" : "") + esc(updLine(d, updTimes()[p.id]));
+  kv.push([d.lastUpd, SYNCING ? d.updating : fmtWhen(updTimes()[p.id]), ""]);
+  if(!x && LAST_DL && LAST_DL.bytes > 0) kv.push([d.updSize, fmtSize(LAST_DL.bytes), ""]);
+  h += '<div class="acc-kv">' + kv.map(function(r){
+    return '<div><s>'+esc(r[0])+'</s><b'+(r[2] ? ' class="'+r[2]+'"' : '')+'>'+esc(r[1])+'</b></div>';
+  }).join("") + '</div>';
+
   var own = p.id !== DEFAULT_PLAYLIST.id;
-  h += '<div class="acc-f">' + (metaH ? '<span class="meta">'+metaH+'</span>' : '');
-  if(on){
-    h += '<span class="acts">'
-       +   (SYNCING ? '<button class="abtn busy">'+ICON.refresh+'</button>'
-                    : '<button class="abtn" onclick="refreshList()" aria-label="'+esc(d.refreshShort)+'">'+ICON.refresh+'</button>')
-       +   (own ? '<button class="abtn" onclick="editList(\''+esc(p.id)+'\')">'+ICON.edit+'</button>'
-                + '<button class="abtn red" onclick="removeList(\''+esc(p.id)+'\')">'+ICON.trash+'</button>'
-                : '<span class="spill grey">'+esc(d.builtIn)+'</span>')
-       + '</span>';
-  } else {
-    h += '<span class="acts">'
-       +   (own ? '<button class="abtn" onclick="event.stopPropagation();editList(\''+esc(p.id)+'\')">'+ICON.edit+'</button>'
-                + '<button class="abtn red" onclick="event.stopPropagation();removeList(\''+esc(p.id)+'\')">'+ICON.trash+'</button>' : '')
-       + '<span class="acc-sw">'+esc(d.aUse)+SICON.chev+'</span></span>';
-  }
-  return h + '</div></div>';
+  h += '<div class="acc-a">'
+     +   (SYNCING ? '<button class="abtn busy">'+ICON.refresh+'<span>'+esc(d.updating)+'</span></button>'
+                  : '<button class="abtn" onclick="refreshList()">'+ICON.refresh+'<span>'+esc(d.refreshShort)+'</span></button>')
+     +   (own ? '<button class="abtn" onclick="editList(\''+esc(p.id)+'\')">'+ICON.edit+'<span>'+esc(d.aEdit)+'</span></button>'
+              + '<button class="abtn red" onclick="removeList(\''+esc(p.id)+'\')">'+ICON.trash+'<span>'+esc(d.del)+'</span></button>'
+              : '')
+     + '</div>';
+  return h + '</div>';
+}
+
+/* another playlist: one quiet row. A tap switches to it; the dots open the
+   rest (edit, delete) without switching first. */
+function accRow(p){
+  var d = t(), x = p.type === "xtream", n = accNums(p, false), st = x ? accState(p) : null;
+  var sub = x ? hostOf(p) : d.aPlaylist + (n.L[0] ? "  ·  " + nfmt(n.L[0]) + " " + d.channels : "");
+  var state = st ? '<span class="stx '+(st.cls || "ok")+'">'+(st.spin ? '<span class="sp"></span>' : esc(st.txt))+'</span>' : '';
+  return '<div class="row" onclick="pickList(\''+esc(p.id)+'\')" tabindex="0">'
+       +   '<span class="ic '+(x ? "c-red" : "c-green")+'">'+(x ? SICON.server : SICON.wifi)+'</span>'
+       +   '<span class="tx"><b>'+esc(p.name)+'</b><s>'+esc(sub)+'</s></span>' + state
+       +   '<button class="mini more" onclick="event.stopPropagation();accMenu(\''+esc(p.id)+'\')" aria-label="more">'+SICON.dots+'</button>'
+       + '</div>';
+}
+
+var ACCM_ID = null;
+function accMenu(id){ if(findList(id)){ ACCM_ID = id; openSheet("accm") } }
+function accMenuBody(d){
+  var p = findList(ACCM_ID); if(!p) return "";
+  var own = p.id !== DEFAULT_PLAYLIST.id;
+  return '<div class="row" onclick="closeSheet();pickList(\''+esc(p.id)+'\')"><span class="ic">'+SICON.play+'</span>'
+       +   '<span class="tx"><b>'+esc(d.aUse)+'</b><s>'+esc(hostOf(p) || d.aPlaylist)+'</s></span></div>'
+       + (own ? '<div class="row" onclick="editList(\''+esc(p.id)+'\')"><span class="ic">'+ICON.edit+'</span>'
+              +   '<span class="tx"><b>'+esc(d.aEdit)+'</b></span></div>'
+              + '<div class="row" onclick="closeSheet();removeList(\''+esc(p.id)+'\')" style="color:#FF8A8A"><span class="ic" style="color:#FF8A8A">'+ICON.trash+'</span>'
+              +   '<span class="tx"><b>'+esc(d.del)+'</b></span></div>' : '');
 }
 
 /* ==================== the health check ====================
@@ -4146,7 +4220,7 @@ function probeStream(c){
       });
     }).then(function(head){
       var kind = /#EXTM3U|#EXT-X/.test(head) ? "HLS" : head.charCodeAt(0) === 0x47 ? "MPEG-TS"
-               : /<MPD/.test(head) ? "DASH" : "";
+               : /<MPD/.test(head) ? "DASH" : head.slice(4, 8) === "ftyp" ? "MP4" : "";
       fin({ ok: true, ms: Date.now() - t0, kind: kind });
     }).catch(function(e){ fin({ ok: false, err: e && e.message ? e.message : "network" }) });
   });
@@ -4194,7 +4268,18 @@ function hcSpeed(urlList){
   }, function(e){ if(urlList.length) return hcSpeed(urlList); throw e });
 }
 
-function hcSet(key, st, v){ if(HC && HC.rows[key]){ HC.rows[key].st = st; HC.rows[key].v = v; hcDraw() } }
+/* one line of the check: what it is, the answer on the right, and the
+   detail under the name */
+function hcSet(key, st, main, sub){
+  if(!HC || !HC.rows[key]) return;
+  HC.rows[key] = { st: st, m: main || "", s: sub || "" };
+  hcDraw();
+}
+function hcDrop(key){
+  if(!HC) return;
+  HC.order = HC.order.filter(function(k){ return k !== key });
+  hcDraw();
+}
 
 /* only the health card is redrawn while it runs - the rest of the page,
    and where it is scrolled to, stays exactly as it is */
@@ -4202,6 +4287,27 @@ function hcDraw(){
   var box = $("hcBox");
   if(box) box.outerHTML = hcHTML();
   else refreshSettings();
+}
+
+/* a film to open: one already in memory, one from the history, or the
+   first film of the panel's first group - two small questions */
+function hcVodPick(p){
+  var mv = DATA.movies || [];
+  for(var j = 0; j < mv.length; j++) if(mv[j] && /^https?:/i.test(mv[j].u || "")) return Promise.resolve(mv[j]);
+  var hl = histList();
+  for(var k = 0; k < hl.length; k++) if(hl[k] && /\/movie\//.test(hl[k].u || "")) return Promise.resolve(hl[k]);
+  if(p.type !== "xtream") return Promise.resolve(null);
+  var d0 = String(p.domain || "").replace(/\/+$/, "");
+  var ask = function(action){ return fetch(viaApp(xtBase(p) + "&action=" + action)).then(function(r){ return r.text() }).then(JSON.parse) };
+  return ask("get_vod_categories").then(function(cats){
+    if(!cats || !cats.length) return null;
+    return ask("get_vod_streams&category_id=" + encodeURIComponent(cats[0].category_id)).then(function(list){
+      var v = list && list[0];
+      if(!v || !v.stream_id) return null;
+      return { n: v.name || ("#" + v.stream_id),
+               u: streamURL(v.direct_source, d0 + "/movie/" + xtCreds(p) + "/" + v.stream_id + "." + (v.container_extension || "mp4"), d0) };
+    });
+  }).catch(function(){ return null });
 }
 
 function hcRun(){
@@ -4213,7 +4319,7 @@ function hcRun(){
   order.push("live");
   if(x) order.push("vod");
   order.push("hevc", "ac3");
-  order.forEach(function(k){ HC.rows[k] = { st: "run", v: "" } });
+  order.forEach(function(k){ HC.rows[k] = { st: "run", m: "", s: "" } });
   HC.order = order;
   hcDraw();
 
@@ -4223,9 +4329,9 @@ function hcRun(){
   var provUrl = x ? (xtBase(p) + "&action=get_live_streams") : (p.url || "");
   jobs.push(hcSpeed(["https://speed.cloudflare.com/__down?bytes=5000000", provUrl].filter(Boolean)).then(function(r){
     var mbps = r.bps / 1000000;
-    hcSet("net", mbps >= 3 ? "ok" : "warn",
-      fmtRate(r.bps / 8) + "  ·  " + d.hFirst.replace("%s", msTxt(r.first)) + "  ·  " + speedVerdict(d, mbps));
-  }, function(){ hcSet("net", "bad", d.hOff) }));
+    hcSet("net", mbps >= 3 ? "ok" : "warn", fmtRate(r.bps / 8),
+      speedVerdict(d, mbps) + "  ·  " + d.hFirst.replace("%s", msTxt(r.first)));
+  }, function(){ hcSet("net", "bad", d.hOff, "") }));
 
   /* the provider, and what it says about the account */
   var t0 = Date.now();
@@ -4240,47 +4346,41 @@ function hcRun(){
     if(x){
       var o = null; try{ o = JSON.parse(txt) }catch(e){}
       var ui = o && o.user_info;
-      if(!ui){ hcSet("prov", "bad", hostOf(p) + "  ·  " + d.hOff); hcSet("acc", "bad", "—"); return }
+      if(!ui){ hcSet("prov", "bad", d.hOff, hostOf(p)); hcSet("acc", "bad", "—", ""); return }
       ACCI[p.id] = { at: Date.now(), ms: ms, ui: ui };
-      hcSet("prov", ms > 2500 ? "warn" : "ok", hostOf(p) + "  ·  " + d.hOnline + "  ·  " + msTxt(ms));
+      hcSet("prov", ms > 2500 ? "warn" : "ok", msTxt(ms), hostOf(p));
       var used = parseInt(ui.active_cons, 10) || 0, max = parseInt(ui.max_connections, 10) || 0;
-      var stt = accState(p), parts = [stt ? stt.txt : ""];
-      parts.push(d.aExp.replace("%s", dayOf(ui.exp_date) || d.spdNoExp));
+      var stt = accState(p), parts = [d.aExp.replace("%s", dayOf(ui.exp_date) || d.spdNoExp)];
       if(max) parts.push(d.aCons.replace("%s", "⁦" + used + "/" + max + "⁩"));
-      hcSet("acc", stt && stt.cls === "red" ? "bad" : (max && used >= max ? "warn" : "ok"), parts.join("  ·  "));
+      hcSet("acc", stt && stt.cls === "red" ? "bad" : (max && used >= max ? "warn" : "ok"),
+        stt ? stt.txt : "", parts.join("  ·  "));
     } else {
-      hcSet("prov", ms > 2500 ? "warn" : "ok", hostOf(p) + "  ·  " + d.hOnline + "  ·  " + msTxt(ms));
+      hcSet("prov", ms > 2500 ? "warn" : "ok", msTxt(ms), hostOf(p));
     }
-  }, function(){ hcSet("prov", "bad", hostOf(p) + "  ·  " + d.hOff); if(x) hcSet("acc", "bad", "—") }));
+  }, function(){ hcSet("prov", "bad", d.hOff, hostOf(p)); if(x) hcSet("acc", "bad", "—", "") }));
 
   /* the device */
-  var cd = codecInfo();
-  hcSet("hevc", cd.hevc ? "ok" : "warn", (cd.hevc ? d.hSup : d.hNoSup) + (cd.hevc4k ? "  ·  4K" : ""));
-  hcSet("ac3", (cd.ac3 || window.AndroidPlayer) ? "ok" : "warn", (cd.ac3 || window.AndroidPlayer) ? d.hSup : d.hNoSup);
+  var cd = codecInfo(), ac3 = !!(cd.ac3 || window.AndroidPlayer);
+  hcSet("hevc", cd.hevc ? "ok" : "warn", cd.hevc ? d.hSup : d.hNoSup, cd.hevc4k ? d.hUpTo4k : "");
+  hcSet("ac3", ac3 ? "ok" : "warn", ac3 ? d.hSup : d.hNoSup, "");
 
   /* the streams, one after the other - never two connections at once */
   var pickLive = null;
   for(var i = 0; i < CH.length && !pickLive; i++) if(CH[i] && /^https?:/i.test(CH[i].u || "")) pickLive = CH[i];
-  var pickVod = null;
-  var mv = DATA.movies || [];
-  for(var j = 0; j < mv.length && !pickVod; j++) if(mv[j] && /^https?:/i.test(mv[j].u || "")) pickVod = mv[j];
-  if(!pickVod){
-    var hl = histList();
-    for(var k = 0; k < hl.length && !pickVod; k++) if(hl[k] && /\/movie\//.test(hl[k].u || "")) pickVod = hl[k];
-  }
   var probeRow = function(key, c){
-    if(!c){ hcSet(key, "", d.hNoItem); return Promise.resolve() }
+    if(!c){ hcDrop(key); return Promise.resolve() }
     return probeStream(c).then(function(r){
       if(r && r.ok){
         var kind = r.kind || (/\.m3u8/i.test(c.u) ? "HLS" : /\.ts(\?|$)/i.test(c.u) ? "MPEG-TS" : "");
-        hcSet(key, r.ms > 4000 ? "warn" : "ok",
-          c.n + "  ·  " + (kind ? kind + " " : "") + "OK  ·  " + d.hAns.replace("%s", msTxt(r.ms || 0)));
+        hcSet(key, r.ms > 4000 ? "warn" : "ok", msTxt(r.ms || 0), c.n + (kind ? "  ·  " + kind : ""));
       } else {
-        hcSet(key, "bad", c.n + "  ·  " + d.hFail + (r && r.code ? "  (HTTP " + r.code + ")" : ""));
+        hcSet(key, "bad", d.hFail, c.n + (r && r.code ? "  ·  HTTP " + r.code : ""));
       }
     });
   };
-  jobs.push(probeRow("live", pickLive).then(function(){ if(x) return probeRow("vod", pickVod) }));
+  jobs.push(probeRow("live", pickLive).then(function(){
+    if(x) return hcVodPick(p).then(function(v){ return probeRow("vod", v) });
+  }));
 
   Promise.all(jobs.map(function(j){ return j.catch(function(){}) })).then(function(){
     if(!HC) return;
@@ -4292,15 +4392,15 @@ function hcRun(){
 }
 
 function hcHTML(){
-  var d = t(), sub, pill;
+  var d = t(), sub, pill = null;
   if(!HC){
-    sub = d.hcIdle; pill = { cls: "grey", txt: d.pReady };
+    sub = d.hcIdle;
   } else if(HC.state === "run"){
     sub = d.spdTesting; pill = { cls: "gold", txt: d.pRun, spin: true };
   } else {
     var bad = 0;
     HC.order.forEach(function(k){ if(HC.rows[k].st === "bad" || HC.rows[k].st === "warn") bad++ });
-    sub = bad ? d.hcSome.replace("%s", bad) : d.hcGood;
+    sub = (bad ? d.hcSome.replace("%s", bad) : d.hcGood) + "  ·  " + fmtWhen(HC.at);
     pill = bad ? { cls: "red", txt: d.pIssue } : { cls: "", txt: d.pAll };
   }
   var names = { net: d.hNet, prov: d.hProv, acc: d.spdStat, live: d.hLive, vod: d.hVod, hevc: d.hHevc, ac3: d.hAudio };
@@ -4309,7 +4409,9 @@ function hcHTML(){
   if(HC){
     h += '<div class="hc-rows">' + HC.order.map(function(k){
       var r = HC.rows[k];
-      return '<div class="hr '+(r.st || "")+'"><i></i><b>'+esc(names[k])+'</b><span>'+esc(r.v || (r.st === "run" ? "…" : ""))+'</span></div>';
+      return '<div class="hr '+(r.st || "")+'"><i></i>'
+           +   '<span class="hl"><b>'+esc(names[k])+'</b>'+(r.s ? '<s>'+esc(r.s)+'</s>' : '')+'</span>'
+           +   '<em>'+esc(r.m || (r.st === "run" ? "…" : ""))+'</em></div>';
     }).join("") + '</div>';
   }
   var running = HC && HC.state === "run";
@@ -4324,12 +4426,12 @@ function hcHTML(){
 /* the line under the name: which code opened the app, and until when */
 function actLine(d){
   var a = actRead();
-  if(!a || !a.c) return { txt: d.actOwner, warn: false };
+  if(!a || !a.c) return { txt: d.actOwner, short: d.actOn, warn: false };
   if(a.u){
     var ends = Date.parse(a.u);
-    if(ends) return { txt: d.actUntil.replace("%s", speedDay(ends)), warn: ends - Date.now() < 7 * 86400000 };
+    if(ends) return { txt: d.actUntil.replace("%s", speedDay(ends)), short: speedDay(ends), warn: ends - Date.now() < 7 * 86400000 };
   }
-  return { txt: d.actOn, warn: false };
+  return { txt: d.actOn, short: d.actOn, warn: false };
 }
 
 function drawSettings(){
@@ -4342,17 +4444,23 @@ function drawSettings(){
   /* who */
   var al = actLine(d);
   h += '<div class="st-hero"><span class="lg">'+LOGO_ICON+'</span>'
-     +   '<span class="tx"><b>KURDISTAN IPTV</b><s>'+esc(d.version + " " + appVerText())+'</s>'
-     +   '<i'+(al.warn ? ' class="warn"' : '')+'>'+esc(al.txt)+'</i></span></div>';
+     +   '<span class="tx"><b>KURDISTAN IPTV</b><s>'+esc(d.version + " " + appVerText())+'</s></span>'
+     +   '<span class="spill'+(al.warn ? " gold" : "")+'">'+esc(al.short)+'</span></div>';
 
   /* is everything working */
   h += hcHTML();
 
-  /* the accounts: the one in use first */
-  var lists = getLists(), ordered = [act].concat(lists.filter(function(p){ return p.id !== cur }));
-  h += '<div class="st-g">'+esc(d.accounts)+'<em>'+nfmt(lists.length)+'</em></div>';
-  h += ordered.map(function(p){ return accCard(p, p.id === cur) }).join("");
-  h += '<button class="addbtn" onclick="openSheet(\'type\')">'+SICON.plus+esc(d.addList)+'</button>';
+  /* the playlist in use */
+  h += setGroup(d.activeList);
+  h += accCard(act);
+
+  /* the others, and adding one */
+  var others = getLists().filter(function(p){ return p.id !== cur });
+  h += '<div class="st-g">'+esc(d.otherLists)+(others.length ? '<em>'+nfmt(others.length)+'</em>' : '')+'</div>';
+  h += '<div class="sgroup">' + others.map(accRow).join("")
+     +   '<div class="row addrow" onclick="openSheet(\'type\')" tabindex="0"><span class="ic c-gold">'+SICON.plus+'</span>'
+     +     '<span class="tx"><b>'+esc(d.addList)+'</b><s class="nat">'+esc(d.xtream + " · M3U")+'</s></span></div>'
+     + '</div>';
 
   /* the switches */
   h += setGroup(d.general);
@@ -4372,8 +4480,7 @@ function drawSettings(){
   h += setRowC("c-red", SICON.mail, d.gcMail, GC_MAIL, "stMail()", false);
   h += '</div>';
 
-  h += '<div class="st-foot"><span class="lg">'+LOGO_ICON+'</span><b>KURDISTAN IPTV</b>'
-     +   '<span class="fl"></span>'+esc(d.version + " " + appVerText())+'</div>';
+  h += '<div class="st-foot"><span class="fl"></span>KURDISTAN IPTV  ·  '+esc(d.version + " " + appVerText())+'</div>';
   h += '</div>';
 
   $("setBody").innerHTML = h;
