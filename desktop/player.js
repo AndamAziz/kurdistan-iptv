@@ -204,16 +204,6 @@ function mpvArgs(opts) {
     "--demuxer-lavf-analyzeduration=1",
     "--demuxer-lavf-probesize=2000000",
 
-    /* A series' pieces come one after another from a file server (r2.dev
-       and the like) that now and then answers a piece slowly or not at all.
-       FFmpeg's list reader used to give up on such a piece at once - the
-       picture stopped there. Now it asks for it again, up to ten times, and
-       the player waits for a few seconds of picture before it carries on
-       after a pause, rather than starting and stopping every second. */
-    "--demuxer-lavf-o-append=seg_max_retry=10",
-    "--demuxer-lavf-o-append=http_persistent=1",
-    "--cache-pause-wait=3",
-
     /* A line that drops is put back up.
        This is what the phone does with reconnects of its own, and its absence
        here is why a film or an episode simply stopped part way through. */
