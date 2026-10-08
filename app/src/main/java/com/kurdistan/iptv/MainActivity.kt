@@ -328,6 +328,12 @@ class MainActivity : ComponentActivity() {
             )
         }
 
+        /* Android's own HTTP code (the playlist downloads, the update, and the
+           player's "sys" ways) checks certificates the browser way too: a
+           missing middle certificate is fetched, then everything is checked */
+        try {
+            javax.net.ssl.HttpsURLConnection.setDefaultSSLSocketFactory(AiaTrust.shared.socketFactory)
+        } catch (e: Exception) { }
         net = StreamNet(this)
         configureWebView()
         webView.loadUrl("file:///android_asset/index.html")
