@@ -117,15 +117,25 @@ section{margin-top:22px}
 .shead .cnt{margin-inline-start:auto;font-size:11px;font-weight:700;color:var(--muted2);
   background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 10px}
 
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-@media(min-width:520px){.grid{grid-template-columns:repeat(4,1fr)}}
-@media(min-width:760px){.grid{grid-template-columns:repeat(6,1fr)}}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media(min-width:520px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(min-width:760px){.grid{grid-template-columns:repeat(6,minmax(0,1fr))}}
 
-.card{cursor:pointer;transition:transform .16s}
+/* A grid column must never take its width from what is written inside a
+   card. "1fr" alone means "at least as wide as the longest line", so when the
+   guide line of one channel arrived while scrolling, its whole column grew
+   and the tiles beside it shrank - every tile on the page jumped. minmax(0,..)
+   on the columns and min-width:0 here keep every column exactly equal. */
+.card{cursor:pointer;transition:transform .16s;min-width:0}
 .card .epg{margin-top:1px;font-size:10px;font-weight:600;line-height:1.35;color:var(--muted2);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:1.35em}
 html.tv .card .epg{font-size:12px}
-.card:active{transform:scale(.94)}
+/* The press is drawn by a class, not by :active. A list with touch handlers
+   gets :active the instant a finger lands - so every scroll that started on
+   a tile shrank that tile and popped it back. The class only comes once the
+   finger has rested without moving, and goes the moment it moves. */
+.card.press{transform:scale(.95)}
+@media(hover:hover) and (pointer:fine){.card:active{transform:scale(.96)}}
 .tile{position:relative;aspect-ratio:1;border-radius:var(--r-lg);overflow:hidden;background:var(--surface);
   border:1px solid var(--line);box-shadow:0 10px 24px rgba(0,0,0,.45)}
 .tile::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
@@ -142,7 +152,7 @@ html.tv .card .epg{font-size:12px}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 .name{font-size:11.5px;font-weight:700;color:var(--muted);text-align:center;padding:9px 2px 0;
   line-height:1.35;min-height:41px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.card:active .name{color:var(--text)}
+.card.press .name{color:var(--text)}
 
 #moreWrap{display:none;text-align:center;padding:26px 0 6px}
 #moreBtn{padding:13px 30px;border-radius:999px;border:1px solid var(--line);background:var(--surface);
@@ -384,21 +394,21 @@ html[dir=rtl] .rhead .all svg{transform:scaleX(-1)}
 body.hasnav main{padding-bottom:calc(96px + var(--safe-b))}
 
 /* ---------- poster cards (movies / series) ---------- */
-.grid.posters{grid-template-columns:repeat(3,1fr);gap:12px}
-@media(min-width:520px){.grid.posters{grid-template-columns:repeat(4,1fr)}}
-@media(min-width:760px){.grid.posters{grid-template-columns:repeat(6,1fr)}}
+.grid.posters{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media(min-width:520px){.grid.posters{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(min-width:760px){.grid.posters{grid-template-columns:repeat(6,minmax(0,1fr))}}
 /* A window on a desk is far wider than a phone. A banner that kept its shape
    would fill the whole of it, so past this width it stops growing downwards
    and the rows put more on a line instead. A television is left alone: it has
    its own sizes already, set for a remote and a room away. */
 @media(min-width:900px){
-  html:not(.tv) .grid{grid-template-columns:repeat(8,1fr)}
-  html:not(.tv) .grid.posters{grid-template-columns:repeat(7,1fr)}
+  html:not(.tv) .grid{grid-template-columns:repeat(8,minmax(0,1fr))}
+  html:not(.tv) .grid.posters{grid-template-columns:repeat(7,minmax(0,1fr))}
   html:not(.tv) main{max-width:1500px;margin-inline:auto}
 }
 @media(min-width:1500px){
-  html:not(.tv) .grid{grid-template-columns:repeat(10,1fr)}
-  html:not(.tv) .grid.posters{grid-template-columns:repeat(9,1fr)}
+  html:not(.tv) .grid{grid-template-columns:repeat(10,minmax(0,1fr))}
+  html:not(.tv) .grid.posters{grid-template-columns:repeat(9,minmax(0,1fr))}
 }
 /* A sheet that rises from the bottom of a phone is right for a phone. On a
    wide window the same thing stretches a label to one far edge and its answer
@@ -512,7 +522,7 @@ html.tv #splash h1{font-size:23px}
 .pin.fill{border-color:rgba(232,179,60,.5);background:var(--surface2)}
 .pin.cur{border-color:var(--accent2);box-shadow:0 0 0 4px rgba(232,179,60,.16)}
 /* the keypad: a remote reaches it, and no system keyboard covers the screen */
-.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:24px auto 0;
+.keys{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:24px auto 0;
   max-width:266px;direction:ltr}
 .key{height:54px;border-radius:16px;background:rgba(18,25,36,.8);border:1px solid var(--line);
   color:var(--text);font-size:20px;font-weight:700;cursor:pointer;transition:.15s;
@@ -602,10 +612,11 @@ html.tv .gc svg{width:14px;height:14px}
 
 /* ---------- categories: hide, put in order, lock ---------- */
 .segs{display:flex;gap:7px;margin-bottom:13px}
-.seg{flex:1;padding:10px 4px;border-radius:12px;border:1px solid var(--line);background:var(--surface);
-  color:var(--muted);font-size:12.5px;font-weight:800;cursor:pointer}
-.seg.on{border-color:rgba(232,179,60,.55);background:var(--surface2);color:var(--text)}
-.seg[disabled]{opacity:.35;cursor:default}
+.segs .seg{flex:1;padding:10px 4px;border-radius:12px;border:1px solid var(--line);background:var(--surface);
+  color:var(--muted);font-size:12.5px;font-weight:800;cursor:pointer;margin:0;
+  display:flex;align-items:center;justify-content:center}
+.segs .seg.on{border-color:rgba(232,179,60,.55);background:var(--surface2);color:var(--text)}
+.segs .seg[disabled]{opacity:.35;cursor:default}
 .catrow{display:flex;align-items:center;gap:7px;padding:9px 11px;border-radius:14px;background:var(--surface);
   border:1px solid var(--line);margin-bottom:7px}
 .catrow.off{opacity:.48}
@@ -698,7 +709,7 @@ html.tv .pinwrap .keys{max-width:230px;margin-top:12px}
 html.kbd :focus{outline:none}
 html.kbd .card:focus .tile,html.kbd .card:focus .poster{box-shadow:0 0 0 3px #fff,0 0 0 7px var(--accent)}
 html.kbd .card:focus .name{color:#fff}
-html.kbd button:focus,html.kbd input:focus,html.kbd .row:focus,html.kbd .ep:focus,html.kbd .hi:focus,
+html.kbd button:focus,html.kbd input:focus,html.kbd .row:focus,html.kbd .ep:focus,html.kbd .hi:focus,html.kbd .acc:focus,
 html.kbd .all:focus,html.kbd #pins:focus{outline:3px solid #fff;outline-offset:2px}
 html.kbd .chip:focus{outline:3px solid #fff;outline-offset:2px}
 html.kbd .hero.on:focus{outline:4px solid #fff;outline-offset:-4px}
@@ -751,95 +762,191 @@ html.kbd .card,html.kbd .row,html.kbd .ep,html.kbd .hi,html.kbd button{scroll-ma
 .mini.red{color:#FF8A8A}
 .badge{flex:none;font-size:10px;font-weight:800;letter-spacing:.6px;padding:4px 8px;border-radius:7px;
   background:var(--surface2);color:var(--muted)}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:9px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-bottom:9px}
 .stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:13px 6px;text-align:center}
 .stat b{display:block;font-size:18px;font-weight:800;direction:ltr}
 .stat s{display:block;text-decoration:none;font-size:11px;color:var(--muted2);font-weight:700;margin-top:4px}
 
 /* ---------- settings ----------
-   Rows that belong together are drawn as one card with hairlines between
-   them, the way a settings screen is drawn everywhere else. A dozen separate
-   floating pills was what made this page look unfinished. */
-#settings .st-g{text-transform:uppercase;font-size:10.5px;letter-spacing:1.5px}
-#settings .sgroup{background:var(--surface);border:1px solid var(--line);border-radius:18px;
-  overflow:hidden;box-shadow:0 8px 22px rgba(0,0,0,.3)}
-#settings .sgroup .row{background:none;border:0;border-radius:0;margin:0;padding:11px 13px;
+   One page, read top to bottom the way people look for things: who I am and
+   whether the app is healthy, then my accounts, then the switches, then how
+   to reach a person. Every block is one card; rows inside a card are split
+   by hairlines, never drawn as a dozen floating pills. */
+#settings{padding:0 0 calc(34px + var(--safe-b))}
+#settings .st-in{max-width:640px;margin:0 auto;padding:0 16px}
+.st-top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;
+  padding:calc(12px + var(--safe-t)) 16px 12px;margin-bottom:4px;
+  background:rgba(7,10,14,.95);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-bottom:1px solid transparent;transition:border-color .2s}
+.st-top.sh{border-bottom-color:var(--line)}
+.st-top h1{margin:0;font-size:22px;font-weight:800;letter-spacing:-.3px;flex:1;min-width:0}
+.st-top .iconbtn svg{display:block}
+html[dir=rtl] .st-top .iconbtn svg{transform:scaleX(-1)}
+#settings .st-g{display:flex;align-items:center;gap:9px;margin:26px 2px 11px;font-size:11px;font-weight:800;
+  letter-spacing:1.6px;text-transform:uppercase;color:var(--muted2)}
+#settings .st-g .bar{display:none}
+#settings .st-g em{margin-inline-start:auto;font-style:normal;letter-spacing:.4px;text-transform:none;
+  font-size:11.5px;color:var(--muted2);font-weight:700}
+
+/* who: the app, the version, the code it was opened with */
+.st-hero{position:relative;overflow:hidden;display:flex;align-items:center;gap:14px;
+  padding:16px;border-radius:22px;border:1px solid rgba(232,179,60,.22);
+  background:radial-gradient(120% 140% at 0% 0%,rgba(232,179,60,.16),transparent 55%),
+             radial-gradient(90% 120% at 100% 100%,rgba(42,161,75,.10),transparent 60%),
+             linear-gradient(160deg,#141C27,#0D131B);
+  box-shadow:0 14px 34px rgba(0,0,0,.42)}
+html[dir=rtl] .st-hero{background:radial-gradient(120% 140% at 100% 0%,rgba(232,179,60,.16),transparent 55%),
+             radial-gradient(90% 120% at 0% 100%,rgba(42,161,75,.10),transparent 60%),
+             linear-gradient(200deg,#141C27,#0D131B)}
+.st-hero::after{content:"";position:absolute;inset-inline:18px;bottom:0;height:2px;border-radius:2px;opacity:.75;
+  background:linear-gradient(90deg,#ED2024 0 33.33%,#FFFFFF 33.33% 66.66%,#2AA14B 66.66% 100%)}
+.st-hero .lg{width:56px;height:56px;flex:none;border-radius:17px;display:grid;place-items:center;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);padding:7px}
+.st-hero .lg svg{display:block;width:100%;height:100%}
+.st-hero .tx{flex:1;min-width:0}
+.st-hero .tx b{display:block;font-size:16.5px;font-weight:800;letter-spacing:1.4px;color:#fff;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-hero .tx s{display:block;text-decoration:none;margin-top:4px;font-size:12px;font-weight:700;color:var(--muted)}
+.st-hero .tx i{display:flex;align-items:center;gap:6px;margin-top:7px;font-style:normal;font-size:11.5px;
+  font-weight:700;color:var(--muted2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-hero .tx i::before{content:"";flex:none;width:7px;height:7px;border-radius:99px;background:var(--live);
+  box-shadow:0 0 0 3px rgba(47,191,113,.18)}
+.st-hero .tx i.warn::before{background:var(--accent);box-shadow:0 0 0 3px rgba(232,179,60,.18)}
+
+/* a status word on a soft plate of its own colour */
+.spill{flex:none;display:inline-flex;align-items:center;gap:5px;max-width:46%;
+  padding:6px 11px;border-radius:999px;font-size:11.5px;font-weight:800;letter-spacing:.2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  color:var(--live);background:rgba(47,191,113,.13);border:1px solid rgba(47,191,113,.28)}
+.spill.gold{color:var(--accent2);background:rgba(232,179,60,.12);border-color:rgba(232,179,60,.32)}
+.spill.red{color:#FF8A8A;background:rgba(237,32,36,.12);border-color:rgba(237,32,36,.32)}
+.spill.grey{color:var(--muted);background:rgba(152,165,179,.1);border-color:rgba(152,165,179,.24)}
+.spill .sp{width:10px;height:10px;flex:none;border-radius:99px;border:2px solid currentColor;
+  border-top-color:transparent;animation:spin .8s linear infinite}
+
+/* the health check */
+.st-hero + .hc{margin-top:14px}
+.hc{border-radius:22px;background:var(--surface);border:1px solid var(--line);overflow:hidden;
+  box-shadow:0 12px 30px rgba(0,0,0,.36)}
+.hc-h{display:flex;align-items:center;gap:13px;padding:15px 15px 14px}
+.ibox{width:44px;height:44px;flex:none;border-radius:14px;display:grid;place-items:center;
+  color:#6FB1FF;background:rgba(77,155,255,.13);border:1px solid rgba(77,155,255,.18)}
+.ibox svg{display:block;width:21px;height:21px}
+.ibox.red{color:#FF6B6E;background:rgba(237,32,36,.13);border-color:rgba(237,32,36,.2)}
+.ibox.green{color:#46D486;background:rgba(42,161,75,.14);border-color:rgba(42,161,75,.22)}
+.ibox.gold{color:var(--accent2);background:rgba(232,179,60,.13);border-color:rgba(232,179,60,.22)}
+.ibox.tg{color:#3FA8F0;background:rgba(42,158,232,.14);border-color:rgba(42,158,232,.22)}
+.hc-h .tx,.acc-h .tx{flex:1;min-width:0}
+.hc-h .tx b,.acc-h .tx b{display:block;font-size:15.5px;font-weight:800;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hc-h .tx s,.acc-h .tx s{display:block;text-decoration:none;margin-top:3px;font-size:12px;font-weight:600;
+  color:var(--muted2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hc-rows{border-top:1px solid var(--line);padding:4px 0}
+.hr{display:flex;align-items:flex-start;gap:11px;padding:11px 15px}
+.hr+.hr{border-top:1px solid rgba(34,44,56,.6)}
+.hr i{flex:none;width:8px;height:8px;margin-top:6px;border-radius:99px;background:var(--muted2)}
+.hr.ok i{background:var(--live);box-shadow:0 0 0 3px rgba(47,191,113,.16)}
+.hr.warn i{background:var(--accent);box-shadow:0 0 0 3px rgba(232,179,60,.16)}
+.hr.bad i{background:#ED2024;box-shadow:0 0 0 3px rgba(237,32,36,.16)}
+.hr.run i{background:transparent;border:2px solid var(--muted2);border-top-color:var(--accent2);
+  width:10px;height:10px;margin-top:5px;animation:spin .8s linear infinite}
+.hr b{flex:0 0 38%;min-width:0;font-size:13.5px;font-weight:800;line-height:1.4}
+.hr span{flex:1;min-width:0;text-align:end;font-size:12.5px;font-weight:600;line-height:1.45;color:var(--muted);
+  overflow-wrap:anywhere}
+.hr.bad span{color:#FF9B9B}
+.hc-f{display:flex;gap:8px;padding:12px 15px 15px;border-top:1px solid var(--line)}
+.hbtn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:0;
+  padding:12px 14px;border-radius:14px;border:0;cursor:pointer;font:inherit;font-size:13.5px;font-weight:800;
+  color:#1A1203;background:linear-gradient(100deg,var(--accent),var(--accent2));
+  box-shadow:0 8px 20px rgba(232,179,60,.26);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hbtn svg{flex:none;display:block}
+.hbtn.ghost{flex:0 0 auto;color:var(--text);background:var(--surface2);box-shadow:none;border:1px solid var(--line)}
+.hbtn[disabled]{opacity:.55;cursor:default}
+.hbtn:active{transform:scale(.97)}
+
+/* one card per account */
+.acc{border-radius:22px;background:var(--surface);border:1px solid var(--line);padding:15px;
+  box-shadow:0 12px 30px rgba(0,0,0,.34);cursor:pointer;transition:border-color .2s,transform .15s}
+.acc+.acc{margin-top:12px}
+.acc:active{transform:scale(.99)}
+.acc.on{cursor:default;border-color:rgba(232,179,60,.42);
+  background:linear-gradient(180deg,rgba(232,179,60,.06),transparent 46%),var(--surface)}
+.acc.on:active{transform:none}
+.acc-h{display:flex;align-items:center;gap:12px}
+.acc-h .tx s{direction:ltr;text-align:start}
+html[dir=rtl] .acc-h .tx s{text-align:end}
+.acc-big{flex:none;text-align:end;line-height:1.1}
+.acc-big b{display:block;font-size:22px;font-weight:800;direction:ltr}
+.acc-big s{display:block;text-decoration:none;font-size:11.5px;font-weight:700;color:var(--muted2);margin-top:3px}
+.acc-n{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:14px}
+.acc-n div{min-width:0;padding:12px 11px 11px;border-radius:16px;background:rgba(255,255,255,.035);
+  border:1px solid rgba(255,255,255,.05)}
+.acc-n svg{display:block;width:22px;height:22px;margin-bottom:9px}
+.acc-n .c1 svg{color:#FF6B6E}
+.acc-n .c2 svg{color:var(--accent2)}
+.acc-n .c3 svg{color:#46D486}
+.acc-n b{display:block;font-size:19px;font-weight:800;line-height:1.1;direction:ltr;text-align:start;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html[dir=rtl] .acc-n b{text-align:end}
+.acc-n span{display:block;margin-top:3px;font-size:12.5px;font-weight:800;color:var(--muted)}
+.acc-n s{display:block;text-decoration:none;margin-top:2px;font-size:10.5px;font-weight:600;color:var(--muted2);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acc-f{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px;margin-top:13px;padding-top:12px;
+  border-top:1px solid var(--line)}
+.acc-f .meta{flex:1 1 180px;min-width:0;font-size:12px;font-weight:700;color:var(--muted2);line-height:1.5}
+.acc-f .meta em{font-style:normal;color:var(--muted)}
+.acc-f .meta em.red{color:#FF8A8A}
+.acc-f .acts{display:flex;align-items:center;gap:7px;flex:none;margin-inline-start:auto}
+.acc-f .acts .spill{max-width:none}
+.acc-f .acts .acc-sw{margin-inline-start:4px}
+html[dir=rtl] #settings .st-g{letter-spacing:0;font-size:12.5px}
+.abtn{height:36px;min-width:36px;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:0 11px;border-radius:12px;border:1px solid var(--line);background:var(--surface2);color:var(--text);
+  font:inherit;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}
+.abtn svg{display:block;flex:none}
+.abtn.red{color:#FF8A8A}
+.abtn.busy{color:var(--muted);cursor:default}
+.abtn.busy svg{animation:spin .9s linear infinite}
+.abtn:active{transform:scale(.94)}
+.acc-sw{display:flex;align-items:center;gap:6px;margin-inline-start:auto;flex:none;font-size:12px;
+  font-weight:800;color:var(--accent2)}
+.acc-sw svg{display:block}
+html[dir=rtl] .acc-sw svg{transform:scaleX(-1)}
+
+/* plain rows, gathered into one card */
+#settings .sgroup{background:var(--surface);border:1px solid var(--line);border-radius:20px;
+  overflow:hidden;box-shadow:0 10px 26px rgba(0,0,0,.3)}
+#settings .sgroup .row{background:none;border:0;border-radius:0;margin:0;padding:12px 14px;gap:13px;
   border-top:1px solid var(--line)}
 #settings .sgroup .row:first-child{border-top:0}
 #settings .sgroup .row:active{background:var(--surface2)}
-#settings .sgroup .row .ic{width:32px;height:32px;flex:none;border-radius:10px;
+#settings .sgroup .row .ic{width:38px;height:38px;flex:none;border-radius:12px;
   display:grid;place-items:center;background:var(--surface2);color:var(--muted)}
-#settings .sgroup .row .ic svg{display:block}
-#settings .sgroup + .addbtn{margin-top:9px}
-
-.plcard{border-radius:18px;padding:13px;border:1px solid var(--line);
-  background:var(--surface);box-shadow:0 10px 26px rgba(0,0,0,.34)}
-.plcard .t{display:flex;align-items:center;gap:11px}
-.plcard .ic{width:38px;height:38px;flex:none;border-radius:12px;display:grid;place-items:center;
-  background:rgba(232,179,60,.12);color:var(--accent)}
-.plcard .tx{flex:1;min-width:0}
-.plcard .tx b{display:block;font-size:16px;font-weight:800}
-.plcard .tx s{display:block;text-decoration:none;font-size:11px;color:var(--muted2);font-weight:600;
-  margin-top:2px;direction:ltr;text-align:start;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pill{flex:none;font-size:9.5px;font-weight:800;letter-spacing:.8px;padding:5px 9px;border-radius:8px;
-  background:rgba(47,191,113,.14);color:var(--live);border:1px solid rgba(47,191,113,.3)}
-.pill.grey{background:rgba(139,151,166,.14);color:var(--muted);border-color:rgba(139,151,166,.3)}
-.nums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
-.num{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:12px;padding:7px 4px;text-align:center}
-.num b{display:block;font-size:15px;font-weight:800;direction:ltr}
-.num s{display:block;text-decoration:none;font-size:9.5px;color:var(--muted2);font-weight:700;margin-top:2px}
-/* the line about the last download sits on its own, above the buttons -
-   three things fighting for one line is what made this corner feel cramped */
-/* Two lines, always the same two: what was downloaded and when, then the
-   buttons. Three things sharing one line is what made this corner cramped,
-   and letting them wrap however they liked is what left a button stranded
-   on a line of its own. */
-.upd{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px;
-  padding-top:10px;border-top:1px solid var(--line)}
-.upd span.when{flex:0 0 100%;min-width:0;order:-2;
-  font-size:11px;color:var(--muted2);font-weight:700;
+#settings .sgroup .row .ic svg{display:block;width:19px;height:19px}
+#settings .sgroup .row .ic.c-blue{color:#6FB1FF;background:rgba(77,155,255,.13)}
+#settings .sgroup .row .ic.c-gold{color:var(--accent2);background:rgba(232,179,60,.13)}
+#settings .sgroup .row .ic.c-green{color:#46D486;background:rgba(42,161,75,.14)}
+#settings .sgroup .row .ic.c-red{color:#FF6B6E;background:rgba(237,32,36,.13)}
+#settings .sgroup .row .ic.c-violet{color:#B79CFF;background:rgba(150,120,255,.13)}
+#settings .sgroup .row .ic.c-tg{color:#3FA8F0;background:rgba(42,158,232,.14)}
+#settings .row .tx b{font-size:14.5px}
+#settings .row .tx s{font-size:11.5px;margin-top:2px}
+.row .val{flex:none;max-width:45%;font-size:12px;color:var(--muted);font-weight:700;direction:ltr;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-/* "BUILT-IN" belongs with that line, not wedged beside a button */
-.upd .badge{order:-1;flex:none;margin-bottom:2px}
-.upd .chip{flex:none}
-.upd .chip:first-of-type{flex:1 1 auto;justify-content:center}
-.chip{display:flex;align-items:center;gap:6px;padding:8px 13px;border-radius:11px;border:1px solid var(--line);
-  background:rgba(255,255,255,.04);font-size:11.5px;font-weight:800;color:var(--text);cursor:pointer}
-.chip.sq{padding:8px 10px;color:var(--muted)}
-.chip.red{color:#FF8A8A}
-.chip.busy{color:var(--muted);cursor:default}
-.chip.busy svg{animation:spin .9s linear infinite}
-.row .tx s.wrap{white-space:normal;line-height:1.5;margin-top:4px}
-.chip:active{transform:scale(.95)}
-#settings .row .val{flex:none;font-size:11.5px;color:var(--muted);font-weight:700;direction:ltr}
 #settings .row .ch{flex:none;color:var(--muted2);display:flex}
 #settings .row .ch svg{display:block}
 html[dir=rtl] #settings .row .ch svg{transform:scaleX(-1)}
-#settings .addbtn{border-radius:16px;border:1px dashed var(--line);background:transparent;
-  color:var(--accent2);padding:11px;font-size:13px;margin-top:2px}
-#settings .st-foot .lg{width:24px;height:24px;display:inline-block;vertical-align:-6px;margin-inline-end:7px}
-#settings .st-foot .lg svg{display:block;width:100%;height:100%}
-#settings .st-foot b{color:var(--muted);letter-spacing:1px}
-
-/* the settings page holds a lot: keep every line tight so it fits one screen */
-#settings .st-h{margin:0 0 2px}
-#settings .st-h h1{font-size:21px}
-#settings .st-g{margin:11px 0 6px}
-#settings .row{padding:10px 12px;margin-bottom:6px}
-#settings .row .tx b{font-size:13.5px}
-#settings .row .tx s{font-size:10.5px;margin-top:1px}
-#settings .mini{width:31px;height:31px}
-#settings .stats{gap:8px;margin:14px 0 8px}
-#settings .stat{padding:9px 6px}
-#settings .stat b{font-size:16px}
-#settings .stat s{font-size:10px;margin-top:2px}
-.st-two{display:flex;gap:8px;margin-top:2px}
-.st-two button{flex:1;min-width:0;padding:11px 8px;border-radius:var(--r-md);border:1px dashed var(--line);
-  background:transparent;color:var(--accent2);font-weight:800;font-size:12.5px;cursor:pointer;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.st-two button.solid{border-style:solid;background:var(--surface);color:var(--text)}
-.st-two button:active{transform:scale(.98)}
-.st-foot{text-align:center;font-size:11px;font-weight:700;color:var(--muted2);line-height:1.6;padding:2px 0 2px}
+#settings .addbtn{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;
+  border-radius:18px;border:1.5px dashed rgba(232,179,60,.34);background:rgba(232,179,60,.04);
+  color:var(--accent2);padding:14px;font-size:13.5px}
+#settings .addbtn.updgo{border:0}
+.st-foot{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:30px;text-align:center;
+  font-size:11.5px;font-weight:700;color:var(--muted2);line-height:1.6}
+.st-foot .lg{width:34px;height:34px;display:block;opacity:.85}
+.st-foot .lg svg{display:block;width:100%;height:100%}
+.st-foot b{color:var(--muted);letter-spacing:1.6px;font-size:12px}
+.st-foot .fl{width:54px;height:3px;border-radius:3px;opacity:.7;
+  background:linear-gradient(90deg,#ED2024 0 33.33%,#FFFFFF 33.33% 66.66%,#2AA14B 66.66% 100%)}
 /* ---------- a TV is watched from across the room, and its edges can be cut off ---------- */
 html.tv header{padding:8px 3% 8px}
 html.tv main{padding:6px 3% calc(40px + var(--safe-b))}
@@ -857,19 +964,14 @@ html.tv .hrow{margin-top:14px}
 html.tv .rhead{margin-bottom:8px}
 html.tv .rhead h3{font-size:13.5px}
 /* more channels on screen, each still large enough to read from the sofa */
-html.tv .grid{grid-template-columns:repeat(8,1fr);gap:11px}
+html.tv .grid{grid-template-columns:repeat(8,minmax(0,1fr));gap:11px}
 html.tv .strip .card{width:92px}
 html.tv .strip.big .card{width:104px}
 html.tv .name{font-size:10.5px;padding-top:7px;min-height:34px}
 html.tv .card .epg{font-size:10px}
 
-html.tv #settings{padding-top:12px}
-html.tv #settings .st-h h1{font-size:24px}
-html.tv #settings .st-g{margin:10px 0 6px}
-html.tv #settings .row{padding:11px 14px;margin-bottom:6px}
-html.tv #settings .stats{margin:10px 0 6px}
-html.tv #settings .stat{padding:7px 6px}
-html.tv .st-two button{padding:11px 8px;font-size:14px}
+html.tv .st-top{padding-top:12px}
+html.tv #settings .st-in{max-width:760px}
 </style>
 </head>
 <body>
@@ -1056,7 +1158,8 @@ var T = {
       pinAsk:"کۆدی قفڵ بنووسە",pinBad:"کۆدەکە هەڵەیە",pinNoMatch:"هەردوو کۆدەکە وەک یەک نین",
       pinSaved:"کۆدەکە پاشەکەوتکرا 🔒",pinChange:"گۆڕینی کۆد",pinOff:"لابردنی کۆد",
       pinOffAsk:"کۆدەکە لابدرێت؟ هەموو پۆلە قفڵکراوەکانیش دەکرێنەوە.",
-      lockOpened:"پۆلە قفڵکراوەکان کرانەوە",lockClosed:"پۆلە قفڵکراوەکان داخران"},
+      lockOpened:"پۆلە قفڵکراوەکان کرانەوە",lockClosed:"پۆلە قفڵکراوەکان داخران",
+      hcTitle:"سێرڤەر و تاقیکردنەوەی خێرایی",hcIdle:"دوگمەکە دابگرە بۆ پشکنینی هەموو شتێک",hcGood:"هەموو شتێک کاردەکات",hcSome:"%s شت پێویستی بە سەرنجە",pAll:"هەمووی باشە",pRun:"پشکنین",pIssue:"کێشە",pReady:"ئامادە",hcStart:"دەستپێکردنی پشکنین",hcDetails:"وردەکاری",hNet:"خێرایی ئینتەرنێت",hProv:"سێرڤەری پرۆڤایدەر",hLive:"پەخشی ڕاستەوخۆ",hVod:"پەخشی فیلم",hHevc:"ڤیدیۆی H.265 (HEVC)",hAudio:"دەنگی Dolby (AC3)",hSup:"پشتگیری دەکرێت",hNoSup:"پشتگیری ناکرێت",hOnline:"سەرهێڵ",hOff:"وەڵام ناداتەوە",hAns:"لە %s وەڵامی دایەوە",hFirst:"یەکەم بایت %s",hFail:"ناکرێتەوە",hNoItem:"هیچ نییە بۆ تاقیکردنەوە",hLast:"دوایین پشکنین %s",accounts:"ئەکاونتەکانم",aActive:"چالاک",aExpired:"بەسەرچووە",aBanned:"ڕاگیراوە",aUse:"بەکاری بهێنە",aCats:"%s پۆل",aExp:"کۆتایی %s",aCons:"پەیوەندی %s",aPlaylist:"لیستی IPTV",help:"یارمەتی و پەیوەندی",actOn:"چالاککراوە",actUntil:"چالاککراوە · تا %s",actOwner:"کلیلی خاوەن · بێ کۆتایی"},
   en:{name:"English",dir:"ltr",all:"All",search:"Search channels...",
       featured:"FEATURED",isNew:"NEW",playNow:"Play",resume:"Resume",seeAll:"See all",
       fromStart:"From start",left:"%s left",director:"Director",cast:"Cast",
@@ -1119,7 +1222,8 @@ var T = {
       pinAsk:"Enter the lock code",pinBad:"Wrong code",pinNoMatch:"The two codes are not the same",
       pinSaved:"Code saved 🔒",pinChange:"Change code",pinOff:"Remove code",
       pinOffAsk:"Remove the code? Every locked group opens again.",
-      lockOpened:"Locked groups are open",lockClosed:"Locked groups are closed"},
+      lockOpened:"Locked groups are open",lockClosed:"Locked groups are closed",
+      hcTitle:"Server & speed test",hcIdle:"Tap the button to check everything",hcGood:"Everything is working",hcSome:"%s need attention",pAll:"All good",pRun:"Testing",pIssue:"Issue",pReady:"Ready",hcStart:"Run test",hcDetails:"Details",hNet:"Internet speed",hProv:"Provider server",hLive:"Live stream",hVod:"Movie stream",hHevc:"H.265 (HEVC) video",hAudio:"Dolby audio (AC3)",hSup:"Supported",hNoSup:"Not supported",hOnline:"Online",hOff:"No answer",hAns:"answered in %s",hFirst:"first byte %s",hFail:"does not open",hNoItem:"nothing to test",hLast:"Last check %s",accounts:"My accounts",aActive:"Active",aExpired:"Expired",aBanned:"Disabled",aUse:"Use",aCats:"%s categories",aExp:"Expires %s",aCons:"Connections %s",aPlaylist:"IPTV playlist",help:"Help & contact",actOn:"Activated",actUntil:"Activated · until %s",actOwner:"Owner key · no end date"},
   ar:{name:"العربية",dir:"rtl",all:"الكل",search:"ابحث عن قناة...",
       featured:"مميّز",isNew:"جديد",playNow:"تشغيل",resume:"متابعة",seeAll:"الكل",
       fromStart:"من البداية",left:"باقٍ %s",director:"المخرج",cast:"الأبطال",
@@ -1182,7 +1286,8 @@ var T = {
       pinAsk:"اكتب رمز القفل",pinBad:"الرمز غير صحيح",pinNoMatch:"الرمزان غير متطابقين",
       pinSaved:"تم حفظ الرمز 🔒",pinChange:"تغيير الرمز",pinOff:"إزالة الرمز",
       pinOffAsk:"إزالة الرمز؟ ستُفتح كل الفئات المقفلة.",
-      lockOpened:"الفئات المقفلة مفتوحة",lockClosed:"الفئات المقفلة مغلقة"}
+      lockOpened:"الفئات المقفلة مفتوحة",lockClosed:"الفئات المقفلة مغلقة",
+      hcTitle:"الخادم واختبار السرعة",hcIdle:"اضغط الزر لفحص كل شيء",hcGood:"كل شيء يعمل",hcSome:"%s تحتاج إلى انتباه",pAll:"كله جيد",pRun:"فحص",pIssue:"مشكلة",pReady:"جاهز",hcStart:"ابدأ الفحص",hcDetails:"التفاصيل",hNet:"سرعة الإنترنت",hProv:"خادم المزوّد",hLive:"البث المباشر",hVod:"بث الأفلام",hHevc:"فيديو H.265 (HEVC)",hAudio:"صوت Dolby (AC3)",hSup:"مدعوم",hNoSup:"غير مدعوم",hOnline:"متصل",hOff:"لا يوجد رد",hAns:"رد خلال %s",hFirst:"أول بايت %s",hFail:"لا يفتح",hNoItem:"لا شيء للاختبار",hLast:"آخر فحص %s",accounts:"حساباتي",aActive:"نشط",aExpired:"منتهي",aBanned:"معطّل",aUse:"استخدم",aCats:"%s فئة",aExp:"ينتهي %s",aCons:"الاتصالات %s",aPlaylist:"قائمة IPTV",help:"المساعدة والتواصل",actOn:"مفعّل",actUntil:"مفعّل · حتى %s",actOwner:"مفتاح المالك · بلا نهاية"}
 };
 var LANG_ORDER = ["en", "ku", "ar"];
 var lang = localStorage.kiptv_lang || "en";
@@ -2001,6 +2106,7 @@ function loadSection(name){
     .then(function(list){
       DATA[name] = markNew(list || [], name);
       LOADED[name] = true;
+      statsNote(name, DATA[name], p.id);
       hideSync();
     })
     .catch(function(e){
@@ -3712,7 +3818,7 @@ function saveForm(type){
   closeSheet();
   loadActive(true);
 }
-function useList(id){ lsSet("kiptv_active", id); closeSheet(); loadActive(true) }
+function useList(id){ lsSet("kiptv_active", id); HC = null; closeSheet(); loadActive(true) }
 function delList(id){
   if(!window.confirm(t().confirmDel)) return;
   var a = getLists().filter(function(p){ return p.id !== id });
@@ -3781,6 +3887,10 @@ function openSettings(){
   drawSettings();
   $("settings").scrollTop = 0;
   drawNav();
+  /* every Xtream account is asked how it stands; the health check runs by
+     itself the first time the page is opened, after that only when asked */
+  getLists().forEach(function(p){ accAsk(p) });
+  if(!HC_AUTO){ HC_AUTO = true; setTimeout(function(){ if(settingsOn()) hcRun() }, 350) }
 }
 function closeSettings(){ layerClose("settings") }
 
@@ -3840,76 +3950,461 @@ function updLine(d, when){
   return line;
 }
 
+/* ---------- icons the settings page draws with ---------- */
+var SICON = {
+  back:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg>',
+  gauge:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 18a9 9 0 1117 0"/><path d="M12 18l4.2-5"/><circle cx="12" cy="18" r="1.4" fill="currentColor" stroke="none"/></svg>',
+  server:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3.5" width="18" height="7" rx="2"/><rect x="3" y="13.5" width="18" height="7" rx="2"/><path d="M7 7h.01M7 17h.01"/></svg>',
+  wifi:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 9a14 14 0 0119 0"/><path d="M5.5 12.5a9.5 9.5 0 0113 0"/><path d="M8.7 16a5 5 0 016.6 0"/><circle cx="12" cy="19.3" r="1.2" fill="currentColor" stroke="none"/></svg>',
+  live:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7" width="19" height="13.5" rx="2.6"/><path d="M8 2.8l4 4.2 4-4.2"/><path d="M10.2 11v5.4l4.6-2.7z" fill="currentColor"/></svg>',
+  film:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9h18v10a2 2 0 01-2 2H5a2 2 0 01-2-2z" opacity=".95"/><path d="M3.3 7.6L19.6 3.4a1 1 0 011.2.7l.5 1.9-17.5 4.5z" opacity=".75"/></svg>',
+  screen:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="13" rx="2.2"/><path d="M8 21h8M12 17v4"/></svg>',
+  plus:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  play:'<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.2a1 1 0 011.5-.87l9 6.8a1 1 0 010 1.74l-9 6.8A1 1 0 018 18.8z"/></svg>',
+  chev:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>',
+  mail:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4.5" width="19" height="15" rx="2.5"/><path d="M3 7l9 6 9-6"/></svg>'
+};
+
+/* ---------- what each playlist held the last time it was loaded ----------
+   Only the playlist in use is in memory, but the accounts page shows every
+   one of them - so each keeps a few numbers of its own: how many channels,
+   films and series, in how many groups. */
+function statsAll(){ try{ return JSON.parse(lsGet("kiptv_stats", "{}")) || {} }catch(e){ return {} } }
+function statsOf(id){ return statsAll()[id] || {} }
+function statsNote(sec, list, id){
+  if(!list) return;
+  var all = statsAll(), k = id || activeId(), o = all[k] || {}, g = {};
+  for(var i = 0; i < list.length; i++) if(list[i]) g[list[i].c] = 1;
+  o[sec === "live" ? "l" : sec === "movies" ? "m" : "s"] = [list.length, Object.keys(g).length];
+  o.at = Date.now();
+  all[k] = o;
+  lsSet("kiptv_stats", JSON.stringify(all));
+}
+function statsCats(id, sec, n){
+  var all = statsAll(), o = all[id] || {}, key = sec === "live" ? "l" : sec === "movies" ? "m" : "s";
+  var cur = o[key] || [null, 0];
+  o[key] = [cur[0], n];
+  all[id] = o;
+  lsSet("kiptv_stats", JSON.stringify(all));
+}
+
+/* ---------- what each Xtream panel says about its account ----------
+   One small question per panel (the same one any IPTV app asks first):
+   is it active, when does it end, how many connections are in use. Asked
+   when the page opens, kept for ten minutes. */
+var ACCI = {};
+function accAsk(p, force){
+  if(!p || p.type !== "xtream" || !window.fetch) return;
+  var a = ACCI[p.id];
+  if(a && !force && (a.busy || Date.now() - a.at < 600000)) return;
+  ACCI[p.id] = { busy: true, at: Date.now(), ui: a && a.ui, ms: a && a.ms };
+  var t0 = Date.now();
+  fetch(viaApp(xtBase(p))).then(function(r){ return r.text() }).then(function(txt){
+    var o = null;
+    try{ o = JSON.parse(txt) }catch(e){}
+    ACCI[p.id] = { at: Date.now(), ms: Date.now() - t0, ui: (o && o.user_info) || null, err: !(o && o.user_info) };
+  }).catch(function(){
+    ACCI[p.id] = { at: Date.now(), err: true };
+  }).then(function(){
+    /* the group counts are small answers too - only asked while unknown */
+    var st = statsOf(p.id), jobs = [];
+    [["live", "get_live_categories"], ["movies", "get_vod_categories"], ["series", "get_series_categories"]].forEach(function(x){
+      var key = x[0] === "live" ? "l" : x[0] === "movies" ? "m" : "s";
+      if(st[key] && st[key][1]) return;
+      jobs.push(fetch(viaApp(xtBase(p) + "&action=" + x[1])).then(function(r){ return r.text() }).then(function(txt){
+        var j = null; try{ j = JSON.parse(txt) }catch(e){}
+        if(Object.prototype.toString.call(j) === "[object Array]") statsCats(p.id, x[0], j.length);
+      }).catch(function(){}));
+    });
+    return Promise.all(jobs);
+  }).then(function(){ refreshSettings() }, function(){ refreshSettings() });
+}
+
+/* "2027-10-07" from a panel's seconds, or nothing */
+function dayOf(sec){
+  var n = parseInt(sec, 10);
+  return n > 0 ? speedDay(n * 1000) : "";
+}
+function nfmt(n){
+  if(n === null || n === undefined || n === "") return "–";
+  try{ return "⁦" + Number(n).toLocaleString("en-US") + "⁩" }catch(e){ return String(n) }
+}
+function msTxt(ms){ return "\u2066" + Math.round(ms) + "\u00a0ms\u2069" }
+function hostOf(p){
+  try{ return (p.type === "xtream" ? (p.domain || "") : (p.url || "")).replace(/^https?:\/\//i, "").split("/")[0] }catch(e){ return "" }
+}
+
+/* the account's status word, from what its panel answered */
+function accState(p){
+  var d = t(), a = ACCI[p.id];
+  if(p.type !== "xtream") return null;
+  if(!a || (a.busy && !a.ui)) return { cls: "grey", txt: "", spin: true };
+  if(!a.ui) return { cls: "red", txt: d.hOff };
+  var st = String(a.ui.status || "").toLowerCase(), exp = parseInt(a.ui.exp_date, 10);
+  if(exp > 0 && exp * 1000 < Date.now()) return { cls: "red", txt: d.aExpired };
+  if(st && st !== "active") return { cls: "red", txt: /expir/.test(st) ? d.aExpired : d.aBanned };
+  return { cls: "", txt: d.aActive };
+}
+function pillHTML(s){
+  if(!s) return "";
+  return '<span class="spill'+(s.cls ? " " + s.cls : "")+'">'+(s.spin ? '<span class="sp"></span>' : "")+esc(s.txt)+'</span>';
+}
+
+function accCard(p, on){
+  var d = t(), st = statsOf(p.id), a = ACCI[p.id] || {}, ui = a.ui;
+  var num = function(sec, key){
+    if(on && sec === "live") return [CH.length, allGroups("live").list.length];
+    if(on && LOADED[sec] && (DATA[sec] || []).length) return [DATA[sec].length, allGroups(sec).list.length];
+    return st[key] || [null, 0];
+  };
+  var L = num("live", "l"), M = num("movies", "m"), S = num("series", "s");
+  var host = hostOf(p), click = on ? "" : ' onclick="pickList(\''+esc(p.id)+'\')" tabindex="0"';
+  var h = '<div class="acc'+(on ? " on" : "")+'"'+click+'>';
+
+  if(p.type !== "xtream"){
+    h += '<div class="acc-h"><span class="ibox green">'+SICON.wifi+'</span>'
+       +   '<span class="tx"><b>'+esc(p.name)+'</b><s class="nat">'+esc(d.aPlaylist)
+       +     (L[1] ? " · " + d.aCats.replace("%s", nfmt(L[1])) : "")+'</s></span>'
+       +   '<span class="acc-big"><b>'+nfmt(L[0])+'</b><s>'+esc(d.channels)+'</s></span></div>';
+  } else {
+    var sub = host + (a.ms ? "  ·  " + d.hAns.replace("%s", msTxt(a.ms)) : "");
+    h += '<div class="acc-h"><span class="ibox red">'+SICON.server+'</span>'
+       +   '<span class="tx"><b>'+esc(p.name)+'</b><s>'+esc(sub)+'</s></span>'
+       +   pillHTML(accState(p)) + '</div>'
+       + '<div class="acc-n">'
+       +   '<div class="c1">'+SICON.live+'<b>'+nfmt(L[0])+'</b><span>'+esc(d.live)+'</span><s>'+esc(d.aCats.replace("%s", nfmt(L[1])))+'</s></div>'
+       +   '<div class="c2">'+SICON.film+'<b>'+nfmt(M[0])+'</b><span>'+esc(d.movies)+'</span><s>'+esc(d.aCats.replace("%s", nfmt(M[1])))+'</s></div>'
+       +   '<div class="c3">'+SICON.screen+'<b>'+nfmt(S[0])+'</b><span>'+esc(d.series)+'</span><s>'+esc(d.aCats.replace("%s", nfmt(S[1])))+'</s></div>'
+       + '</div>';
+  }
+
+  /* the bottom line: when it ends, how full it is, and what can be done */
+  var meta = [];
+  if(ui){
+    meta.push(d.aExp.replace("%s", dayOf(ui.exp_date) || d.spdNoExp));
+    var used = parseInt(ui.active_cons, 10) || 0, max = parseInt(ui.max_connections, 10) || 0;
+    if(max) meta.push('<em'+(used >= max ? ' class="red"' : '')+'>'+esc(d.aCons.replace("%s", "⁦" + used + "/" + max + "⁩"))+'</em>');
+  }
+  var metaH = meta.map(function(m){ return m.charAt(0) === "<" ? m : esc(m) }).join("  ·  ");
+  if(on) metaH += (metaH ? "<br>" : "") + esc(updLine(d, updTimes()[p.id]));
+  var own = p.id !== DEFAULT_PLAYLIST.id;
+  h += '<div class="acc-f">' + (metaH ? '<span class="meta">'+metaH+'</span>' : '');
+  if(on){
+    h += '<span class="acts">'
+       +   (SYNCING ? '<button class="abtn busy">'+ICON.refresh+'</button>'
+                    : '<button class="abtn" onclick="refreshList()" aria-label="'+esc(d.refreshShort)+'">'+ICON.refresh+'</button>')
+       +   (own ? '<button class="abtn" onclick="editList(\''+esc(p.id)+'\')">'+ICON.edit+'</button>'
+                + '<button class="abtn red" onclick="removeList(\''+esc(p.id)+'\')">'+ICON.trash+'</button>'
+                : '<span class="spill grey">'+esc(d.builtIn)+'</span>')
+       + '</span>';
+  } else {
+    h += '<span class="acts">'
+       +   (own ? '<button class="abtn" onclick="event.stopPropagation();editList(\''+esc(p.id)+'\')">'+ICON.edit+'</button>'
+                + '<button class="abtn red" onclick="event.stopPropagation();removeList(\''+esc(p.id)+'\')">'+ICON.trash+'</button>' : '')
+       + '<span class="acc-sw">'+esc(d.aUse)+SICON.chev+'</span></span>';
+  }
+  return h + '</div></div>';
+}
+
+/* ==================== the health check ====================
+   Every line is something that really happened just now: a download timed,
+   a server that answered, a stream that opened (only its first bytes, then
+   it is let go at once, so an account with one connection is never held). */
+var HC = null, HC_AUTO = false, PROBE_CB = {}, PROBE_N = 0;
+
+window.kiptvProbe = function(id, json){
+  var cb = PROBE_CB[id]; if(!cb) return;
+  delete PROBE_CB[id];
+  var o = null; try{ o = typeof json === "string" ? JSON.parse(json) : json }catch(e){}
+  cb(o || { ok: false });
+};
+
+/* Opens a stream the way the player does and reads its first bytes. Inside
+   the app this is native code; anywhere else the page reads them itself. */
+function probeStream(c){
+  return new Promise(function(res){
+    var done = false, fin = function(o){ if(!done){ done = true; res(o) } };
+    setTimeout(function(){ fin({ ok: false, err: "timeout" }) }, 25000);
+    try{
+      if(window.AndroidPlayer && AndroidPlayer.probeStream){
+        var id = "p" + (++PROBE_N);
+        PROBE_CB[id] = fin;
+        AndroidPlayer.probeStream(id, c.u, c.ua || "", c.rf || "");
+        return;
+      }
+    }catch(e){}
+    var t0 = Date.now();
+    fetch(viaApp(c.u)).then(function(r){
+      if(!r.ok) throw new Error("HTTP " + r.status);
+      if(!r.body || !r.body.getReader) return r.text().then(function(x){ return x.slice(0, 64) });
+      var rd = r.body.getReader();
+      return rd.read().then(function(x){
+        try{ rd.cancel() }catch(e){}
+        var s = "";
+        if(x && x.value) for(var i = 0; i < Math.min(64, x.value.length); i++) s += String.fromCharCode(x.value[i]);
+        return s;
+      });
+    }).then(function(head){
+      var kind = /#EXTM3U|#EXT-X/.test(head) ? "HLS" : head.charCodeAt(0) === 0x47 ? "MPEG-TS"
+               : /<MPD/.test(head) ? "DASH" : "";
+      fin({ ok: true, ms: Date.now() - t0, kind: kind });
+    }).catch(function(e){ fin({ ok: false, err: e && e.message ? e.message : "network" }) });
+  });
+}
+
+/* what this device can decode, asked from Android itself */
+function codecInfo(){
+  try{ if(window.AndroidPlayer && AndroidPlayer.codecs) return JSON.parse(AndroidPlayer.codecs()) || {} }catch(e){}
+  var o = {};
+  try{
+    var M = window.MediaSource;
+    o.hevc = !!(M && (M.isTypeSupported('video/mp4; codecs="hvc1.1.6.L93.B0"') || M.isTypeSupported('video/mp4; codecs="hev1.1.6.L93.B0"')));
+    o.ac3 = !!(M && M.isTypeSupported('audio/mp4; codecs="ac-3"'));
+  }catch(e){}
+  return o;
+}
+
+/* a timed download from a neutral speed server - the line itself, not the
+   provider - falling back to the provider when that server cannot be reached */
+function hcSpeed(urlList){
+  var url = urlList.shift();
+  if(!url) return Promise.reject(new Error("network"));
+  var t0 = Date.now(), first = 0, got = 0, LIMIT = 5 * 1048576, MAX_MS = 6000;
+  return fetch(viaApp(url)).then(function(r){
+    if(!r.ok) throw new Error("HTTP " + r.status);
+    var finish = function(){
+      var end = Date.now(), transfer = end - (first || t0);
+      var base = Math.max(120, transfer >= 150 ? transfer : (end - t0));
+      return { bps: got * 8 / (base / 1000), first: (first || end) - t0 };
+    };
+    if(!r.body || !r.body.getReader) return r.text().then(function(x){ first = Date.now(); got = byteLen(x); return finish() });
+    var rd = r.body.getReader();
+    var step = function(){
+      return rd.read().then(function(x){
+        if(!first) first = Date.now();
+        if(x.value) got += x.value.length;
+        if(x.done || got >= LIMIT || Date.now() - t0 > MAX_MS){ try{ rd.cancel() }catch(e){} return finish() }
+        return step();
+      });
+    };
+    return step();
+  }).then(function(r){
+    if(got < 20000 && urlList.length) return hcSpeed(urlList);
+    return r;
+  }, function(e){ if(urlList.length) return hcSpeed(urlList); throw e });
+}
+
+function hcSet(key, st, v){ if(HC && HC.rows[key]){ HC.rows[key].st = st; HC.rows[key].v = v; hcDraw() } }
+
+/* only the health card is redrawn while it runs - the rest of the page,
+   and where it is scrolled to, stays exactly as it is */
+function hcDraw(){
+  var box = $("hcBox");
+  if(box) box.outerHTML = hcHTML();
+  else refreshSettings();
+}
+
+function hcRun(){
+  if(HC && HC.state === "run") return;
+  var d = t(), p = activeList(), x = p.type === "xtream";
+  HC = { state: "run", at: Date.now(), rows: {} };
+  var order = ["net", "prov"];
+  if(x) order.push("acc");
+  order.push("live");
+  if(x) order.push("vod");
+  order.push("hevc", "ac3");
+  order.forEach(function(k){ HC.rows[k] = { st: "run", v: "" } });
+  HC.order = order;
+  hcDraw();
+
+  var jobs = [];
+
+  /* the line */
+  var provUrl = x ? (xtBase(p) + "&action=get_live_streams") : (p.url || "");
+  jobs.push(hcSpeed(["https://speed.cloudflare.com/__down?bytes=5000000", provUrl].filter(Boolean)).then(function(r){
+    var mbps = r.bps / 1000000;
+    hcSet("net", mbps >= 3 ? "ok" : "warn",
+      fmtRate(r.bps / 8) + "  ·  " + d.hFirst.replace("%s", msTxt(r.first)) + "  ·  " + speedVerdict(d, mbps));
+  }, function(){ hcSet("net", "bad", d.hOff) }));
+
+  /* the provider, and what it says about the account */
+  var t0 = Date.now();
+  var provAsk = x ? fetch(viaApp(xtBase(p))).then(function(r){ return r.text() })
+                  : fetch(viaApp(p.url || "")).then(function(r){
+                      if(!r.ok) throw new Error("HTTP " + r.status);
+                      if(r.body && r.body.getReader){ var rd = r.body.getReader(); return rd.read().then(function(){ try{ rd.cancel() }catch(e){} return "" }) }
+                      return r.text();
+                    });
+  jobs.push(provAsk.then(function(txt){
+    var ms = Date.now() - t0;
+    if(x){
+      var o = null; try{ o = JSON.parse(txt) }catch(e){}
+      var ui = o && o.user_info;
+      if(!ui){ hcSet("prov", "bad", hostOf(p) + "  ·  " + d.hOff); hcSet("acc", "bad", "—"); return }
+      ACCI[p.id] = { at: Date.now(), ms: ms, ui: ui };
+      hcSet("prov", ms > 2500 ? "warn" : "ok", hostOf(p) + "  ·  " + d.hOnline + "  ·  " + msTxt(ms));
+      var used = parseInt(ui.active_cons, 10) || 0, max = parseInt(ui.max_connections, 10) || 0;
+      var stt = accState(p), parts = [stt ? stt.txt : ""];
+      parts.push(d.aExp.replace("%s", dayOf(ui.exp_date) || d.spdNoExp));
+      if(max) parts.push(d.aCons.replace("%s", "⁦" + used + "/" + max + "⁩"));
+      hcSet("acc", stt && stt.cls === "red" ? "bad" : (max && used >= max ? "warn" : "ok"), parts.join("  ·  "));
+    } else {
+      hcSet("prov", ms > 2500 ? "warn" : "ok", hostOf(p) + "  ·  " + d.hOnline + "  ·  " + msTxt(ms));
+    }
+  }, function(){ hcSet("prov", "bad", hostOf(p) + "  ·  " + d.hOff); if(x) hcSet("acc", "bad", "—") }));
+
+  /* the device */
+  var cd = codecInfo();
+  hcSet("hevc", cd.hevc ? "ok" : "warn", (cd.hevc ? d.hSup : d.hNoSup) + (cd.hevc4k ? "  ·  4K" : ""));
+  hcSet("ac3", (cd.ac3 || window.AndroidPlayer) ? "ok" : "warn", (cd.ac3 || window.AndroidPlayer) ? d.hSup : d.hNoSup);
+
+  /* the streams, one after the other - never two connections at once */
+  var pickLive = null;
+  for(var i = 0; i < CH.length && !pickLive; i++) if(CH[i] && /^https?:/i.test(CH[i].u || "")) pickLive = CH[i];
+  var pickVod = null;
+  var mv = DATA.movies || [];
+  for(var j = 0; j < mv.length && !pickVod; j++) if(mv[j] && /^https?:/i.test(mv[j].u || "")) pickVod = mv[j];
+  if(!pickVod){
+    var hl = histList();
+    for(var k = 0; k < hl.length && !pickVod; k++) if(hl[k] && /\/movie\//.test(hl[k].u || "")) pickVod = hl[k];
+  }
+  var probeRow = function(key, c){
+    if(!c){ hcSet(key, "", d.hNoItem); return Promise.resolve() }
+    return probeStream(c).then(function(r){
+      if(r && r.ok){
+        var kind = r.kind || (/\.m3u8/i.test(c.u) ? "HLS" : /\.ts(\?|$)/i.test(c.u) ? "MPEG-TS" : "");
+        hcSet(key, r.ms > 4000 ? "warn" : "ok",
+          c.n + "  ·  " + (kind ? kind + " " : "") + "OK  ·  " + d.hAns.replace("%s", msTxt(r.ms || 0)));
+      } else {
+        hcSet(key, "bad", c.n + "  ·  " + d.hFail + (r && r.code ? "  (HTTP " + r.code + ")" : ""));
+      }
+    });
+  };
+  jobs.push(probeRow("live", pickLive).then(function(){ if(x) return probeRow("vod", pickVod) }));
+
+  Promise.all(jobs.map(function(j){ return j.catch(function(){}) })).then(function(){
+    if(!HC) return;
+    HC.state = "done";
+    HC.at = Date.now();
+    hcDraw();
+    refreshSettings();          /* the account card picks up the answer too */
+  });
+}
+
+function hcHTML(){
+  var d = t(), sub, pill;
+  if(!HC){
+    sub = d.hcIdle; pill = { cls: "grey", txt: d.pReady };
+  } else if(HC.state === "run"){
+    sub = d.spdTesting; pill = { cls: "gold", txt: d.pRun, spin: true };
+  } else {
+    var bad = 0;
+    HC.order.forEach(function(k){ if(HC.rows[k].st === "bad" || HC.rows[k].st === "warn") bad++ });
+    sub = bad ? d.hcSome.replace("%s", bad) : d.hcGood;
+    pill = bad ? { cls: "red", txt: d.pIssue } : { cls: "", txt: d.pAll };
+  }
+  var names = { net: d.hNet, prov: d.hProv, acc: d.spdStat, live: d.hLive, vod: d.hVod, hevc: d.hHevc, ac3: d.hAudio };
+  var h = '<div class="hc" id="hcBox"><div class="hc-h"><span class="ibox">'+SICON.gauge+'</span>'
+        + '<span class="tx"><b>'+esc(d.hcTitle)+'</b><s>'+esc(sub)+'</s></span>'+pillHTML(pill)+'</div>';
+  if(HC){
+    h += '<div class="hc-rows">' + HC.order.map(function(k){
+      var r = HC.rows[k];
+      return '<div class="hr '+(r.st || "")+'"><i></i><b>'+esc(names[k])+'</b><span>'+esc(r.v || (r.st === "run" ? "…" : ""))+'</span></div>';
+    }).join("") + '</div>';
+  }
+  var running = HC && HC.state === "run";
+  h += '<div class="hc-f">'
+     +   '<button class="hbtn" onclick="hcRun()"'+(running ? " disabled" : "")+'>'
+     +     (running ? esc(d.spdTesting) : SICON.play + esc(HC ? d.spdAgain : d.hcStart)) + '</button>'
+     +   '<button class="hbtn ghost" onclick="speedTest()">'+esc(d.hcDetails)+'</button>'
+     + '</div></div>';
+  return h;
+}
+
+/* the line under the name: which code opened the app, and until when */
+function actLine(d){
+  var a = actRead();
+  if(!a || !a.c) return { txt: d.actOwner, warn: false };
+  if(a.u){
+    var ends = Date.parse(a.u);
+    if(ends) return { txt: d.actUntil.replace("%s", speedDay(ends)), warn: ends - Date.now() < 7 * 86400000 };
+  }
+  return { txt: d.actOn, warn: false };
+}
+
 function drawSettings(){
-  var d = t(), cur = activeId(), act = activeList(), upd = updTimes();
-  var h = '<div class="st-h"><h1>'+esc(d.menu)+'</h1>'
-        + '<button class="iconbtn" onclick="closeSettings()">&#10005;</button></div>';
+  var d = t(), cur = activeId(), act = activeList();
+  var box = $("settings"), keep = box ? box.scrollTop : 0;
 
-  /* the playlist in use, as one card: what it is, what it holds, what you can do with it */
-  var own = act.id !== DEFAULT_PLAYLIST.id;
-  var nMov = (act.type === "xtream" && LOADED.movies) ? DATA.movies.length : "\u2013";
-  var nSer = (act.type === "xtream" && LOADED.series) ? DATA.series.length : "\u2013";
-  h += setGroup(d.activeList);
-  h += '<div class="plcard">'
-     +   '<div class="t">'
-     +     '<span class="ic">'+(act.type === "xtream" ? ICON.key : ICON.link)+'</span>'
-     +     '<span class="tx"><b>'+esc(act.name)+'</b><s>'+esc(act.type === "xtream" ? (act.domain||"") : (act.url||""))+'</s></span>'
-     +     '<span class="pill'+(act.type === "xtream" ? "" : " grey")+'">'+(act.type === "xtream" ? "XTREAM" : "M3U")+'</span>'
-     +   '</div>'
-     +   '<div class="nums">'
-     +     '<div class="num"><b>'+CH.length+'</b><s>'+esc(d.live)+'</s></div>'
-     +     '<div class="num"><b>'+nMov+'</b><s>'+esc(d.movies)+'</s></div>'
-     +     '<div class="num"><b>'+nSer+'</b><s>'+esc(d.series)+'</s></div>'
-     +   '</div>'
-     +   '<div class="upd"><span class="when">'+esc(updLine(d, upd[cur]))+'</span>'
-     +     (SYNCING
-        ? '<button class="chip busy">'+ICON.refresh+' '+esc(d.updating)+'</button>'
-        : '<button class="chip" onclick="refreshList()">'+ICON.refresh+' '+esc(d.refreshShort)+'</button>')
-     +     (own
-        ? '<button class="chip sq mini" onclick="editList(\''+esc(act.id)+'\')">'+ICON.edit+'</button>'
-        + '<button class="chip sq red mini" onclick="removeList(\''+esc(act.id)+'\')">'+ICON.trash+'</button>'
-        : '<span class="badge">'+esc(d.builtIn)+'</span>')
-     +   '</div>'
-     + '</div>';
+  var h = '<div class="st-top" id="stTop"><button class="iconbtn" onclick="closeSettings()" aria-label="close">'+SICON.back+'</button>'
+        + '<h1>'+esc(d.menu)+'</h1></div><div class="st-in">';
 
-  /* the other playlists: one tap switches to it */
-  var others = getLists().filter(function(p){ return p.id !== cur });
-  h += setGroup(d.otherLists);
-  if(others.length) h += '<div class="sgroup">';
-  h += others.map(function(p){
-    var sub = p.type === "xtream" ? (p.domain || "") : (p.url || "");
-    var mine = p.id !== DEFAULT_PLAYLIST.id;
-    return '<div class="row" onclick="pickList(\''+esc(p.id)+'\')">'
-         +   '<span class="ic">'+(p.type === "xtream" ? ICON.key : ICON.link)+'</span>'
-         +   '<span class="tx"><b>'+esc(p.name)+'</b><s>'+esc(sub)+'</s></span>'
-         +   (mine
-              ? '<span class="acts">'
-              +   '<button class="mini" onclick="event.stopPropagation();editList(\''+esc(p.id)+'\')">'+ICON.edit+'</button>'
-              +   '<button class="mini red" onclick="event.stopPropagation();removeList(\''+esc(p.id)+'\')">'+ICON.trash+'</button>'
-              + '</span>'
-              : '<span class="val">'+esc(d.builtIn)+'</span>')
-         +   '<span class="ch">'+CHEV+'</span>'
-         + '</div>';
-  }).join("");
-  if(others.length) h += '</div>';
-  h += '<button class="addbtn" onclick="openSheet(\'type\')">+ '+esc(d.addList)+'</button>';
+  /* who */
+  var al = actLine(d);
+  h += '<div class="st-hero"><span class="lg">'+LOGO_ICON+'</span>'
+     +   '<span class="tx"><b>KURDISTAN IPTV</b><s>'+esc(d.version + " " + appVerText())+'</s>'
+     +   '<i'+(al.warn ? ' class="warn"' : '')+'>'+esc(al.txt)+'</i></span></div>';
 
-  /* general */
+  /* is everything working */
+  h += hcHTML();
+
+  /* the accounts: the one in use first */
+  var lists = getLists(), ordered = [act].concat(lists.filter(function(p){ return p.id !== cur }));
+  h += '<div class="st-g">'+esc(d.accounts)+'<em>'+nfmt(lists.length)+'</em></div>';
+  h += ordered.map(function(p){ return accCard(p, p.id === cur) }).join("");
+  h += '<button class="addbtn" onclick="openSheet(\'type\')">'+SICON.plus+esc(d.addList)+'</button>';
+
+  /* the switches */
   h += setGroup(d.general);
   h += '<div class="sgroup">';
-  h += setRow(ICON.globe, d.lang, "", "openSheet('lang')", true, T[lang].name);
-  h += setRow(ICON.layers, d.cats, catsLine(d), "openSheet('cats')", true);
-  if(act.type === "xtream") h += setRow(ICON.tv, d.epgTest, d.epgTestSub, "epgProbe()", true);
-  h += setRow(ICON.gauge, d.speedTest, d.speedTestSub, "speedTest()", true);
-  h += setRow(ICON.disk, d.clearCache, "", "clearCache()", true, cacheSize());
-  h += setRow(ICON.down, d.updCheck, d.updCheckSub, "updOpen()", true, appVerText());
+  h += setRowC("c-blue", ICON.globe, d.lang, "", "openSheet('lang')", true, T[lang].name);
+  h += setRowC("c-gold", ICON.layers, d.cats, catsLine(d), "openSheet('cats')", true);
+  if(act.type === "xtream") h += setRowC("c-violet", ICON.tv, d.epgTest, d.epgTestSub, "epgProbe()", true);
+  h += setRowC("c-red", ICON.disk, d.clearCache, "", "clearCache()", true, cacheSize());
+  h += setRowC("c-green", ICON.down, d.updCheck, d.updCheckSub, "updOpen()", true, appVerText());
   h += '</div>';
 
-  h += '<div class="st-foot"><span class="lg">'+LOGO_ICON+'</span><b>KURDISTAN IPTV</b><br>'
-     +   esc(d.version + " " + appVerText())+'</div>';
+  /* a person */
+  h += setGroup(d.help);
+  h += '<div class="sgroup">';
+  h += setRowC("c-tg", GC_ICON.tg, "Telegram", "@AndamAziz", "gcOpen('tg')", false);
+  h += setRowC("c-green", GC_ICON.wa, "WhatsApp", "+44 7482 828237", "gcOpen('wa')", false);
+  h += setRowC("c-red", SICON.mail, d.gcMail, GC_MAIL, "stMail()", false);
+  h += '</div>';
+
+  h += '<div class="st-foot"><span class="lg">'+LOGO_ICON+'</span><b>KURDISTAN IPTV</b>'
+     +   '<span class="fl"></span>'+esc(d.version + " " + appVerText())+'</div>';
+  h += '</div>';
 
   $("setBody").innerHTML = h;
+  if(box){ box.scrollTop = keep; stTopShade() }
 }
+
+/* a row whose icon sits on a tile of its own colour */
+function setRowC(color, icon, title, sub, onclick, natural, value){
+  return setRow(icon, title, sub, onclick, natural, value).replace('<span class="ic">', '<span class="ic '+color+'">');
+}
+
+/* the address is copied: a TV box has no mail app, and a phone may not either */
+function stMail(){
+  var ok = false;
+  try{
+    var ta = document.createElement("textarea");
+    ta.value = GC_MAIL; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+  }catch(e){}
+  try{ if(!ok && navigator.clipboard) navigator.clipboard.writeText(GC_MAIL) }catch(e){}
+  showToast(t().gcCopied + " · " + GC_MAIL);
+}
+
+/* the title bar draws its hairline only once the page has moved under it */
+function stTopShade(){
+  var s = $("settings"), top = $("stTop");
+  if(s && top) top.classList.toggle("sh", s.scrollTop > 4);
+}
+$("settings").addEventListener("scroll", stTopShade, { passive: true });
 
 /* tapping the playlist that is already active does nothing -
    use "Update playlist now" to download it again */
@@ -3928,6 +4423,8 @@ function removeList(id){
   if(!window.confirm(t().confirmDel)) return;
   saveLists(getLists().filter(function(p){ return p.id !== id }));
   favDropList(id);                         /* its favourites go with it */
+  try{ var sa = statsAll(); delete sa[id]; lsSet("kiptv_stats", JSON.stringify(sa)) }catch(e){}
+  delete ACCI[id];
   histDropList(id);                        /* ...and its history */
   if(activeId() === id || lsGet("kiptv_active", "") === id){
     lsSet("kiptv_active", DEFAULT_PLAYLIST.id);
@@ -4081,6 +4578,11 @@ function longPress(card){
    The tap that ends a long press does not also play the card. */
 (function(){
   var timer = null, x0 = 0, y0 = 0, fired = false, swallowUntil = 0;
+  var pressT = null, pressed = null;
+  function unpress(){
+    if(pressT){ clearTimeout(pressT); pressT = null }
+    if(pressed){ pressed.classList.remove("press"); pressed = null }
+  }
   function cardOf(el){
     while(el && el.nodeType === 1){
       if(el.classList.contains("card")) return el;
@@ -4091,24 +4593,27 @@ function longPress(card){
   function cancel(){ if(timer){ clearTimeout(timer); timer = null } }
   function start(e){
     cancel(); fired = false;
+    unpress();
     var card = cardOf(e.target); if(!card || !e.touches || e.touches.length > 1) return;
     x0 = e.touches[0].clientX; y0 = e.touches[0].clientY;
+    pressT = setTimeout(function(){ pressT = null; pressed = card; card.classList.add("press") }, 110);
     timer = setTimeout(function(){ timer = null; fired = true; longPress(card) }, FAV_MS);
   }
   function move(e){
-    if(!timer || !e.touches) return;
+    if(!e.touches || (!timer && !pressT && !pressed)) return;
     var p = e.touches[0];
-    if(Math.abs(p.clientX - x0) > 10 || Math.abs(p.clientY - y0) > 10) cancel();   /* a scroll */
+    if(Math.abs(p.clientX - x0) > 10 || Math.abs(p.clientY - y0) > 10){ cancel(); unpress() }   /* a scroll */
   }
   function end(e){
     cancel();
+    unpress();
     if(fired){ fired = false; swallowUntil = Date.now() + 450; if(e.cancelable) e.preventDefault() }
   }
   [$("main"), $("favs")].forEach(function(box){
     box.addEventListener("touchstart", start, { passive: true });
     box.addEventListener("touchmove", move, { passive: true });
     box.addEventListener("touchend", end, false);
-    box.addEventListener("touchcancel", cancel, { passive: true });
+    box.addEventListener("touchcancel", function(){ cancel(); unpress() }, { passive: true });
     box.addEventListener("contextmenu", function(e){ if(cardOf(e.target)) e.preventDefault() });
     box.addEventListener("click", function(e){
       if(Date.now() < swallowUntil){ swallowUntil = 0; e.stopPropagation(); e.preventDefault() }
@@ -4382,7 +4887,7 @@ $("favs").addEventListener("click", function(e){
    here runs for touches: a phone behaves exactly as before. */
 var TV = false;
 try{ TV = !!(window.AndroidPlayer && AndroidPlayer.isTv && AndroidPlayer.isTv()) }catch(e){}
-var NAV_SEL = 'button, input, .card, .row, .ep, .hi, .hero.on, #pins, .rhead .all';
+var NAV_SEL = 'button, input, .card, .row, .ep, .hi, .hero.on, #pins, .rhead .all, .acc[tabindex]';
 var tvMem = {};                    /* last highlighted item, per page */
 var okDown = 0, okTimer = null, okFired = false;
 
@@ -4869,6 +5374,7 @@ function viaApp(u){
    it is really fetched. */
 function setData(list, fromProvider){
   CH = fromProvider ? markNew(list, "live") : list;
+  if(fromProvider) statsNote("live", CH);
   epgReset(); buildGroups(); renderChips(); render();
 }
 function showSync(text, isErr){
@@ -4888,12 +5394,12 @@ function byteLen(txt){
   try{ return new Blob([txt]).size }catch(e){ return (txt || "").length }
 }
 function fmtSize(n){
-  var s = n < 1048576 ? Math.max(1, Math.round(n / 1024)) + " KB" : (n / 1048576).toFixed(1) + " MB";
+  var s = n < 1048576 ? Math.max(1, Math.round(n / 1024)) + "\u00a0KB" : (n / 1048576).toFixed(1) + "\u00a0MB";
   return "\u2066" + s + "\u2069";
 }
 function fmtRate(bytesPerSec){
   var mbps = bytesPerSec * 8 / 1000000;
-  var s = mbps >= 10 ? mbps.toFixed(0) + " Mbps" : mbps.toFixed(1) + " Mbps";
+  var s = mbps >= 10 ? mbps.toFixed(0) + "\u00a0Mbps" : mbps.toFixed(1) + "\u00a0Mbps";
   return "\u2066" + s + "\u2069";
 }
 
