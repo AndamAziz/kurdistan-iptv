@@ -188,7 +188,7 @@ function wire() {
     if (!Array.isArray(arr) || !arr.length) return;
     const items = arr
       .filter(o => o && o.u)
-      .map(o => ({ u: String(o.u), n: String(o.n || ""), ua: o.ua || null, rf: o.rf || null }));
+      .map(o => ({ u: String(o.u), n: String(o.n || ""), ua: o.ua || null, rf: o.rf || null, v: o.v === 1 }));
     if (!items.length) return;
     const at = (index >= 0 && index < items.length) ? index : 0;
     play(items, at, startMs > 0 ? startMs : 0);

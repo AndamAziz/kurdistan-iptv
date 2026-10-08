@@ -190,6 +190,8 @@ class MainActivity : ComponentActivity() {
 
     /** some channels only answer to their own agent / referrer */
     private var uas: List<String?> = emptyList()
+    /** films and episodes whose address does not say so ("v":1 from the page) */
+    private var vodSet: Set<String> = emptySet()
     private var refs: List<String?> = emptyList()
     private var curUa: String? = null
     private var curRef: String? = null
@@ -438,6 +440,7 @@ class MainActivity : ComponentActivity() {
         @android.webkit.JavascriptInterface
         fun playNative(url: String, title: String) {
             runOnUiThread {
+                vodSet = emptySet()
                 openQueue(listOf(url), listOf(title), listOf(null), listOf(null), 0, 0L)
             }
         }
@@ -654,16 +657,18 @@ class MainActivity : ComponentActivity() {
                 val n = ArrayList<String>(arr.length())
                 val a = ArrayList<String?>(arr.length())
                 val r = ArrayList<String?>(arr.length())
+                val v = HashSet<String>()
                 for (i in 0 until arr.length()) {
                     val o = arr.getJSONObject(i)
                     u.add(o.optString("u"))
+                    if (o.optInt("v", 0) == 1) v.add(o.optString("u"))
                     n.add(o.optString("n"))
                     a.add(o.optString("ua").ifBlank { null })
                     r.add(o.optString("rf").ifBlank { null })
                 }
                 if (u.isEmpty()) return
                 val start = if (index in u.indices) index else 0
-                runOnUiThread { openQueue(u, n, a, r, start, startMs.toLong()) }
+                runOnUiThread { vodSet = v; openQueue(u, n, a, r, start, startMs.toLong()) }
             } catch (e: Exception) { /* ignore malformed input */ }
         }
     }
@@ -817,6 +822,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun isVod(url: String): Boolean {
+        if (url in vodSet) return true
         val u = url.lowercase()
         return u.contains("/movie/") || u.contains("/series/")
     }
@@ -2126,6 +2132,7 @@ class MainActivity : ComponentActivity() {
     private fun pickChan(pos: Int) {
         if (pos !in chanShown.indices) return
         closeChans()
+        vodSet = emptySet()                  /* the list over the picture holds channels only */
         /* the next / previous buttons walk the group this came from */
         val from = maxOf(0, pos - 150)
         val to = minOf(chanShown.size, pos + 150)
