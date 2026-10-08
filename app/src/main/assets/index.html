@@ -1999,6 +1999,27 @@ var SERIES_CACHE = {};
 
 function isXtream(){ return activeList().type === "xtream" }
 
+/* ---------- film, episode or channel ----------
+   A classic panel says so in the address: /movie/..., /series/.... Panels
+   that hand out the broadcaster's own link say nothing - a film is then just
+   ".../media/4052/1280x720.m3u8". So what came from the film list or from a
+   season is remembered as such, and that, not the address, decides: the
+   film page, "carry on from where you stopped", and how the player treats
+   it (a film is not a live channel). */
+var VODK = {};
+function vodNote(list, kind){
+  for(var i = 0; i < (list || []).length; i++){
+    var u = list[i] && list[i].u;
+    if(u && !/\/(movie|series)\//.test(u)) VODK[u] = kind;
+  }
+}
+function vodKind(u){
+  u = String(u || "");
+  if(/\/movie\//.test(u)) return "movie";
+  if(/\/series\//.test(u)) return "episode";
+  return VODK[u] || "";
+}
+
 /* ---------- where a channel's stream really is ----------
    A classic Xtream panel keeps the streams itself, and the address is built
    from the panel's own domain: .../live/user/pass/1234.ts
@@ -2141,6 +2162,7 @@ function loadSection(name){
       DATA[name] = markNew(list || [], name);
       LOADED[name] = true;
       statsNote(name, DATA[name], p.id);
+      if(name === "movies") vodNote(DATA[name], "movie");
       hideSync();
     })
     .catch(function(e){
@@ -3102,7 +3124,7 @@ function playQueue(arr, idx){
   histAdd(arr[idx]);               /* watch history */
   /* keep enough about a film / episode that "Continue watching"
      can show it again on the next cold start */
-  if(/\/movie\/|\/series\//.test(arr[idx].u || ""))
+  if(vodKind(arr[idx].u))
     rememberEpisodes([{ c:arr[idx].c || "", n:arr[idx].n, u:arr[idx].u,
                         l:arr[idx].l || "", r:arr[idx].r || "" }]);
   var sp = getPos(arr[idx].u);
@@ -3112,7 +3134,7 @@ function playQueue(arr, idx){
      screen. It is sent once, and again only if the channels change. */
   try{
     if(window.AndroidPlayer && AndroidPlayer.setChannels && CH && CH.length &&
-       !/\/movie\/|\/series\//.test(arr[idx].u || "")){
+       !vodKind(arr[idx].u)){
       var stamp = CH.length + "|" + (CH[0] ? CH[0].u : "") +
                   "|" + (CH[CH.length - 1] ? CH[CH.length - 1].u : "");
       if(stamp !== CHAN_STAMP){
@@ -3130,6 +3152,7 @@ function playQueue(arr, idx){
   if(window.AndroidPlayer && AndroidPlayer.playList){
     AndroidPlayer.playList(JSON.stringify(slice.map(function(c){
       var o = { n: c.n, u: c.u };
+      if(vodKind(c.u)) o.v = 1;        /* a film or an episode, whatever its address says */
       if(c.ua) o.ua = c.ua;            /* channel's own user agent */
       if(c.rf) o.rf = c.rf;            /* channel's own referrer */
       return o;
@@ -3183,7 +3206,7 @@ $("main").addEventListener("click", function(e){
   var sid = el.getAttribute("data-sid");
   if(sid){ openSeries(sid, el.getAttribute("data-n")); return }
   var u = el.getAttribute("data-u"), nm = el.getAttribute("data-n");
-  if(u.indexOf("/movie/") > -1){ openMovie(u, nm); return }
+  if(vodKind(u) === "movie"){ openMovie(u, nm); return }
   var idx = -1;
   for(var i = 0; i < view.length; i++) if(view[i].u === u){ idx = i; break }
   if(idx > -1) playQueue(view, idx);
@@ -3501,6 +3524,7 @@ function pickSeason(k){
   $("dEps").innerHTML = eps.map(function(e, idx){
     var ext = e.container_extension || "mp4";
     var url = streamURL(e.direct_source || (e.info && e.info.direct_source), d + "/series/" + cr + "/" + e.id + "." + ext, d);
+    if(!/\/(movie|series)\//.test(url)) VODK[url] = "episode";
     var inf = e.info || {};
     var sub = [];
     if(inf.duration) sub.push(inf.duration);
@@ -4295,7 +4319,7 @@ function hcVodPick(p){
   var mv = DATA.movies || [];
   for(var j = 0; j < mv.length; j++) if(mv[j] && /^https?:/i.test(mv[j].u || "")) return Promise.resolve(mv[j]);
   var hl = histList();
-  for(var k = 0; k < hl.length; k++) if(hl[k] && /\/movie\//.test(hl[k].u || "")) return Promise.resolve(hl[k]);
+  for(var k = 0; k < hl.length; k++) if(hl[k] && (hl[k].t === "movie" || vodKind(hl[k].u) === "movie")) return Promise.resolve(hl[k]);
   if(p.type !== "xtream") return Promise.resolve(null);
   var d0 = String(p.domain || "").replace(/\/+$/, "");
   var ask = function(action){ return fetch(viaApp(xtBase(p) + "&action=" + action)).then(function(r){ return r.text() }).then(JSON.parse) };
@@ -4607,8 +4631,9 @@ function favType(c){
   if(c.sid) return "series";
   var u = c.u || "";
   if(!u) return "";
-  if(/\/movie\//.test(u)) return "movie";
-  if(/\/series\//.test(u)) return "";
+  var vk = vodKind(u);
+  if(vk === "movie") return "movie";
+  if(vk === "episode") return "";
   return "live";
 }
 function isFav(c){
@@ -4835,8 +4860,9 @@ $("favs").addEventListener("click", function(e){
   var sid = el.getAttribute("data-sid"), nm = el.getAttribute("data-n");
   if(sid){ openSeries(sid, nm); return }
   var u = el.getAttribute("data-u");
-  if(u.indexOf("/movie/") > -1){
-    var f = favFind("u:" + u) || {};
+  var fv = favFind("u:" + u) || {};
+  if(vodKind(u) === "movie" || fv.t === "movie"){
+    var f = fv;
     openMovie(u, nm);
     /* the film list may not be loaded yet - use the poster we kept */
     if(f.l && !$("dImg").getAttribute("src")) $("dImg").src = f.l;
@@ -4872,7 +4898,8 @@ function histAdd(c){
   try{
     if(!c || !c.u) return;
     var u = c.u;
-    var ty = /\/movie\//.test(u) ? "movie" : /\/series\//.test(u) ? "episode" : "live";
+    var vk = vodKind(u);
+    var ty = vk || (c.t === "movie" || c.t === "episode" ? c.t : "live");
     var full = (c.l && c.c) ? c : (histFindItem(u) || c);
     var o = { u: u, t: ty, n: c.n || full.n || "", l: c.l || full.l || "", c: c.c || full.c || "", at: Date.now() };
     if(ty === "episode"){

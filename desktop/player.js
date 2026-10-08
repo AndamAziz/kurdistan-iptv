@@ -74,16 +74,43 @@ function isVod(u) {
  * playing. So it is gone from the first attempt: what opens a film now is
  * exactly what opened it before any of this.
  */
+/** a stream that is a list of pieces (HLS), whether a channel, a film or an episode */
+function isHls(u) {
+  return /\.m3u8?$/.test(String(u || "").toLowerCase().split("?")[0]);
+}
+
+/**
+ * Whether the go-between carries this one on the first try.
+ *
+ * Channels always did. A film or an episode that is a list of pieces now
+ * does too: its server answers by sending the player somewhere else, and the
+ * list found there names its pieces in short form - exactly the trap channels
+ * fell into, and the reason films and series played on the phone but not
+ * here. A film that is one plain file still goes straight to mpv.
+ */
+function viaFirst(u, vod) { return isHls(u) || !(vod || isVod(u)) }
+
+/** where the go-between's piece-by-piece door is, beside its list door */
+function segOf(via) { return via ? via.replace(/\/live\?u=$/, "/seg?u=") : null }
+
+/*
+ *   "robust" everything through the go-between: lists through its list door,
+ *            a film's file through its piece door - asked the way its server
+ *            answers (another agent, secure DNS, an old certificate)
+ */
 function playlistText(items, mode, via) {
   /* it used to be a flag; both spellings still mean the same thing */
   const how = (mode === true) ? "auto" : (mode === false || !mode) ? "plain" : mode;
+  const seg = segOf(via);
   let out = "#EXTM3U\n";
   for (const it of items) {
     if (!it || !it.u) continue;
     const web = /^https?:/i.test(it.u);
     let line = it.u;
     if (web && how === "all") line = "lavf://" + it.u;
-    else if (web && !isVod(it.u) && how === "proxy" && via) line = via + encodeURIComponent(it.u);
+    else if (web && how === "proxy" && via && viaFirst(it.u, it.v)) line = via + encodeURIComponent(it.u);
+    else if (web && how === "robust" && via)
+      line = (viaFirst(it.u, it.v) || !seg ? via : seg) + encodeURIComponent(it.u);
     out += "#EXTINF:-1," + String(it.n || "").replace(/[\r\n]+/g, " ") + "\n";
     out += line + "\n";
   }
@@ -91,7 +118,7 @@ function playlistText(items, mode, via) {
 }
 
 const QUEUE_FILE = {
-  proxy: "kiptv-via.m3u8", auto: "kiptv-queue.m3u8",
+  proxy: "kiptv-via.m3u8", robust: "kiptv-robust.m3u8", auto: "kiptv-queue.m3u8",
   plain: "kiptv-plain.m3u8", all: "kiptv-lavf.m3u8"
 };
 
@@ -102,10 +129,14 @@ function writePlaylist(items, dir, mode, via) {
   return file;
 }
 
-/** the address without the "play this through FFmpeg" mark in front of it */
+/** the address itself: without the "play this through FFmpeg" mark, and
+ *  taken back out of the go-between's address when it went through there */
 function bareUrl(u) {
-  const s = String(u || "");
-  return s.startsWith("lavf://") ? s.slice(7) : s;
+  let s = String(u || "");
+  if (s.startsWith("lavf://")) s = s.slice(7);
+  const m = s.match(/^http:\/\/127\.0\.0\.1:\d+\/(?:live|seg)\?u=(.*)$/);
+  if (m) { try { s = decodeURIComponent(m[1]) } catch (e) { } }
+  return s;
 }
 
 function sameStream(a, b) { return bareUrl(a) === bareUrl(b); }
@@ -187,8 +218,9 @@ function mpvArgs(opts) {
 
     /* a playlist served over plain http whose pieces are https is ordinary
        enough, and is refused unless both are allowed */
-    "--stream-lavf-o-append=protocol_whitelist=file,http,https,tcp,tls,crypto,hls,applehttp",
-    "--demuxer-lavf-o-append=protocol_whitelist=file,http,https,tcp,tls,crypto,hls,applehttp",
+    /* httpproxy: a machine that reaches the internet through a proxy */
+    "--stream-lavf-o-append=protocol_whitelist=file,http,https,tcp,tls,crypto,hls,applehttp,httpproxy,data",
+    "--demuxer-lavf-o-append=protocol_whitelist=file,http,https,tcp,tls,crypto,hls,applehttp,httpproxy,data",
 
     /* the panel is spoken to the way the Android app speaks to it */
     "--user-agent=" + (it.ua || opts.ua || "VLC/3.0.20 LibVLC/3.0.20"),
@@ -321,50 +353,36 @@ class Player {
       }));
     };
 
-    /* ---- Channels go through the go-between, which knows how to follow a
-           panel that moves them. If it is not up, or the channel will not
-           come that way, the old path is still there underneath. ---- */
-    const first = (this.via && !isVod(want)) ? "proxy" : "auto";
-    if (!go(first, true)) return this.failed(at);
-    this.listen();                      /* in the background; settling waits on it */
-
-    /* Two things can leave mpv with nothing to show: a screen arrangement it
-       will not have, and - for a film - the other way of fetching it. Either
-       way it is given a second, plainer try rather than left dead. */
-    let alive = await this.settled();
-    if (!alive && first !== "auto") {
-      go("auto", true); this.listen();
-      alive = await this.settled();
-    }
-    if (!alive) {
-      go("plain", true); this.listen();
-      alive = await this.settled();
-      if (!alive && box) { go("plain", false); this.listen(); alive = await this.settled() }
-    }
-    if (!this.child) return this.failed(at);
-
+    /* ---- The ways to open it, in turn ----
+       1. what suits it: the go-between for channels and lists, mpv itself
+          for a film that is one plain file
+       2. everything through the go-between, which asks the way the server
+          answers (another agent, secure DNS, an old certificate)
+       3. FFmpeg's own web code - the last resort, never the first try
+       Each one is watched: mpv that moves to another channel, or gives up
+       on this one, is the signal for the next way. */
+    const modes = this.via ? [viaFirst(want, this.items[at].v) ? "proxy" : "auto", "robust", "all"] : ["auto", "all"];
     const others = this.items.map(x => x && x.u).filter((u, k) => u && k !== at);
-    await this.linkUp();
-    let how = await this.watch(want, others);
-    if (how === "ok") { this.tick(); return true }
 
-    /* ---- it opened something else ----
-       mpv moves on to the next line of the queue when a channel will not
-       open, which is why the wrong channel comes up instead of a word about
-       it. The usual reason is that mpv fetched the channel with its own web
-       code, which hands the stream's own list of parts an address they are
-       not under, so every part comes back missing. FFmpeg's web code does
-       not have that fault, so that one channel is given exactly that. */
-    this.swapping = true;
-    await this.close();
-    if (go(first === "proxy" ? "all" : (this.via && !isVod(want) ? "proxy" : "all"), true)) this.listen();
-    const again = await this.settled();
-    this.swapping = false;
-    if (!again) return this.failed(at);
+    for (let k = 0; k < modes.length; k++) {
+      if (k > 0) { this.swapping = true; await this.close() }
+      let alive = go(modes[k], true);
+      if (alive) { this.listen(); alive = await this.settled() }
+      /* a screen arrangement mpv will not have: the same way, without it */
+      if (!alive && box) {
+        alive = go(modes[k], false);
+        if (alive) { this.listen(); alive = await this.settled() }
+      }
+      this.swapping = false;
+      if (!alive || !this.child) continue;
 
-    await this.linkUp();
-    how = await this.watch(want, others);
-    if (how === "ok") { this.tick(); return true }
+      await this.linkUp();
+      const how = await this.watch(want, others);
+      if (how === "ok") { this.tick(); return true }
+      /* the window was closed by hand while it was still starting: that is
+         the person's answer, not a reason to open it again */
+      if (how === "dead" && this.lastExit === 0) return false;
+    }
 
     /* it will not open at all: say so, rather than play something else */
     await this.close();
@@ -469,6 +487,8 @@ class Player {
     /* mpv that ends, and mpv that never started, are the same to everyone else:
        an "error" is what a missing mpv.exe reports, and it never reaches "exit" */
     let over = false;
+    this.lastExit = null;
+    c.on("exit", code => { if (this.child === c || !this.child) this.lastExit = code });
     const gone = () => {
       if (over) return;
       over = true;
@@ -514,7 +534,7 @@ class Player {
         this.link.get("time-pos"), this.link.get("duration"), this.link.get("path")
       ]);
       if (this.hooks.onPosition && url && pos > 5 && dur > 0)
-        this.hooks.onPosition(url, Math.round(pos * 1000), Math.round(dur * 1000));
+        this.hooks.onPosition(bareUrl(url), Math.round(pos * 1000), Math.round(dur * 1000));
     }, 5000);
   }
   stopTicker() { if (this.ticker) { clearInterval(this.ticker); this.ticker = null } }
@@ -530,5 +550,5 @@ class Player {
   }
 }
 
-module.exports = { Player, mpvArgs, playlistText, writePlaylist, isVod, geometry,
+module.exports = { Player, mpvArgs, playlistText, writePlaylist, isVod, isHls, viaFirst, geometry,
                    bareUrl, sameStream, PIPE };

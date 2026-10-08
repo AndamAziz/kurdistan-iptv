@@ -1,49 +1,44 @@
 [en]
-A smarter player, and a new Settings page.
+Films and series now play on Windows too.
 
-Channels that played in VLC or a browser but showed "connection failed"
-here now open. When a server refuses the first try, the player asks again
-another way: a different player name, secure DNS (for names your internet
-provider blocks), certificates that have run out, the panel's other output
-(.ts or .m3u8), or http instead of https. It remembers which way worked for
-each server, so the next channel there opens at once. Live channels that
-drop are picked up again by themselves.
+Some providers send films and episodes as a list of pieces on another
+server, behind a redirect. The Windows app now opens those the same way it
+opens live channels, so they play.
 
-Settings is new: a health check that tests your internet, the provider, a
-live stream, a film and your device in one tap, and one card per account
-with its channels, films, series, end date and connections.
+When a server refuses, the Windows app now asks again another way, as the
+phone does: a different player name, secure DNS for names your internet
+provider blocks, or an old certificate. What worked is remembered for each
+server.
 
-"See all" no longer makes the tiles grow and shrink while you scroll.
+Films whose address does not say "movie" are now treated as films on every
+device: they open their own page, remember where you stopped, and are not
+marked LIVE.
 
 [ku]
-پلەیەرێکی زیرەکتر، و پەڕەیەکی نوێی ڕێکخستنەکان.
+فیلم و زنجیرە ئێستا لە ویندۆزیش کاردەکەن.
 
-ئەو کەناڵانەی لە VLC یان وێبگەڕدا کاریان دەکرد بەڵام لێرە «پەیوەندی
-سەرنەکەوت»یان پیشان دەدا، ئێستا دەکرێنەوە. کاتێک سێرڤەرێک هەوڵی یەکەم
-ڕەتدەکاتەوە، پلەیەرەکە بە ڕێگایەکی تر دەپرسێتەوە: ناوێکی تری پلەیەر،
-DNSی پارێزراو (بۆ ئەو ناوانەی ئینتەرنێتەکەت دایدەخات)، بڕوانامەی
-بەسەرچوو، دەرچەکەی تری پانێڵ (.ts یان .m3u8)، یان http لەجیاتی https.
-بیری دەمێنێت کام ڕێگا بۆ هەر سێرڤەرێک کاری کرد، بۆیە کەناڵی دواتر یەکسەر
-دەکرێتەوە. کەناڵی ڕاستەوخۆ کە دەپچڕێت خۆی دووبارە پەیوەندی دەکاتەوە.
+هەندێ پرۆڤایدەر فیلم و ئیپسۆد وەک لیستێکی پارچە لەسەر سێرڤەرێکی تر
+دەنێرن، لە پشت ئاڕاستەکردنەوەیەکەوە. ئەپی ویندۆز ئێستا ئەوانە بە هەمان
+شێوەی کەناڵە ڕاستەوخۆکان دەکاتەوە، بۆیە کاردەکەن.
 
-ڕێکخستنەکان نوێن: پشکنینێک کە بە یەک دەست لێدان ئینتەرنێت، پرۆڤایدەر،
-پەخشێکی ڕاستەوخۆ، فیلمێک و ئامێرەکەت تاقی دەکاتەوە، و کارتێک بۆ هەر
-ئەکاونتێک لەگەڵ کەناڵ، فیلم، زنجیرە، ڕۆژی کۆتایی و پەیوەندییەکان.
+کاتێک سێرڤەرێک ڕەتدەکاتەوە، ئەپی ویندۆز ئێستا وەک مۆبایل بە ڕێگایەکی تر
+دەپرسێتەوە: ناوێکی تری پلەیەر، DNSی پارێزراو بۆ ئەو ناوانەی ئینتەرنێتەکەت
+دایدەخات، یان بڕوانامەی کۆن. ئەوەی کاری کرد بۆ هەر سێرڤەرێک لەبیر دەمێنێت.
 
-«هەمووی» چیتر وێنۆچکەکان لە کاتی سکرۆڵکردندا گەورە و بچووک ناکات.
+ئەو فیلمانەی لە ناونیشانەکەیاندا «movie» نییە، ئێستا لە هەموو ئامێرێک
+وەک فیلم دەناسرێنەوە: پەڕەی خۆیان دەکرێتەوە، شوێنی وەستانت لەبیر دەمێنێت،
+و نیشانەی LIVE یان لەسەر نییە.
 
 [ar]
-مشغّل أذكى، وصفحة إعدادات جديدة.
+الأفلام والمسلسلات تعمل الآن على ويندوز أيضاً.
 
-القنوات التي كانت تعمل في VLC أو المتصفح وتظهر هنا «فشل الاتصال» تُفتح
-الآن. عندما يرفض الخادم المحاولة الأولى يسأل المشغّل بطريقة أخرى: اسم
-مشغّل مختلف، DNS آمن (للأسماء التي يحجبها مزوّد الإنترنت)، شهادات منتهية،
-المخرج الآخر للوحة (.ts أو .m3u8)، أو http بدل https. ويتذكر الطريقة التي
-نجحت مع كل خادم، فتُفتح القناة التالية فوراً. والقنوات المباشرة التي
-تنقطع تعود وحدها.
+بعض المزوّدين يرسلون الأفلام والحلقات كقائمة أجزاء على خادم آخر بعد
+إعادة توجيه. يفتحها تطبيق ويندوز الآن بالطريقة نفسها التي يفتح بها القنوات
+المباشرة، فتعمل.
 
-الإعدادات جديدة: فحص بلمسة واحدة للإنترنت والمزوّد وبث مباشر وفيلم
-وجهازك، وبطاقة لكل حساب بالقنوات والأفلام والمسلسلات وتاريخ الانتهاء
-والاتصالات.
+عندما يرفض الخادم، يسأل تطبيق ويندوز الآن بطريقة أخرى كما يفعل الهاتف:
+اسم مشغّل مختلف، أو DNS آمن للأسماء التي يحجبها مزوّد الإنترنت، أو شهادة
+قديمة. ويتذكر ما نجح مع كل خادم.
 
-زر «الكل» لم يعد يكبّر المربعات ويصغّرها أثناء التمرير.
+الأفلام التي لا يقول عنوانها «movie» تُعامل الآن كأفلام على كل الأجهزة:
+تفتح صفحتها، وتتذكر أين توقفت، ولا تُعلَّم بـ LIVE.
