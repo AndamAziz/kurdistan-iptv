@@ -4238,8 +4238,12 @@ function probeStream(c){
       }
     }catch(e){}
     var t0 = Date.now();
-    fetch(viaApp(c.u)).then(function(r){
-      if(!r.ok) throw new Error("HTTP " + r.status);
+    /* on Windows: through the same door the player uses, asked the same ways */
+    var door = window.KIPTV_PROXY ? window.KIPTV_PROXY.replace(/\/p\?u=$/, "/live?probe=1&u=") + encodeURIComponent(c.u) : viaApp(c.u);
+    fetch(door).then(function(r){
+      if(!r.ok) return r.text().then(function(x){
+        throw { code: r.status < 599 ? r.status : 0, trail: String(x || "").replace(/^PROXY_ERROR\s*/, "").slice(0, 160).replace(/ /g, "\u00a0") };
+      }, function(){ throw { code: r.status < 599 ? r.status : 0 } });
       if(!r.body || !r.body.getReader) return r.text().then(function(x){ return x.slice(0, 64) });
       var rd = r.body.getReader();
       return rd.read().then(function(x){
@@ -4252,7 +4256,7 @@ function probeStream(c){
       var kind = /#EXTM3U|#EXT-X/.test(head) ? "HLS" : head.charCodeAt(0) === 0x47 ? "MPEG-TS"
                : /<MPD/.test(head) ? "DASH" : head.slice(4, 8) === "ftyp" ? "MP4" : "";
       fin({ ok: true, ms: Date.now() - t0, kind: kind });
-    }).catch(function(e){ fin({ ok: false, err: e && e.message ? e.message : "network" }) });
+    }).catch(function(e){ fin({ ok: false, err: e && e.message ? e.message : "network", code: e && e.code, trail: e && e.trail }) });
   });
 }
 
@@ -4260,6 +4264,8 @@ function probeStream(c){
 function codecInfo(){
   try{ if(window.AndroidPlayer && AndroidPlayer.codecs) return JSON.parse(AndroidPlayer.codecs()) || {} }catch(e){}
   var o = {};
+  /* on Windows the player is mpv, which decodes these itself */
+  if(window.KIPTV_PROXY) return { hevc: true, ac3: true };
   try{
     var M = window.MediaSource;
     o.hevc = !!(M && (M.isTypeSupported('video/mp4; codecs="hvc1.1.6.L93.B0"') || M.isTypeSupported('video/mp4; codecs="hev1.1.6.L93.B0"')));
