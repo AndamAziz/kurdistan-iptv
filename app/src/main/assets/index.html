@@ -2071,6 +2071,7 @@ function loadVod(p){
         out.push({
           c: map[String(v.category_id)] || "Other",
           n: v.name || ("#" + v.stream_id),
+          id: v.stream_id,
           u: streamURL(v.direct_source, d + "/movie/" + cr + "/" + v.stream_id + "." + (v.container_extension || "mp4"), d),
           l: artURL(v.stream_icon, d) || artURL(v.cover, d) || artURL(v.movie_image, d) || artURL(v.cover_big, d)
              || artURL(v.backdrop_path, d),
@@ -3478,7 +3479,10 @@ function openMovie(url, name){
   $("dMeta").textContent = bits.join("  ·  ");
 
   /* the panel knows more about it - ask, but the page already works without it */
-  var id = (url.split("/").pop() || "").split(".")[0];
+  /* the film's own number from the list; read from the address only when
+     the address is the panel's own /movie/.../123.mkv */
+  var id = (item && item.id) ? String(item.id)
+         : (/\/movie\//.test(url) ? (url.split("/").pop() || "").split(".")[0] : "");
   var p = activeList();
   if(p.type !== "xtream" || !id) return;
   xtGet(xtBase(p), "get_vod_info&vod_id=" + encodeURIComponent(id))

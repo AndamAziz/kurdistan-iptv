@@ -1,5 +1,9 @@
 [en]
-Films and series now play on Windows too.
+Films and series now play on Windows too, and play better on phones.
+
+On phones the player now tries secure DNS before anything else when a
+server cannot be reached properly, and it prefers IPv4, so films on
+servers with a half-working IPv6 route no longer stall.
 
 Some providers send films and episodes as a list of pieces on another
 server, behind a redirect. The Windows app now opens those the same way it
@@ -15,7 +19,11 @@ device: they open their own page, remember where you stopped, and are not
 marked LIVE.
 
 [ku]
-فیلم و زنجیرە ئێستا لە ویندۆزیش کاردەکەن.
+فیلم و زنجیرە ئێستا لە ویندۆزیش کاردەکەن، و لە مۆبایل باشتر کاردەکەن.
+
+لە مۆبایل، کاتێک سێرڤەرێک بە باشی ناگات، پلەیەرەکە پێش هەموو شتێک
+DNSی پارێزراو تاقی دەکاتەوە، و IPv4 ی بە باشتر دادەنێت، بۆیە ئەو فیلمانەی
+لەسەر سێرڤەری IPv6ی نیوە-کاراوەن چیتر ناوەستن.
 
 هەندێ پرۆڤایدەر فیلم و ئیپسۆد وەک لیستێکی پارچە لەسەر سێرڤەرێکی تر
 دەنێرن، لە پشت ئاڕاستەکردنەوەیەکەوە. ئەپی ویندۆز ئێستا ئەوانە بە هەمان
@@ -30,7 +38,11 @@ marked LIVE.
 و نیشانەی LIVE یان لەسەر نییە.
 
 [ar]
-الأفلام والمسلسلات تعمل الآن على ويندوز أيضاً.
+الأفلام والمسلسلات تعمل الآن على ويندوز أيضاً، وبشكل أفضل على الهاتف.
+
+على الهاتف يجرّب المشغّل الآن DNS الآمن قبل أي شيء آخر عندما لا يصل إلى
+الخادم كما يجب، ويفضّل IPv4، فلا تتوقف الأفلام على خوادم IPv6 فيها نصف
+معطّل.
 
 بعض المزوّدين يرسلون الأفلام والحلقات كقائمة أجزاء على خادم آخر بعد
 إعادة توجيه. يفتحها تطبيق ويندوز الآن بالطريقة نفسها التي يفتح بها القنوات

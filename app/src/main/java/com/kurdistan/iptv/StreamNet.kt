@@ -17,6 +17,7 @@ import okhttp3.Request
 import okhttp3.dnsoverhttps.DnsOverHttps
 import java.io.EOFException
 import java.net.ConnectException
+import java.net.Inet4Address
 import java.net.InetAddress
 import java.net.NoRouteToHostException
 import java.net.PortUnreachableException
@@ -108,8 +109,19 @@ class StreamNet(context: Context) {
         }
     }
 
+    /* IPv4 first. A phone on a network whose IPv6 is half-working tries every
+       IPv6 address of a server one after another before IPv4, and each one
+       waits out the connect timeout - for every piece of a film. Servers on
+       Cloudflare (r2.dev, most panels) all have IPv6; live channels' servers
+       often do not, which is how films could stall while live played. */
+    private val v4First = object : Dns {
+        override fun lookup(hostname: String): List<InetAddress> =
+            Dns.SYSTEM.lookup(hostname).sortedBy { if (it is Inet4Address) 0 else 1 }
+    }
+
     private val base: OkHttpClient = OkHttpClient.Builder()
-        .connectTimeout(12, TimeUnit.SECONDS)
+        .dns(v4First)
+        .connectTimeout(8, TimeUnit.SECONDS)
         .readTimeout(20, TimeUnit.SECONDS)
         .followRedirects(true)
         .followSslRedirects(true)
@@ -141,7 +153,7 @@ class StreamNet(context: Context) {
                         if (r.isNotEmpty()) return r
                     } catch (e: Exception) { /* the next one */ }
                 }
-                return Dns.SYSTEM.lookup(hostname)
+                return v4First.lookup(hostname)
             }
         }
     }
@@ -190,15 +202,22 @@ class StreamNet(context: Context) {
             if (e.swap == SWAP_EXT && (vod || !canSwapExt(url))) return
             out.putIfAbsent(e.key(), e)
         }
+        /* The same order the Windows app uses. Secure DNS always comes before
+           accepting a certificate the phone does not trust: a name the
+           internet provider blocks often leads to its own block page, whose
+           certificate is wrong - accepting it would hand the player a web
+           page instead of a film. With the real address from secure DNS, an
+           old certificate is then the only thing left to forgive. */
         remembered(url)?.let { add(it) }          /* what worked on this server last time */
         add(Way(u0))
         add(Way(BROWSER_UA))
-        add(Way(u0, lenient = true))
         add(Way(u0, doh = true))
-        add(Way(u0, lenient = true, swap = SWAP_EXT))
-        add(Way(SMARTERS_UA, lenient = true))
-        add(Way(BROWSER_UA, lenient = true, doh = true, swap = SWAP_EXT))
-        add(Way(u0, lenient = true, swap = SWAP_SCHEME))
+        add(Way(SMARTERS_UA))
+        add(Way(BROWSER_UA, doh = true))
+        add(Way(u0, doh = true, swap = SWAP_EXT))
+        add(Way(u0, lenient = true, doh = true))
+        add(Way(BROWSER_UA, lenient = true, doh = true))
+        add(Way(u0, doh = true, swap = SWAP_SCHEME))
         add(Way(LAVF_UA, lenient = true, doh = true))
         return out.values.toList()
     }
@@ -207,7 +226,7 @@ class StreamNet(context: Context) {
     fun helps(w: Way, why: Why): Boolean = when (why) {
         Why.DNS -> w.doh
         Why.CONNECT -> w.doh || w.swap == SWAP_SCHEME
-        Why.SSL -> (w.lenient && lenientOk) || w.swap == SWAP_SCHEME
+        Why.SSL -> w.doh || (w.lenient && lenientOk) || w.swap == SWAP_SCHEME
         else -> true
     }
 
