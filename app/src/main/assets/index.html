@@ -861,6 +861,8 @@ html[dir=rtl] .st-hero{background:radial-gradient(120% 140% at 100% 0%,rgba(232,
 .hr.warn em{color:var(--accent2)}
 .hr.bad em{color:#FF8A8A}
 .hr.run em{color:var(--muted2)}
+.hr-t{padding:0 14px 11px 33px;margin-top:-4px;font-size:10.5px;font-weight:600;line-height:1.6;
+  color:var(--muted2);direction:ltr;text-align:left;word-break:break-word}
 .hc-f{display:flex;gap:8px;padding:12px 14px 14px;border-top:1px solid var(--line)}
 .hbtn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:0;
   padding:11px 14px;border-radius:13px;border:0;cursor:pointer;font:inherit;font-size:13.5px;font-weight:800;
@@ -4447,7 +4449,9 @@ function hcHTML(){
       /* a failed stream keeps the answer of every way it tried: a tap shows them */
       return '<div class="hr '+(r.st || "")+'"'+(r.t ? ' onclick="hcTrail(\''+k+'\')" tabindex="0" style="cursor:pointer"' : '')+'><i></i>'
            +   '<span class="hl"><b>'+esc(names[k])+'</b>'+(r.s ? '<s>'+esc(r.s)+'</s>' : '')+'</span>'
-           +   '<em>'+esc(r.m || (r.st === "run" ? "…" : ""))+'</em></div>';
+           +   '<em>'+esc(r.m || (r.st === "run" ? "…" : ""))+'</em></div>'
+           /* and they are written out under it, so a screenshot shows them */
+           + (r.t && r.st === "bad" ? '<div class="hr-t">'+esc(r.t.split(" ").join("  \u00b7  "))+'</div>' : '');
     }).join("") + '</div>';
   }
   var running = HC && HC.state === "run";

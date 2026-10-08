@@ -89,6 +89,10 @@ dependencies {
        (agent, certificates, DNS) when a server refuses the first way */
     implementation("androidx.media3:media3-datasource-okhttp:$media3")
     implementation("com.squareup.okhttp3:okhttp-dnsoverhttps:4.12.0")
+    /* one more way to ask: Chrome's own network code (Cronet), from Google
+       Play Services - nothing added to the APK. A server that turns away
+       Android's built-in TLS still answers the browser it serves every day. */
+    implementation("androidx.media3:media3-datasource-cronet:$media3")
     /* the system's own media controls (lock screen, headset buttons) while
        the sound keeps playing in the background */
     implementation("androidx.media3:media3-session:$media3")
