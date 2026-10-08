@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.SystemClock
 import androidx.media3.common.MimeTypes
 import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.HttpDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import okhttp3.Cookie
@@ -17,6 +18,7 @@ import okhttp3.Request
 import okhttp3.dnsoverhttps.DnsOverHttps
 import java.io.EOFException
 import java.net.ConnectException
+import java.net.HttpURLConnection
 import java.net.Inet4Address
 import java.net.InetAddress
 import java.net.NoRouteToHostException
@@ -43,18 +45,39 @@ data class Way(
     val doh: Boolean = false,
     val swap: Int = 0,
     /** ask the way VLC and mpv do: HTTP/1.1, nothing compressed */
-    val h1: Boolean = false
+    val h1: Boolean = false,
+    /** Android's own HTTP code instead of OkHttp - what most other IPTV apps
+     *  play with - so a server that dislikes OkHttp itself still answers */
+    val sys: Boolean = false,
+    /** "Range: bytes=0-" on the first request, as VLC and FFmpeg always send */
+    val range: Boolean = false
 ) {
-    fun key(): String = "$ua|$lenient|$doh|$swap|$h1"
+    fun key(): String = "$ua|$lenient|$doh|$swap|$h1|$sys|$range"
+
+    /** a few letters for the health check: which way got which answer */
+    fun label(): String {
+        val who = when {
+            ua.startsWith("VLC") -> "VLC"; ua.startsWith("Mozilla") -> "Web"
+            ua.startsWith("IPTVSmarters") -> "Smarters"; ua.startsWith("Lavf") -> "Lavf"
+            else -> "UA"
+        }
+        return who + (if (sys) "+sys" else "") + (if (range) "+range" else "") + (if (h1) "+h1" else "") +
+            (if (doh) "+dns" else "") + (if (lenient) "+cert" else "") +
+            (if (swap == 1) "+ext" else if (swap == 2) "+scheme" else "")
+    }
 
     companion object {
         fun parse(s: String?): Way? {
             if (s.isNullOrBlank()) return null
             val p = s.split('|')
             return try {
-                /* written with the HTTP/1.1 flag, or by a build from before it */
-                if (p.size >= 5 && p[p.size - 2].toIntOrNull() != null &&
-                    (p.last() == "true" || p.last() == "false"))
+                fun b(x: String) = x == "true" || x == "false"
+                /* written with every flag, with the HTTP/1.1 flag only, or by an
+                   older build - each reads back */
+                if (p.size >= 7 && p[p.size - 4].toIntOrNull() != null && b(p[p.size - 3]) && b(p[p.size - 2]) && b(p.last()))
+                    Way(p.dropLast(6).joinToString("|"), p[p.size - 6].toBoolean(), p[p.size - 5].toBoolean(),
+                        p[p.size - 4].toInt(), p[p.size - 3].toBoolean(), p[p.size - 2].toBoolean(), p.last().toBoolean())
+                else if (p.size >= 5 && p[p.size - 2].toIntOrNull() != null && b(p.last()))
                     Way(p.dropLast(4).joinToString("|"), p[p.size - 4].toBoolean(),
                         p[p.size - 3].toBoolean(), p[p.size - 2].toInt(), p.last().toBoolean())
                 else if (p.size >= 4)
@@ -190,17 +213,28 @@ class StreamNet(context: Context) {
     @Volatile var way: Way = Way(VLC_UA)
     @Volatile var referer: String? = null
 
-    private val factories = ConcurrentHashMap<String, OkHttpDataSource.Factory>()
+    private val factories = ConcurrentHashMap<String, HttpDataSource.Factory>()
 
     fun dataSourceFactory(): DataSource.Factory = DataSource.Factory {
         val w = way
         val r = referer
         factories.getOrPut(w.key() + "|" + (r ?: "")) {
-            OkHttpDataSource.Factory(client(w)).setUserAgent(w.ua).also { f ->
-                val h = HashMap(PLAYER_HEADERS)
+            val h = HashMap(PLAYER_HEADERS)
+            if (r != null) h["Referer"] = r
+            if (w.sys) {
+                /* Android's own HTTP code. Its range header is set after these,
+                   so a seek still asks for the right place */
+                if (w.range) h["Range"] = "bytes=0-"
+                DefaultHttpDataSource.Factory()
+                    .setUserAgent(w.ua)
+                    .setAllowCrossProtocolRedirects(true)
+                    .setConnectTimeoutMs(10000)
+                    .setReadTimeoutMs(20000)
+                    .setKeepPostFor302Redirects(true)
+                    .setDefaultRequestProperties(h)
+            } else {
                 if (w.h1) h["Accept-Encoding"] = "identity"
-                if (r != null) h["Referer"] = r
-                f.setDefaultRequestProperties(h)
+                OkHttpDataSource.Factory(client(w)).setUserAgent(w.ua).setDefaultRequestProperties(h)
             }
         }.createDataSource()
     }
@@ -224,7 +258,9 @@ class StreamNet(context: Context) {
         remembered(url)?.let { add(it) }          /* what worked on this server last time */
         add(Way(u0))
         add(Way(BROWSER_UA))
+        add(Way(u0, sys = true, range = true))    /* what VLC sends, through Android's own HTTP code */
         add(Way(u0, h1 = true))                   /* exactly what mpv on Windows sends */
+        add(Way(BROWSER_UA, sys = true))          /* what an ordinary IPTV app sends */
         add(Way(u0, doh = true))
         add(Way(SMARTERS_UA))
         add(Way(BROWSER_UA, doh = true))
@@ -234,13 +270,15 @@ class StreamNet(context: Context) {
         add(Way(BROWSER_UA, lenient = true, doh = true))
         add(Way(u0, doh = true, swap = SWAP_SCHEME))
         add(Way(LAVF_UA, lenient = true, doh = true))
+        add(Way(u0, sys = true))
+        add(Way(LAVF_UA, sys = true, range = true))
         return out.values.toList()
     }
 
     /** whether trying [w] can help with a failure of this kind */
     fun helps(w: Way, why: Why): Boolean = when (why) {
         Why.DNS -> w.doh
-        Why.CONNECT -> w.doh || w.swap == SWAP_SCHEME
+        Why.CONNECT -> w.doh || w.swap == SWAP_SCHEME || w.sys
         Why.SSL -> w.doh || (w.lenient && lenientOk) || w.swap == SWAP_SCHEME
         else -> true
     }
@@ -311,6 +349,7 @@ class StreamNet(context: Context) {
     /** Follows every redirect itself and reads the first bytes that come back:
      *  where the stream really is, and what it really is. Then lets go. */
     private fun attempt(url: String, w: Way, ref: String?): Tried {
+        if (w.sys) return attemptSys(url, w, ref)
         val t0 = SystemClock.elapsedRealtime()
         var target = linkFor(url, w)
         val cl = client(w, follow = false)
@@ -340,45 +379,89 @@ class StreamNet(context: Context) {
                 var got = 0
                 try {
                     val ins = resp.body?.byteStream()
-                    if (ins != null) {
-                        while (got < head.size) {
-                            val r = ins.read(head, got, head.size - got)
-                            if (r <= 0) break
-                            got += r
-                        }
-                    }
+                    if (ins != null) got = readHead(ins, head)
                 } catch (e: Exception) { /* enough is enough */ }
                 resp.close()
-                val ms = SystemClock.elapsedRealtime() - t0
-
-                val text = if (got > 0) String(head, 0, got, Charsets.ISO_8859_1) else ""
-                val mime = when {
-                    text.startsWith("#EXTM3U") || text.contains("#EXT-X-") -> MimeTypes.APPLICATION_M3U8
-                    text.contains("<MPD") -> MimeTypes.APPLICATION_MPD
-                    got > 0 && head[0] == 0x47.toByte() -> MimeTypes.VIDEO_MP2T
-                    ctype.contains("mpegurl") -> MimeTypes.APPLICATION_M3U8
-                    ctype.contains("dash+xml") -> MimeTypes.APPLICATION_MPD
-                    ctype.contains("mp2t") -> MimeTypes.VIDEO_MP2T
-                    else -> null
-                }
-                val kind = when {
-                    mime == MimeTypes.APPLICATION_M3U8 -> "HLS"
-                    mime == MimeTypes.APPLICATION_MPD -> "DASH"
-                    mime == MimeTypes.VIDEO_MP2T -> "MPEG-TS"
-                    got > 8 && text.substring(4, 8) == "ftyp" -> "MP4"
-                    got > 4 && head[0] == 0x1A.toByte() && head[1] == 0x45.toByte() -> "MKV"
-                    else -> ""
-                }
-                /* a refusal dressed as a page: html where a stream should be */
-                if (got > 0 && (ctype.contains("text/html") || text.trimStart().startsWith("<!DOCTYPE", true) ||
-                        text.trimStart().startsWith("<html", true)) && mime == null)
-                    return Tried(null, Why.REFUSED, code)
-                return Tried(Found(target, mime, kind, w, ms), Why.OTHER, code)
+                return judge(target, w, code, ctype, head, got, SystemClock.elapsedRealtime() - t0)
             }
         } catch (e: Exception) {
             return Tried(null, why(e), 0)
         }
         return Tried(null, Why.REFUSED, 0)
+    }
+
+    /** the same, through Android's own HTTP code */
+    private fun attemptSys(url: String, w: Way, ref: String?): Tried {
+        val t0 = SystemClock.elapsedRealtime()
+        var target = linkFor(url, w)
+        try {
+            var hop = 0
+            while (hop++ < 8) {
+                val c = URL(target).openConnection() as HttpURLConnection
+                c.instanceFollowRedirects = false
+                c.connectTimeout = 10000
+                c.readTimeout = 15000
+                c.setRequestProperty("User-Agent", w.ua)
+                for ((k, v) in PLAYER_HEADERS) c.setRequestProperty(k, v)
+                if (w.range) c.setRequestProperty("Range", "bytes=0-")
+                if (ref != null) c.setRequestProperty("Referer", ref)
+                val code = c.responseCode
+                if (code in 300..399) {
+                    val loc = c.getHeaderField("Location")
+                    c.disconnect()
+                    if (loc.isNullOrBlank()) return Tried(null, Why.REFUSED, code)
+                    target = URL(URL(target), loc).toString()
+                    continue
+                }
+                if (code !in 200..299) { c.disconnect(); return Tried(null, Why.REFUSED, code) }
+                val ctype = (c.contentType ?: "").lowercase()
+                val head = ByteArray(2048)
+                var got = 0
+                try { c.inputStream.use { got = readHead(it, head) } } catch (e: Exception) { }
+                c.disconnect()
+                return judge(target, w, code, ctype, head, got, SystemClock.elapsedRealtime() - t0)
+            }
+        } catch (e: Exception) {
+            return Tried(null, why(e), 0)
+        }
+        return Tried(null, Why.REFUSED, 0)
+    }
+
+    private fun readHead(ins: java.io.InputStream, head: ByteArray): Int {
+        var got = 0
+        while (got < head.size) {
+            val r = ins.read(head, got, head.size - got)
+            if (r <= 0) break
+            got += r
+        }
+        return got
+    }
+
+    /** what the first bytes say the stream is - or that it is a page, not a stream */
+    private fun judge(target: String, w: Way, code: Int, ctype: String, head: ByteArray, got: Int, ms: Long): Tried {
+        val text = if (got > 0) String(head, 0, got, Charsets.ISO_8859_1) else ""
+        val mime = when {
+            text.startsWith("#EXTM3U") || text.contains("#EXT-X-") -> MimeTypes.APPLICATION_M3U8
+            text.contains("<MPD") -> MimeTypes.APPLICATION_MPD
+            got > 0 && head[0] == 0x47.toByte() -> MimeTypes.VIDEO_MP2T
+            ctype.contains("mpegurl") -> MimeTypes.APPLICATION_M3U8
+            ctype.contains("dash+xml") -> MimeTypes.APPLICATION_MPD
+            ctype.contains("mp2t") -> MimeTypes.VIDEO_MP2T
+            else -> null
+        }
+        val kind = when {
+            mime == MimeTypes.APPLICATION_M3U8 -> "HLS"
+            mime == MimeTypes.APPLICATION_MPD -> "DASH"
+            mime == MimeTypes.VIDEO_MP2T -> "MPEG-TS"
+            got > 8 && text.substring(4, 8) == "ftyp" -> "MP4"
+            got > 4 && head[0] == 0x1A.toByte() && head[1] == 0x45.toByte() -> "MKV"
+            else -> ""
+        }
+        /* a refusal dressed as a page: html where a stream should be */
+        if (got > 0 && (ctype.contains("text/html") || text.trimStart().startsWith("<!DOCTYPE", true) ||
+                text.trimStart().startsWith("<html", true)) && mime == null)
+            return Tried(null, Why.REFUSED, code)
+        return Tried(Found(target, mime, kind, w, ms), Why.OTHER, code)
     }
 
     /**
@@ -387,21 +470,31 @@ class StreamNet(context: Context) {
      * (or null) and the last HTTP answer the server gave.
      */
     fun find(url: String, ua: String?, ref: String?, vod: Boolean, maxTries: Int): Pair<Found?, Int> {
+        val r = search(url, ua, ref, vod, maxTries)
+        return Pair(r.found, r.code)
+    }
+
+    /** what a search found, its last HTTP answer, and every way's answer in turn */
+    class Search(val found: Found?, val code: Int, val trail: String)
+
+    fun search(url: String, ua: String?, ref: String?, vod: Boolean, maxTries: Int): Search {
         val ways = waysFor(url, ua, vod)
         val plain = Way(ua ?: VLC_UA)
         val tried = HashSet<String>()
-        var cur = ways.firstOrNull() ?: return Pair(null, 0)
+        val trail = ArrayList<String>()
+        var cur = ways.firstOrNull() ?: return Search(null, 0, "")
         var lastCode = 0
         for (n in 0 until maxTries) {
             tried.add(cur.key())
             val r = attempt(url, cur, ref)
+            trail.add(cur.label() + ":" + (if (r.found != null) "OK" else if (r.code > 0) r.code.toString() else r.why.name.lowercase()))
             if (r.found != null) {
                 remember(url, cur, cur == plain)
-                return Pair(r.found, r.code)
+                return Search(r.found, r.code, trail.joinToString(" "))
             }
             if (r.code > 0) lastCode = r.code
             cur = ways.firstOrNull { it.key() !in tried && helps(it, r.why) } ?: break
         }
-        return Pair(null, lastCode)
+        return Search(null, lastCode, trail.joinToString(" "))
     }
 }
