@@ -85,6 +85,10 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer-hls:$media3")
     implementation("androidx.media3:media3-exoplayer-dash:$media3")
     implementation("androidx.media3:media3-ui:$media3")
+    /* streams are fetched with OkHttp: it lets the player change how it asks
+       (agent, certificates, DNS) when a server refuses the first way */
+    implementation("androidx.media3:media3-datasource-okhttp:$media3")
+    implementation("com.squareup.okhttp3:okhttp-dnsoverhttps:4.12.0")
     /* the system's own media controls (lock screen, headset buttons) while
        the sound keeps playing in the background */
     implementation("androidx.media3:media3-session:$media3")

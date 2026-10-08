@@ -1,40 +1,49 @@
 [en]
-A new look, built from the colours of the Kurdistan flag.
+A smarter player, and a new Settings page.
 
-The name is now white, with red, white and green beneath it, and gold has
-replaced purple everywhere.
+Channels that played in VLC or a browser but showed "connection failed"
+here now open. When a server refuses the first try, the player asks again
+another way: a different player name, secure DNS (for names your internet
+provider blocks), certificates that have run out, the panel's other output
+(.ts or .m3u8), or http instead of https. It remembers which way worked for
+each server, so the next channel there opens at once. Live channels that
+drop are picked up again by themselves.
 
-The home banner carries the artwork softly behind the poster, and anything
-with no picture gets a design of its own instead of an empty space.
+Settings is new: a health check that tests your internet, the provider, a
+live stream, a film and your device in one tap, and one card per account
+with its channels, films, series, end date and connections.
 
-"See all" is quieter. Settings is one clean card per section.
-
-Pictures load from more kinds of address, so fewer posters come up blank.
+"See all" no longer makes the tiles grow and shrink while you scroll.
 
 [ku]
-ڕووخسارێکی نوێ، لە ڕەنگەکانی ئاڵای کوردستانەوە.
+پلەیەرێکی زیرەکتر، و پەڕەیەکی نوێی ڕێکخستنەکان.
 
-KURDISTAN IPTV ئێستا بە سپی نووسراوە، لەگەڵ سوور و سپی و سەوز لە ژێریدا.
-زێڕین جێی مۆری گرتووەتەوە لە هەموو شوێنێک: بانەر، دوگمەکان، ڕێکخستنەکان.
+ئەو کەناڵانەی لە VLC یان وێبگەڕدا کاریان دەکرد بەڵام لێرە «پەیوەندی
+سەرنەکەوت»یان پیشان دەدا، ئێستا دەکرێنەوە. کاتێک سێرڤەرێک هەوڵی یەکەم
+ڕەتدەکاتەوە، پلەیەرەکە بە ڕێگایەکی تر دەپرسێتەوە: ناوێکی تری پلەیەر،
+DNSی پارێزراو (بۆ ئەو ناوانەی ئینتەرنێتەکەت دایدەخات)، بڕوانامەی
+بەسەرچوو، دەرچەکەی تری پانێڵ (.ts یان .m3u8)، یان http لەجیاتی https.
+بیری دەمێنێت کام ڕێگا بۆ هەر سێرڤەرێک کاری کرد، بۆیە کەناڵی دواتر یەکسەر
+دەکرێتەوە. کەناڵی ڕاستەوخۆ کە دەپچڕێت خۆی دووبارە پەیوەندی دەکاتەوە.
 
-بانەری پەڕەی سەرەکی وێنەکە بە نەرمی لە پشتییەوە پیشان دەدات، و ئەو کەناڵ
-یان فیلمەی وێنەی نییە، دیزاینێکی تایبەتی خۆی وەردەگرێت لەبری شوێنێکی بەتاڵ.
+ڕێکخستنەکان نوێن: پشکنینێک کە بە یەک دەست لێدان ئینتەرنێت، پرۆڤایدەر،
+پەخشێکی ڕاستەوخۆ، فیلمێک و ئامێرەکەت تاقی دەکاتەوە، و کارتێک بۆ هەر
+ئەکاونتێک لەگەڵ کەناڵ، فیلم، زنجیرە، ڕۆژی کۆتایی و پەیوەندییەکان.
 
-«هەمووی» ئارامتر بووە و چیتر ڕکابەری ئەو ڕیزە ناکات کە لە ژێریەتی. پەڕەی
-ڕێکخستنەکان بووەتە کارتێکی ڕێک بۆ هەر بەشێک، وەک پێویست بوو.
-
-وێنەکان لە جۆری زیاتری ناونیشانەوە دادەبەزن، بۆیە پۆستەری کەمتر بەتاڵ دێت.
+«هەمووی» چیتر وێنۆچکەکان لە کاتی سکرۆڵکردندا گەورە و بچووک ناکات.
 
 [ar]
-مظهر جديد، مبني على ألوان علم كردستان.
+مشغّل أذكى، وصفحة إعدادات جديدة.
 
-اسم KURDISTAN IPTV مكتوب الآن بالأبيض، وتحته الأحمر والأبيض والأخضر.
-حلّ الذهبي محل البنفسجي في كل مكان: البانر والأزرار والإعدادات.
+القنوات التي كانت تعمل في VLC أو المتصفح وتظهر هنا «فشل الاتصال» تُفتح
+الآن. عندما يرفض الخادم المحاولة الأولى يسأل المشغّل بطريقة أخرى: اسم
+مشغّل مختلف، DNS آمن (للأسماء التي يحجبها مزوّد الإنترنت)، شهادات منتهية،
+المخرج الآخر للوحة (.ts أو .m3u8)، أو http بدل https. ويتذكر الطريقة التي
+نجحت مع كل خادم، فتُفتح القناة التالية فوراً. والقنوات المباشرة التي
+تنقطع تعود وحدها.
 
-يعرض بانر الصفحة الرئيسية الصورة نفسها خلف الملصق بهدوء، وأي قناة أو فيلم
-بلا صورة يحصل على تصميم خاص به بدل مساحة فارغة.
+الإعدادات جديدة: فحص بلمسة واحدة للإنترنت والمزوّد وبث مباشر وفيلم
+وجهازك، وبطاقة لكل حساب بالقنوات والأفلام والمسلسلات وتاريخ الانتهاء
+والاتصالات.
 
-أصبح زر «الكل» أهدأ ولم يعد ينافس الصف الذي تحته. وصفحة الإعدادات صارت
-بطاقة واحدة مرتبة لكل قسم، كما ينبغي.
-
-تُحمَّل الصور من أنواع عناوين أكثر، لذا تظهر ملصقات فارغة أقل.
+زر «الكل» لم يعد يكبّر المربعات ويصغّرها أثناء التمرير.

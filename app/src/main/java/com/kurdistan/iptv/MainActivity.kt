@@ -15,6 +15,7 @@ import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.StateListDrawable
 import android.media.AudioManager
+import android.media.MediaCodecList
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -56,12 +57,14 @@ import androidx.media3.common.Player
 import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
-import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.HttpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.extractor.DefaultExtractorsFactory
+import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory
 import androidx.media3.session.MediaSession
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
@@ -102,8 +105,21 @@ class MainActivity : ComponentActivity() {
     private val ORDER: List<String?> =
         listOf(MimeTypes.APPLICATION_M3U8, null, MimeTypes.VIDEO_MP2T, MimeTypes.APPLICATION_MPD)
 
-    private val MAX_RECONNECTS = 8
+    /* a live channel that drops is picked up again and again, a little
+       slower each time, so a server's hiccup never ends the picture */
+    private val MAX_RECONNECTS = 15
     private val RECONNECT_DELAY_MS = 1200L
+
+    /** how streams are reached: agents, certificates, DNS, the other output */
+    private lateinit var net: StreamNet
+    /** the ways to ask for the item on screen, which one is in use, which failed */
+    private var ways: List<Way> = emptyList()
+    private var wayIdx = 0
+    private val waysTried = HashSet<String>()
+    /** when the item on screen was first asked for: a server that is truly
+     *  down gets its error in well under a minute, not after every way */
+    private var itemStartAt = 0L
+    private val WAYS_BUDGET_MS = 45_000L
 
     private lateinit var webView: WebView
     private lateinit var playerLayer: View
@@ -308,6 +324,7 @@ class MainActivity : ComponentActivity() {
             )
         }
 
+        net = StreamNet(this)
         configureWebView()
         webView.loadUrl("file:///android_asset/index.html")
         webView.requestFocus()                /* a TV remote's keys go to the page */
@@ -534,6 +551,61 @@ class MainActivity : ComponentActivity() {
             } catch (e: Exception) { updToPage("fail", 0, 0) }
         }
 
+        /**
+         * Opens a stream the way the player would - every way it knows, the
+         * redirects followed by hand - reads its first bytes and lets go at
+         * once. The answer goes back as window.kiptvProbe(id, json). A way
+         * that works is remembered, so the player starts with it later.
+         */
+        @android.webkit.JavascriptInterface
+        fun probeStream(id: String, url: String, ua: String, ref: String) {
+            Thread {
+                val t0 = SystemClock.elapsedRealtime()
+                val o = JSONObject()
+                try {
+                    val (found, code) = net.find(url, ua.ifBlank { null }, ref.ifBlank { null }, isVod(url), 6)
+                    o.put("ok", found != null)
+                    o.put("ms", found?.ms ?: (SystemClock.elapsedRealtime() - t0))
+                    o.put("kind", found?.kind ?: "")
+                    if (code > 0) o.put("code", code)
+                } catch (e: Exception) {
+                    try { o.put("ok", false); o.put("err", e.javaClass.simpleName) } catch (e2: Exception) { }
+                }
+                val js = "window.kiptvProbe&&kiptvProbe(" + JSONObject.quote(id) + "," +
+                    JSONObject.quote(o.toString()) + ")"
+                runOnUiThread { try { webView.evaluateJavascript(js, null) } catch (e: Exception) { } }
+            }.start()
+        }
+
+        /** what this device decodes: {"hevc":..,"hevc4k":..,"av1":..,"ac3":..} */
+        @android.webkit.JavascriptInterface
+        fun codecs(): String {
+            val o = JSONObject()
+            try {
+                var hevc = false; var hevc4k = false; var av1 = false; var ac3hw = false
+                for (ci in MediaCodecList(MediaCodecList.REGULAR_CODECS).codecInfos) {
+                    if (ci.isEncoder) continue
+                    for (type in ci.supportedTypes) {
+                        when (type.lowercase(Locale.ROOT)) {
+                            "video/hevc" -> {
+                                hevc = true
+                                try {
+                                    if (ci.getCapabilitiesForType(type).videoCapabilities
+                                            ?.isSizeSupported(3840, 2160) == true) hevc4k = true
+                                } catch (e: Exception) { }
+                            }
+                            "video/av01" -> av1 = true
+                            "audio/ac3", "audio/eac3" -> ac3hw = true
+                        }
+                    }
+                }
+                o.put("hevc", hevc); o.put("hevc4k", hevc4k); o.put("av1", av1)
+                o.put("ac3", true)          /* FFmpeg decodes it when the phone cannot */
+                o.put("ac3hw", ac3hw)
+            } catch (e: Exception) { }
+            return o.toString()
+        }
+
         /** the page's language, so the player's own menu speaks it too */
         @android.webkit.JavascriptInterface
         fun setLang(l: String) {
@@ -633,14 +705,17 @@ class MainActivity : ComponentActivity() {
         builtUa = curUa
         builtRef = curRef
 
-        val http = DefaultHttpDataSource.Factory()
-            .setUserAgent(curUa ?: UA)
-            .setAllowCrossProtocolRedirects(true)
-            .setConnectTimeoutMs(20000)
-            .setReadTimeoutMs(20000)
-            .setKeepPostFor302Redirects(true)
+        /* the data source reads net.way each time it opens a connection, so a
+           different way of asking needs no new player - only a new prepare */
+        net.referer = curRef
+        val data = DefaultDataSource.Factory(this, net.dataSourceFactory())
 
-        curRef?.let { http.setDefaultRequestProperties(mapOf("Referer" to it)) }
+        /* a live .ts often starts on a picture that is not a clean keyframe,
+           and many encoders leave out the markers between frames */
+        val extractors = DefaultExtractorsFactory()
+            .setTsExtractorFlags(DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES or
+                DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS)
+            .setConstantBitrateSeekingEnabled(true)
 
         /* FFmpeg audio decoders (AC3, EAC3, DTS, TrueHD ...) as a fallback:
            the phone's own decoder is tried first, FFmpeg only takes over when
@@ -654,91 +729,40 @@ class MainActivity : ComponentActivity() {
             .build()
 
         return ExoPlayer.Builder(this, renderers)
-            .setMediaSourceFactory(DefaultMediaSourceFactory(this).setDataSourceFactory(http))
+            .setMediaSourceFactory(DefaultMediaSourceFactory(data, extractors))
             .setLoadControl(loadControl)
             .build()
     }
 
-    /** Follow the address by hand the way VLC does - every redirect, keeping
-     *  cookies - and look at the first bytes that actually come back. Returns
-     *  the address the stream really lives at and what it turned out to be. */
-    private fun resolveStream(url: String, ua: String, ref: String?): Pair<String, String?>? {
-        var target = url
-        var hop = 0
-        try {
-            while (hop++ < 8) {
-                val c = URL(target).openConnection() as HttpURLConnection
-                c.instanceFollowRedirects = false          /* we follow them ourselves */
-                c.connectTimeout = 9000
-                c.readTimeout = 9000
-                c.setRequestProperty("User-Agent", ua)
-                c.setRequestProperty("Accept", "*/*")
-                c.setRequestProperty("Connection", "close")
-                ref?.let { c.setRequestProperty("Referer", it) }
-
-                val code = c.responseCode
-                if (code in 300..399) {
-                    val loc = c.getHeaderField("Location")
-                    c.disconnect()
-                    if (loc.isNullOrBlank()) return null
-                    target = URL(URL(target), loc).toString()   /* relative or absolute */
-                    continue
-                }
-                if (code !in 200..299) { c.disconnect(); return null }
-
-                val ctype = (c.contentType ?: "").lowercase()
-                val head = ByteArray(2048)
-                var got = 0
-                try {
-                    c.inputStream.use { ins ->
-                        while (got < head.size) {
-                            val r = ins.read(head, got, head.size - got)
-                            if (r <= 0) break
-                            got += r
-                        }
-                    }
-                } catch (e: Exception) { /* enough is enough */ }
-                c.disconnect()
-
-                val text = if (got > 0) String(head, 0, got, Charsets.ISO_8859_1) else ""
-                val mime = when {
-                    text.startsWith("#EXTM3U") || text.contains("#EXT-X-") ->
-                        MimeTypes.APPLICATION_M3U8
-                    text.contains("<MPD") -> MimeTypes.APPLICATION_MPD
-                    got > 0 && head[0] == 0x47.toByte() -> MimeTypes.VIDEO_MP2T
-                    ctype.contains("mpegurl") -> MimeTypes.APPLICATION_M3U8
-                    ctype.contains("dash+xml") -> MimeTypes.APPLICATION_MPD
-                    ctype.contains("mp2t") -> MimeTypes.VIDEO_MP2T
-                    else -> null
-                }
-                return Pair(target, mime)
-            }
-        } catch (e: Exception) { /* fall through */ }
-        return null
-    }
-
-    /** Last resort: the address lied, so go and find the real one. */
-    private fun resolveAndRetry(index: Int, fallbackCode: String) {
+    /** Last resort: the address lied, or every way the player knows failed.
+     *  Go and find where the stream really is, and what it really is, trying
+     *  every way of asking - then play exactly that. */
+    private fun resolveAndRetry(index: Int, fallbackCode: String, tries: Int = 10) {
         val link = urls.getOrNull(index)
         if (link == null) { showError(fallbackCode); return }
-        val ua = curUa ?: UA
+        val ua = curUa
         val ref = curRef
         loading.visibility = View.VISIBLE
         errorBox.visibility = View.GONE
 
         Thread {
-            val found = resolveStream(link, ua, ref)
+            val found = try { net.find(link, ua, ref, isVod(link), tries).first } catch (e: Exception) { null }
             runOnUiThread {
                 if (dead || playerLayer.visibility != View.VISIBLE) return@runOnUiThread
                 if (found == null) { showError(fallbackCode); return@runOnUiThread }
 
-                val (realUrl, mime) = found
-                resolvedUrl = realUrl
+                /* the address found already carries the way's change of
+                   address, so from here on the way only sets agent and DNS */
+                val w = found.way.copy(swap = 0)
+                ways = listOf(w) + ways.filter { it.key() != w.key() }
+                wayIdx = 0
+                net.way = w
+                resolvedUrl = found.url
                 step = 0
                 reconnects = 0
-                plan = listOf(mime) + ORDER.filter { it != mime }
-                val b = MediaItem.Builder().setUri(realUrl)
-                mime?.let { b.setMimeType(it) }
+                plan = listOf(found.mime) + ORDER.filter { it != found.mime }
+                val b = MediaItem.Builder().setUri(found.url)
+                found.mime?.let { b.setMimeType(it) }
                 try {
                     val p = player ?: return@runOnUiThread
                     p.replaceMediaItem(index, b.build())
@@ -747,6 +771,49 @@ class MainActivity : ComponentActivity() {
                 } catch (e: Exception) { showError(fallbackCode) }
             }
         }.start()
+    }
+
+    /** the ways to ask for this item, best first; the player starts on the first */
+    private fun startWays(link: String) {
+        itemStartAt = SystemClock.elapsedRealtime()
+        ways = net.waysFor(link, curUa, isVod(link))
+        wayIdx = 0
+        waysTried.clear()
+        net.way = ways.firstOrNull() ?: Way(curUa ?: UA)
+    }
+
+    /** the next way that can help with this kind of failure, if one is left */
+    private fun nextWay(why: Why): Boolean {
+        ways.getOrNull(wayIdx)?.let { waysTried.add(it.key()) }
+        val n = ways.indexOfFirst { it.key() !in waysTried && net.helps(it, why) }
+        if (n < 0) return false
+        wayIdx = n
+        return true
+    }
+
+    /** the address the current way asks for */
+    private fun linkNow(i: Int): String {
+        val raw = resolvedUrl ?: urls.getOrNull(i) ?: ""
+        return ways.getOrNull(wayIdx)?.let { net.linkFor(raw, it) } ?: raw
+    }
+
+    /** ask for the same item again, the new way */
+    private fun switchWay(p: ExoPlayer, i: Int) {
+        val w = ways.getOrNull(wayIdx) ?: return
+        net.way = w
+        val link = linkNow(i)
+        if (w.swap == StreamNet.SWAP_EXT) { plan = planFor(link); step = 0 }
+        val b = MediaItem.Builder().setUri(link)
+        plan.getOrNull(step)?.let { b.setMimeType(it) }
+        loading.visibility = View.VISIBLE
+        playerView.post {
+            if (dead) return@post
+            try {
+                p.replaceMediaItem(i, b.build())
+                p.prepare()
+                p.playWhenReady = true
+            } catch (e: Exception) { showError("RETRY_FAILED") }
+        }
     }
 
     private fun isVod(url: String): Boolean {
@@ -799,11 +866,12 @@ class MainActivity : ComponentActivity() {
         currentTitle = titles.getOrNull(index)
         curUa = uas.getOrNull(index)
         curRef = refs.getOrNull(index)
-        plan = planFor(currentUrl ?: "")
+        startWays(currentUrl ?: "")
+        plan = planFor(linkNow(index))
         applyItemChrome(index)
 
         val items = urls.mapIndexed { i, link ->
-            val b = MediaItem.Builder().setUri(link)
+            val b = MediaItem.Builder().setUri(if (i == index) linkNow(index) else link)
             if (i == index) plan.getOrNull(0)?.let { b.setMimeType(it) }
             else planFor(link).getOrNull(0)?.let { b.setMimeType(it) }
             b.build()
@@ -832,7 +900,8 @@ class MainActivity : ComponentActivity() {
                     currentTitle = titles.getOrNull(i)
                     curUa = uas.getOrNull(i)
                     curRef = refs.getOrNull(i)
-                    plan = planFor(currentUrl ?: "")
+                    startWays(currentUrl ?: "")
+                    plan = planFor(linkNow(i))
                     applyItemChrome(i)
                     applySpeed()        /* a film keeps the chosen speed, live is always 1× */
                     /* this channel wants a different agent - the data source
@@ -842,6 +911,9 @@ class MainActivity : ComponentActivity() {
                             if (playerLayer.visibility == View.VISIBLE && urls.isNotEmpty())
                                 buildAndStart(i)
                         }
+                    } else if ((ways.firstOrNull()?.swap ?: 0) != 0) {
+                        /* this server only works at its other address - ask there */
+                        switchWay(p, i)
                     }
                 }
 
@@ -850,6 +922,13 @@ class MainActivity : ComponentActivity() {
                         Player.STATE_BUFFERING -> loading.visibility = View.VISIBLE
                         Player.STATE_READY -> {
                             loading.visibility = View.GONE
+                            if (!hasPlayed) {
+                                /* the way that worked is the first one tried on
+                                   this server next time */
+                                val w = ways.getOrNull(wayIdx)
+                                val raw = urls.getOrNull(p.currentMediaItemIndex)
+                                if (w != null && raw != null) net.remember(raw, w, w == Way(curUa ?: UA))
+                            }
                             hasPlayed = true
                             reconnects = 0
                         }
@@ -867,11 +946,28 @@ class MainActivity : ComponentActivity() {
                 override fun onPlayerError(error: PlaybackException) {
                     if (dead) return
                     val i = p.currentMediaItemIndex
+                    /* a live HLS stream the player fell behind: back to the live edge */
+                    if (error.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) {
+                        playerView.post {
+                            if (dead) return@post
+                            try {
+                                p.seekToDefaultPosition(i)
+                                p.prepare()
+                                p.playWhenReady = true
+                            } catch (e: Exception) { reconnect() }
+                        }
+                        return
+                    }
+                    /* 2xxx: the server would not hand the stream over. Another
+                       container cannot fix that - another way of asking can. */
+                    val netErr = error.errorCode in 2000..2999
+                    val late = SystemClock.elapsedRealtime() - itemStartAt > WAYS_BUDGET_MS
                     when {
+                        netErr && !hasPlayed && !late && nextWay(net.why(error)) -> switchWay(p, i)
                         // the container guess was wrong - try the next one for this item
-                        !hasPlayed && step < plan.size - 1 -> {
+                        !netErr && !hasPlayed && step < plan.size - 1 -> {
                             step++
-                            val link = resolvedUrl ?: urls.getOrNull(i) ?: ""
+                            val link = linkNow(i)
                             val b = MediaItem.Builder().setUri(link)
                             plan.getOrNull(step)?.let { b.setMimeType(it) }
                             playerView.post {
@@ -884,11 +980,15 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                         // every container failed: the address is not what it says
-                        !hasPlayed && !probed -> {
+                        !hasPlayed && !probed && !late -> {
                             probed = true
-                            resolveAndRetry(i, error.errorCodeName)
+                            /* after the ways ran out on a network failure, a short
+                               look is enough; a stream that lied about what it
+                               is gets the full search */
+                            resolveAndRetry(i, error.errorCodeName, if (netErr) 3 else 10)
                         }
-                        reconnects < MAX_RECONNECTS -> reconnect()
+                        hasPlayed && reconnects < MAX_RECONNECTS -> reconnect()
+                        !hasPlayed && !late && reconnects < 2 -> reconnect()
                         else -> showError(error.errorCodeName)
                     }
                 }
@@ -1038,6 +1138,8 @@ class MainActivity : ComponentActivity() {
             if (isVod(urls.getOrNull(i0) ?: "")) (player?.currentPosition ?: 0L) else 0L
         } catch (e: Exception) { 0L }
 
+        val wait = minOf(RECONNECT_DELAY_MS + 600L * (reconnects - 1), 6000L)
+
         handler.removeCallbacksAndMessages(null)
         handler.postDelayed({
             if (dead || playerLayer.visibility != View.VISIBLE) return@postDelayed
@@ -1047,7 +1149,9 @@ class MainActivity : ComponentActivity() {
                     startAtMs = keep
                     buildAndStart(i0)
                 } else {
-                    p.seekTo(p.currentMediaItemIndex, keep)
+                    /* a film goes back to where it was; live goes to the live edge */
+                    if (keep > 0) p.seekTo(p.currentMediaItemIndex, keep)
+                    else p.seekToDefaultPosition(p.currentMediaItemIndex)
                     p.prepare()
                     p.playWhenReady = true
                 }
@@ -1059,7 +1163,7 @@ class MainActivity : ComponentActivity() {
             }
             handler.removeCallbacks(posTicker)
             handler.postDelayed(posTicker, 5000)
-        }, RECONNECT_DELAY_MS)
+        }, wait)
     }
 
     private fun showError(code: String) {
@@ -1069,8 +1173,18 @@ class MainActivity : ComponentActivity() {
         handler.removeCallbacks(posTicker)
         try { player?.playWhenReady = false } catch (e: Exception) {}
         loading.visibility = View.GONE
-        txtError.text = getString(R.string.player_error) + "\n\n" + code +
+        val why = when {
+            lastHttp in listOf(401, 403, 407, 458, 509) || code.contains("NO_PERMISSION") -> tx("errRefused")
+            lastHttp == 404 || code.contains("FILE_NOT_FOUND") -> tx("errGone")
+            code.contains("TIMEOUT") -> tx("errSlow")
+            code.contains("IO_") -> tx("errNet")
+            code.contains("DECOD") || code.contains("AUDIO_TRACK") -> tx("errCodec")
+            code.contains("PARSING") -> tx("errFormat")
+            else -> ""
+        }
+        txtError.text = tx("errMain") + (if (why.isNotEmpty()) "\n$why" else "") + "\n\n" + code +
             (if (lastHttp > 0) "  (HTTP $lastHttp)" else "")
+        findViewById<TextView>(R.id.btnRetry).text = tx("retry")
         errorBox.visibility = View.VISIBLE
     }
 
@@ -1457,6 +1571,14 @@ class MainActivity : ComponentActivity() {
 
     private val TX_EN = mapOf(
         "allCats" to "All",
+        "errMain" to "This channel could not be opened.",
+        "errNet" to "The server did not answer, even after trying other ways to connect. It may be down right now.",
+        "errSlow" to "The server is too slow to answer right now.",
+        "errRefused" to "The server refused the stream. The account may be in use on another device, or it has ended.",
+        "errGone" to "This stream is no longer on the server.",
+        "errCodec" to "This device cannot decode the picture or sound of this stream.",
+        "errFormat" to "What the server sent is not a video.",
+        "retry" to "Try again",
         "audio" to "Audio", "subs" to "Subtitles", "quality" to "Quality",
         "off" to "Off", "auto" to "Auto", "size" to "Text size",
         "s1" to "Small", "s2" to "Normal", "s3" to "Large", "s4" to "Extra large",
@@ -1468,6 +1590,14 @@ class MainActivity : ComponentActivity() {
         "radioNote" to "Leave the app and the sound goes on, like a radio. No small window then.")
     private val TX_KU = mapOf(
         "allCats" to "هەموو",
+        "errMain" to "نەتوانرا ئەم کەناڵە بکرێتەوە.",
+        "errNet" to "سێرڤەرەکە وەڵامی نەدایەوە، تەنانەت دوای تاقیکردنەوەی چەند ڕێگایەکی تری پەیوەندی. لەوانەیە ئێستا لەکارکەوتبێت.",
+        "errSlow" to "سێرڤەرەکە ئێستا زۆر خاوە لە وەڵامدانەوە.",
+        "errRefused" to "سێرڤەرەکە پەخشەکەی ڕەتکردەوە. لەوانەیە ئەکاونتەکە لە ئامێرێکی تر بەکاربێت یان کۆتایی هاتبێت.",
+        "errGone" to "ئەم پەخشە چیتر لەسەر سێرڤەرەکە نییە.",
+        "errCodec" to "ئەم ئامێرە ناتوانێت وێنە یان دەنگی ئەم پەخشە بخوێنێتەوە.",
+        "errFormat" to "ئەوەی سێرڤەرەکە ناردی ڤیدیۆ نییە.",
+        "retry" to "هەوڵدانەوە",
         "audio" to "دەنگ", "subs" to "ژێرنووس", "quality" to "کوالیتی",
         "off" to "بێ ژێرنووس", "auto" to "خۆکار", "size" to "قەبارەی نووسین",
         "s1" to "بچووک", "s2" to "ئاسایی", "s3" to "گەورە", "s4" to "زۆر گەورە",
@@ -1479,6 +1609,14 @@ class MainActivity : ComponentActivity() {
         "radioNote" to "لە ئەپەکە دەردەچیت و دەنگەکە بەردەوام دەبێت، وەک ڕادیۆ. ئەوکات پەنجەرە بچووکەکە ناکرێتەوە.")
     private val TX_AR = mapOf(
         "allCats" to "الكل",
+        "errMain" to "تعذّر فتح هذه القناة.",
+        "errNet" to "لم يستجب الخادم حتى بعد تجربة طرق اتصال أخرى. قد يكون متوقفاً الآن.",
+        "errSlow" to "الخادم بطيء جداً في الرد الآن.",
+        "errRefused" to "رفض الخادم البث. قد يكون الحساب مستخدماً على جهاز آخر أو منتهياً.",
+        "errGone" to "هذا البث لم يعد موجوداً على الخادم.",
+        "errCodec" to "هذا الجهاز لا يستطيع فك ترميز صورة أو صوت هذا البث.",
+        "errFormat" to "ما أرسله الخادم ليس فيديو.",
+        "retry" to "إعادة المحاولة",
         "audio" to "الصوت", "subs" to "الترجمة", "quality" to "الجودة",
         "off" to "بدون ترجمة", "auto" to "تلقائي", "size" to "حجم الخط",
         "s1" to "صغير", "s2" to "عادي", "s3" to "كبير", "s4" to "كبير جداً",
