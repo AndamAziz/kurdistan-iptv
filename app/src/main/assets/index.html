@@ -4298,9 +4298,9 @@ function hcSpeed(urlList){
 
 /* one line of the check: what it is, the answer on the right, and the
    detail under the name */
-function hcSet(key, st, main, sub){
+function hcSet(key, st, main, sub, trail){
   if(!HC || !HC.rows[key]) return;
-  HC.rows[key] = { st: st, m: main || "", s: sub || "" };
+  HC.rows[key] = { st: st, m: main || "", s: sub || "", t: trail || "" };
   hcDraw();
 }
 function hcDrop(key){
@@ -4403,7 +4403,8 @@ function hcRun(){
         hcSet(key, r.ms > 4000 ? "warn" : "ok", msTxt(r.ms || 0), c.n + (kind ? "  ·  " + kind : ""));
       } else {
         var vpn = key === "vod" && r && (r.code === 400 || r.code === 403 || r.code === 451);
-        hcSet(key, "bad", d.hFail, c.n + (r && r.code ? "  ·  HTTP " + r.code : "") + (vpn ? "  ·  " + d.hVpn : ""));
+        hcSet(key, "bad", d.hFail, c.n + (r && r.code ? "  ·  HTTP " + r.code : "") + (vpn ? "  ·  " + d.hVpn : ""),
+              (r && r.trail) || "");
       }
     });
   };
@@ -4418,6 +4419,11 @@ function hcRun(){
     hcDraw();
     refreshSettings();          /* the account card picks up the answer too */
   });
+}
+
+function hcTrail(k){
+  var r = HC && HC.rows[k]; if(!r || !r.t) return;
+  try{ window.alert(r.s + "\n\n" + r.t.split(" ").join("\n")) }catch(e){}
 }
 
 function hcHTML(){
@@ -4438,7 +4444,8 @@ function hcHTML(){
   if(HC){
     h += '<div class="hc-rows">' + HC.order.map(function(k){
       var r = HC.rows[k];
-      return '<div class="hr '+(r.st || "")+'"><i></i>'
+      /* a failed stream keeps the answer of every way it tried: a tap shows them */
+      return '<div class="hr '+(r.st || "")+'"'+(r.t ? ' onclick="hcTrail(\''+k+'\')" tabindex="0" style="cursor:pointer"' : '')+'><i></i>'
            +   '<span class="hl"><b>'+esc(names[k])+'</b>'+(r.s ? '<s>'+esc(r.s)+'</s>' : '')+'</span>'
            +   '<em>'+esc(r.m || (r.st === "run" ? "…" : ""))+'</em></div>';
     }).join("") + '</div>';

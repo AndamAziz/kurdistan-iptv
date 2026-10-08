@@ -566,7 +566,10 @@ class MainActivity : ComponentActivity() {
                 val t0 = SystemClock.elapsedRealtime()
                 val o = JSONObject()
                 try {
-                    val (found, code) = net.find(url, ua.ifBlank { null }, ref.ifBlank { null }, isVod(url), 12)
+                    val sr = net.search(url, ua.ifBlank { null }, ref.ifBlank { null }, isVod(url), 16)
+                    val found = sr.found
+                    val code = sr.code
+                    o.put("trail", sr.trail)
                     o.put("ok", found != null)
                     o.put("ms", found?.ms ?: (SystemClock.elapsedRealtime() - t0))
                     o.put("kind", found?.kind ?: "")
@@ -751,7 +754,7 @@ class MainActivity : ComponentActivity() {
         errorBox.visibility = View.GONE
 
         Thread {
-            val found = try { net.find(link, ua, ref, isVod(link), tries).first } catch (e: Exception) { null }
+            val found = try { net.find(link, ua, ref, isVod(link), tries + 4).first } catch (e: Exception) { null }
             runOnUiThread {
                 if (dead || playerLayer.visibility != View.VISIBLE) return@runOnUiThread
                 if (found == null) { showError(fallbackCode); return@runOnUiThread }
