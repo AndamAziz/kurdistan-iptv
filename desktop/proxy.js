@@ -91,6 +91,13 @@ const SMARTERS_UA = "IPTVSmartersPlayer";
 const PLAIN = { ua: UA, doh: false, insecure: false };
 const WAYS = [
   PLAIN,
+  /* A certificate that is not quite in order - one sent without the
+     certificate in the middle, or one that has run out - is the commonest
+     reason a film plays in VLC and not here. mpv itself (FFmpeg) does not
+     check certificates at all; this asks the same way, at once, and only
+     after a certificate was refused. A block page found this way is still
+     a web page, not a stream, and is turned away below. */
+  { ua: UA, doh: false, insecure: true, sslOnly: true },
   { ua: BROWSER_UA, doh: false, insecure: false },
   { ua: UA, doh: true, insecure: false },
   { ua: SMARTERS_UA, doh: false, insecure: false },
@@ -103,7 +110,7 @@ const REFUSED = new Set([401, 403, 406, 429, 451, 456, 503]);
 const HOP_MS = 9000;          /* one way's chance to connect */
 const WAYS_MS = 16000;        /* all of them together - mpv gives up at 20 */
 
-const wayKey = w => w.ua + "|" + w.doh + "|" + w.insecure;
+const wayKey = w => w.ua + "|" + w.doh + "|" + w.insecure + "|" + !!w.sslOnly;
 const isPlain = w => !w || (w.ua === UA && !w.doh && !w.insecure);
 const goodWay = new Map();    /* host -> the way that worked there */
 
@@ -119,6 +126,7 @@ function whyOf(err) {
   return "dropped";
 }
 function helps(w, why) {
+  if (w.sslOnly) return why === "ssl";
   if (why === "dns" || why === "connect") return w.doh;
   if (why === "ssl") return w.doh || w.insecure;
   return true;
@@ -152,9 +160,16 @@ async function dohResolve(host) {
   }
   throw Object.assign(new Error("secure DNS found nothing for " + host), { code: "ENOTFOUND" });
 }
+/* secure DNS first; the machine's own DNS when secure DNS cannot be reached
+   at all (some networks block it) - as the phone does */
+const dns = require("dns");
+function dohOrSystem(host) {
+  return dohResolve(host).catch(() => new Promise((ok, no) =>
+    dns.lookup(host, { family: 4 }, (e, ip) => e ? no(e) : ok(ip))));
+}
 function dohLookup(hostname, opts, cb) {
   if (typeof opts === "function") { cb = opts; opts = {} }
-  dohResolve(hostname).then(
+  dohOrSystem(hostname).then(
     ip => (opts && opts.all) ? cb(null, [{ address: ip, family: 4 }]) : cb(null, ip, 4),
     e => cb(e));
 }
@@ -358,8 +373,9 @@ function start() {
           return;
         }
         /* not a list. Asked the plain way, mpv can fetch it itself from where
-           it really is; asked another way, it comes through here, that way */
-        if (isPlain(r.way) && !req.headers.range) {
+           it really is; asked another way, it comes through here, that way.
+           The health check reads it here, whichever way it was asked. */
+        if (isPlain(r.way) && !req.headers.range && !here.searchParams.get("probe")) {
           r.resp.destroy();
           res.writeHead(302, Object.assign({}, HEAD, { Location: r.url }));
           res.end();

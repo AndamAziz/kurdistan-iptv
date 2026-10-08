@@ -1,56 +1,46 @@
 [en]
-Films and series now play on Windows too, and play better on phones.
+Films now play in the Google Play version and on Windows, as they already
+did in the version from GitHub.
 
-On phones the player now tries secure DNS before anything else when a
-server cannot be reached properly, and it prefers IPv4, so films on
-servers with a half-working IPv6 route no longer stall.
+Some film servers send a certificate that is not quite in order: the
+certificate in the middle is missing, or it has run out. The Google Play
+version now does what a browser does when the normal check fails: it fetches
+the missing certificate and checks the chain again, and it forgives a
+certificate that has run out only if everything else about it is right.
+Live channels and every server that was already working are not touched.
 
-Some providers send films and episodes as a list of pieces on another
-server, behind a redirect. The Windows app now opens those the same way it
-opens live channels, so they play.
-
-When a server refuses, the Windows app now asks again another way, as the
-phone does: a different player name, secure DNS for names your internet
-provider blocks, or an old certificate. What worked is remembered for each
-server.
-
-Films whose address does not say "movie" are now treated as films on every
-device: they open their own page, remember where you stopped, and are not
-marked LIVE.
+On Windows, such a server is now asked again at once without the strict
+check, as VLC does, even on networks that block secure DNS. The server test
+in Settings now opens streams exactly the way the Windows player does, and
+no longer says H.265 is unsupported on Windows.
 
 [ku]
-فیلم و زنجیرە ئێستا لە ویندۆزیش کاردەکەن، و لە مۆبایل باشتر کاردەکەن.
+فیلمەکان ئێستا لە وەشانی گووگڵ پلەی و ویندۆزیش کاردەکەن، وەک چۆن پێشتر
+لە وەشانی GitHub کاریان دەکرد.
 
-لە مۆبایل، کاتێک سێرڤەرێک بە باشی ناگات، پلەیەرەکە پێش هەموو شتێک
-DNSی پارێزراو تاقی دەکاتەوە، و IPv4 ی بە باشتر دادەنێت، بۆیە ئەو فیلمانەی
-لەسەر سێرڤەری IPv6ی نیوە-کاراوەن چیتر ناوەستن.
+هەندێ سێرڤەری فیلم بڕوانامەیەک دەنێرن کە تەواو ڕێک نییە: بڕوانامەی
+ناوەڕاست ونە، یان کاتی بەسەرچووە. وەشانی گووگڵ پلەی ئێستا وەک وێبگەڕ
+دەکات کاتێک پشکنینی ئاسایی سەرناکەوێت: بڕوانامە ونەکە دەهێنێت و زنجیرەکە
+دووبارە دەپشکنێت، و بڕوانامەی بەسەرچوو تەنها ئەو کاتە قبووڵ دەکات کە
+هەموو شتێکی تری دروست بێت. کەناڵە ڕاستەوخۆکان و ئەو سێرڤەرانەی پێشتر
+کاریان دەکرد دەستیان لێنەدراوە.
 
-هەندێ پرۆڤایدەر فیلم و ئیپسۆد وەک لیستێکی پارچە لەسەر سێرڤەرێکی تر
-دەنێرن، لە پشت ئاڕاستەکردنەوەیەکەوە. ئەپی ویندۆز ئێستا ئەوانە بە هەمان
-شێوەی کەناڵە ڕاستەوخۆکان دەکاتەوە، بۆیە کاردەکەن.
-
-کاتێک سێرڤەرێک ڕەتدەکاتەوە، ئەپی ویندۆز ئێستا وەک مۆبایل بە ڕێگایەکی تر
-دەپرسێتەوە: ناوێکی تری پلەیەر، DNSی پارێزراو بۆ ئەو ناوانەی ئینتەرنێتەکەت
-دایدەخات، یان بڕوانامەی کۆن. ئەوەی کاری کرد بۆ هەر سێرڤەرێک لەبیر دەمێنێت.
-
-ئەو فیلمانەی لە ناونیشانەکەیاندا «movie» نییە، ئێستا لە هەموو ئامێرێک
-وەک فیلم دەناسرێنەوە: پەڕەی خۆیان دەکرێتەوە، شوێنی وەستانت لەبیر دەمێنێت،
-و نیشانەی LIVE یان لەسەر نییە.
+لە ویندۆز، ئەو جۆرە سێرڤەرانە یەکسەر بەبێ پشکنینی توند دووبارە
+دەپرسرێنەوە، وەک VLC، تەنانەت لەو تۆڕانەشی DNSی پارێزراو دادەخەن. تاقیکردنەوەی
+سێرڤەر لە ڕێکخستنەکان ئێستا وەک پلەیەری ویندۆز ستریمەکان دەکاتەوە، و
+چیتر نالێت H.265 لە ویندۆز پشتگیری ناکرێت.
 
 [ar]
-الأفلام والمسلسلات تعمل الآن على ويندوز أيضاً، وبشكل أفضل على الهاتف.
+الأفلام تعمل الآن في نسخة Google Play وعلى ويندوز، كما كانت تعمل في نسخة
+GitHub.
 
-على الهاتف يجرّب المشغّل الآن DNS الآمن قبل أي شيء آخر عندما لا يصل إلى
-الخادم كما يجب، ويفضّل IPv4، فلا تتوقف الأفلام على خوادم IPv6 فيها نصف
-معطّل.
+بعض خوادم الأفلام ترسل شهادة غير سليمة تماماً: الشهادة الوسيطة مفقودة، أو
+انتهت صلاحيتها. نسخة Google Play تفعل الآن ما يفعله المتصفح عندما يفشل
+الفحص العادي: تجلب الشهادة المفقودة وتعيد فحص السلسلة، وتقبل الشهادة
+المنتهية فقط إذا كان كل ما عداها صحيحاً. القنوات المباشرة وكل خادم كان يعمل
+لم يتغير.
 
-بعض المزوّدين يرسلون الأفلام والحلقات كقائمة أجزاء على خادم آخر بعد
-إعادة توجيه. يفتحها تطبيق ويندوز الآن بالطريقة نفسها التي يفتح بها القنوات
-المباشرة، فتعمل.
-
-عندما يرفض الخادم، يسأل تطبيق ويندوز الآن بطريقة أخرى كما يفعل الهاتف:
-اسم مشغّل مختلف، أو DNS آمن للأسماء التي يحجبها مزوّد الإنترنت، أو شهادة
-قديمة. ويتذكر ما نجح مع كل خادم.
-
-الأفلام التي لا يقول عنوانها «movie» تُعامل الآن كأفلام على كل الأجهزة:
-تفتح صفحتها، وتتذكر أين توقفت، ولا تُعلَّم بـ LIVE.
+على ويندوز، يُسأل هذا النوع من الخوادم مرة أخرى فوراً دون الفحص الصارم، كما
+يفعل VLC، حتى على الشبكات التي تحجب DNS الآمن. وفحص الخادم في الإعدادات
+يفتح البث الآن بالطريقة نفسها التي يفتحه بها مشغّل ويندوز، ولم يعد يقول إن
+H.265 غير مدعوم على ويندوز.
