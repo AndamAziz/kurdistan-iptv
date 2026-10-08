@@ -328,12 +328,6 @@ class MainActivity : ComponentActivity() {
             )
         }
 
-        /* Android's own HTTP code (the playlist downloads, the update, and the
-           player's "sys" ways) checks certificates the browser way too: a
-           missing middle certificate is fetched, then everything is checked */
-        try {
-            javax.net.ssl.HttpsURLConnection.setDefaultSSLSocketFactory(AiaTrust.shared.socketFactory)
-        } catch (e: Exception) { }
         net = StreamNet(this)
         configureWebView()
         webView.loadUrl("file:///android_asset/index.html")
@@ -412,7 +406,10 @@ class MainActivity : ComponentActivity() {
      * Try VLC first and retry as a browser when the first answer is a refusal.
      */
     private fun fetchAllowingCloudflare(target: String): HttpURLConnection {
-        val first = openFollowingRedirects(target, UA)
+        val first = try { openFollowingRedirects(target, UA) } catch (e: javax.net.ssl.SSLException) {
+            /* a panel that left out its middle certificate: fetch it, check it all */
+            openFollowingRedirects(target, UA, aia = true)
+        }
         val code = first.responseCode
         if (code != 403 && code != 406 && code != 503) return first
         first.disconnect()
@@ -420,11 +417,12 @@ class MainActivity : ComponentActivity() {
     }
 
     /** HttpURLConnection will not follow http -> https redirects, so do it by hand. */
-    private fun openFollowingRedirects(startUrl: String, ua: String): HttpURLConnection {
+    private fun openFollowingRedirects(startUrl: String, ua: String, aia: Boolean = false): HttpURLConnection {
         var url = startUrl
         var hops = 0
         while (true) {
             val c = URL(url).openConnection() as HttpURLConnection
+            if (aia && c is javax.net.ssl.HttpsURLConnection) c.sslSocketFactory = AiaTrust.shared.socketFactory
             c.instanceFollowRedirects = false
             c.connectTimeout = 30000
             c.readTimeout = 40000
@@ -991,7 +989,13 @@ class MainActivity : ComponentActivity() {
                         if (waysTrail.size < 24) waysTrail.add(w.label() + ":" + what)
                     }
                     when {
-                        netErr && !hasPlayed && !late && nextWay(net.why(error)) -> switchWay(p, i)
+                        netErr && !hasPlayed && !late && nextWay(net.why(error)) -> {
+                            /* the way remembered for this server failed: forget it */
+                            if (waysTrail.size == 1) urls.getOrNull(i)?.let { raw ->
+                                if (net.remembered(raw) != null) net.forget(raw)
+                            }
+                            switchWay(p, i)
+                        }
                         // the container guess was wrong - try the next one for this item
                         !netErr && !hasPlayed && step < plan.size - 1 -> {
                             step++
