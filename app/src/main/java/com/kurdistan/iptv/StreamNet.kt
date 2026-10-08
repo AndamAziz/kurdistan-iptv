@@ -56,12 +56,9 @@ data class Way(
     /** "Range: bytes=0-" on the first request, as VLC and FFmpeg always send */
     val range: Boolean = false,
     /** Chrome's own network code (Cronet): its TLS, its HTTP - a browser */
-    val cr: Boolean = false,
-    /** certificates checked the browser way: a missing middle certificate is
-     *  fetched, then the whole chain checked in full (AiaTrust) */
-    val aia: Boolean = false
+    val cr: Boolean = false
 ) {
-    fun key(): String = "$ua|$lenient|$doh|$swap|$h1|$sys|$range|$cr|$aia"
+    fun key(): String = "$ua|$lenient|$doh|$swap|$h1|$sys|$range|$cr"
 
     /** a few letters for the health check: which way got which answer */
     fun label(): String {
@@ -70,22 +67,34 @@ data class Way(
             ua.startsWith("IPTVSmarters") -> "Smarters"; ua.startsWith("Lavf") -> "Lavf"
             else -> "UA"
         }
-        return who + (if (cr) "+chrome" else "") + (if (sys) "+sys" else "") + (if (range) "+range" else "") +
-            (if (h1) "+h1" else "") + (if (aia) "+chain" else "") + (if (doh) "+dns" else "") +
-            (if (lenient) "+cert" else "") + (if (swap == 1) "+ext" else if (swap == 2) "+scheme" else "")
+        return who + (if (cr) "+chrome" else "") + (if (sys) "+sys" else "") + (if (range) "+range" else "") + (if (h1) "+h1" else "") +
+            (if (doh) "+dns" else "") + (if (lenient) "+cert" else "") +
+            (if (swap == 1) "+ext" else if (swap == 2) "+scheme" else "")
     }
 
     companion object {
-        /** only this build's own form reads back - older forms were cleared */
         fun parse(s: String?): Way? {
             if (s.isNullOrBlank()) return null
             val p = s.split('|')
-            if (p.size < 9) return null
             return try {
-                val n = p.size
-                Way(p.dropLast(8).joinToString("|"), p[n - 8].toBooleanStrict(), p[n - 7].toBooleanStrict(),
-                    p[n - 6].toInt(), p[n - 5].toBooleanStrict(), p[n - 4].toBooleanStrict(),
-                    p[n - 3].toBooleanStrict(), p[n - 2].toBooleanStrict(), p[n - 1].toBooleanStrict())
+                fun b(x: String) = x == "true" || x == "false"
+                /* written with every flag, with the HTTP/1.1 flag only, or by an
+                   older build - each reads back */
+                if (p.size >= 8 && p[p.size - 5].toIntOrNull() != null && b(p[p.size - 4]) && b(p[p.size - 3]) &&
+                    b(p[p.size - 2]) && b(p.last()))
+                    Way(p.dropLast(7).joinToString("|"), p[p.size - 7].toBoolean(), p[p.size - 6].toBoolean(),
+                        p[p.size - 5].toInt(), p[p.size - 4].toBoolean(), p[p.size - 3].toBoolean(),
+                        p[p.size - 2].toBoolean(), p.last().toBoolean())
+                else if (p.size >= 7 && p[p.size - 4].toIntOrNull() != null && b(p[p.size - 3]) && b(p[p.size - 2]) && b(p.last()))
+                    Way(p.dropLast(6).joinToString("|"), p[p.size - 6].toBoolean(), p[p.size - 5].toBoolean(),
+                        p[p.size - 4].toInt(), p[p.size - 3].toBoolean(), p[p.size - 2].toBoolean(), p.last().toBoolean())
+                else if (p.size >= 5 && p[p.size - 2].toIntOrNull() != null && b(p.last()))
+                    Way(p.dropLast(4).joinToString("|"), p[p.size - 4].toBoolean(),
+                        p[p.size - 3].toBoolean(), p[p.size - 2].toInt(), p.last().toBoolean())
+                else if (p.size >= 4)
+                    Way(p.dropLast(3).joinToString("|"), p[p.size - 3].toBoolean(),
+                        p[p.size - 2].toBoolean(), p[p.size - 1].toInt())
+                else null
             } catch (e: Exception) { null }
         }
     }
@@ -127,13 +136,7 @@ class StreamNet(private val context: Context) {
         private val IP_RX = Regex("^[0-9.]+$|:")
     }
 
-    private val prefs = context.getSharedPreferences("kiptv_net", Context.MODE_PRIVATE).also { p ->
-        /* Ways remembered by older builds could come from a quick test that
-           read two kilobytes, not from a stream that really played - and a
-           wrong one was tried first for every channel on that server. They
-           are cleared once; from now on only a way that played is kept. */
-        try { if (p.getInt("v", 0) < 3) p.edit().clear().putInt("v", 3).apply() } catch (e: Exception) { }
-    }
+    private val prefs = context.getSharedPreferences("kiptv_net", Context.MODE_PRIVATE)
 
     /* Chrome's network code, from Google Play Services when the device has
        them. Built once, the first time a way needs it, off the main thread. */
@@ -234,11 +237,8 @@ class StreamNet(private val context: Context) {
 
     fun client(w: Way, follow: Boolean = true): OkHttpClient {
         val lenient = w.lenient && lenientOk
-        return clients.getOrPut("$lenient|${w.doh}|${w.h1}|${w.aia}|$follow") {
+        return clients.getOrPut("$lenient|${w.doh}|${w.h1}|$follow") {
             val b = base.newBuilder()
-            /* the browser's way with certificates - only on the ways that ask for
-               it, after the phone's own check has already failed */
-            if (w.aia && !lenient) b.sslSocketFactory(AiaTrust.shared.socketFactory, AiaTrust.shared)
             if (lenient) Lenient.apply(b)
             if (lenient || w.h1) b.protocols(listOf(Protocol.HTTP_1_1))
             if (w.doh) b.dns(smartDns)
@@ -308,8 +308,6 @@ class StreamNet(private val context: Context) {
         remembered(url)?.let { add(it) }          /* what worked on this server last time */
         add(Way(u0))
         add(Way(BROWSER_UA))
-        add(Way(u0, aia = true))                  /* a server that left out its middle certificate */
-        add(Way(BROWSER_UA, aia = true, doh = true))
         add(Way(BROWSER_UA, cr = true))           /* a browser, exactly: Chrome's own network code */
         add(Way(u0, cr = true))
         add(Way(u0, sys = true, range = true))    /* what VLC sends, through Android's own HTTP code */
@@ -333,7 +331,7 @@ class StreamNet(private val context: Context) {
     fun helps(w: Way, why: Why): Boolean = when (why) {
         Why.DNS -> w.doh
         Why.CONNECT -> w.doh || w.swap == SWAP_SCHEME || w.sys || w.cr
-        Why.SSL -> w.aia || w.doh || (w.lenient && lenientOk) || w.swap == SWAP_SCHEME || w.cr
+        Why.SSL -> w.doh || (w.lenient && lenientOk) || w.swap == SWAP_SCHEME || w.cr
         else -> true
     }
 
@@ -364,11 +362,6 @@ class StreamNet(private val context: Context) {
     fun remembered(url: String): Way? {
         val k = hostKey(url)
         return if (k.length > 4) Way.parse(prefs.getString(k, null)) else null
-    }
-
-    fun forget(url: String) {
-        val k = hostKey(url)
-        if (k.length > 4) try { prefs.edit().remove(k).apply() } catch (e: Exception) { }
     }
 
     fun remember(url: String, w: Way, plain: Boolean) {
@@ -551,8 +544,7 @@ class StreamNet(private val context: Context) {
             val r = attempt(url, cur, ref)
             trail.add(cur.label() + ":" + (if (r.found != null) "OK" else if (r.code > 0) r.code.toString() else r.why.name.lowercase()))
             if (r.found != null) {
-                /* not remembered here: two kilobytes are not a stream that plays.
-                   The player remembers a way once it has really played. */
+                remember(url, cur, cur == plain)
                 return Search(r.found, r.code, trail.joinToString(" "))
             }
             if (r.code > 0) lastCode = r.code
