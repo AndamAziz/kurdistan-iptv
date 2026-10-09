@@ -177,6 +177,33 @@ function wire() {
     if (typeof u === "string" && /^https?:\/\//i.test(u)) shell.openExternal(u);
   });
 
+  /* subtitles: requests the page cannot make itself, and the files it makes */
+  ipcMain.handle("kiptv-http", async (e, method, u, headers, body) => {
+    if (!/^https?:\/\//i.test(u)) return { status: 0, text: "bad address" };
+    let h = {};
+    try { h = JSON.parse(headers || "{}") } catch (err) { }
+    try {
+      const r = await net.fetch(u, { method: method === "POST" ? "POST" : "GET", headers: h,
+                                     body: method === "POST" ? body : undefined });
+      return { status: r.status, text: await r.text() };
+    } catch (err) {
+      return { status: 0, text: String(err && err.message || err) };
+    }
+  });
+  ipcMain.on("kiptv-subsave", (e, name, text) => {
+    try {
+      const dir = path.join(app.getPath("userData"), "subs");
+      fs.mkdirSync(dir, { recursive: true });
+      const f = path.join(dir, String(name).replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 80));
+      fs.writeFileSync(f, String(text), "utf8");
+      /* the oldest go once there are many */
+      const all = fs.readdirSync(dir).map(n => path.join(dir, n))
+        .map(x => ({ x, t: fs.statSync(x).mtimeMs })).sort((a, b) => b.t - a.t);
+      all.slice(400).forEach(o => { try { fs.unlinkSync(o.x) } catch (err) { } });
+      e.returnValue = f;
+    } catch (err) { e.returnValue = "" }
+  });
+
   ipcMain.on("kiptv-play-one", (e, u, n) => {
     if (typeof u !== "string" || !u) return;
     play([{ u, n: String(n || "") }], 0, 0);
@@ -188,7 +215,8 @@ function wire() {
     if (!Array.isArray(arr) || !arr.length) return;
     const items = arr
       .filter(o => o && o.u)
-      .map(o => ({ u: String(o.u), n: String(o.n || ""), ua: o.ua || null, rf: o.rf || null, v: o.v === 1 }));
+      .map(o => ({ u: String(o.u), n: String(o.n || ""), ua: o.ua || null, rf: o.rf || null, v: o.v === 1,
+                   subs: Array.isArray(o.subs) ? o.subs.filter(x => x && x.f && fs.existsSync(String(x.f))) : null }));
     if (!items.length) return;
     const at = (index >= 0 && index < items.length) ? index : 0;
     play(items, at, startMs > 0 ? startMs : 0);
