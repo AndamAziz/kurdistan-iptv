@@ -443,15 +443,58 @@ img.rdy{animation:imgIn .25s ease both}
 /* ---------- series detail ---------- */
 #detail{position:fixed;inset:0;z-index:70;background:var(--bg);overflow-y:auto;display:none}
 #detail.on{display:block}
-.dhero{position:relative;padding:calc(16px + var(--safe-t)) 16px 16px;display:flex;gap:14px;
-  background:linear-gradient(180deg,rgba(232,179,60,.09),transparent)}
-.dhero .pw{width:104px;flex:none;aspect-ratio:2/3;border-radius:var(--r-md);overflow:hidden;
-  background:var(--surface);border:1px solid var(--line)}
+.dhero{position:relative;padding:calc(16px + var(--safe-t)) 16px 18px;display:flex;gap:16px;
+  background:linear-gradient(180deg,rgba(232,179,60,.09),transparent);overflow:hidden;min-height:230px}
+/* the film's own still, faded into the page behind the poster */
+.dbg{position:absolute;inset:0;background-size:cover;background-position:center 22%;
+  opacity:0;transition:opacity .6s ease;transform:scale(1.04)}
+.dbg.on{opacity:.5}
+.dbg::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(7,10,14,.30) 0%,rgba(7,10,14,.72) 55%,var(--bg) 100%),
+             linear-gradient(90deg,rgba(7,10,14,.55),transparent 70%)}
+html[dir=rtl] .dbg::after{background:linear-gradient(180deg,rgba(7,10,14,.30) 0%,rgba(7,10,14,.72) 55%,var(--bg) 100%),
+             linear-gradient(270deg,rgba(7,10,14,.55),transparent 70%)}
+.dhero>.pw,.dhero>.dinfo{position:relative;z-index:1}
+.dhero .pw{width:118px;flex:none;aspect-ratio:2/3;align-self:flex-start;border-radius:var(--r-md);overflow:hidden;
+  background:var(--surface);border:1px solid rgba(255,255,255,.12);box-shadow:0 14px 34px rgba(0,0,0,.55)}
 .dhero .pw img{width:100%;height:100%;object-fit:cover}
-.dhero h2{margin:0 0 6px;font-size:18px;font-weight:800;line-height:1.3}
-.dhero .meta{font-size:11.5px;color:var(--muted2);font-weight:700;margin-bottom:8px}
-.dhero p{margin:0;font-size:12.5px;color:var(--muted);line-height:1.6;
-  display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
+.dinfo{flex:1;min-width:0;padding-top:2px}
+.dhero h2{margin:0 0 4px;font-size:19px;font-weight:800;line-height:1.3;text-shadow:0 2px 12px rgba(0,0,0,.5)}
+.dorig{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:8px}
+.dorig:empty,.dgen:empty,.dtag:empty,.dacts:empty,.dplot:empty{display:none}
+.dhero .meta{display:flex;flex-wrap:wrap;gap:6px;font-size:11.5px;color:var(--muted2);font-weight:700;margin-bottom:9px}
+.dhero .meta span{padding:4px 9px;border-radius:999px;background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.09);color:#C9D2DC;font-size:11px;font-weight:700;line-height:1.3;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.dhero .meta .rt{color:#FFD466;background:rgba(255,212,102,.11);border-color:rgba(255,212,102,.32)}
+.dhero .meta .rt small{color:var(--muted);font-weight:600;font-size:10px;margin-inline-start:4px}
+.dgen{display:flex;flex-wrap:wrap;gap:5px 10px;font-size:11.5px;font-weight:700;color:var(--accent2);opacity:.9}
+.dgen i{font-style:normal}
+.dgen i+i::before{content:"•";margin-inline-end:10px;color:var(--muted2)}
+.dtag{margin-top:9px;font-size:12px;font-style:italic;color:var(--muted);line-height:1.5}
+.dacts{padding:0 16px 4px}
+.dacts .dact{margin-top:0}
+.dplot{margin:8px 16px 0;font-size:13px;color:var(--muted);line-height:1.75;cursor:pointer;
+  display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.dplot.open{-webkit-line-clamp:unset;display:block}
+.dsec{display:flex;align-items:center;gap:8px;padding:18px 16px 10px;font-size:13.5px;font-weight:800}
+.dsec::before{content:"";width:3px;height:14px;border-radius:2px;background:linear-gradient(var(--accent),var(--accent2))}
+.dcast{display:flex;gap:12px;overflow-x:auto;padding:0 16px 4px;scrollbar-width:none}
+.dcast::-webkit-scrollbar{display:none}
+.dcast div{flex:none;width:74px;text-align:center}
+.dcast img,.dcast em{display:block;width:62px;height:62px;margin:0 auto 7px;border-radius:50%;object-fit:cover;
+  background:var(--surface2);border:2px solid rgba(255,255,255,.08)}
+.dcast em{display:grid;place-items:center;font-style:normal;font-weight:800;font-size:20px;color:var(--muted2)}
+.dcast b{display:block;font-size:11px;font-weight:700;line-height:1.35;color:var(--text);
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.dcast s{display:block;text-decoration:none;font-size:10px;color:var(--muted2);margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dmore .dfacts{margin:4px 16px 0}
+.dtmdb{margin:14px 16px 0;font-size:10px;color:var(--muted2);opacity:.7}
+/* text from TMDB may be in English inside a Kurdish page: each line takes
+   its own direction, so its ending dots land where its sentence ends */
+.dplot,.dorig,.dtag,.dcast b,.dcast s,.ep .ov,.ep .tx b,.dfacts span{unicode-bidi:plaintext}
+@media(min-width:600px){.dhero .pw{width:150px}.dhero h2{font-size:23px}.dhero{min-height:280px}}
 #dclose{position:absolute;top:calc(12px + var(--safe-t));inset-inline-end:14px;width:36px;height:36px;
   border-radius:12px;border:1px solid var(--line);background:rgba(7,10,14,.8);color:#fff;
   display:grid;place-items:center;font-size:17px;cursor:pointer;z-index:2}
@@ -463,6 +506,13 @@ img.rdy{animation:imgIn .25s ease both}
 .ep .tx{flex:1;min-width:0}
 .ep .tx b{display:block;font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ep .tx s{display:block;text-decoration:none;font-size:11px;color:var(--muted2);margin-top:3px}
+.ep .st{position:relative;width:112px;flex:none;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:var(--surface2)}
+.ep .st img{width:100%;height:100%;object-fit:cover;display:block}
+.ep .st .no{position:absolute;bottom:5px;inset-inline-start:5px;width:24px;height:24px;border-radius:7px;font-size:11px;
+  background:rgba(7,10,14,.78);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.ep .ov{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  font-size:11.5px;color:var(--muted);line-height:1.5;margin-top:4px}
+.ep.rich{align-items:flex-start;padding:10px}
 .ep:active{transform:scale(.98)}
 
 /* ---------- the first two seconds ---------- */
@@ -1083,13 +1133,19 @@ html.tv #settings .st-in{max-width:760px}
   <button id="dclose" onclick="closeDetail()">&#10005;</button>
   <button id="dfav" onclick="toggleDetailFav()"></button>
   <div class="dhero">
+    <div class="dbg" id="dBg"></div>
     <div class="pw"><img id="dImg" alt=""></div>
-    <div style="flex:1;min-width:0">
+    <div class="dinfo">
       <h2 id="dName"></h2>
+      <div class="dorig" id="dOrig"></div>
       <div class="meta" id="dMeta"></div>
-      <p id="dPlot"></p>
+      <div class="dgen" id="dGen"></div>
+      <div class="dtag" id="dTag"></div>
     </div>
   </div>
+  <div class="dacts" id="dAct"></div>
+  <p class="dplot" id="dPlot" onclick="this.classList.toggle('open')"></p>
+  <div id="dMore"></div>
   <div class="chips" id="dSeasons" style="padding:0 16px 4px"></div>
   <div class="dbody" id="dEps"></div>
 </div>
@@ -1135,6 +1191,7 @@ var T = {
   ku:{name:"کوردی سۆرانی",dir:"rtl",all:"هەموو",search:"گەڕان بۆ کەنال...",
       featured:"پێشنیارکراو",isNew:"نوێ",playNow:"بینین",resume:"بەردەوامبوون",seeAll:"هەمووی",
       fromStart:"لە سەرەتاوە",left:"%s ماوە",director:"دەرهێنەر",cast:"ئەکتەران",
+      trailer:"ترەیلەر",creator:"دروستکەر",country:"وڵات",nSeasons:"%s وەرز",nEps:"%s ئیپسۆد",votes:"%s دەنگ",
       live:"کەناڵ",movies:"فیلم",series:"زنجیرە",seasonN:"وەرزی",episodeN:"ئیپسۆد",
       noVod:"هیچ فیلمێک نییە",noSer:"هیچ زنجیرەیەک نییە",onlyXtream:"تەنها بۆ لیستی Xtream",
       tag:"پەخشی ڕاستەوخۆ",ann:"بەخێربێیت بۆ KURDISTAN IPTV — پەخشی ڕاستەوخۆی کەناڵە کوردی و نێودەوڵەتییەکان",
@@ -1199,6 +1256,7 @@ var T = {
   en:{name:"English",dir:"ltr",all:"All",search:"Search channels...",
       featured:"FEATURED",isNew:"NEW",playNow:"Play",resume:"Resume",seeAll:"See all",
       fromStart:"From start",left:"%s left",director:"Director",cast:"Cast",
+      trailer:"Trailer",creator:"Created by",country:"Country",nSeasons:"%s seasons",nEps:"%s episodes",votes:"%s votes",
       live:"Live TV",movies:"Movies",series:"Series",seasonN:"Season",episodeN:"Episode",
       noVod:"No movies here",noSer:"No series here",onlyXtream:"Xtream playlists only",
       tag:"LIVE STREAMING",ann:"Welcome to KURDISTAN IPTV — live Kurdish and international channels",
@@ -1263,6 +1321,7 @@ var T = {
   ar:{name:"العربية",dir:"rtl",all:"الكل",search:"ابحث عن قناة...",
       featured:"مميّز",isNew:"جديد",playNow:"تشغيل",resume:"متابعة",seeAll:"الكل",
       fromStart:"من البداية",left:"باقٍ %s",director:"المخرج",cast:"الأبطال",
+      trailer:"الإعلان",creator:"من تأليف",country:"البلد",nSeasons:"%s مواسم",nEps:"%s حلقات",votes:"%s صوت",
       live:"القنوات",movies:"أفلام",series:"مسلسلات",seasonN:"الموسم",episodeN:"حلقة",
       noVod:"لا توجد أفلام",noSer:"لا توجد مسلسلات",onlyXtream:"لقوائم Xtream فقط",
       tag:"بث مباشر",ann:"مرحباً بك في KURDISTAN IPTV — بث مباشر للقنوات الكردية والعالمية",
@@ -2074,6 +2133,7 @@ function loadVod(p){
           c: map[String(v.category_id)] || "Other",
           n: v.name || ("#" + v.stream_id),
           id: v.stream_id,
+          tmdb: v.tmdb || v.tmdb_id || "",
           u: streamURL(v.direct_source, d + "/movie/" + cr + "/" + v.stream_id + "." + (v.container_extension || "mp4"), d),
           l: artURL(v.stream_icon, d) || artURL(v.cover, d) || artURL(v.movie_image, d) || artURL(v.cover_big, d)
              || artURL(v.backdrop_path, d),
@@ -3371,19 +3431,295 @@ $("main").addEventListener("click", function(e){
 /* a new query starts from the first page again */
 $("search").addEventListener("input", function(){ SQ_SHOW = 48 });
 
+/* ==================== film and series facts (TMDB) ====================
+   The panel says little about a film - often only its name and poster. The
+   Movie Database knows the rest: the story, the rating, the cast with their
+   photos, a still for the page behind the poster, each episode's picture and
+   summary. It is asked by the number the panel gives (tmdb_id) when it gives
+   one, and by name otherwise; the answer is kept for a week, so a page opened
+   again is complete at once. Without an answer the page is exactly what it
+   was before: the panel's own facts. */
+var TMDB_KEY = "dd107ddd176354c28a10d4afa3c91d34";
+var TMDB_IMG = "https://image.tmdb.org/t/p/";
+var TMDB_TTL = 7 * 86400000;
+var DTOK = 0;              /* which page is open: a late answer for another one is dropped */
+var DBASE = {};            /* what the panel itself said about the open page */
+var DTMDB = null;          /* what TMDB said about it */
+var TMDB_MEM = null;
+
+function tmdbStore(){
+  if(!TMDB_MEM){ try{ TMDB_MEM = JSON.parse(lsGet("kiptv_tmdb", "{}")) || {} }catch(e){ TMDB_MEM = {} } }
+  return TMDB_MEM;
+}
+function tmdbHit(k){
+  var h = tmdbStore()[k];
+  return (h && Date.now() - h.at < TMDB_TTL) ? h : null;
+}
+function tmdbKeep(k, v){
+  var m = tmdbStore(), keys;
+  m[k] = { at: Date.now(), v: v };
+  keys = Object.keys(m);
+  if(keys.length > 120){
+    keys.sort(function(a, b){ return m[a].at - m[b].at });
+    for(var i = 0; i < keys.length - 120; i++) delete m[keys[i]];
+  }
+  lsSet("kiptv_tmdb", JSON.stringify(m));
+}
+function tmdbGet(path, q){
+  var url = "https://api.themoviedb.org/3" + path + "?api_key=" + TMDB_KEY + (q ? "&" + q : "");
+  return fetch(viaApp(url)).then(function(r){
+    if(!r.ok) throw new Error("HTTP " + r.status);
+    return r.text();
+  }).then(function(x){
+    if(x.indexOf("PROXY_ERROR") === 0) throw new Error(x.slice(0, 120));
+    return JSON.parse(x);
+  });
+}
+function tmdbLang(){ return lang === "ar" ? "ar" : lang === "ku" ? "ku" : "en-US" }
+
+/* what to look for: the name without the panel's decorations, and its year */
+function tmdbQuery(name){
+  var s = String(name || "");
+  var y = (s.match(/[\(\[]\s*((?:19|20)\d{2})\s*[\)\]]/) || s.match(/(?:^|[\s\-])((?:19|20)\d{2})\s*$/) || [])[1] || "";
+  s = s.replace(/[\(\[\{][^\)\]\}]*[\)\]\}]/g, " ")
+       .replace(/^\s*\|?[A-Za-z]{2,3}\|\s*/, "")
+       .replace(/^\s*[A-Z]{2,3}\s*[\-:|]\s+/, "")
+       .replace(/\b(4K|UHD|FHD|HD|SD|HEVC|H\.?26[45]|x26[45]|1080p|720p|2160p|MULTI|DUAL|SUB|SUBBED|DUBBED|KURDISH|ENGLISH|ARABIC)\b/gi, " ")
+       .replace(/\s*[\-–]?\s*S\d{1,2}\s*E\d{1,3}.*$/i, "")
+       .replace(/\s(19|20)\d{2}\s*$/, " ");
+  /* a name written twice, in two scripts: the Latin half is the one TMDB knows */
+  var parts = s.split(/\s[\-–|]\s|\|/).map(function(x){ return x.trim() }).filter(Boolean);
+  var latin = parts.filter(function(x){ return /[A-Za-z]{2}/.test(x) && !/[؀-ۿ]/.test(x) });
+  s = (latin[0] || s).replace(/[\-–:|,.]+\s*$/, "").replace(/\s+/g, " ").trim();
+  return { q: s, y: y };
+}
+
+function tmdbSearch(kind, Q){
+  if(!Q.q) return Promise.resolve(null);
+  var yk = kind === "movie" ? "year" : "first_air_date_year";
+  var ask = function(withYear){
+    return tmdbGet("/search/" + kind, "include_adult=false&query=" + encodeURIComponent(Q.q)
+                   + (withYear && Q.y ? "&" + yk + "=" + Q.y : ""))
+      .then(function(r){ return (r && r.results) || [] });
+  };
+  return ask(true).then(function(list){ return (list.length || !Q.y) ? list : ask(false) })
+    .then(function(list){
+      if(!list.length) return null;
+      var n = Q.q.toLowerCase();
+      var same = list.filter(function(x){
+        return String(x.title || x.name || "").toLowerCase() === n
+            || String(x.original_title || x.original_name || "").toLowerCase() === n;
+      });
+      return (same[0] || list[0]).id;
+    });
+}
+
+/* only what the page shows is kept */
+function tmdbSlim(d, kind){
+  var cr = d.credits || {}, cast = cr.cast || [], crew = cr.crew || [];
+  var vids = (d.videos && d.videos.results) || [];
+  var tr = vids.filter(function(v){ return v.site === "YouTube" && v.type === "Trailer" })[0]
+        || vids.filter(function(v){ return v.site === "YouTube" && v.type === "Teaser" })[0];
+  var date = d.release_date || d.first_air_date || "";
+  var names = function(l){ return (l || []).map(function(x){ return x.name }).filter(Boolean) };
+  return {
+    id: d.id, k: kind, t: d.title || d.name || "", o: d.original_title || d.original_name || "",
+    y: String(date).slice(0, 4), rt: d.vote_average || 0, vc: d.vote_count || 0,
+    run: d.runtime || (d.episode_run_time || [])[0] || 0,
+    g: names(d.genres), tag: d.tagline || "", ov: d.overview || "", ovL: "",
+    bd: d.backdrop_path || "", ps: d.poster_path || "",
+    dir: kind === "movie" ? names(crew.filter(function(x){ return x.job === "Director" })) : names(d.created_by),
+    ctry: names(d.production_countries).slice(0, 2),
+    ns: d.number_of_seasons || 0, ne: d.number_of_episodes || 0,
+    cast: cast.slice(0, 16).map(function(x){ return { n: x.name || "", c: x.character || "", p: x.profile_path || "" } }),
+    yt: tr ? tr.key : ""
+  };
+}
+
+/* kind: "movie" or "tv". Resolves to the facts, or null when TMDB does not know it */
+function tmdbFind(kind, name, tmdbId){
+  var Q = tmdbQuery(name), L = tmdbLang();
+  tmdbId = /^\d+$/.test(String(tmdbId || "").trim()) ? String(tmdbId).trim() : "";
+  var key = kind + ":" + (tmdbId ? "#" + tmdbId : Q.q.toLowerCase() + "|" + Q.y) + ":" + L;
+  var hit = tmdbHit(key);
+  if(hit) return Promise.resolve(hit.v);
+  return (tmdbId ? Promise.resolve(tmdbId) : tmdbSearch(kind, Q)).then(function(id){
+    if(!id) return null;
+    return tmdbGet("/" + kind + "/" + id, "language=" + L + "&append_to_response=credits,videos"
+                   + "&include_video_language=" + L.slice(0, 2) + ",en,null")
+      .then(function(d){
+        var v = tmdbSlim(d, kind);
+        if(v.ov) v.ovL = L;
+        if(v.ov && v.tag || L === "en-US") return v;
+        /* not written in this language yet: the story in English */
+        return tmdbGet("/" + kind + "/" + id, "language=en-US").then(function(e){
+          if(!v.ov && e.overview){ v.ov = e.overview; v.ovL = "en-US" }
+          if(!v.tag) v.tag = (L === "ku" ? "" : e.tagline) || "";
+          if(!v.g.length) v.g = (e.genres || []).map(function(x){ return x.name });
+          return v;
+        }, function(){ return v });
+      });
+  }).then(function(v){ tmdbKeep(key, v); return v });
+}
+
+/* one season's episodes: number, name, summary, still */
+function tmdbSeason(id, n){
+  var L = tmdbLang(), key = "s:" + id + ":" + n + ":" + L, hit = tmdbHit(key);
+  if(hit) return Promise.resolve(hit.v);
+  var slim = function(r){
+    return ((r && r.episodes) || []).map(function(e){
+      return { e: e.episode_number, n: e.name || "", ov: e.overview || "", st: e.still_path || "", rt: e.vote_average || 0 };
+    });
+  };
+  return tmdbGet("/tv/" + id + "/season/" + n, "language=" + L).then(function(r){
+    var eps = slim(r);
+    if(L === "en-US" || eps.some(function(x){ return x.ov })) return eps;
+    return tmdbGet("/tv/" + id + "/season/" + n, "language=en-US").then(function(r2){
+      var en = {}; slim(r2).forEach(function(x){ en[x.e] = x });
+      eps.forEach(function(x){
+        var e = en[x.e]; if(!e) return;
+        x.ov = e.ov;
+        if(!x.st) x.st = e.st;
+        if(!x.n || /^(episode|الحلقة|حلقة)\s*\d+$/i.test(x.n)) x.n = e.n;
+      });
+      return eps;
+    }, function(){ return eps });
+  }).then(function(v){ tmdbKeep(key, v); return v });
+}
+
+function vcFmt(n){ return n >= 1000 ? (Math.round(n / 100) / 10) + "K" : String(n) }
+
+/* the line of small facts under the name; the rating stands out in gold */
+function dMetaSet(bits, rating){
+  var h = "";
+  if(rating && rating.v) h += '<span class="rt"><bdi>\u2605 ' + esc(rating.v) + '</bdi>' + (rating.n ? '<small><bdi>' + esc(rating.n) + '</bdi></small>' : '') + '</span>';
+  h += bits.filter(Boolean).map(function(b){ return '<span><bdi>' + esc(b) + '</bdi></span>' }).join("");
+  $("dMeta").innerHTML = h;
+}
+
+/* a new page: nothing of the last one is left on it */
+function detailReset(){
+  DTOK++;
+  DBASE = {}; DTMDB = null;
+  $("dBg").className = "dbg"; $("dBg").style.backgroundImage = "";
+  $("dOrig").textContent = ""; $("dGen").innerHTML = ""; $("dTag").textContent = "";
+  $("dMeta").innerHTML = ""; $("dPlot").textContent = ""; $("dPlot").className = "dplot";
+  $("dAct").innerHTML = ""; $("dMore").innerHTML = "";
+  return DTOK;
+}
+
+function openTrailer(k){
+  var u = "https://www.youtube.com/watch?v=" + encodeURIComponent(k);
+  try{ if(window.AndroidPlayer && AndroidPlayer.openUrl){ AndroidPlayer.openUrl(u); return } }catch(e){}
+  try{ window.open(u, "_blank") }catch(e){}
+}
+function trailerBtn(){
+  return (DTMDB && DTMDB.yt) ? '<button class="dghost" onclick="openTrailer(\'' + esc(DTMDB.yt) + '\')">&#9654;&#65038; ' + esc(t().trailer) + '</button>' : "";
+}
+
+/* everything TMDB knows, laid onto the open page */
+function tmdbApply(v, tok){
+  if(!v || tok !== DTOK) return;
+  DTMDB = v;
+  var d = t();
+  if(v.bd){
+    var src = TMDB_IMG + "w780" + v.bd, im = new Image();
+    im.onload = function(){
+      if(tok !== DTOK) return;
+      $("dBg").style.backgroundImage = 'url("' + src + '")';
+      $("dBg").className = "dbg on";
+    };
+    im.src = src;
+  }
+  if(v.ps && !$("dImg").getAttribute("src")) $("dImg").src = TMDB_IMG + "w342" + v.ps;
+
+  var shown = String($("dName").textContent || "").toLowerCase(), shownQ = tmdbQuery(shown).q.toLowerCase();
+  var alt = [v.t, v.o].filter(function(x){ return x && x.toLowerCase() !== shown && x.toLowerCase() !== shownQ })[0] || "";
+  $("dOrig").textContent = alt + (alt && v.y && alt.indexOf(v.y) < 0 ? "  (" + v.y + ")" : "");
+
+  var bits = [v.y];
+  if(v.k === "movie") bits.push(v.run ? fmtTime(v.run * 60000) : "");
+  else {
+    if(v.ns) bits.push(d.nSeasons.replace("%s", v.ns));
+    if(v.ne) bits.push(d.nEps.replace("%s", v.ne));
+  }
+  dMetaSet(bits, v.rt ? { v: (Math.round(v.rt * 10) / 10).toFixed(1), n: v.vc ? d.votes.replace("%s", vcFmt(v.vc)) : "" }
+                      : DBASE.rating);
+  $("dGen").innerHTML = (v.g.length ? v.g : DBASE.genre ? String(DBASE.genre).split(/\s*[,\/]\s*/) : [])
+    .slice(0, 4).map(function(g){ return '<i>' + esc(g) + '</i>' }).join("");
+  $("dTag").textContent = v.tag || "";
+
+  /* the story in this language from TMDB; else the panel's own; else TMDB's in English */
+  $("dPlot").textContent = (v.ov && v.ovL === tmdbLang()) ? v.ov : (DBASE.plot || v.ov || "");
+
+  var h = "";
+  if(v.cast.length){
+    h += '<div class="dsec">' + esc(d.cast) + '</div><div class="dcast">' + v.cast.map(function(c){
+      return '<div>' + (c.p ? '<img loading="lazy" alt="" src="' + TMDB_IMG + 'w185' + esc(c.p) + '">'
+                            : '<em>' + esc((c.n || "?").charAt(0)) + '</em>')
+           + '<b>' + esc(c.n) + '</b>' + (c.c ? '<s>' + esc(c.c) + '</s>' : '') + '</div>';
+    }).join("") + '</div>';
+  }
+  var facts = "";
+  if(v.dir.length) facts += '<div><b>' + esc(v.k === "movie" ? d.director : d.creator) + '</b><span>' + esc(v.dir.join(", ")) + '</span></div>';
+  if(v.ctry.length) facts += '<div><b>' + esc(d.country) + '</b><span>' + esc(v.ctry.join(", ")) + '</span></div>';
+  if(facts) h += '<div class="dmore"><div class="dfacts">' + facts + '</div></div>';
+  h += '<div class="dtmdb">TMDB</div>';
+  $("dMore").innerHTML = h;
+
+  if(curMovie) movieBody(curMovie.u, curMovie.n, DBASE.info);
+  else if(v.yt) $("dAct").innerHTML = '<div class="dact">' + trailerBtn() + '</div>';
+  if(curSeries && curSeason != null) seasonFacts(curSeason, tok);
+}
+
+/* a season's pictures and summaries, laid onto its episode rows */
+function seasonFacts(k, tok){
+  if(!DTMDB || DTMDB.k !== "tv") return;
+  var n = parseInt(k, 10);
+  if(isNaN(n)) return;
+  tmdbSeason(DTMDB.id, n).then(function(eps){
+    if(tok !== DTOK || curSeason !== k || !eps || !eps.length) return;
+    var by = {};
+    eps.forEach(function(x){ by[x.e] = x });
+    var rows = $("dEps").getElementsByClassName("ep");
+    for(var i = 0; i < rows.length; i++){
+      var row = rows[i], x = by[row.getAttribute("data-en")];
+      if(!x || row.classList.contains("rich")) continue;
+      var no = row.querySelector(".no"), tx = row.querySelector(".tx");
+      if(x.st && no){
+        var st = document.createElement("span");
+        st.className = "st";
+        st.innerHTML = '<img loading="lazy" alt="" src="' + TMDB_IMG + 'w300' + esc(x.st) + '">';
+        row.insertBefore(st, no);
+        st.appendChild(no);
+      }
+      var b = tx && tx.querySelector("b");
+      /* a panel that names its episodes "Name - S01E03" gets their real names */
+      if(b && x.n && /S\d+\s*E\d+/i.test(b.textContent) && !/^(episode|الحلقة|حلقة)\s*\d+$/i.test(x.n))
+        b.textContent = x.n;
+      if(x.ov && tx){
+        var ov = document.createElement("span");
+        ov.className = "ov";
+        ov.textContent = x.ov;
+        tx.appendChild(ov);
+      }
+      row.classList.add("rich");
+    }
+  }).catch(function(){});
+}
+
 /* ==================== series detail ==================== */
 var curSeries = null, curSeason = null, curMovie = null;
 
 function openSeries(sid, name){
   var p = activeList();
   if(p.type !== "xtream") return;
-  curMovie = null;
+  curMovie = null; curSeries = null; curSeason = null;
   detailFav("series", sid, name);
   if(!$("detail").classList.contains("on")) layerOpen("detail");   /* phone Back closes it */
   $("detail").classList.add("on");
+  var tok = detailReset();
   $("dName").textContent = name || "";
-  $("dMeta").textContent = "";
-  $("dPlot").textContent = "";
   $("dSeasons").innerHTML = "";
   $("dEps").innerHTML = '<div class="empty"><p>…</p></div>';
   $("dImg").removeAttribute("src");
@@ -3393,12 +3729,14 @@ function openSeries(sid, name){
     var i = info.info || {};
     $("dName").textContent = i.name || name || "";
     if(i.cover) $("dImg").src = i.cover;
+    if(tok !== DTOK) return;
     var bits = [];
     if(i.releaseDate || i.releasedate) bits.push(String(i.releaseDate || i.releasedate).slice(0,4));
-    if(i.genre) bits.push(i.genre);
-    if(i.rating) bits.push("\u2605 " + i.rating);
-    $("dMeta").textContent = bits.join("  ·  ");
+    DBASE = { plot: i.plot || "", genre: i.genre || "", rating: i.rating ? { v: String(i.rating) } : null };
+    dMetaSet(bits, DBASE.rating);
+    if(i.genre) $("dGen").innerHTML = String(i.genre).split(/\s*[,\/]\s*/).slice(0, 4).map(function(g){ return '<i>' + esc(g) + '</i>' }).join("");
     $("dPlot").textContent = i.plot || "";
+    tmdbFind("tv", i.name || name, i.tmdb || i.tmdb_id).then(function(v){ tmdbApply(v, tok) }).catch(function(){});
     var seasons = [];
     for(var k in info.episodes) if(info.episodes.hasOwnProperty(k)) seasons.push(k);
     seasons.sort(function(a,b){ return (parseInt(a,10)||0) - (parseInt(b,10)||0) });
@@ -3419,8 +3757,10 @@ function openSeries(sid, name){
       done(info);
     })
     .catch(function(e){
+      if(tok !== DTOK) return;
       lastLoadError = (e && e.message) ? e.message : "network";
       $("dEps").innerHTML = '<div class="empty"><div>&#128533;</div><p>'+esc(t().loadFail)+'</p></div>';
+      tmdbFind("tv", name).then(function(v){ tmdbApply(v, tok) }).catch(function(){});
     });
 }
 
@@ -3433,11 +3773,12 @@ function fmtTime(ms){
    Called twice: once from what we already know, once the panel answers. */
 function movieBody(url, name, i){
   var d = t(), sp = getPos(url), html = '<div class="dact">';
+  DBASE.info = i;
   html += '<button class="dplay" data-play="'+esc(url)+'" data-n="'+esc(name||"")+'">&#9654;&#65038; '
        +  esc(sp ? (d.resume + "  ·  " + fmtTime(sp.p)) : d.playNow) + '</button>';
   if(sp) html += '<button class="dghost" data-play="'+esc(url)+'" data-n="'+esc(name||"")
               +  '" data-fresh="1">&#8634; ' + esc(d.fromStart) + '</button>';
-  html += '</div>';
+  html += trailerBtn() + '</div>';
 
   if(sp){
     var pct = Math.min(100, Math.round(sp.p / sp.d * 100));
@@ -3446,13 +3787,16 @@ function movieBody(url, name, i){
          +  '<span>'+esc(d.left.replace("%s", fmtTime(sp.d - sp.p)))+'</span></div></div>';
   }
 
+  $("dAct").innerHTML = html;
+
+  /* the panel's own names, when TMDB has not given the cast with faces */
   i = i || {};
   var facts = "";
-  if(i.director) facts += '<div><b>'+esc(d.director)+'</b><span>'+esc(i.director)+'</span></div>';
-  if(i.cast)     facts += '<div><b>'+esc(d.cast)+'</b><span>'+esc(i.cast)+'</span></div>';
-  if(facts) html += '<div class="dfacts">'+facts+'</div>';
-
-  $("dEps").innerHTML = html;
+  if(!(DTMDB && DTMDB.cast.length)){
+    if(i.director) facts += '<div><b>'+esc(d.director)+'</b><span>'+esc(i.director)+'</span></div>';
+    if(i.cast)     facts += '<div><b>'+esc(d.cast)+'</b><span>'+esc(i.cast)+'</span></div>';
+  }
+  $("dEps").innerHTML = facts ? '<div class="dfacts">'+facts+'</div>' : "";
 }
 
 function openMovie(url, name){
@@ -3465,20 +3809,20 @@ function openMovie(url, name){
 
   if(!$("detail").classList.contains("on")) layerOpen("detail");   /* phone Back closes it */
   $("detail").classList.add("on");
+  var tok = detailReset();
   $("dSeasons").innerHTML = "";
   $("dEps").innerHTML = "";
   $("dName").textContent = name || "";
-  $("dMeta").textContent = "";
-  $("dPlot").textContent = "";
   $("dImg").removeAttribute("src");
   if(item && item.l) $("dImg").src = item.l;
 
   movieBody(url, name, null);
 
-  var bits = [];
-  if(item && item.r) bits.push("\u2605 " + item.r);
-  if(item && item.c) bits.push(cleanGroup(item.c));
-  $("dMeta").textContent = bits.join("  ·  ");
+  DBASE.rating = (item && item.r) ? { v: String(item.r) } : null;
+  dMetaSet([item && item.c ? cleanGroup(item.c) : ""], DBASE.rating);
+  var facts = function(tid){
+    tmdbFind("movie", name || (item && item.n), tid).then(function(v){ tmdbApply(v, tok) }).catch(function(){});
+  };
 
   /* the panel knows more about it - ask, but the page already works without it */
   /* the film's own number from the list; read from the address only when
@@ -3486,22 +3830,26 @@ function openMovie(url, name){
   var id = (item && item.id) ? String(item.id)
          : (/\/movie\//.test(url) ? (url.split("/").pop() || "").split(".")[0] : "");
   var p = activeList();
-  if(p.type !== "xtream" || !id) return;
+  if(p.type !== "xtream" || !id){ facts(item && item.tmdb); return }
   xtGet(xtBase(p), "get_vod_info&vod_id=" + encodeURIComponent(id))
     .then(function(r){
+      if(tok !== DTOK) return;
       var i = (r && r.info) || {};
       if(i.movie_image && !$("dImg").getAttribute("src")) $("dImg").src = i.movie_image;
       if(curMovie && curMovie.u === url && !curMovie.l && i.movie_image) curMovie.l = i.movie_image;
       var b = [];
       if(i.releasedate || i.releaseDate) b.push(String(i.releasedate || i.releaseDate).slice(0,4));
-      if(i.genre) b.push(i.genre);
       if(i.duration) b.push(i.duration);
-      if(i.rating) b.push("\u2605 " + i.rating);
-      if(b.length) $("dMeta").textContent = b.join("  ·  ");
+      if(i.rating) DBASE.rating = { v: String(i.rating) };
+      DBASE.plot = i.plot || "";
+      DBASE.genre = i.genre || "";
+      if(b.length || i.rating) dMetaSet(b, DBASE.rating);
+      if(i.genre) $("dGen").innerHTML = String(i.genre).split(/\s*[,\/]\s*/).slice(0, 4).map(function(g){ return '<i>' + esc(g) + '</i>' }).join("");
       if(i.plot) $("dPlot").textContent = i.plot;
       if($("detail").classList.contains("on")) movieBody(url, name, i);
+      facts(i.tmdb_id || i.tmdb || (item && item.tmdb));
     })
-    .catch(function(){});
+    .catch(function(){ if(tok === DTOK) facts(item && item.tmdb) });
 }
 
 $("dEps").addEventListener("click", function(e){
@@ -3538,13 +3886,14 @@ function pickSeason(k){
     var sp = getPos(url);
     if(sp) sub.unshift(t().resume + " " + fmtTime(sp.p));
     memo.push({ c:"SERIES", n:(curSeries.info && curSeries.info.name ? curSeries.info.name + " · " : "") + (e.title || ""), u:url, l:(curSeries.info && curSeries.info.cover) || "" });
-    return '<div class="ep" data-u="'+esc(url)+'" data-n="'+esc((curSeries.info && curSeries.info.name ? curSeries.info.name + " · " : "") + (e.title || (t().episodeN + " " + (idx+1))))+'">'
+    return '<div class="ep" data-en="'+esc(String(e.episode_num || (idx+1)))+'" data-u="'+esc(url)+'" data-n="'+esc((curSeries.info && curSeries.info.name ? curSeries.info.name + " · " : "") + (e.title || (t().episodeN + " " + (idx+1))))+'">'
          +   '<span class="no">'+(e.episode_num || (idx+1))+'</span>'
          +   '<span class="tx"><b>'+esc(e.title || (t().episodeN + " " + (idx+1)))+'</b>'
          +   (sub.length ? '<s>'+esc(sub.join("  ·  "))+'</s>' : '')+'</span>'
          + '</div>';
   }).join("") || '<div class="empty"><p>-</p></div>';
   rememberEpisodes(memo);
+  seasonFacts(k, DTOK);
 }
 
 $("dEps").addEventListener("click", function(e){

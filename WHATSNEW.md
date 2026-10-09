@@ -1,46 +1,40 @@
 [en]
-Films now play in the Google Play version and on Windows, as they already
-did in the version from GitHub.
+Film and series pages now tell the whole story. Beside the poster: the
+rating, year, length, genres and the film's tagline, over a still from the
+film itself. Below: the story, the cast with their photos, the director or
+creator, and a Trailer button. Each episode of a series gets its own
+picture, name and summary.
 
-Some film servers send a certificate that is not quite in order: the
-certificate in the middle is missing, or it has run out. The Google Play
-version now does what a browser does when the normal check fails: it fetches
-the missing certificate and checks the chain again, and it forgives a
-certificate that has run out only if everything else about it is right.
-Live channels and every server that was already working are not touched.
+The facts come from The Movie Database (TMDB) and are kept for a week, so a
+page opened again is complete at once. Where TMDB does not know a title,
+the page shows what the provider sends, as before.
 
-On Windows, such a server is now asked again at once without the strict
-check, as VLC does, even on networks that block secure DNS. The server test
-in Settings now opens streams exactly the way the Windows player does, and
-no longer says H.265 is unsupported on Windows.
+Films also keep playing in the Google Play version and on Windows when a
+film server's certificate is not quite in order.
 
 [ku]
-فیلمەکان ئێستا لە وەشانی گووگڵ پلەی و ویندۆزیش کاردەکەن، وەک چۆن پێشتر
-لە وەشانی GitHub کاریان دەکرد.
+پەڕەی فیلم و زنجیرە ئێستا هەموو زانیارییەکان پیشان دەدات. لە تەنیشت
+پۆستەرەکە: هەڵسەنگاندن، ساڵ، ماوە، جۆر و دێڕی ناساندنی فیلمەکە، لەسەر
+وێنەیەک لە خودی فیلمەکە. لە خوارەوە: چیرۆکەکە، ئەکتەران بە وێنەکانیانەوە،
+دەرهێنەر یان دروستکەر، و دوگمەی ترەیلەر. هەر ئیپسۆدێکی زنجیرەش وێنە و
+ناو و کورتەی خۆی هەیە.
 
-هەندێ سێرڤەری فیلم بڕوانامەیەک دەنێرن کە تەواو ڕێک نییە: بڕوانامەی
-ناوەڕاست ونە، یان کاتی بەسەرچووە. وەشانی گووگڵ پلەی ئێستا وەک وێبگەڕ
-دەکات کاتێک پشکنینی ئاسایی سەرناکەوێت: بڕوانامە ونەکە دەهێنێت و زنجیرەکە
-دووبارە دەپشکنێت، و بڕوانامەی بەسەرچوو تەنها ئەو کاتە قبووڵ دەکات کە
-هەموو شتێکی تری دروست بێت. کەناڵە ڕاستەوخۆکان و ئەو سێرڤەرانەی پێشتر
-کاریان دەکرد دەستیان لێنەدراوە.
+زانیارییەکان لە The Movie Database (TMDB) ـەوە دێن و بۆ هەفتەیەک
+هەڵدەگیرێن، بۆیە پەڕەیەک کە دووبارە دەکرێتەوە یەکسەر تەواوە. ئەگەر TMDB
+فیلمێکی نەناسی، پەڕەکە وەک پێشوو زانیاری پرۆڤایدەرەکە پیشان دەدات.
 
-لە ویندۆز، ئەو جۆرە سێرڤەرانە یەکسەر بەبێ پشکنینی توند دووبارە
-دەپرسرێنەوە، وەک VLC، تەنانەت لەو تۆڕانەشی DNSی پارێزراو دادەخەن. تاقیکردنەوەی
-سێرڤەر لە ڕێکخستنەکان ئێستا وەک پلەیەری ویندۆز ستریمەکان دەکاتەوە، و
-چیتر نالێت H.265 لە ویندۆز پشتگیری ناکرێت.
+فیلمەکان لە وەشانی گووگڵ پلەی و ویندۆزیش کاردەکەن کاتێک بڕوانامەی
+سێرڤەری فیلمەکە تەواو ڕێک نییە.
 
 [ar]
-الأفلام تعمل الآن في نسخة Google Play وعلى ويندوز، كما كانت تعمل في نسخة
-GitHub.
+صفحات الأفلام والمسلسلات تعرض الآن القصة كاملة. بجانب الملصق: التقييم
+والسنة والمدة والتصنيف وشعار الفيلم، فوق لقطة من الفيلم نفسه. وفي الأسفل:
+القصة، والممثلون بصورهم، والمخرج أو المؤلف، وزر الإعلان. ولكل حلقة من
+المسلسل صورتها واسمها وملخصها.
 
-بعض خوادم الأفلام ترسل شهادة غير سليمة تماماً: الشهادة الوسيطة مفقودة، أو
-انتهت صلاحيتها. نسخة Google Play تفعل الآن ما يفعله المتصفح عندما يفشل
-الفحص العادي: تجلب الشهادة المفقودة وتعيد فحص السلسلة، وتقبل الشهادة
-المنتهية فقط إذا كان كل ما عداها صحيحاً. القنوات المباشرة وكل خادم كان يعمل
-لم يتغير.
+تأتي المعلومات من The Movie Database (TMDB) وتُحفظ لأسبوع، فتكتمل الصفحة
+فوراً عند فتحها مرة أخرى. وإن لم يعرف TMDB العنوان، تعرض الصفحة ما يرسله
+المزوّد كما كانت.
 
-على ويندوز، يُسأل هذا النوع من الخوادم مرة أخرى فوراً دون الفحص الصارم، كما
-يفعل VLC، حتى على الشبكات التي تحجب DNS الآمن. وفحص الخادم في الإعدادات
-يفتح البث الآن بالطريقة نفسها التي يفتحه بها مشغّل ويندوز، ولم يعد يقول إن
-H.265 غير مدعوم على ويندوز.
+وتستمر الأفلام بالعمل في نسخة Google Play وعلى ويندوز حتى عندما لا تكون
+شهادة خادم الأفلام سليمة تماماً.
