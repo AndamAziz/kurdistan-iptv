@@ -3852,7 +3852,8 @@ function openMovie(url, name){
     .catch(function(){ if(tok === DTOK) facts(item && item.tmdb) });
 }
 
-$("dEps").addEventListener("click", function(e){
+/* a film's Play and From-start buttons sit just under the poster (dAct) */
+function onPlayBtn(e){
   var el = e.target;
   while(el && el !== this && !(el.getAttribute && el.getAttribute("data-play"))) el = el.parentNode;
   if(!el || el === this) return;
@@ -3862,7 +3863,9 @@ $("dEps").addEventListener("click", function(e){
   }
   playQueue([(curMovie && curMovie.u === pu) ? curMovie
              : { n: el.getAttribute("data-n"), u: pu }], 0);
-});
+}
+$("dAct").addEventListener("click", onPlayBtn);
+$("dEps").addEventListener("click", onPlayBtn);
 
 function pickSeason(k){
   if(!curSeries) return;
