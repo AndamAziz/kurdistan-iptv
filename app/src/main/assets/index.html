@@ -1218,7 +1218,7 @@ var T = {
       subNoId:"ئەم فیلمە لە TMDB نەدۆزرایەوە، بۆیە ژێرنووسی بۆ نادۆزرێتەوە",subNone:"ژێرنووسی %s بۆ ئەمە نییە",
       subNoSave:"ژێرنووسەکە هەڵنەگیرا",subPrep:"ژێرنووس ئامادە دەکرێت…",subSkip:"بەبێ ژێرنووس پلەی بکە",
       subHint:"ژێرنووس لە OpenSubtitles دێت. کوردییەکە لە ئینگلیزییەکەوە وەردەگێڕدرێت (بە بنەڕەت Google، بەبێبەرامبەر) و لەسەر ئامێرەکەت هەڵدەگیرێت.",
-      subAiQ:"وەرگێڕانی کوردی",subGoogle:"Google Translate",subGoogleS:"بێبەرامبەر، بەبێ کلیل",subBest:"باشترین کوالیتی",subBestS:"Claude Opus 5.5 · کلیلی پێویستە",subFast:"Claude خێرا",subFastS:"Claude Haiku 5.5 · کلیلی پێویستە",
+      subAiQ:"وەرگێڕانی کوردی",subAgain:"دووبارە دایبگرە، لەو شوێنەوە بەردەوام دەبێت",subGoogle:"Google Translate",subGoogleS:"بێبەرامبەر، بەبێ کلیل",subBest:"باشترین کوالیتی",subBestS:"Claude Opus 5.5 · کلیلی پێویستە",subFast:"Claude خێرا",subFastS:"Claude Haiku 5.5 · کلیلی پێویستە",
       subKeys:"کلیلەکان",subOsUser:"ناوی هەژماری OpenSubtitles (ئارەزوومەندانە)",subOsPass:"وشەی نهێنی OpenSubtitles",saved:"پاشەکەوت کرا",
       trailer:"ترەیلەر",creator:"دروستکەر",country:"وڵات",nSeasons:"%s وەرز",nEps:"%s ئیپسۆد",votes:"%s دەنگ",
       live:"کەناڵ",movies:"فیلم",series:"زنجیرە",seasonN:"وەرزی",episodeN:"ئیپسۆد",
@@ -1290,7 +1290,7 @@ var T = {
       subNoId:"TMDB does not know this title, so no subtitles can be found",subNone:"No %s subtitles for this",
       subNoSave:"The subtitle file could not be saved",subPrep:"Preparing subtitles…",subSkip:"Play without subtitles",
       subHint:"Subtitles come from OpenSubtitles. Kurdish ones are translated from the English (Google by default, free) and kept on this device.",
-      subAiQ:"Kurdish translation",subGoogle:"Google Translate",subGoogleS:"Free, no key needed",subBest:"Best quality",subBestS:"Claude Opus 5.5 · needs a key",subFast:"Claude, fast",subFastS:"Claude Haiku 5.5 · needs a key",
+      subAiQ:"Kurdish translation",subAgain:"tap again to carry on where it stopped",subGoogle:"Google Translate",subGoogleS:"Free, no key needed",subBest:"Best quality",subBestS:"Claude Opus 5.5 · needs a key",subFast:"Claude, fast",subFastS:"Claude Haiku 5.5 · needs a key",
       subKeys:"Keys",subOsUser:"OpenSubtitles username (optional)",subOsPass:"OpenSubtitles password",saved:"Saved",
       trailer:"Trailer",creator:"Created by",country:"Country",nSeasons:"%s seasons",nEps:"%s episodes",votes:"%s votes",
       live:"Live TV",movies:"Movies",series:"Series",seasonN:"Season",episodeN:"Episode",
@@ -1362,7 +1362,7 @@ var T = {
       subNoId:"لم يُعثر على هذا العنوان في TMDB، فلا يمكن إيجاد ترجمة له",subNone:"لا توجد ترجمة %s لهذا",
       subNoSave:"تعذّر حفظ ملف الترجمة",subPrep:"جارٍ تجهيز الترجمة…",subSkip:"تشغيل بدون ترجمة",
       subHint:"الترجمات من OpenSubtitles. الكردية تُترجم من الإنجليزية (Google افتراضياً، مجاناً) وتُحفظ على هذا الجهاز.",
-      subAiQ:"الترجمة الكردية",subGoogle:"Google Translate",subGoogleS:"مجاني، بدون مفتاح",subBest:"أفضل جودة",subBestS:"Claude Opus 5.5 · يحتاج مفتاحاً",subFast:"Claude السريع",subFastS:"Claude Haiku 5.5 · يحتاج مفتاحاً",
+      subAiQ:"الترجمة الكردية",subAgain:"اضغط مجدداً للمتابعة من حيث توقفت",subGoogle:"Google Translate",subGoogleS:"مجاني، بدون مفتاح",subBest:"أفضل جودة",subBestS:"Claude Opus 5.5 · يحتاج مفتاحاً",subFast:"Claude السريع",subFastS:"Claude Haiku 5.5 · يحتاج مفتاحاً",
       subKeys:"المفاتيح",subOsUser:"اسم مستخدم OpenSubtitles (اختياري)",subOsPass:"كلمة مرور OpenSubtitles",saved:"تم الحفظ",
       trailer:"الإعلان",creator:"من تأليف",country:"البلد",nSeasons:"%s مواسم",nEps:"%s حلقات",votes:"%s صوت",
       live:"القنوات",movies:"أفلام",series:"مسلسلات",seasonN:"الموسم",episodeN:"حلقة",
@@ -3974,16 +3974,32 @@ function aiBatchSafe(items, tries){
     throw e;
   });
 }
-/* ---- Kurdish, made by Google Translate: free, no key; many cues in one request ---- */
+/* ---- Kurdish, made by Google Translate: free, no key; many cues in one request ----
+   The free service turns away a device that asks too fast (HTTP 429). So
+   it is asked one request at a time, as a browser asks, spread over the
+   three addresses it answers on; a refusal moves to the next address and
+   waits longer each round instead of giving up. */
+var G_HOSTS = [
+  "https://translate.googleapis.com/translate_a/t?client=gtx&sl=auto&tl=ckb&format=text",
+  "https://clients5.google.com/translate_a/t?client=dict-chrome-ex&sl=auto&tl=ckb",
+  "https://translate.google.com/translate_a/t?client=gtx&sl=auto&tl=ckb"
+];
+var G_UA = "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Mobile Safari/537.36";
+var G_AT = 0;
 function gBatch(items, tries){
+  tries = tries || 0;
+  var host = G_HOSTS[G_AT % G_HOSTS.length];
   var body = items.map(function(c){ return "q=" + encodeURIComponent(c.tx) }).join("&");
-  return nativeHttp("POST", "https://translate.googleapis.com/translate_a/t?client=gtx&sl=auto&tl=ckb&format=text",
-                    { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" }, body).then(function(r){
+  return nativeHttp("POST", host, { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+                                    "User-Agent": G_UA, "Accept": "*/*" }, body).then(function(r){
     var j = null; try{ j = JSON.parse(r.text) }catch(e){}
     if(r.status !== 200 || !j){
-      if((r.status === 429 || r.status >= 500 || r.status === 0) && (tries || 0) < 4)
-        return new Promise(function(ok){ setTimeout(ok, 3000 * ((tries || 0) + 1)) })
-          .then(function(){ return gBatch(items, (tries || 0) + 1) });
+      G_AT++;                                  /* the next address, whatever went wrong */
+      if(tries < 9){
+        /* each address once, quickly; then a pause that grows: 8, 16, 32, 60 s */
+        var wait = (tries + 1) % G_HOSTS.length ? 1500 : Math.min(60000, 8000 * Math.pow(2, Math.floor(tries / G_HOSTS.length)));
+        return new Promise(function(ok){ setTimeout(ok, wait) }).then(function(){ return gBatch(items, tries + 1) });
+      }
       throw new Error("Google Translate: HTTP " + r.status);
     }
     if(!Array.isArray(j)) j = [j];
@@ -3997,23 +4013,28 @@ function gBatch(items, tries){
   });
 }
 
-function aiSrt(srt, onPct){
+/* what was translated so far, per film: a stopped job carries on from there */
+var SUBPART = {};
+
+function aiSrt(srt, onPct, partKey){
   var eng = subEngine();
   if(eng !== "google" && !aiKey()) return Promise.reject(new Error(t().subNoAi));
   var cues = srtParse(srt);
   if(!cues.length) return Promise.reject(new Error("empty subtitle file"));
   cues.forEach(function(c, i){ c.i = i + 1 });
+  var part = partKey ? (SUBPART[partKey] = SUBPART[partKey] || { done: {} }) : { done: {} };
+  var todo = cues.filter(function(c){ return part.done[c.i] == null });
   var batches = [];
   if(eng === "google"){
     /* about 4000 letters a request, the size the free service takes without complaint */
     var cur = [], len = 0;
-    cues.forEach(function(c){
+    todo.forEach(function(c){
       if(cur.length && (len + c.tx.length > 4000 || cur.length >= 100)){ batches.push(cur); cur = []; len = 0 }
       cur.push(c); len += c.tx.length + 3;
     });
     if(cur.length) batches.push(cur);
   } else {
-    for(var i = 0; i < cues.length; i += 120) batches.push(cues.slice(i, i + 120));
+    for(var i = 0; i < todo.length; i += 120) batches.push(todo.slice(i, i + 120));
   }
   var run = eng === "google" ? function(b){ return gBatch(b, 0) } : function(b){ return aiBatchSafe(b, 0) };
   var done = 0, next = 0, failed = null;
@@ -4021,16 +4042,19 @@ function aiSrt(srt, onPct){
     if(failed || next >= batches.length) return Promise.resolve();
     var b = batches[next++];
     return run(b).then(function(by){
-      b.forEach(function(c){ if(by[c.i] != null && String(by[c.i]).trim()) c.tx = by[c.i] });
+      b.forEach(function(c){ if(by[c.i] != null && String(by[c.i]).trim()) part.done[c.i] = by[c.i] });
       done++;
-      if(onPct) onPct(Math.round(done / batches.length * 100));
-      return worker();
+      if(onPct) onPct(Math.round((cues.length - todo.length + done / batches.length * todo.length) / cues.length * 100));
+      /* a breath between requests, so the free service does not count us as a flood */
+      return eng === "google" ? new Promise(function(ok){ setTimeout(ok, 400) }).then(worker) : worker();
     }, function(e){ failed = e });
   };
   var crew = [];
-  for(var w = 0; w < Math.min(eng === "google" ? 3 : 5, batches.length); w++) crew.push(worker());
+  for(var w = 0; w < Math.min(eng === "google" ? 1 : 5, batches.length); w++) crew.push(worker());
   return Promise.all(crew).then(function(){
     if(failed) throw failed;
+    cues.forEach(function(c){ if(part.done[c.i] != null) c.tx = part.done[c.i] });
+    if(partKey) delete SUBPART[partKey];
     return srtBuild(cues);
   });
 }
@@ -4077,15 +4101,17 @@ function prepareSub(tg, lang, onPct){
       }
       var src = pick("en") || pick("ar") || list.filter(function(x){ return !x.mt })[0] || list[0];
       if(!src) throw new Error(t().subNone.replace("%s", "English"));
-      return osDownload(src.id).then(function(srt){
+      var mem = SUBPART["src:" + qk];        /* a stopped job's English is not downloaded again */
+      return (mem ? Promise.resolve(mem) : osDownload(src.id)).then(function(srt){
+        SUBPART["src:" + qk] = srt;
         tell(6);
         /* the English it is made from is kept too: one more choice, no second download */
         try{
           var fs = subSave("s" + hashStr(qk) + "_" + src.lang + ".srt", srt);
           if(fs && !subHave(tg.u, src.lang)) subKeep([tg.u, qk], src.lang, { f: fs });
         }catch(e){}
-        return aiSrt(srt, function(p){ tell(6 + Math.round(p * 0.94)) });
-      }).then(store);
+        return aiSrt(srt, function(p){ tell(6 + Math.round(p * 0.94)) }, qk + "|" + subEngine());
+      }).then(function(text){ delete SUBPART["src:" + qk]; return store(text) });
     });
   });
   var fin = function(){ delete SUBJOB[k] };
@@ -4134,7 +4160,11 @@ function subPick(l){
   var tg = subTargetMovie(), tok = DTOK;
   prepareSub(tg, l, function(){ if(tok === DTOK) subsRow() })
     .then(function(){ if(tok === DTOK) subsRow() },
-          function(e){ if(tok === DTOK) subsRow(); showToast(e && e.message ? e.message : String(e)) });
+          function(e){
+            if(tok === DTOK) subsRow();
+            var m = e && e.message ? e.message : String(e);
+            showToast(m + (/Google/.test(m) ? "  ·  " + t().subAgain : ""));
+          });
   subsRow();
 }
 
