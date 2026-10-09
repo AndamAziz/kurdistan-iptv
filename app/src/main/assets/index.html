@@ -3762,7 +3762,7 @@ function seasonFacts(k, tok){
    kept on the device and handed to the player with the film from then on;
    the player lists it with any subtitles the stream has. */
 var OS_KEY_BUILT = "__KIPTV_OS_KEY__", AI_KEY_BUILT = "__KIPTV_AI_KEY__";
-var OS_API = "https://api.opensubtitles.com/api/v1", OS_UA = "KurdistanIPTV v1.0";
+var OS_API = "https://api.opensubtitles.com/api/v1", OS_UA = "KURDISTANIPTV v1.0";
 var AI_MODELS = { best: "claude-opus-5-5", fast: "claude-haiku-5-5" };
 var SUB_LANGS = ["ku-ai", "en", "ar", "fa", "tr", "fr", "de", "es"];
 
@@ -3864,14 +3864,17 @@ function osLogin(){
   });
 }
 function osQuery(q){
-  return q.ptmdb ? "parent_tmdb_id=" + q.ptmdb + "&season_number=" + q.s + "&episode_number=" + q.e
-                 : "tmdb_id=" + q.tmdb;
+  /* a TMDB number names a film or a series, so the kind is said too */
+  return q.ptmdb ? "parent_tmdb_id=" + q.ptmdb + "&season_number=" + q.s + "&episode_number=" + q.e + "&type=episode"
+                 : "tmdb_id=" + q.tmdb + "&type=movie";
 }
 /* which languages exist for it - looking costs nothing of the daily limit */
 function osSearch(q){
   var qs = osQuery(q), key = "os:" + qs, hit = tmdbHit(key);
   if(hit) return Promise.resolve(hit.v);
-  return osJson("GET", "/subtitles?" + qs + "&order_by=download_count&order_direction=desc").then(function(j){
+  /* only the languages offered here, so a popular film's first page is not all English */
+  var langs = SUB_LANGS.filter(function(l){ return l !== "ku-ai" }).concat(["ku"]).join(",");
+  return osJson("GET", "/subtitles?" + qs + "&languages=" + langs + "&order_by=download_count&order_direction=desc").then(function(j){
     var by = {};
     ((j && j.data) || []).forEach(function(d){
       var a = d.attributes || {}, f = (a.files || [])[0];
