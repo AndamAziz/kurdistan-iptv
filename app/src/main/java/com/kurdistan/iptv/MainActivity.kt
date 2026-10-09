@@ -73,6 +73,7 @@ import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.NextRenderersFactory
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.ByteArrayInputStream
+import java.io.File
 import java.net.CookieHandler
 import java.net.CookieManager
 import java.net.CookiePolicy
@@ -194,6 +195,10 @@ class MainActivity : ComponentActivity() {
     private var uas: List<String?> = emptyList()
     /** films and episodes whose address does not say so ("v":1 from the page) */
     private var vodSet: Set<String> = emptySet()
+
+    /** a subtitle file the page made ready for one stream (OpenSubtitles, or Kurdish by Claude) */
+    private data class SubF(val path: String, val lang: String, val label: String, val def: Boolean)
+    private var subsByUrl: Map<String, List<SubF>> = emptyMap()
     private var refs: List<String?> = emptyList()
     private var curUa: String? = null
     private var curRef: String? = null
@@ -443,6 +448,7 @@ class MainActivity : ComponentActivity() {
         fun playNative(url: String, title: String) {
             runOnUiThread {
                 vodSet = emptySet()
+                subsByUrl = emptyMap()
                 openQueue(listOf(url), listOf(title), listOf(null), listOf(null), 0, 0L)
             }
         }
@@ -585,6 +591,54 @@ class MainActivity : ComponentActivity() {
             }.start()
         }
 
+        /**
+         * A request the page cannot make itself - a POST, or headers of its
+         * own (OpenSubtitles, Claude for Kurdish subtitles). The answer goes
+         * back as window.kiptvHttp(id, status, body).
+         */
+        @android.webkit.JavascriptInterface
+        fun http(id: String, method: String, url: String, headers: String, body: String) {
+            Thread {
+                var code = 0
+                var text = ""
+                try {
+                    if (!url.startsWith("https://", true) && !url.startsWith("http://", true)) throw IllegalArgumentException("url")
+                    val c = URL(url).openConnection() as HttpURLConnection
+                    c.connectTimeout = 20000
+                    c.readTimeout = 180000
+                    c.instanceFollowRedirects = true
+                    c.requestMethod = if (method.equals("POST", true)) "POST" else "GET"
+                    try {
+                        val h = JSONObject(headers.ifBlank { "{}" })
+                        for (k in h.keys()) c.setRequestProperty(k, h.optString(k))
+                    } catch (e: Exception) { }
+                    if (c.requestMethod == "POST") {
+                        c.doOutput = true
+                        c.outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) }
+                    }
+                    code = c.responseCode
+                    val st = if (code >= 400) c.errorStream else c.inputStream
+                    text = st?.use { String(it.readBytes(), Charsets.UTF_8) } ?: ""
+                    c.disconnect()
+                } catch (e: Exception) { text = e.javaClass.simpleName + ": " + (e.message ?: "") }
+                val js = "window.kiptvHttp&&kiptvHttp(" + JSONObject.quote(id) + "," + code + "," +
+                    JSONObject.quote(text) + ")"
+                runOnUiThread { try { webView.evaluateJavascript(js, null) } catch (e: Exception) { } }
+            }.start()
+        }
+
+        /** keeps a finished subtitle file; answers the path the player reads it from */
+        @android.webkit.JavascriptInterface
+        fun subSave(name: String, text: String): String = try {
+            val dir = File(filesDir, "subs").apply { mkdirs() }
+            val safe = name.replace(Regex("[^A-Za-z0-9._-]"), "_").take(80)
+            val f = File(dir, safe)
+            f.writeText(text, Charsets.UTF_8)
+            /* the oldest go once there are many */
+            dir.listFiles()?.sortedByDescending { it.lastModified() }?.drop(400)?.forEach { it.delete() }
+            f.absolutePath
+        } catch (e: Exception) { "" }
+
         /** what this device decodes: {"hevc":..,"hevc4k":..,"av1":..,"ac3":..} */
         @android.webkit.JavascriptInterface
         fun codecs(): String {
@@ -663,19 +717,48 @@ class MainActivity : ComponentActivity() {
                 val a = ArrayList<String?>(arr.length())
                 val r = ArrayList<String?>(arr.length())
                 val v = HashSet<String>()
+                val sb = HashMap<String, List<SubF>>()
                 for (i in 0 until arr.length()) {
                     val o = arr.getJSONObject(i)
                     u.add(o.optString("u"))
                     if (o.optInt("v", 0) == 1) v.add(o.optString("u"))
+                    o.optJSONArray("subs")?.let { sa ->
+                        val l = ArrayList<SubF>()
+                        for (k in 0 until sa.length()) {
+                            val so = sa.optJSONObject(k) ?: continue
+                            val f = so.optString("f").removePrefix("file://")
+                            if (f.isNotBlank() && File(f).isFile)
+                                l.add(SubF(f, so.optString("lang"), so.optString("label"), so.optInt("def", 0) == 1))
+                        }
+                        if (l.isNotEmpty()) sb[o.optString("u")] = l
+                    }
                     n.add(o.optString("n"))
                     a.add(o.optString("ua").ifBlank { null })
                     r.add(o.optString("rf").ifBlank { null })
                 }
                 if (u.isEmpty()) return
                 val start = if (index in u.indices) index else 0
-                runOnUiThread { vodSet = v; openQueue(u, n, a, r, start, startMs.toLong()) }
+                runOnUiThread { vodSet = v; subsByUrl = sb; openQueue(u, n, a, r, start, startMs.toLong()) }
             } catch (e: Exception) { /* ignore malformed input */ }
         }
+    }
+
+    /** the queue's item [i] at [uri], with the subtitle files made ready for its stream */
+    private fun mediaItem(i: Int, uri: String, mime: String?): MediaItem {
+        val b = MediaItem.Builder().setUri(uri)
+        mime?.let { b.setMimeType(it) }
+        val subs = urls.getOrNull(i)?.let { subsByUrl[it] }
+        if (!subs.isNullOrEmpty()) {
+            b.setSubtitleConfigurations(subs.map { s ->
+                MediaItem.SubtitleConfiguration.Builder(Uri.fromFile(File(s.path)))
+                    .setMimeType(if (s.path.endsWith(".vtt", true)) MimeTypes.TEXT_VTT else MimeTypes.APPLICATION_SUBRIP)
+                    .setLanguage(s.lang)
+                    .setLabel(s.label)
+                    .setSelectionFlags(if (s.def) C.SELECTION_FLAG_DEFAULT else 0)
+                    .build()
+            })
+        }
+        return b.build()
     }
 
     // ---------------- format plan ----------------
@@ -771,11 +854,9 @@ class MainActivity : ComponentActivity() {
                 step = 0
                 reconnects = 0
                 plan = listOf(found.mime) + ORDER.filter { it != found.mime }
-                val b = MediaItem.Builder().setUri(found.url)
-                found.mime?.let { b.setMimeType(it) }
                 try {
                     val p = player ?: return@runOnUiThread
-                    p.replaceMediaItem(index, b.build())
+                    p.replaceMediaItem(index, mediaItem(index, found.url, found.mime))
                     p.prepare()
                     p.playWhenReady = true
                 } catch (e: Exception) { showError(fallbackCode) }
@@ -814,13 +895,12 @@ class MainActivity : ComponentActivity() {
         net.way = w
         val link = linkNow(i)
         if (w.swap == StreamNet.SWAP_EXT) { plan = planFor(link); step = 0 }
-        val b = MediaItem.Builder().setUri(link)
-        plan.getOrNull(step)?.let { b.setMimeType(it) }
+        val item = mediaItem(i, link, plan.getOrNull(step))
         loading.visibility = View.VISIBLE
         playerView.post {
             if (dead) return@post
             try {
-                p.replaceMediaItem(i, b.build())
+                p.replaceMediaItem(i, item)
                 p.prepare()
                 p.playWhenReady = true
             } catch (e: Exception) { showError("RETRY_FAILED") }
@@ -883,10 +963,8 @@ class MainActivity : ComponentActivity() {
         applyItemChrome(index)
 
         val items = urls.mapIndexed { i, link ->
-            val b = MediaItem.Builder().setUri(if (i == index) linkNow(index) else link)
-            if (i == index) plan.getOrNull(0)?.let { b.setMimeType(it) }
-            else planFor(link).getOrNull(0)?.let { b.setMimeType(it) }
-            b.build()
+            if (i == index) mediaItem(i, linkNow(index), plan.getOrNull(0))
+            else mediaItem(i, link, planFor(link).getOrNull(0))
         }
 
         player = buildPlayer().also { p ->
@@ -990,12 +1068,11 @@ class MainActivity : ComponentActivity() {
                         !netErr && !hasPlayed && step < plan.size - 1 -> {
                             step++
                             val link = linkNow(i)
-                            val b = MediaItem.Builder().setUri(link)
-                            plan.getOrNull(step)?.let { b.setMimeType(it) }
+                            val item = mediaItem(i, link, plan.getOrNull(step))
                             playerView.post {
                                 if (dead) return@post
                                 try {
-                                    p.replaceMediaItem(i, b.build())
+                                    p.replaceMediaItem(i, item)
                                     p.prepare()
                                     p.playWhenReady = true
                                 } catch (e: Exception) { showError(error.errorCodeName) }
@@ -2423,6 +2500,18 @@ class MainActivity : ComponentActivity() {
         val pr = prefs()
         val audio = pr.getString("audioLang", null)
         val text = pr.getString("textLang", null)
+        /* a subtitle the person chose on the film's page is shown, whatever was set before */
+        val chosen = subsByUrl.values.flatten().firstOrNull { it.def }
+        if (chosen != null) {
+            try {
+                p.trackSelectionParameters = p.trackSelectionParameters.buildUpon()
+                    .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, false)
+                    .setPreferredTextLanguage(chosen.lang)
+                    .apply { if (audio != null) setPreferredAudioLanguage(audio) }
+                    .build()
+            } catch (e: Exception) { }
+            return
+        }
         if (audio == null && text == null) return
         try {
             val b = p.trackSelectionParameters.buildUpon()

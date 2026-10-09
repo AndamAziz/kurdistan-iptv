@@ -491,6 +491,27 @@ html[dir=rtl] .dbg::after{background:linear-gradient(180deg,rgba(7,10,14,.30) 0%
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dmore .dfacts{margin:4px 16px 0}
 .dtmdb{margin:14px 16px 0;font-size:10px;color:var(--muted2);opacity:.7}
+/* subtitle choice on the film / series page */
+.dsubs{display:flex;align-items:center;gap:7px;overflow-x:auto;padding:12px 16px 2px;scrollbar-width:none}
+.dsubs::-webkit-scrollbar{display:none}
+.dsubs:empty{display:none}
+.dsubs .cc{flex:none;font-size:10px;font-weight:900;letter-spacing:.5px;color:var(--bg);background:var(--muted);
+  border-radius:5px;padding:3px 5px}
+.dsubs .chip{flex:none;display:inline-flex;align-items:center;gap:6px}
+.dsubs .chip.dim{opacity:.45}
+.dsubs .chip i{font-style:normal;color:var(--live);font-weight:900}
+.dsubs .sp,#subWait .sp{width:12px;height:12px;border:2px solid rgba(255,255,255,.25);border-top-color:var(--accent2);
+  border-radius:50%;display:inline-block;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#subWait{position:fixed;inset:0;z-index:95;background:rgba(7,10,14,.72);display:none;place-items:center;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+#subWait.on{display:grid}
+#subWait .pn{width:min(320px,86vw);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);
+  padding:24px 20px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+#subWait .sp{width:28px;height:28px;border-width:3px}
+#subWait b{font-size:15px}
+#subWait s{text-decoration:none;font-size:12.5px;color:var(--muted)}
+#subWait .dghost{margin-top:8px}
 /* text from TMDB may be in English inside a Kurdish page: each line takes
    its own direction, so its ending dots land where its sentence ends */
 .dplot,.dorig,.dtag,.dcast b,.dcast s,.ep .ov,.ep .tx b,.dfacts span{unicode-bidi:plaintext}
@@ -1144,6 +1165,7 @@ html.tv #settings .st-in{max-width:760px}
     </div>
   </div>
   <div class="dacts" id="dAct"></div>
+  <div class="dsubs" id="dSubs"></div>
   <p class="dplot" id="dPlot" onclick="this.classList.toggle('open')"></p>
   <div id="dMore"></div>
   <div class="chips" id="dSeasons" style="padding:0 16px 4px"></div>
@@ -1191,6 +1213,13 @@ var T = {
   ku:{name:"کوردی سۆرانی",dir:"rtl",all:"هەموو",search:"گەڕان بۆ کەنال...",
       featured:"پێشنیارکراو",isNew:"نوێ",playNow:"بینین",resume:"بەردەوامبوون",seeAll:"هەمووی",
       fromStart:"لە سەرەتاوە",left:"%s ماوە",director:"دەرهێنەر",cast:"ئەکتەران",
+      subTitle:"ژێرنووس",subRowS:"ژێرنووسی فیلم و زنجیرە، کوردی بە AI",subOff:"بێ ژێرنووس",subKu:"کوردی · AI",
+      subNoKey:"کلیلی OpenSubtitles دانەنراوە (ڕێکخستن ← ژێرنووس)",subNoAi:"کلیلی Claude دانەنراوە (ڕێکخستن ← ژێرنووس)",
+      subNoId:"ئەم فیلمە لە TMDB نەدۆزرایەوە، بۆیە ژێرنووسی بۆ نادۆزرێتەوە",subNone:"ژێرنووسی %s بۆ ئەمە نییە",
+      subNoSave:"ژێرنووسەکە هەڵنەگیرا",subPrep:"ژێرنووس ئامادە دەکرێت…",subSkip:"بەبێ ژێرنووس پلەی بکە",
+      subHint:"ژێرنووس لە OpenSubtitles دێت. کوردییەکە لە ئینگلیزییەکەوە بە Claude وەردەگێڕدرێت و لەسەر ئامێرەکەت هەڵدەگیرێت.",
+      subAiQ:"وەرگێڕانی کوردی",subBest:"باشترین کوالیتی",subBestS:"Claude Opus 5.5",subFast:"خێرا و هەرزان",subFastS:"Claude Haiku 5.5",
+      subKeys:"کلیلەکان",subOsUser:"ناوی هەژماری OpenSubtitles (ئارەزوومەندانە)",subOsPass:"وشەی نهێنی OpenSubtitles",saved:"پاشەکەوت کرا",
       trailer:"ترەیلەر",creator:"دروستکەر",country:"وڵات",nSeasons:"%s وەرز",nEps:"%s ئیپسۆد",votes:"%s دەنگ",
       live:"کەناڵ",movies:"فیلم",series:"زنجیرە",seasonN:"وەرزی",episodeN:"ئیپسۆد",
       noVod:"هیچ فیلمێک نییە",noSer:"هیچ زنجیرەیەک نییە",onlyXtream:"تەنها بۆ لیستی Xtream",
@@ -1256,6 +1285,13 @@ var T = {
   en:{name:"English",dir:"ltr",all:"All",search:"Search channels...",
       featured:"FEATURED",isNew:"NEW",playNow:"Play",resume:"Resume",seeAll:"See all",
       fromStart:"From start",left:"%s left",director:"Director",cast:"Cast",
+      subTitle:"Subtitles",subRowS:"For films and series, Kurdish made by AI",subOff:"Off",subKu:"Kurdî · AI",
+      subNoKey:"No OpenSubtitles key (Settings → Subtitles)",subNoAi:"No Claude key (Settings → Subtitles)",
+      subNoId:"TMDB does not know this title, so no subtitles can be found",subNone:"No %s subtitles for this",
+      subNoSave:"The subtitle file could not be saved",subPrep:"Preparing subtitles…",subSkip:"Play without subtitles",
+      subHint:"Subtitles come from OpenSubtitles. Kurdish ones are translated from the English by Claude and kept on this device.",
+      subAiQ:"Kurdish translation",subBest:"Best quality",subBestS:"Claude Opus 5.5",subFast:"Fast and cheaper",subFastS:"Claude Haiku 5.5",
+      subKeys:"Keys",subOsUser:"OpenSubtitles username (optional)",subOsPass:"OpenSubtitles password",saved:"Saved",
       trailer:"Trailer",creator:"Created by",country:"Country",nSeasons:"%s seasons",nEps:"%s episodes",votes:"%s votes",
       live:"Live TV",movies:"Movies",series:"Series",seasonN:"Season",episodeN:"Episode",
       noVod:"No movies here",noSer:"No series here",onlyXtream:"Xtream playlists only",
@@ -1321,6 +1357,13 @@ var T = {
   ar:{name:"العربية",dir:"rtl",all:"الكل",search:"ابحث عن قناة...",
       featured:"مميّز",isNew:"جديد",playNow:"تشغيل",resume:"متابعة",seeAll:"الكل",
       fromStart:"من البداية",left:"باقٍ %s",director:"المخرج",cast:"الأبطال",
+      subTitle:"الترجمة",subRowS:"للأفلام والمسلسلات، والكردية بالذكاء الاصطناعي",subOff:"بدون ترجمة",subKu:"كوردي · AI",
+      subNoKey:"لا يوجد مفتاح OpenSubtitles (الإعدادات ← الترجمة)",subNoAi:"لا يوجد مفتاح Claude (الإعدادات ← الترجمة)",
+      subNoId:"لم يُعثر على هذا العنوان في TMDB، فلا يمكن إيجاد ترجمة له",subNone:"لا توجد ترجمة %s لهذا",
+      subNoSave:"تعذّر حفظ ملف الترجمة",subPrep:"جارٍ تجهيز الترجمة…",subSkip:"تشغيل بدون ترجمة",
+      subHint:"الترجمات من OpenSubtitles. الكردية تُترجم من الإنجليزية بواسطة Claude وتُحفظ على هذا الجهاز.",
+      subAiQ:"الترجمة الكردية",subBest:"أفضل جودة",subBestS:"Claude Opus 5.5",subFast:"أسرع وأرخص",subFastS:"Claude Haiku 5.5",
+      subKeys:"المفاتيح",subOsUser:"اسم مستخدم OpenSubtitles (اختياري)",subOsPass:"كلمة مرور OpenSubtitles",saved:"تم الحفظ",
       trailer:"الإعلان",creator:"من تأليف",country:"البلد",nSeasons:"%s مواسم",nEps:"%s حلقات",votes:"%s صوت",
       live:"القنوات",movies:"أفلام",series:"مسلسلات",seasonN:"الموسم",episodeN:"حلقة",
       noVod:"لا توجد أفلام",noSer:"لا توجد مسلسلات",onlyXtream:"لقوائم Xtream فقط",
@@ -3218,6 +3261,8 @@ function playQueue(arr, idx){
       if(vodKind(c.u)) o.v = 1;        /* a film or an episode, whatever its address says */
       if(c.ua) o.ua = c.ua;            /* channel's own user agent */
       if(c.rf) o.rf = c.rf;            /* channel's own referrer */
+      var sb = subsFor(c.u);
+      if(sb) o.subs = sb;              /* subtitle files made ready for it */
       return o;
     })), pick, startMs);
   } else {
@@ -3605,6 +3650,7 @@ function detailReset(){
   $("dOrig").textContent = ""; $("dGen").innerHTML = ""; $("dTag").textContent = "";
   $("dMeta").innerHTML = ""; $("dPlot").textContent = ""; $("dPlot").className = "dplot";
   $("dAct").innerHTML = ""; $("dMore").innerHTML = "";
+  $("dSubs").innerHTML = ""; DSUB_AV = null;
   return DTOK;
 }
 
@@ -3667,7 +3713,7 @@ function tmdbApply(v, tok){
   h += '<div class="dtmdb">TMDB</div>';
   $("dMore").innerHTML = h;
 
-  if(curMovie) movieBody(curMovie.u, curMovie.n, DBASE.info);
+  if(curMovie){ movieBody(curMovie.u, curMovie.n, DBASE.info); subsLook(tok) }
   else if(v.yt) $("dAct").innerHTML = '<div class="dact">' + trailerBtn() + '</div>';
   if(curSeries && curSeason != null) seasonFacts(curSeason, tok);
 }
@@ -3708,6 +3754,407 @@ function seasonFacts(k, tok){
   }).catch(function(){});
 }
 
+/* ==================== subtitles ====================
+   Films and episodes rarely carry subtitles of their own. These come from
+   OpenSubtitles, by the film's TMDB number (an episode: its series' number,
+   season and episode), and Kurdish ones are made from the English (or
+   Arabic) file by Claude, cue by cue, timing untouched. A file made once is
+   kept on the device and handed to the player with the film from then on;
+   the player lists it with any subtitles the stream has. */
+var OS_KEY_BUILT = "__KIPTV_OS_KEY__", AI_KEY_BUILT = "__KIPTV_AI_KEY__";
+var OS_API = "https://api.opensubtitles.com/api/v1", OS_UA = "KurdistanIPTV v1.0";
+var AI_MODELS = { best: "claude-opus-5-5", fast: "claude-haiku-5-5" };
+var SUB_LANGS = ["ku-ai", "en", "ar", "fa", "tr", "fr", "de", "es"];
+
+function builtKey(v){ return /^__KIPTV_/.test(v) ? "" : v }
+function subCfg(){ var o = null; try{ o = JSON.parse(lsGet("kiptv_subcfg", "{}")) }catch(e){} return o || {} }
+function subCfgSet(o){ lsSet("kiptv_subcfg", JSON.stringify(o)) }
+function osKey(){ return subCfg().osKey || builtKey(OS_KEY_BUILT) }
+function aiKey(){ return subCfg().aiKey || builtKey(AI_KEY_BUILT) }
+function aiModel(){ return AI_MODELS[subCfg().model] || AI_MODELS.best }
+function subPref(){ return lsGet("kiptv_sublang", "") }      /* "" = off */
+function subLangName(l){
+  var d = t();
+  return l === "ku-ai" ? d.subKu : ({ en: "English", ar: "العربية", fa: "فارسی", tr: "Türkçe", fr: "Français",
+          de: "Deutsch", es: "Español", ku: "Kurdî" })[l] || l.toUpperCase();
+}
+
+/* ---- a request the page cannot make itself (POST, its own headers):
+   the app makes it, on Android and on Windows alike ---- */
+var NHTTP = {}, NHTTP_N = 0;
+window.kiptvHttp = function(id, status, body){
+  var cb = NHTTP[id]; if(!cb) return;
+  delete NHTTP[id];
+  cb({ status: status, text: body });
+};
+function nativeHttp(method, url, headers, body){
+  try{
+    if(window.KIPTV_HTTP) return window.KIPTV_HTTP(method, url, JSON.stringify(headers || {}), body || "");
+  }catch(e){}
+  try{
+    if(window.AndroidPlayer && AndroidPlayer.http) return new Promise(function(res){
+      var id = "h" + (++NHTTP_N);
+      NHTTP[id] = res;
+      AndroidPlayer.http(id, method, url, JSON.stringify(headers || {}), body || "");
+      setTimeout(function(){ if(NHTTP[id]){ delete NHTTP[id]; res({ status: 0, text: "timeout" }) } }, 240000);
+    });
+  }catch(e){}
+  return fetch(url, { method: method, headers: headers, body: method === "GET" ? undefined : body })
+    .then(function(r){ return r.text().then(function(x){ return { status: r.status, text: x } }) },
+          function(e){ return { status: 0, text: String(e && e.message || e) } });
+}
+/* a finished file, kept by the app; the answer is where it lies */
+function subSave(name, text){
+  try{ if(window.KIPTV_SUBSAVE) return window.KIPTV_SUBSAVE(name, text) || "" }catch(e){}
+  try{ if(window.AndroidPlayer && AndroidPlayer.subSave) return AndroidPlayer.subSave(name, text) || "" }catch(e){}
+  return "";
+}
+function hashStr(x){ var h = 5381; x = String(x); for(var i = 0; i < x.length; i++) h = ((h << 5) + h + x.charCodeAt(i)) >>> 0; return h.toString(36) }
+
+/* ---- what has been made: stream address (or film) -> language -> file ---- */
+function subMap(){ var o = null; try{ o = JSON.parse(lsGet("kiptv_subs", "{}")) }catch(e){} return o || {} }
+function subHave(key, lang){ var m = subMap(); return m[key] && m[key][lang] || null }
+function subKeep(keys, lang, rec){
+  var m = subMap();
+  keys.forEach(function(k){ if(!k) return; m[k] = m[k] || {}; m[k][lang] = rec; m[k].at = Date.now() });
+  var all = Object.keys(m);
+  if(all.length > 300){
+    all.sort(function(a, b){ return (m[a].at || 0) - (m[b].at || 0) });
+    for(var i = 0; i < all.length - 300; i++) delete m[all[i]];
+  }
+  lsSet("kiptv_subs", JSON.stringify(m));
+}
+/* the player's list for one stream: every file made for it, the chosen one first and on */
+function subsFor(u){
+  var m = subMap()[u]; if(!m) return null;
+  var pref = subPref(), out = [];
+  Object.keys(m).forEach(function(l){
+    if(l === "at" || !m[l] || !m[l].f) return;
+    out.push({ f: m[l].f, lang: l === "ku-ai" ? "ckb" : l, label: subLangName(l), def: l === pref ? 1 : 0 });
+  });
+  out.sort(function(a, b){ return b.def - a.def });
+  return out.length ? out : null;
+}
+
+/* ---- OpenSubtitles ---- */
+function osHead(){
+  var h = { "Api-Key": osKey(), "User-Agent": OS_UA, "Accept": "application/json", "Content-Type": "application/json" };
+  var tk = subCfg().osTok;
+  if(tk) h.Authorization = "Bearer " + tk;
+  return h;
+}
+function osJson(method, path, body){
+  if(!osKey()) return Promise.reject(new Error(t().subNoKey));
+  return nativeHttp(method, OS_API + path, osHead(), body ? JSON.stringify(body) : "").then(function(r){
+    var j = null; try{ j = JSON.parse(r.text) }catch(e){}
+    if(r.status < 200 || r.status >= 300){
+      var m = (j && (j.message || (j.errors && j.errors[0]))) || ("OpenSubtitles HTTP " + r.status);
+      var er = new Error(m); er.status = r.status; throw er;
+    }
+    return j;
+  });
+}
+/* a person's own free account raises the daily limit; without one it is a few a day */
+function osLogin(){
+  var c = subCfg();
+  if(!c.osUser || !c.osPass) return Promise.resolve();
+  if(c.osTok && Date.now() - (c.osTokAt || 0) < 20 * 3600000) return Promise.resolve();
+  return osJson("POST", "/login", { username: c.osUser, password: c.osPass }).then(function(j){
+    var c2 = subCfg(); c2.osTok = j && j.token || ""; c2.osTokAt = Date.now(); subCfgSet(c2);
+  });
+}
+function osQuery(q){
+  return q.ptmdb ? "parent_tmdb_id=" + q.ptmdb + "&season_number=" + q.s + "&episode_number=" + q.e
+                 : "tmdb_id=" + q.tmdb;
+}
+/* which languages exist for it - looking costs nothing of the daily limit */
+function osSearch(q){
+  var qs = osQuery(q), key = "os:" + qs, hit = tmdbHit(key);
+  if(hit) return Promise.resolve(hit.v);
+  return osJson("GET", "/subtitles?" + qs + "&order_by=download_count&order_direction=desc").then(function(j){
+    var by = {};
+    ((j && j.data) || []).forEach(function(d){
+      var a = d.attributes || {}, f = (a.files || [])[0];
+      var l = String(a.language || "").toLowerCase();
+      if(!f || !f.file_id || !l) return;
+      var mt = a.machine_translated || a.ai_translated ? 1 : 0;
+      /* a person's translation before a machine's, then the most downloaded */
+      if(!by[l] || (by[l].mt && !mt)) by[l] = { id: f.file_id, lang: l, mt: mt };
+    });
+    var v = Object.keys(by).map(function(k){ return by[k] });
+    tmdbKeep(key, v);
+    return v;
+  });
+}
+function osDownload(fileId){
+  return osLogin().catch(function(){}).then(function(){
+    return osJson("POST", "/download", { file_id: fileId, sub_format: "srt" });
+  }).then(function(j){
+    if(!j || !j.link) throw new Error((j && j.message) || "OpenSubtitles: no file");
+    return nativeHttp("GET", j.link, { "User-Agent": OS_UA }, "");
+  }).then(function(r){
+    if(r.status !== 200 || !r.text) throw new Error("OpenSubtitles HTTP " + r.status);
+    return r.text;
+  });
+}
+
+/* ---- SRT ---- */
+function srtParse(x){
+  var out = [];
+  String(x || "").replace(/^﻿/, "").replace(/\r/g, "").split(/\n[ \t]*\n/).forEach(function(b){
+    var ln = b.split("\n").filter(function(y){ return y.trim() !== "" });
+    for(var i = 0; i < ln.length; i++){
+      if(ln[i].indexOf("-->") > 0){
+        out.push({ tm: ln[i].trim(), tx: ln.slice(i + 1).join("\n") });
+        return;
+      }
+    }
+  });
+  return out;
+}
+function srtBuild(cues){
+  return cues.map(function(c, i){ return (i + 1) + "\n" + c.tm + "\n" + c.tx }).join("\n\n") + "\n";
+}
+
+/* ---- Kurdish, made by Claude ---- */
+var AI_SYS = "You translate film and TV subtitles into Central Kurdish (Sorani), written in the Kurdish Arabic "
+  + "script (with ە ێ ۆ ڕ ڵ ڤ گ چ پ ژ). Write natural spoken Sorani, the way a good Kurdish subtitler would: "
+  + "short clear lines, everyday words, and the tone of the original - casual stays casual, formal stays formal. "
+  + "Write names of people and places as they sound, in Kurdish script. Translate the meaning of idioms and jokes, "
+  + "not their words. Keep a line break inside a cue where the original has one, and keep each cue about as long "
+  + "as the original so it fits on screen. Translate sound notes such as [music] inside the same brackets. "
+  + "Every cue you are given comes back exactly once, with the same number.";
+var AI_SCHEMA = { type: "object", additionalProperties: false, required: ["cues"],
+  properties: { cues: { type: "array", items: { type: "object", additionalProperties: false, required: ["i", "t"],
+    properties: { i: { type: "integer" }, t: { type: "string" } } } } } };
+
+function aiBatch(items){
+  var model = aiModel(), opus = /opus/.test(model);
+  var body = {
+    model: model, max_tokens: 16000, system: AI_SYS,
+    output_config: { effort: "low", format: { type: "json_schema", schema: AI_SCHEMA } },
+    messages: [{ role: "user", content: "Translate these subtitle cues into Sorani Kurdish.\n\n"
+      + JSON.stringify({ cues: items.map(function(c){ return { i: c.i, t: c.tx } }) }) }]
+  };
+  var head = { "x-api-key": aiKey(), "anthropic-version": "2023-06-01", "content-type": "application/json" };
+  /* a declined request is tried again on the model Anthropic picks for it (Haiku has no such fallback) */
+  if(opus){ body.fallbacks = "default"; head["anthropic-beta"] = "server-side-fallback-2026-07-01" }
+  return nativeHttp("POST", "https://api.anthropic.com/v1/messages", head, JSON.stringify(body)).then(function(r){
+    var j = null; try{ j = JSON.parse(r.text) }catch(e){}
+    if(r.status !== 200 || !j){
+      var er = new Error("Claude: " + ((j && j.error && j.error.message) || ("HTTP " + r.status)));
+      er.retry = r.status === 429 || r.status >= 500 || r.status === 0;
+      throw er;
+    }
+    if(j.stop_reason === "refusal") throw new Error("Claude declined this part");
+    if(j.stop_reason === "max_tokens"){ var e2 = new Error("too long"); e2.split = true; throw e2 }
+    var txt = (j.content || []).filter(function(b){ return b.type === "text" }).map(function(b){ return b.text }).join("");
+    var o = JSON.parse(txt), by = {};
+    (o.cues || []).forEach(function(c){ if(c && typeof c.t === "string") by[c.i] = c.t });
+    return by;
+  });
+}
+/* one batch, made smaller when it does not fit and tried again when the line drops */
+function aiBatchSafe(items, tries){
+  return aiBatch(items).catch(function(e){
+    if(e.split && items.length > 10){
+      var h = Math.ceil(items.length / 2);
+      return aiBatchSafe(items.slice(0, h), 0).then(function(a){
+        return aiBatchSafe(items.slice(h), 0).then(function(b){ for(var k in b) a[k] = b[k]; return a });
+      });
+    }
+    if(e.retry && (tries || 0) < 3)
+      return new Promise(function(ok){ setTimeout(ok, 2500 * ((tries || 0) + 1)) })
+        .then(function(){ return aiBatchSafe(items, (tries || 0) + 1) });
+    throw e;
+  });
+}
+function aiSrt(srt, onPct){
+  if(!aiKey()) return Promise.reject(new Error(t().subNoAi));
+  var cues = srtParse(srt);
+  if(!cues.length) return Promise.reject(new Error("empty subtitle file"));
+  cues.forEach(function(c, i){ c.i = i + 1 });
+  var SIZE = 120, batches = [];
+  for(var i = 0; i < cues.length; i += SIZE) batches.push(cues.slice(i, i + SIZE));
+  var done = 0, next = 0, failed = null;
+  var worker = function(){
+    if(failed || next >= batches.length) return Promise.resolve();
+    var b = batches[next++];
+    return aiBatchSafe(b, 0).then(function(by){
+      b.forEach(function(c){ if(by[c.i] != null && String(by[c.i]).trim()) c.tx = by[c.i] });
+      done++;
+      if(onPct) onPct(Math.round(done / batches.length * 100));
+      return worker();
+    }, function(e){ failed = e });
+  };
+  var crew = [];
+  for(var w = 0; w < Math.min(5, batches.length); w++) crew.push(worker());
+  return Promise.all(crew).then(function(){
+    if(failed) throw failed;
+    return srtBuild(cues);
+  });
+}
+
+/* ---- getting one ready ----
+   tg: { u: stream address, n: name, kind: "movie" | "episode", tmdb?, ptmdb?, s?, e? } */
+var SUBJOB = {};
+function subQuery(tg){
+  if(tg.kind === "episode"){
+    if(!tg.ptmdb || !tg.e) return Promise.resolve(null);
+    return Promise.resolve({ ptmdb: tg.ptmdb, s: tg.s || 1, e: tg.e });
+  }
+  if(tg.tmdb) return Promise.resolve({ tmdb: tg.tmdb });
+  return tmdbFind("movie", tg.n, "").then(function(v){ return v ? { tmdb: v.id } : null });
+}
+function prepareSub(tg, lang, onPct){
+  var have = subHave(tg.u, lang);
+  if(have) return Promise.resolve(have);
+  var k = tg.u + "|" + lang;
+  if(SUBJOB[k]){ if(onPct) SUBJOB[k].cbs.push(onPct); return SUBJOB[k].p }
+  var job = { cbs: onPct ? [onPct] : [], pct: 0 };
+  var tell = function(p){ job.pct = p; job.cbs.forEach(function(f){ try{ f(p) }catch(e){} }) };
+  var qk = "";
+  job.p = subQuery(tg).then(function(q){
+    if(!q) throw new Error(t().subNoId);
+    qk = "q:" + osQuery(q);
+    var same = subHave(qk, lang);          /* made already, for this film from another list */
+    if(same){ subKeep([tg.u], lang, same); return same }
+    tell(2);
+    return osSearch(q).then(function(list){
+      var pick = function(l){ return list.filter(function(x){ return x.lang === l })[0] };
+      var store = function(text){
+        var f = subSave("s" + hashStr(qk) + "_" + lang + ".srt", text);
+        if(!f) throw new Error(t().subNoSave);
+        var rec = { f: f };
+        subKeep([tg.u, qk], lang, rec);
+        return rec;
+      };
+      if(lang !== "ku-ai"){
+        var it = pick(lang);
+        if(!it) throw new Error(t().subNone.replace("%s", subLangName(lang)));
+        tell(30);
+        return osDownload(it.id).then(store);
+      }
+      var src = pick("en") || pick("ar") || list.filter(function(x){ return !x.mt })[0] || list[0];
+      if(!src) throw new Error(t().subNone.replace("%s", "English"));
+      return osDownload(src.id).then(function(srt){
+        tell(6);
+        /* the English it is made from is kept too: one more choice, no second download */
+        try{
+          var fs = subSave("s" + hashStr(qk) + "_" + src.lang + ".srt", srt);
+          if(fs && !subHave(tg.u, src.lang)) subKeep([tg.u, qk], src.lang, { f: fs });
+        }catch(e){}
+        return aiSrt(srt, function(p){ tell(6 + Math.round(p * 0.94)) });
+      }).then(store);
+    });
+  });
+  var fin = function(){ delete SUBJOB[k] };
+  job.p.then(fin, fin);
+  SUBJOB[k] = job;
+  return job.p;
+}
+
+/* ---- on the film / series page: the subtitle chips ---- */
+var DSUB_TG = null, DSUB_AV = null;
+function subTargetMovie(){
+  if(!curMovie) return null;
+  return { u: curMovie.u, n: curMovie.n, kind: "movie", tmdb: DTMDB && DTMDB.k === "movie" ? DTMDB.id : "" };
+}
+function subTargetEp(u, n, epNo){
+  return { u: u, n: n, kind: "episode", ptmdb: DTMDB && DTMDB.k === "tv" ? DTMDB.id : "",
+           s: parseInt(curSeason, 10) || 1, e: parseInt(epNo, 10) || 0 };
+}
+function subsRow(){
+  var el = $("dSubs"); if(!el) return;
+  var d = t(), pref = subPref(), langs = ["", "ku-ai", "en", "ar"];
+  (DSUB_AV || []).forEach(function(x){ if(langs.indexOf(x.lang) < 0 && SUB_LANGS.indexOf(x.lang) >= 0) langs.push(x.lang) });
+  var tg = curMovie ? subTargetMovie() : null;
+  el.innerHTML = '<span class="cc">CC</span>' + langs.map(function(l){
+    var job = tg && l ? SUBJOB[tg.u + "|" + l] : null;
+    var ready = tg && l && subHave(tg.u, l);
+    var miss = l && l !== "ku-ai" && DSUB_AV && !DSUB_AV.some(function(x){ return x.lang === l });
+    return '<button class="chip' + (pref === l ? " on" : "") + (miss ? " dim" : "") + '" data-sl="' + esc(l) + '">'
+         + (job ? '<span class="sp"></span>' + job.pct + '%' : esc(l ? subLangName(l) : d.subOff))
+         + (ready && !job ? ' <i>&#10003;</i>' : '') + '</button>';
+  }).join("");
+}
+/* the page asks which languages exist, once TMDB has said which film it is */
+function subsLook(tok){
+  DSUB_AV = null;
+  subsRow();
+  if(!osKey()) return;
+  var q = curMovie ? (DTMDB && DTMDB.k === "movie" ? { tmdb: DTMDB.id } : null) : null;
+  if(!q) return;
+  osSearch(q).then(function(v){ if(tok === DTOK){ DSUB_AV = v; subsRow() } }).catch(function(){});
+}
+function subPick(l){
+  lsSet("kiptv_sublang", l);
+  subsRow();
+  if(!l || !curMovie) return;
+  var tg = subTargetMovie(), tok = DTOK;
+  prepareSub(tg, l, function(){ if(tok === DTOK) subsRow() })
+    .then(function(){ if(tok === DTOK) subsRow() },
+          function(e){ if(tok === DTOK) subsRow(); showToast(e && e.message ? e.message : String(e)) });
+  subsRow();
+}
+
+/* ---- playing: the chosen subtitles first, when they are not ready yet ---- */
+function playWithSubs(list, idx, tg){
+  var l = subPref();
+  if(!l || !tg || subHave(tg.u, l)){ playQueue(list, idx); return }
+  var d = t(), box = $("subWait");
+  if(!box){ box = document.createElement("div"); box.id = "subWait"; document.body.appendChild(box) }
+  var gone = false;
+  var go = function(){ if(gone) return; gone = true; box.className = ""; playQueue(list, idx) };
+  box.innerHTML = '<div class="pn"><span class="sp"></span><b id="swT">' + esc(d.subPrep) + '</b>'
+    + '<s id="swP">' + esc(subLangName(l)) + '</s>'
+    + '<button class="dghost" id="swGo">' + esc(d.subSkip) + '</button></div>';
+  box.className = "on";
+  $("swGo").onclick = go;
+  prepareSub(tg, l, function(p){ var x = $("swP"); if(x) x.textContent = subLangName(l) + "  ·  " + p + "%" })
+    .then(go, function(e){ if(!gone) showToast(e && e.message ? e.message : String(e)); go() });
+}
+
+/* ---- Settings: where the keys and the default language are set ---- */
+function subSettingsBody(d){
+  var c = subCfg(), pref = subPref();
+  var h = '<div class="hint" style="margin-bottom:10px">' + esc(d.subHint) + '</div>';
+  h += ["", "ku-ai", "en", "ar"].map(function(l){
+    return '<div class="row' + (pref === l ? " on" : "") + '" onclick="lsSet(\'kiptv_sublang\',\'' + l + '\');drawSheet()">'
+         + '<span class="tx"><b>' + esc(l ? subLangName(l) : d.subOff) + '</b></span><span class="tick">&#10003;</span></div>';
+  }).join("");
+  h += '<div class="st-g" style="margin:16px 0 8px">' + esc(d.subAiQ) + '</div>'
+     + ["best", "fast"].map(function(m){
+         var on = (c.model || "best") === m;
+         return '<div class="row' + (on ? " on" : "") + '" onclick="subModel(\'' + m + '\')"><span class="tx"><b>'
+              + esc(m === "best" ? d.subBest : d.subFast) + '</b><s>' + esc(m === "best" ? d.subBestS : d.subFastS)
+              + '</s></span><span class="tick">&#10003;</span></div>';
+       }).join("");
+  h += '<div class="st-g" style="margin:16px 0 8px">' + esc(d.subKeys) + '</div>'
+     + fld("sk_os", "OpenSubtitles API key", builtKey(OS_KEY_BUILT) ? "••••••" : "")
+     + fld("sk_ou", d.subOsUser, "")
+     + fld("sk_op", d.subOsPass, "")
+     + fld("sk_ai", "Claude API key", builtKey(AI_KEY_BUILT) ? "••••••" : "sk-ant-...")
+     + '<button class="gbtn" onclick="subSaveKeys()">' + esc(d.save) + '</button>';
+  return h;
+}
+function subModel(m){ var c = subCfg(); c.model = m; subCfgSet(c); drawSheet() }
+function subFill(){
+  var c = subCfg();
+  [["sk_os", "osKey"], ["sk_ou", "osUser"], ["sk_op", "osPass"], ["sk_ai", "aiKey"]].forEach(function(x){
+    var el = $(x[0]); if(el) el.value = c[x[1]] || "";
+  });
+  var pw = $("sk_op"); if(pw) pw.type = "password";
+}
+function subSaveKeys(){
+  var c = subCfg(), v = function(id){ var el = $(id); return el ? el.value.trim() : "" };
+  if(v("sk_ou") !== (c.osUser || "") || v("sk_op") !== (c.osPass || "")) c.osTok = "";
+  c.osKey = v("sk_os"); c.osUser = v("sk_ou"); c.osPass = v("sk_op"); c.aiKey = v("sk_ai");
+  subCfgSet(c);
+  showToast(t().saved || t().save);
+  closeSheet();
+}
+
 /* ==================== series detail ==================== */
 var curSeries = null, curSeason = null, curMovie = null;
 
@@ -3721,6 +4168,7 @@ function openSeries(sid, name){
   var tok = detailReset();
   $("dName").textContent = name || "";
   $("dSeasons").innerHTML = "";
+  subsRow();
   $("dEps").innerHTML = '<div class="empty"><p>…</p></div>';
   $("dImg").removeAttribute("src");
 
@@ -3817,6 +4265,7 @@ function openMovie(url, name){
   if(item && item.l) $("dImg").src = item.l;
 
   movieBody(url, name, null);
+  subsRow();
 
   DBASE.rating = (item && item.r) ? { v: String(item.r) } : null;
   dMetaSet([item && item.c ? cleanGroup(item.c) : ""], DBASE.rating);
@@ -3861,10 +4310,14 @@ function onPlayBtn(e){
   if(el.getAttribute("data-fresh")){          /* play it from the beginning */
     var m = allPos(); delete m[pu]; lsSet("kiptv_pos", JSON.stringify(m));
   }
-  playQueue([(curMovie && curMovie.u === pu) ? curMovie
-             : { n: el.getAttribute("data-n"), u: pu }], 0);
+  var it = (curMovie && curMovie.u === pu) ? curMovie : { n: el.getAttribute("data-n"), u: pu };
+  playWithSubs([it], 0, curMovie && curMovie.u === pu ? subTargetMovie() : null);
 }
 $("dAct").addEventListener("click", onPlayBtn);
+$("dSubs").addEventListener("click", function(e){
+  var el = e.target.closest ? e.target.closest("[data-sl]") : null;
+  if(el) subPick(el.getAttribute("data-sl"));
+});
 $("dEps").addEventListener("click", onPlayBtn);
 
 function pickSeason(k){
@@ -3908,7 +4361,7 @@ $("dEps").addEventListener("click", function(e){
     list.push({ n: rows[i].getAttribute("data-n"), u: rows[i].getAttribute("data-u") });
     if(rows[i] === el) idx = i;
   }
-  playQueue(list, idx);
+  playWithSubs(list, idx, subTargetEp(el.getAttribute("data-u"), el.getAttribute("data-n"), el.getAttribute("data-en")));
 });
 function closeDetail(){ layerClose("detail") }
 
@@ -4001,6 +4454,10 @@ function drawSheet(){
          +   '<div class="keys" id="pkeys"></div>'
          + '</div>';
   }
+  else if(v === "subs"){
+    title = d.subTitle;
+    body = subSettingsBody(d);
+  }
   else if(v === "lang"){
     title = d.lang;
     body = LANG_ORDER.filter(function(k){ return T[k] }).map(function(k){
@@ -4066,6 +4523,7 @@ function drawSheet(){
   $("sheetBody").innerHTML = body;
   if(v === "edit") fillEdit();
   if(v === "ppin") pinBoot();
+  if(v === "subs") subFill();
 }
 
 /* ==================== categories: the manager ====================
@@ -4865,6 +5323,8 @@ function drawSettings(){
   h += '<div class="sgroup">';
   h += setRowC("c-blue", ICON.globe, d.lang, "", "openSheet('lang')", true, T[lang].name);
   h += setRowC("c-gold", ICON.layers, d.cats, catsLine(d), "openSheet('cats')", true);
+  h += setRowC("c-violet", '<b style="font-size:10px;font-weight:900">CC</b>', d.subTitle, d.subRowS, "openSheet('subs')", true,
+               subPref() ? subLangName(subPref()) : d.subOff);
   if(act.type === "xtream") h += setRowC("c-violet", ICON.tv, d.epgTest, d.epgTestSub, "epgProbe()", true);
   h += setRowC("c-red", ICON.disk, d.clearCache, "", "clearCache()", true, cacheSize());
   h += setRowC("c-green", ICON.down, d.updCheck, d.updCheckSub, "updOpen()", true, appVerText());

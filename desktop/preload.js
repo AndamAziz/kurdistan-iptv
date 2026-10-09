@@ -27,6 +27,15 @@ contextBridge.exposeInMainWorld("AndroidPlayer", {
     ipcRenderer.send("kiptv-play-list", String(json || ""), index | 0, startMs | 0)
 });
 
+/* a request with its own method and headers (subtitles: OpenSubtitles, Claude),
+   made by the app; the page gets {status, text} back */
+contextBridge.exposeInMainWorld("KIPTV_HTTP", (method, url, headers, body) =>
+  ipcRenderer.invoke("kiptv-http", String(method || "GET"), String(url || ""), String(headers || "{}"), String(body || "")));
+
+/* a finished subtitle file, kept by the app; answers where it lies */
+contextBridge.exposeInMainWorld("KIPTV_SUBSAVE", (name, text) =>
+  ipcRenderer.sendSync("kiptv-subsave", String(name || ""), String(text || "")));
+
 /* where to send a request the page may not make itself */
 contextBridge.exposeInMainWorld("KIPTV_PROXY", argValue("--kiptv-proxy"));
 

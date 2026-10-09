@@ -1,40 +1,31 @@
 [en]
-Film and series pages now tell the whole story. Beside the poster: the
-rating, year, length, genres and the film's tagline, over a still from the
-film itself. Below: the story, the cast with their photos, the director or
-creator, and a Trailer button. Each episode of a series gets its own
-picture, name and summary.
+Subtitles for films and series. On a film or series page, choose Off,
+Kurdish (AI), English or Arabic, plus any other language that exists for it.
+Subtitles come from OpenSubtitles. Kurdish ones are translated from the
+English by Claude, keeping the timing, and kept on your device, so the same
+film needs no second translation. While subtitles are being prepared you
+see the progress, and you can play without them. In the player they appear
+in the subtitle menu next to any the stream has.
 
-The facts come from The Movie Database (TMDB) and are kept for a week, so a
-page opened again is complete at once. Where TMDB does not know a title,
-the page shows what the provider sends, as before.
-
-Films also keep playing in the Google Play version and on Windows when a
-film server's certificate is not quite in order.
+Settings → Subtitles: the default language, the translation quality, and the
+keys.
 
 [ku]
-پەڕەی فیلم و زنجیرە ئێستا هەموو زانیارییەکان پیشان دەدات. لە تەنیشت
-پۆستەرەکە: هەڵسەنگاندن، ساڵ، ماوە، جۆر و دێڕی ناساندنی فیلمەکە، لەسەر
-وێنەیەک لە خودی فیلمەکە. لە خوارەوە: چیرۆکەکە، ئەکتەران بە وێنەکانیانەوە،
-دەرهێنەر یان دروستکەر، و دوگمەی ترەیلەر. هەر ئیپسۆدێکی زنجیرەش وێنە و
-ناو و کورتەی خۆی هەیە.
+ژێرنووس بۆ فیلم و زنجیرە. لە پەڕەی فیلم یان زنجیرەدا هەڵبژێرە: بێ ژێرنووس،
+کوردی (AI)، ئینگلیزی یان عەرەبی، لەگەڵ هەر زمانێکی تر کە هەبێت.
+ژێرنووسەکان لە OpenSubtitles ـەوە دێن. کوردییەکە لە ئینگلیزییەکەوە بە Claude
+وەردەگێڕدرێت، کاتەکانی وەک خۆی دەمێنێت، و لەسەر ئامێرەکەت هەڵدەگیرێت، بۆیە هەمان
+فیلم دووجار وەرناگێڕدرێت. کاتێک ژێرنووس ئامادە دەکرێت ڕێژەکەی دەبینیت، و
+دەتوانیت بەبێ ژێرنووس پلەی بکەیت. لە پلەیەرەکەدا لە مێنیوی ژێرنووسدا دەردەکەوێت.
 
-زانیارییەکان لە The Movie Database (TMDB) ـەوە دێن و بۆ هەفتەیەک
-هەڵدەگیرێن، بۆیە پەڕەیەک کە دووبارە دەکرێتەوە یەکسەر تەواوە. ئەگەر TMDB
-فیلمێکی نەناسی، پەڕەکە وەک پێشوو زانیاری پرۆڤایدەرەکە پیشان دەدات.
-
-فیلمەکان لە وەشانی گووگڵ پلەی و ویندۆزیش کاردەکەن کاتێک بڕوانامەی
-سێرڤەری فیلمەکە تەواو ڕێک نییە.
+ڕێکخستن ← ژێرنووس: زمانی بنەڕەتی، کوالیتی وەرگێڕان، و کلیلەکان.
 
 [ar]
-صفحات الأفلام والمسلسلات تعرض الآن القصة كاملة. بجانب الملصق: التقييم
-والسنة والمدة والتصنيف وشعار الفيلم، فوق لقطة من الفيلم نفسه. وفي الأسفل:
-القصة، والممثلون بصورهم، والمخرج أو المؤلف، وزر الإعلان. ولكل حلقة من
-المسلسل صورتها واسمها وملخصها.
+ترجمة للأفلام والمسلسلات. في صفحة الفيلم أو المسلسل اختر: بدون ترجمة، أو
+الكردية (AI)، أو الإنجليزية، أو العربية، وأي لغة أخرى متوفرة.
+الترجمات من OpenSubtitles. الكردية تُترجم من الإنجليزية بواسطة Claude مع
+الحفاظ على التوقيت، وتُحفظ على جهازك فلا يُترجم الفيلم نفسه مرتين. أثناء تجهيز
+الترجمة ترى نسبة التقدم، ويمكنك التشغيل بدونها. وفي المشغّل تظهر في قائمة
+الترجمة.
 
-تأتي المعلومات من The Movie Database (TMDB) وتُحفظ لأسبوع، فتكتمل الصفحة
-فوراً عند فتحها مرة أخرى. وإن لم يعرف TMDB العنوان، تعرض الصفحة ما يرسله
-المزوّد كما كانت.
-
-وتستمر الأفلام بالعمل في نسخة Google Play وعلى ويندوز حتى عندما لا تكون
-شهادة خادم الأفلام سليمة تماماً.
+الإعدادات ← الترجمة: اللغة الافتراضية، وجودة الترجمة، والمفاتيح.

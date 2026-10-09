@@ -20,6 +20,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # The subtitle keys (OpenSubtitles, Claude) come from the repository's
+      # secrets, never from the code. With none set, people enter their own
+      # in Settings -> Subtitles.
+      - name: Put in the subtitle keys
+        shell: bash
+        env:
+          OS_KEY: ${{ secrets.OPENSUBTITLES_API_KEY }}
+          AI_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          node -e "
+            const fs = require('fs'), p = 'app/src/main/assets/index.html';
+            let s = fs.readFileSync(p, 'utf8');
+            if (process.env.OS_KEY) s = s.replace('__KIPTV_OS_KEY__', process.env.OS_KEY);
+            if (process.env.AI_KEY) s = s.replace('__KIPTV_AI_KEY__', process.env.AI_KEY);
+            fs.writeFileSync(p, s);
+            console.log('OpenSubtitles key: ' + (process.env.OS_KEY ? 'set' : 'none') + ', Claude key: ' + (process.env.AI_KEY ? 'set' : 'none'));
+          "
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -141,6 +159,24 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      # The subtitle keys (OpenSubtitles, Claude) come from the repository's
+      # secrets, never from the code. With none set, people enter their own
+      # in Settings -> Subtitles.
+      - name: Put in the subtitle keys
+        shell: bash
+        env:
+          OS_KEY: ${{ secrets.OPENSUBTITLES_API_KEY }}
+          AI_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          node -e "
+            const fs = require('fs'), p = 'app/src/main/assets/index.html';
+            let s = fs.readFileSync(p, 'utf8');
+            if (process.env.OS_KEY) s = s.replace('__KIPTV_OS_KEY__', process.env.OS_KEY);
+            if (process.env.AI_KEY) s = s.replace('__KIPTV_AI_KEY__', process.env.AI_KEY);
+            fs.writeFileSync(p, s);
+            console.log('OpenSubtitles key: ' + (process.env.OS_KEY ? 'set' : 'none') + ', Claude key: ' + (process.env.AI_KEY ? 'set' : 'none'));
+          "
 
       - name: Set up Node
         uses: actions/setup-node@v4

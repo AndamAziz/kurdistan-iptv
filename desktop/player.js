@@ -378,7 +378,7 @@ class Player {
 
       await this.linkUp();
       const how = await this.watch(want, others);
-      if (how === "ok") { this.tick(); return true }
+      if (how === "ok") { this.tick(); this.subsFollow(); return true }
       /* the window was closed by hand while it was still starting: that is
          the person's answer, not a reason to open it again */
       if (how === "dead" && this.lastExit === 0) return false;
@@ -538,6 +538,30 @@ class Player {
     }, 5000);
   }
   stopTicker() { if (this.ticker) { clearInterval(this.ticker); this.ticker = null } }
+
+  /**
+   * Subtitle files the page made ready (OpenSubtitles, or Kurdish by Claude)
+   * go to mpv with the film or episode they belong to: added when it starts,
+   * the chosen one switched on. A queue of episodes gets each its own.
+   */
+  subsFollow() {
+    this.subsDone = null;
+    const add = async () => {
+      if (!this.link) return;
+      const here = await this.link.get("path");
+      if (!here || this.subsDone === here) return;
+      this.subsDone = here;
+      const it = this.items.find(x => x && sameStream(x.u, here));
+      if (!it || !Array.isArray(it.subs)) return;
+      for (const s of it.subs)
+        await this.link.send(["sub-add", String(s.f), s.def ? "select" : "auto", String(s.label || ""), String(s.lang || "")]);
+    };
+    if (this.link) {
+      this.link.onProp = (name, value) => { if (name === "path" && value) add() };
+      this.link.send(["observe_property", 2, "path"]);
+    }
+    add();
+  }
 
   async close() {
     this.stopTicker();
