@@ -1,31 +1,38 @@
 [en]
-Subtitles for films and series. On a film or series page, choose Off,
-Kurdish (AI), English or Arabic, plus any other language that exists for it.
-Subtitles come from OpenSubtitles. Kurdish ones are translated from the
-English for free by Google Translate (or by Claude, with a key), keeping the timing, and kept on your device, so the same
-film needs no second translation. While subtitles are being prepared you
-see the progress, and you can play without them. In the player they appear
-in the subtitle menu next to any the stream has.
+Live channels no longer switch to another channel by themselves. When a
+provider's server drops a channel, the app now reconnects the same channel
+instead of moving on to the next one; if it cannot come back, it says so.
 
-Settings → Subtitles: the default language, the translation quality, and the
-keys.
+Subtitles keep better time. The app now picks the subtitle file most likely
+to match (made by a person, not for the hard of hearing, from a trusted
+uploader), and in the player's ⚙ menu you can move the subtitles earlier or
+later in half seconds; it is remembered for each film. On Windows the keys
+z and x do the same.
+
+The banners at the top of Live TV, Movies and Series are clearer: the picture
+behind the poster is far less blurred and less dark.
 
 [ku]
-ژێرنووس بۆ فیلم و زنجیرە. لە پەڕەی فیلم یان زنجیرەدا هەڵبژێرە: بێ ژێرنووس،
-کوردی (AI)، ئینگلیزی یان عەرەبی، لەگەڵ هەر زمانێکی تر کە هەبێت.
-ژێرنووسەکان لە OpenSubtitles ـەوە دێن. کوردییەکە لە ئینگلیزییەکەوە بەبێبەرامبەر بە Google Translate
-(یان بە Claude بە کلیل) وەردەگێڕدرێت، کاتەکانی وەک خۆی دەمێنێت، و لەسەر ئامێرەکەت هەڵدەگیرێت، بۆیە هەمان
-فیلم دووجار وەرناگێڕدرێت. کاتێک ژێرنووس ئامادە دەکرێت ڕێژەکەی دەبینیت، و
-دەتوانیت بەبێ ژێرنووس پلەی بکەیت. لە پلەیەرەکەدا لە مێنیوی ژێرنووسدا دەردەکەوێت.
+کەناڵە ڕاستەوخۆکان چیتر خۆیان ناگۆڕن بۆ کەناڵێکی تر. کاتێک سێرڤەری پرۆڤایدەر
+کەناڵێک دەپچڕێنێت، ئەپەکە هەمان کەناڵ دووبارە پەیوەست دەکاتەوە لە جیاتی
+ئەوەی بچێتە سەر کەناڵی دواتر؛ ئەگەر نەگەڕایەوە، پێت دەڵێت.
 
-ڕێکخستن ← ژێرنووس: زمانی بنەڕەتی، کوالیتی وەرگێڕان، و کلیلەکان.
+ژێرنووس کاتی باشتری هەیە. ئەپەکە ئێستا ئەو فایلە هەڵدەبژێرێت کە زیاتر
+دەگونجێت، و لە مێنیوی ⚙ ـی پلەیەرەکەدا دەتوانیت ژێرنووسەکە نیو چرکە نیو چرکە
+زووتر یان درەنگتر بکەیت؛ بۆ هەر فیلمێک لەبیر دەمێنێت. لە ویندۆز دوگمەکانی
+z و x هەمان کار دەکەن.
+
+بانەرەکانی سەرەوەی کەناڵ، فیلم و زنجیرە ڕوونترن: وێنەکەی پشت پۆستەرەکە
+زۆر کەمتر لێڵ و تاریکە.
 
 [ar]
-ترجمة للأفلام والمسلسلات. في صفحة الفيلم أو المسلسل اختر: بدون ترجمة، أو
-الكردية (AI)، أو الإنجليزية، أو العربية، وأي لغة أخرى متوفرة.
-الترجمات من OpenSubtitles. الكردية تُترجم من الإنجليزية مجاناً بواسطة Google Translate (أو Claude بمفتاح) مع
-الحفاظ على التوقيت، وتُحفظ على جهازك فلا يُترجم الفيلم نفسه مرتين. أثناء تجهيز
-الترجمة ترى نسبة التقدم، ويمكنك التشغيل بدونها. وفي المشغّل تظهر في قائمة
-الترجمة.
+لم تعد القنوات المباشرة تنتقل إلى قناة أخرى من تلقاء نفسها. عندما يقطع خادم
+المزوّد قناةً، يعيد التطبيق الاتصال بالقناة نفسها بدلاً من الانتقال إلى التالية؛
+وإن لم تعد، يخبرك بذلك.
 
-الإعدادات ← الترجمة: اللغة الافتراضية، وجودة الترجمة، والمفاتيح.
+توقيت الترجمة أفضل. يختار التطبيق الآن ملف الترجمة الأنسب، ويمكنك من قائمة ⚙
+في المشغّل تقديم الترجمة أو تأخيرها بنصف ثانية؛ ويُحفظ ذلك لكل فيلم. وعلى
+ويندوز تقوم المفاتيح z و x بالشيء نفسه.
+
+بانرات أعلى القنوات والأفلام والمسلسلات أوضح: الصورة خلف الملصق أقل ضبابية وأقل
+عتمة بكثير.

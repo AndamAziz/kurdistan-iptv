@@ -749,8 +749,9 @@ class MainActivity : ComponentActivity() {
         mime?.let { b.setMimeType(it) }
         val subs = urls.getOrNull(i)?.let { subsByUrl[it] }
         if (!subs.isNullOrEmpty()) {
+            val shift = subShift(urls.getOrNull(i))
             b.setSubtitleConfigurations(subs.map { s ->
-                MediaItem.SubtitleConfiguration.Builder(Uri.fromFile(File(s.path)))
+                MediaItem.SubtitleConfiguration.Builder(Uri.fromFile(File(shiftedSrt(s.path, shift))))
                     .setMimeType(if (s.path.endsWith(".vtt", true)) MimeTypes.TEXT_VTT else MimeTypes.APPLICATION_SUBRIP)
                     .setLanguage(s.lang)
                     .setLabel(s.label)
@@ -759,6 +760,87 @@ class MainActivity : ComponentActivity() {
             })
         }
         return b.build()
+    }
+
+    /* ---- subtitle timing ----
+       A subtitle file made for another release of the same film (a longer
+       intro, another cut) runs early or late by the same amount all the way
+       through. The viewer moves it in half seconds; it is remembered for that
+       film, and the player reads a copy of the file with every time moved. */
+    private fun subShiftKey(u: String?) = "subShift:" + (u ?: "").hashCode()
+    private fun subShift(u: String?): Long = prefs().getLong(subShiftKey(u), 0L)
+
+    private fun shiftedSrt(path: String, ms: Long): String {
+        if (ms == 0L || path.endsWith(".vtt", true)) return path
+        return try {
+            val dir = File(cacheDir, "subshift").apply { mkdirs() }
+            val f = File(dir, File(path).nameWithoutExtension + "_" + ms + ".srt")
+            if (!f.isFile) {
+                val rx = Regex("(\\d{1,2}):(\\d{2}):(\\d{2})[,.](\\d{1,3})")
+                val out = File(path).readText(Charsets.UTF_8).lines().joinToString("\n") { line ->
+                    if (!line.contains("-->")) line else rx.replace(line) { m ->
+                        val (h, mi, se, fr) = m.destructured
+                        var t = h.toLong() * 3600000 + mi.toLong() * 60000 + se.toLong() * 1000 +
+                            fr.padEnd(3, '0').toLong() + ms
+                        if (t < 0) t = 0
+                        String.format(Locale.ROOT, "%02d:%02d:%02d,%03d", t / 3600000, t / 60000 % 60, t / 1000 % 60, t % 1000)
+                    }
+                }
+                f.writeText(out, Charsets.UTF_8)
+                dir.listFiles()?.sortedByDescending { it.lastModified() }?.drop(60)?.forEach { it.delete() }
+            }
+            f.absolutePath
+        } catch (e: Exception) { path }
+    }
+
+    /** moves the subtitles of what is playing by [delta] ms and carries on from the same place */
+    private fun moveSubs(delta: Long) {
+        val p = player ?: return
+        val i = p.currentMediaItemIndex
+        val u = urls.getOrNull(i) ?: return
+        val now = if (delta == 0L) 0L else subShift(u) + delta
+        prefs().edit().putLong(subShiftKey(u), now.coerceIn(-600000L, 600000L)).apply()
+        val cur = p.currentMediaItem?.localConfiguration ?: return
+        val pos = p.currentPosition
+        try {
+            p.replaceMediaItem(i, mediaItem(i, cur.uri.toString(), cur.mimeType))
+            p.seekTo(i, pos)
+            p.prepare()
+            p.playWhenReady = true
+        } catch (e: Exception) { }
+        fillPanel()
+    }
+
+    private fun subSyncRow(): LinearLayout {
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, dp(4), 0, dp(4))
+        }
+        val cur = subShift(urls.getOrNull(player?.currentMediaItemIndex ?: -1))
+        fun btn(label: String, tagName: String, on: Boolean, act: () -> Unit) = TextView(this).apply {
+            text = label
+            gravity = Gravity.CENTER
+            setTextColor(if (on) 0xFFFFD277.toInt() else Color.WHITE)
+            textSize = 12.5f
+            if (on) setTypeface(typeface, Typeface.BOLD)
+            background = panelBg(on)
+            setPadding(dp(4), dp(10), dp(4), dp(10))
+            isClickable = true
+            focusRing(this, round = false)
+            tag = tagName
+            setOnClickListener { act() }
+        }
+        val secs = String.format(Locale.ROOT, "%+.1f s", cur / 1000.0)
+        val items = listOf(
+            btn("−0.5", "subE", false) { moveSubs(-500) },
+            btn(if (cur == 0L) "0.0 s" else secs, "subZ", cur != 0L) { if (cur != 0L) moveSubs(0) },
+            btn("+0.5", "subL", false) { moveSubs(500) })
+        for ((k, v) in items.withIndex())
+            row.addView(v, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
+                if (k > 0) marginStart = dp(6)
+            })
+        return row
     }
 
     // ---------------- format plan ----------------
@@ -978,6 +1060,21 @@ class MainActivity : ComponentActivity() {
                     /* swapping the container of the item we are already on also
                        reports a transition - that must not restart the fallback */
                     if (i == lastIndex) return
+                    /* A live channel whose server closed the stream "ends", and the
+                       player then plays the next item of the queue by itself - the
+                       next channel. Nobody chose that. Go back to the channel that
+                       was on and reconnect it, as a dropped channel is reconnected.
+                       (A film or an episode that ends still goes on to the next.) */
+                    val prev = lastIndex
+                    if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO && prev != i &&
+                        prev in urls.indices && !isVod(urls[prev])) {
+                        playerView.post {
+                            if (dead || playerLayer.visibility != View.VISIBLE) return@post
+                            try { p.seekToDefaultPosition(prev) } catch (e: Exception) { }
+                            if (reconnects < MAX_RECONNECTS) reconnect() else { p.pause(); showError("ENDED") }
+                        }
+                        return
+                    }
                     lastIndex = i
                     probed = false
                     resolvedUrl = null
@@ -1025,7 +1122,9 @@ class MainActivity : ComponentActivity() {
                         Player.STATE_ENDED -> {
                             if (dead) return
                             val live = !isVod(currentUrl ?: "")
-                            if (live && reconnects < MAX_RECONNECTS) reconnect()
+                            /* a live channel is never swapped for the next one behind
+                               the viewer's back: reconnect it, or say it has stopped */
+                            if (live) { if (reconnects < MAX_RECONNECTS) reconnect() else showError("ENDED") }
                             else if (p.hasNextMediaItem()) p.seekToNextMediaItem()
                             else showError("ENDED")
                         }
@@ -1686,6 +1785,7 @@ class MainActivity : ComponentActivity() {
         "errVpn" to "The film's server refused this connection. If a VPN is on, turn it off and try again.",
         "audio" to "Audio", "subs" to "Subtitles", "quality" to "Quality",
         "off" to "Off", "auto" to "Auto", "size" to "Text size",
+        "subSync" to "Subtitle timing", "subSyncNote" to "Earlier if the words come late, later if they come early",
         "s1" to "Small", "s2" to "Normal", "s3" to "Large", "s4" to "Extra large",
         "noSubs" to "No subtitles in this video", "oneAudio" to "Only one audio track",
         "oneVideo" to "Only one quality", "track" to "Track",
@@ -1706,6 +1806,7 @@ class MainActivity : ComponentActivity() {
         "errVpn" to "سێرڤەری فیلمەکە ئەم پەیوەندییەی ڕەتکردەوە. ئەگەر VPN هەڵکراوە، بیکوژێنەوە و دووبارە هەوڵ بدەرەوە.",
         "audio" to "دەنگ", "subs" to "ژێرنووس", "quality" to "کوالیتی",
         "off" to "بێ ژێرنووس", "auto" to "خۆکار", "size" to "قەبارەی نووسین",
+        "subSync" to "کاتی ژێرنووس", "subSyncNote" to "ئەگەر نووسینەکە دوادەکەوێت زووتری بکە، ئەگەر پێشدەکەوێت درەنگتری بکە",
         "s1" to "بچووک", "s2" to "ئاسایی", "s3" to "گەورە", "s4" to "زۆر گەورە",
         "noSubs" to "ئەم ڤیدیۆیە ژێرنووسی نییە", "oneAudio" to "تەنها یەک دەنگ هەیە",
         "oneVideo" to "تەنها یەک کوالیتی هەیە", "track" to "تراک",
@@ -1726,6 +1827,7 @@ class MainActivity : ComponentActivity() {
         "errVpn" to "رفض خادم الفيلم هذا الاتصال. إذا كان VPN مفعّلاً فأوقفه وحاول مجدداً.",
         "audio" to "الصوت", "subs" to "الترجمة", "quality" to "الجودة",
         "off" to "بدون ترجمة", "auto" to "تلقائي", "size" to "حجم الخط",
+        "subSync" to "توقيت الترجمة", "subSyncNote" to "أبكر إن تأخر النص، أو أخّره إن سبق الكلام",
         "s1" to "صغير", "s2" to "عادي", "s3" to "كبير", "s4" to "كبير جداً",
         "noSubs" to "لا توجد ترجمة في هذا الفيديو", "oneAudio" to "يوجد صوت واحد فقط",
         "oneVideo" to "توجد جودة واحدة فقط", "track" to "مسار",
@@ -2393,6 +2495,11 @@ class MainActivity : ComponentActivity() {
             for (r in subRows) box.addView(r)
             box.addView(noteRow(tx("size")))
             box.addView(sizeRow())
+            if (!subsByUrl[urls.getOrNull(player?.currentMediaItemIndex ?: -1) ?: ""].isNullOrEmpty()) {
+                box.addView(noteRow(tx("subSync")))
+                box.addView(subSyncRow())
+                box.addView(noteRow(tx("subSyncNote")))
+            }
         }
 
         /* quality */

@@ -250,7 +250,7 @@ function geometry(b) {
 
 /** mpv answers one JSON object per line over the pipe. */
 class Link {
-  constructor() { this.sock = null; this.id = 0; this.waiting = new Map(); this.buf = ""; this.onProp = null }
+  constructor() { this.sock = null; this.id = 0; this.waiting = new Map(); this.buf = ""; this.onProp = null; this.onEvent = null }
 
   connect(pipe, tries = 40) {
     const where = pipe || PIPE;
@@ -286,6 +286,10 @@ class Link {
       /* mpv speaks first when something it was asked to watch changes */
       if (m && m.event === "property-change" && this.onProp) {
         try { this.onProp(m.name, m.data) } catch (e) { /* never on mpv's thread */ }
+        continue;
+      }
+      if (m && m.event && this.onEvent) {
+        try { this.onEvent(m) } catch (e) { }
         continue;
       }
       if (m && m.request_id && this.waiting.has(m.request_id)) {
@@ -378,7 +382,7 @@ class Player {
 
       await this.linkUp();
       const how = await this.watch(want, others);
-      if (how === "ok") { this.tick(); this.subsFollow(); return true }
+      if (how === "ok") { this.tick(); this.subsFollow(); this.stayOnChannel(); return true }
       /* the window was closed by hand while it was still starting: that is
          the person's answer, not a reason to open it again */
       if (how === "dead" && this.lastExit === 0) return false;
@@ -538,6 +542,67 @@ class Player {
     }, 5000);
   }
   stopTicker() { if (this.ticker) { clearInterval(this.ticker); this.ticker = null } }
+
+  /**
+   * A live channel stays the channel that was chosen.
+   *
+   * mpv plays a queue: when a stream ends (the server closed it) or breaks
+   * after it was playing, mpv simply starts the next entry - another channel,
+   * which nobody asked for. A channel the viewer moves to themselves ends the
+   * last one with reason "stop"; only "eof" and "error" are mpv's own doing.
+   * So on those, for a live entry, mpv is sent back to it - a reconnect, with
+   * a growing pause - and after too many in a row it stops and says so. Films
+   * and episodes are left alone: one that ends goes on to the next episode.
+   */
+  stayOnChannel() {
+    this.pos = null;
+    this.backTo = null;
+    this.bounces = [];
+    const isLive = it => !!it && !it.v && !isVod(it.u);
+    const remember = async () => {
+      if (!this.link) return;
+      const n = await this.link.get("playlist-pos");
+      if (typeof n !== "number" || n < 0) return;
+      if (this.backTo != null && n !== this.backTo) {
+        const at = this.backTo;
+        this.backTo = null;
+        const now = Date.now();
+        this.bounces = this.bounces.filter(t => now - t < 120000);
+        this.bounces.push(now);
+        if (this.bounces.length > 12) {        /* it keeps dropping: say so, do not wander */
+          await this.close();
+          this.failed(at);
+          return;
+        }
+        const wait = Math.min(6000, 800 * this.bounces.length);
+        setTimeout(() => { if (this.link) this.link.send(["playlist-play-index", at]) }, wait);
+        return;
+      }
+      if (this.backTo != null && n === this.backTo) {
+        /* back on it already: count the reconnect, so one that keeps dropping is caught */
+        const now = Date.now();
+        this.bounces = this.bounces.filter(t => now - t < 120000);
+        this.bounces.push(now);
+        this.backTo = null;
+        if (this.bounces.length > 12) { await this.close(); this.failed(n); return }
+      }
+      this.pos = n;
+    };
+    if (this.link) {
+      this.link.onEvent = m => {
+        if (m.event === "end-file" && (m.reason === "eof" || m.reason === "error")) {
+          const it = this.items[this.pos];
+          if (this.pos != null && isLive(it)) {
+            this.backTo = this.pos;
+            /* at once, before mpv has the next channel on screen */
+            this.link.send(["playlist-play-index", this.pos]);
+          }
+        }
+        if (m.event === "file-loaded" || m.event === "start-file") remember();
+      };
+    }
+    remember();
+  }
 
   /**
    * Subtitle files the page made ready (OpenSubtitles, or Kurdish by Claude)
