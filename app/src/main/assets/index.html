@@ -449,43 +449,67 @@ img.rdy{animation:imgIn .25s ease both}
 /* ---------- series detail ---------- */
 #detail{position:fixed;inset:0;z-index:70;background:var(--bg);overflow-y:auto;display:none}
 #detail.on{display:block}
-.dhero{position:relative;padding:calc(16px + var(--safe-t)) 16px 18px;display:flex;gap:16px;
-  background:linear-gradient(180deg,rgba(232,179,60,.09),transparent);overflow:hidden;min-height:230px}
-/* the film's own still, faded into the page behind the poster */
-.dbg{position:absolute;inset:0;background-size:cover;background-position:center 22%;
-  opacity:0;transition:opacity .6s ease;transform:scale(1.04)}
-.dbg.on{opacity:.5}
+/* ---- the header: a cinematic band ----
+   The film's own still runs the full width at the top and fades into the
+   page; the poster stands on its lower edge, the title and the facts beside
+   it, the buttons in one clean row underneath. No still from TMDB: the
+   poster itself, softened, takes its place - never an empty band. */
+#detail{--bd:min(60vw,330px);--gut:16px}
+.dhero{position:relative;display:flex;align-items:flex-end;gap:14px;
+  padding:calc(var(--bd) - 92px + var(--safe-t)) var(--gut) 4px;min-height:0;background:none;overflow:visible}
+.dbg{position:absolute;left:0;right:0;top:0;height:calc(var(--bd) + var(--safe-t));
+  background-color:var(--surface);background-size:cover;background-position:center 22%;
+  opacity:0;transition:opacity .6s ease;clip-path:inset(0)}
+.dbg.on{opacity:1}
+/* the poster standing in for a still: soft, so it reads as light, not as a picture */
+.dbg.soft{filter:blur(18px) saturate(1.25) brightness(.72)}
 .dbg::after{content:"";position:absolute;inset:0;
-  background:linear-gradient(180deg,rgba(7,10,14,.30) 0%,rgba(7,10,14,.72) 55%,var(--bg) 100%),
-             linear-gradient(90deg,rgba(7,10,14,.55),transparent 70%)}
-html[dir=rtl] .dbg::after{background:linear-gradient(180deg,rgba(7,10,14,.30) 0%,rgba(7,10,14,.72) 55%,var(--bg) 100%),
-             linear-gradient(270deg,rgba(7,10,14,.55),transparent 70%)}
+  background:linear-gradient(180deg,rgba(7,10,14,.62) 0%,rgba(7,10,14,0) 26%,rgba(7,10,14,.12) 52%,rgba(7,10,14,.78) 82%,var(--bg) 100%),
+             radial-gradient(120% 90% at 50% 40%,transparent 55%,rgba(7,10,14,.45) 100%)}
 .dhero>.pw,.dhero>.dinfo{position:relative;z-index:1}
-.dhero .pw{width:118px;flex:none;aspect-ratio:2/3;align-self:flex-start;border-radius:var(--r-md);overflow:hidden;
-  background:var(--surface);border:1px solid rgba(255,255,255,.12);box-shadow:0 14px 34px rgba(0,0,0,.55)}
-.dhero .pw img{width:100%;height:100%;object-fit:cover}
-.dinfo{flex:1;min-width:0;padding-top:2px}
-.dhero h2{margin:0 0 4px;font-size:19px;font-weight:800;line-height:1.3;text-shadow:0 2px 12px rgba(0,0,0,.5)}
-.dorig{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:8px}
+.dhero .pw{width:112px;flex:none;aspect-ratio:2/3;align-self:flex-end;border-radius:12px;overflow:hidden;
+  background:var(--surface);border:1px solid rgba(255,255,255,.14);
+  box-shadow:0 18px 40px rgba(0,0,0,.65),0 2px 6px rgba(0,0,0,.5)}
+.dhero .pw img{width:100%;height:100%;object-fit:cover;display:block}
+.dinfo{flex:1;min-width:0;padding-bottom:2px}
+/* nothing to show yet - no still, no poster: a short header, no empty band */
+#detail.bare{--bd:150px}
+#detail.nopost .dhero .pw{display:none}
+#detail.bare .dhero h2{padding-inline-end:96px}
+.dhero h2{margin:0 0 3px;font-size:21px;font-weight:800;line-height:1.22;letter-spacing:-.2px;
+  text-shadow:0 2px 14px rgba(0,0,0,.6);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.dorig{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:8px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dorig:empty,.dgen:empty,.dtag:empty,.dacts:empty,.dplot:empty{display:none}
-.dhero .meta{display:flex;flex-wrap:wrap;gap:6px;font-size:11.5px;color:var(--muted2);font-weight:700;margin-bottom:9px}
-.dhero .meta span{padding:4px 9px;border-radius:999px;background:rgba(255,255,255,.07);
-  border:1px solid rgba(255,255,255,.09);color:#C9D2DC;font-size:11px;font-weight:700;line-height:1.3;
-  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
-.dhero .meta .rt{color:#FFD466;background:rgba(255,212,102,.11);border-color:rgba(255,212,102,.32)}
-.dhero .meta .rt small{color:var(--muted);font-weight:600;font-size:10px;margin-inline-start:4px}
-.dgen{display:flex;flex-wrap:wrap;gap:5px 10px;font-size:11.5px;font-weight:700;color:var(--accent2);opacity:.9}
-.dgen i{font-style:normal}
-.dgen i+i::before{content:"•";margin-inline-end:10px;color:var(--muted2)}
-.dtag{margin-top:9px;font-size:12px;font-style:italic;color:var(--muted);line-height:1.5}
-.dacts{padding:0 16px 4px}
-.dacts .dact{margin-top:0}
-.dplot{margin:8px 16px 0;font-size:13px;color:var(--muted);line-height:1.75;cursor:pointer;
+/* the facts as one quiet line: rating in gold, the rest separated by dots */
+.dhero .meta{display:flex;flex-wrap:wrap;align-items:center;gap:4px 0;font-size:12px;color:#B9C3CE;
+  font-weight:700;margin-bottom:6px}
+.dhero .meta:empty{display:none}
+.dhero .meta span{padding:0;background:none;border:0;color:#C9D2DC;font-size:12px;font-weight:700;line-height:1.4}
+.dhero .meta span+span::before{content:"";display:inline-block;width:3px;height:3px;border-radius:50%;
+  background:var(--muted2);vertical-align:middle;margin:0 8px}
+.dhero .meta .rt{color:#FFD466}
+.dhero .meta .rt small{color:var(--muted);font-weight:600;font-size:10.5px;margin-inline-start:5px}
+.dgen{display:flex;flex-wrap:wrap;gap:6px;font-size:10.5px;font-weight:800}
+.dgen i{font-style:normal;padding:3px 9px;border-radius:6px;color:var(--accent2);
+  background:rgba(232,179,60,.10);border:1px solid rgba(232,179,60,.22)}
+.dgen i+i::before{content:none}
+.dtag{margin:14px var(--gut) 0;font-size:12.5px;font-style:italic;color:var(--muted);line-height:1.5}
+/* the buttons: Play across the whole width, the others in an even row */
+.dacts{padding:16px var(--gut) 0}
+.dacts .dact{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:0}
+.dacts .dplay{grid-column:1/-1;justify-content:center;width:100%;margin:0;padding:13px 20px;border-radius:12px;
+  font-size:15px;box-shadow:0 10px 26px rgba(232,179,60,.28)}
+.dacts .dghost{justify-content:center;margin:0;padding:11px 12px;border-radius:12px;
+  background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.12)}
+.dacts .dghost:only-child,.dacts .dplay + .dghost:last-child{grid-column:1/-1}
+.dacts .dbar{margin-top:14px}
+.dplot{margin:14px var(--gut) 0;font-size:13.5px;color:#AEB9C5;line-height:1.7;cursor:pointer;
   display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
 .dplot.open{-webkit-line-clamp:unset;display:block}
-.dsec{display:flex;align-items:center;gap:8px;padding:18px 16px 10px;font-size:13.5px;font-weight:800}
+.dsec{display:flex;align-items:center;gap:8px;padding:22px var(--gut) 12px;font-size:13.5px;font-weight:800}
 .dsec::before{content:"";width:3px;height:14px;border-radius:2px;background:linear-gradient(var(--accent),var(--accent2))}
-.dcast{display:flex;gap:12px;overflow-x:auto;padding:0 16px 4px;scrollbar-width:none}
+.dcast{display:flex;gap:12px;overflow-x:auto;padding:0 var(--gut) 4px;scrollbar-width:none}
 .dcast::-webkit-scrollbar{display:none}
 .dcast div{flex:none;width:74px;text-align:center}
 .dcast img,.dcast em{display:block;width:62px;height:62px;margin:0 auto 7px;border-radius:50%;object-fit:cover;
@@ -495,10 +519,10 @@ html[dir=rtl] .dbg::after{background:linear-gradient(180deg,rgba(7,10,14,.30) 0%
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .dcast s{display:block;text-decoration:none;font-size:10px;color:var(--muted2);margin-top:2px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dmore .dfacts{margin:4px 16px 0}
-.dtmdb{margin:14px 16px 0;font-size:10px;color:var(--muted2);opacity:.7}
+.dmore .dfacts{margin:6px var(--gut) 0}
+.dtmdb{margin:16px var(--gut) 0;font-size:10px;color:var(--muted2);opacity:.7}
 /* subtitle choice on the film / series page */
-.dsubs{display:flex;align-items:center;gap:7px;overflow-x:auto;padding:12px 16px 2px;scrollbar-width:none}
+.dsubs{display:flex;align-items:center;gap:7px;overflow-x:auto;padding:14px var(--gut) 2px;scrollbar-width:none}
 .dsubs::-webkit-scrollbar{display:none}
 .dsubs:empty{display:none}
 .dsubs .cc{flex:none;font-size:10px;font-weight:900;letter-spacing:.5px;color:var(--bg);background:var(--muted);
@@ -521,11 +545,22 @@ html[dir=rtl] .dbg::after{background:linear-gradient(180deg,rgba(7,10,14,.30) 0%
 /* text from TMDB may be in English inside a Kurdish page: each line takes
    its own direction, so its ending dots land where its sentence ends */
 .dplot,.dorig,.dtag,.dcast b,.dcast s,.ep .ov,.ep .tx b,.dfacts span{unicode-bidi:plaintext}
-@media(min-width:600px){.dhero .pw{width:150px}.dhero h2{font-size:23px}.dhero{min-height:280px}}
-#dclose{position:absolute;top:calc(12px + var(--safe-t));inset-inline-end:14px;width:36px;height:36px;
-  border-radius:12px;border:1px solid var(--line);background:rgba(7,10,14,.8);color:#fff;
+/* a wide screen: a taller band, a bigger poster, the content kept to a readable width */
+@media(min-width:760px){
+  #detail{--bd:min(44vw,460px);--gut:clamp(24px,5vw,56px)}
+  .dhero{padding-top:calc(var(--bd) - 150px + var(--safe-t));gap:24px}
+  .dhero .pw{width:168px}
+  .dhero h2{font-size:30px}
+  .dhero .meta,.dhero .meta span{font-size:13px}
+  .dacts .dact{display:flex;flex-wrap:wrap;max-width:620px}
+  .dacts .dplay{width:auto;min-width:200px}
+  .dplot,.dtag{max-width:820px}
+}
+#dclose{position:absolute;top:calc(12px + var(--safe-t));inset-inline-end:14px;width:38px;height:38px;
+  border-radius:50%;border:1px solid rgba(255,255,255,.16);background:rgba(7,10,14,.55);color:#fff;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
   display:grid;place-items:center;font-size:17px;cursor:pointer;z-index:2}
-.dbody{padding:4px 16px calc(28px + var(--safe-b))}
+.dbody{padding:10px var(--gut) calc(28px + var(--safe-b))}
 .ep{display:flex;align-items:center;gap:12px;padding:13px;border-radius:var(--r-md);
   background:var(--surface);border:1px solid var(--line);margin-bottom:9px;cursor:pointer}
 .ep .no{width:34px;height:34px;flex:none;border-radius:10px;display:grid;place-items:center;
@@ -747,12 +782,13 @@ html.tv .pinwrap .keys{max-width:230px;margin-top:12px}
 @keyframes pop{0%{transform:scale(1)}40%{transform:scale(.9)}100%{transform:scale(1)}}
 
 /* star next to ✕ on the film / series page */
-#dfav{position:absolute;top:calc(12px + var(--safe-t));inset-inline-end:58px;width:36px;height:36px;
-  border-radius:12px;border:1px solid var(--line);background:rgba(7,10,14,.8);color:#fff;
+#dfav{position:absolute;top:calc(12px + var(--safe-t));inset-inline-end:60px;width:38px;height:38px;
+  border-radius:50%;border:1px solid rgba(255,255,255,.16);background:rgba(7,10,14,.55);color:#fff;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
   display:grid;place-items:center;cursor:pointer;z-index:2;padding:0}
 #dfav.on{color:#FFD466;border-color:rgba(255,212,102,.45)}
 #dfav:active{transform:scale(.92)}
-.dhero h2{padding-inline-end:88px}
+.dhero h2{padding-inline-end:0}
 
 /* ---------- favourites | history switch + history rows ---------- */
 .seg{display:flex;gap:8px;margin:16px 0 2px}
@@ -1167,14 +1203,14 @@ html.tv #settings .st-in{max-width:760px}
       <div class="dorig" id="dOrig"></div>
       <div class="meta" id="dMeta"></div>
       <div class="dgen" id="dGen"></div>
-      <div class="dtag" id="dTag"></div>
     </div>
   </div>
   <div class="dacts" id="dAct"></div>
   <div class="dsubs" id="dSubs"></div>
+  <div class="dtag" id="dTag"></div>
   <p class="dplot" id="dPlot" onclick="this.classList.toggle('open')"></p>
   <div id="dMore"></div>
-  <div class="chips" id="dSeasons" style="padding:0 16px 4px"></div>
+  <div class="chips" id="dSeasons" style="padding:18px var(--gut) 4px"></div>
   <div class="dbody" id="dEps"></div>
 </div>
 
@@ -3657,8 +3693,24 @@ function detailReset(){
   $("dMeta").innerHTML = ""; $("dPlot").textContent = ""; $("dPlot").className = "dplot";
   $("dAct").innerHTML = ""; $("dMore").innerHTML = "";
   $("dSubs").innerHTML = ""; DSUB_AV = null;
+  $("detail").classList.add("bare", "nopost");
   return DTOK;
 }
+
+/* until TMDB sends the film's own still - or when it has none - the poster,
+   softened, fills the band behind the header */
+$("dImg").addEventListener("load", function(){
+  $("detail").classList.remove("bare", "nopost");
+  var bg = $("dBg");
+  if(bg.classList.contains("on") && !bg.classList.contains("soft")) return;
+  bg.style.backgroundImage = 'url("' + this.src + '")';
+  bg.className = "dbg on soft";
+});
+
+$("dImg").addEventListener("error", function(){
+  $("detail").classList.add("nopost");
+  if(!$("dBg").classList.contains("on")) $("detail").classList.add("bare");
+});
 
 function openTrailer(k){
   var u = "https://www.youtube.com/watch?v=" + encodeURIComponent(k);
@@ -3680,11 +3732,14 @@ function tmdbApply(v, tok){
       if(tok !== DTOK) return;
       $("dBg").style.backgroundImage = 'url("' + src + '")';
       $("dBg").className = "dbg on";
+      $("detail").classList.remove("bare");
     };
     im.src = src;
   }
   if(v.ps && !$("dImg").getAttribute("src")) $("dImg").src = TMDB_IMG + "w342" + v.ps;
 
+  /* the year is in the facts line - not a second time in the title */
+  if(v.y) $("dName").textContent = String($("dName").textContent || "").replace(new RegExp("\\s*[\\(\\[]\\s*" + v.y + "\\s*[\\)\\]]\\s*$"), "");
   var shown = String($("dName").textContent || "").toLowerCase(), shownQ = tmdbQuery(shown).q.toLowerCase();
   var alt = [v.t, v.o].filter(function(x){ return x && x.toLowerCase() !== shown && x.toLowerCase() !== shownQ })[0] || "";
   $("dOrig").textContent = alt + (alt && v.y && alt.indexOf(v.y) < 0 ? "  (" + v.y + ")" : "");
