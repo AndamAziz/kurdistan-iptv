@@ -5551,23 +5551,33 @@ function hcDraw(){
 
 /* a film to open: one already in memory, one from the history, or the
    first film of the panel's first group - two small questions */
+/* up to three different films, spread through the list: one title the panel
+   cannot serve (a film not out yet, a file that was taken down) must not make
+   the whole panel look broken */
 function hcVodPick(p){
-  var mv = DATA.movies || [];
-  for(var j = 0; j < mv.length; j++) if(mv[j] && /^https?:/i.test(mv[j].u || "")) return Promise.resolve(mv[j]);
-  var hl = histList();
-  for(var k = 0; k < hl.length; k++) if(hl[k] && (hl[k].t === "movie" || vodKind(hl[k].u) === "movie")) return Promise.resolve(hl[k]);
-  if(p.type !== "xtream") return Promise.resolve(null);
+  var mv = (DATA.movies || []).filter(function(c){ return c && /^https?:/i.test(c.u || "") });
+  if(mv.length){
+    var out = [], step = Math.max(1, Math.floor(mv.length / 3));
+    for(var j = 0; j < mv.length && out.length < 3; j += step) out.push(mv[j]);
+    return Promise.resolve(out);
+  }
+  var hl = histList().filter(function(h){ return h && (h.t === "movie" || vodKind(h.u) === "movie") });
+  if(hl.length) return Promise.resolve(hl.slice(0, 3));
+  if(p.type !== "xtream") return Promise.resolve([]);
   var d0 = String(p.domain || "").replace(/\/+$/, "");
   var ask = function(action){ return fetch(viaApp(xtBase(p) + "&action=" + action)).then(function(r){ return r.text() }).then(JSON.parse) };
   return ask("get_vod_categories").then(function(cats){
-    if(!cats || !cats.length) return null;
+    if(!cats || !cats.length) return [];
     return ask("get_vod_streams&category_id=" + encodeURIComponent(cats[0].category_id)).then(function(list){
-      var v = list && list[0];
-      if(!v || !v.stream_id) return null;
-      return { n: v.name || ("#" + v.stream_id),
-               u: streamURL(v.direct_source, d0 + "/movie/" + xtCreds(p) + "/" + v.stream_id + "." + (v.container_extension || "mp4"), d0) };
+      var out = [], step = Math.max(1, Math.floor((list || []).length / 3));
+      for(var i = 0; list && i < list.length && out.length < 3; i += step){
+        var v = list[i];
+        if(v && v.stream_id) out.push({ n: v.name || ("#" + v.stream_id),
+          u: streamURL(v.direct_source, d0 + "/movie/" + xtCreds(p) + "/" + v.stream_id + "." + (v.container_extension || "mp4"), d0) });
+      }
+      return out;
     });
-  }).catch(function(){ return null });
+  }).catch(function(){ return [] });
 }
 
 function hcRun(){
@@ -5627,15 +5637,24 @@ function hcRun(){
   /* the streams, one after the other - never two connections at once */
   var pickLive = null;
   for(var i = 0; i < CH.length && !pickLive; i++) if(CH[i] && /^https?:/i.test(CH[i].u || "")) pickLive = CH[i];
-  var probeRow = function(key, c){
-    if(!c){ hcDrop(key); return Promise.resolve() }
-    return probeStream(c).then(function(r){
+  var probeRow = function(key, cs){
+    var list = cs ? (cs.length === undefined ? [cs] : cs) : [];
+    if(!list.length){ hcDrop(key); return Promise.resolve() }
+    var tryAt = function(n){
+      var c = list[n];
+      return probeStream(c).then(function(r){
+        if((!r || !r.ok) && n + 1 < list.length) return tryAt(n + 1);
+        return { c: c, r: r, n: n };
+      });
+    };
+    return tryAt(0).then(function(o){
+      var c = o.c, r = o.r, tried = list.length > 1 ? "  ·  " + (o.n + 1) + "/" + list.length : "";
       if(r && r.ok){
         var kind = r.kind || (/\.m3u8/i.test(c.u) ? "HLS" : /\.ts(\?|$)/i.test(c.u) ? "MPEG-TS" : "");
-        hcSet(key, r.ms > 4000 ? "warn" : "ok", msTxt(r.ms || 0), c.n + (kind ? "  ·  " + kind : ""));
+        hcSet(key, r.ms > 4000 ? "warn" : "ok", msTxt(r.ms || 0), c.n + (kind ? "  ·  " + kind : "") + (o.n ? "  ·  " + (o.n + 1) + "/" + list.length : ""));
       } else {
         var vpn = key === "vod" && r && (r.code === 400 || r.code === 403 || r.code === 451);
-        hcSet(key, "bad", d.hFail, c.n + (r && r.code ? "  ·  HTTP " + r.code : "") + (vpn ? "  ·  " + d.hVpn : ""),
+        hcSet(key, "bad", d.hFail, c.n + (r && r.code ? "  ·  HTTP " + r.code : "") + tried + (vpn ? "  ·  " + d.hVpn : ""),
               (r && r.trail) || "");
       }
     });
