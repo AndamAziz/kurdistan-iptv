@@ -92,6 +92,15 @@ jobs:
           path: app/build/outputs/apk/*/*/*.apk
           if-no-files-found: error
 
+      # R8 renames the release build's code. This file turns a release crash
+      # report back into real names, so it is kept for every build.
+      - name: Upload the R8 mapping
+        uses: actions/upload-artifact@v4
+        with:
+          name: KURDISTAN-IPTV-mapping
+          path: app/build/outputs/mapping/*Release/mapping.txt
+          if-no-files-found: warn
+
       # kept for the job that sends it to Play. A missing one is only a warning
       # here: nothing else depends on it.
       - name: Upload the bundle

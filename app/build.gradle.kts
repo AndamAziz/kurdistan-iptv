@@ -47,7 +47,13 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            /* R8 shrinks and renames the app's own code (and what the libraries
+               leave unused). The rules that keep the page's link to the app
+               and the player's decoders working are in proguard-rules.pro.
+               Resource shrinking stays off on purpose: the page, the player's
+               buttons and the TV banner are looked up by name. */
+            isMinifyEnabled = true
+            isShrinkResources = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

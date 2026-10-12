@@ -129,7 +129,6 @@ section{margin-top:22px}
 .card{cursor:pointer;transition:transform .16s;min-width:0}
 .card .epg{margin-top:1px;font-size:10px;font-weight:600;line-height:1.35;color:var(--muted2);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:1.35em}
-html.tv .card .epg{font-size:12px}
 /* The press is drawn by a class, not by :active. A list with touch handlers
    gets :active the instant a finger lands - so every scroll that started on
    a tile shrank that tile and popped it back. The class only comes once the
@@ -210,12 +209,6 @@ html.tv .card .epg{font-size:12px}
 /* A television screen is wide but not tall, and whatever the banner takes,
    the first row of channels loses. The artwork fills the width, so the
    picture can be small without the banner looking empty. */
-html.tv .heroBox{--hh:min(46vh,248px)}
-html.tv .hero{padding:12px clamp(30px,4vw,54px);gap:9px}
-html.tv .hero.sq .hp{height:calc(var(--hh) * .7)}
-html.tv .hero .hp{height:calc(var(--hh) - 32px)}
-html.tv .hero .in{max-width:580px}
-html.tv .hero .go{padding:9px 19px;font-size:12.5px}
 /* The picture sits on the right and the words beside it on the left, in every
    language. A row follows the reading direction by itself, so the two
    directions need opposite rules to end up looking the same: reversed where
@@ -833,14 +826,8 @@ html.kbd .hero.on:focus{outline:4px solid #fff;outline-offset:-4px}
 html.kbd .hero{transition:opacity .45s ease}
 /* with a remote, a new banner picture can take the highlight at once */
 html.kbd #nav button:focus{outline-offset:-3px;border-radius:12px}
-/* on a TV the tab bar sits at the top, where Up always reaches it */
-html.tv body{padding-top:54px}
-html.tv #nav{top:0;bottom:auto;height:54px;align-items:stretch;border-top:0;border-bottom:1px solid var(--line);
-  padding:4px 10px;background:var(--bg)}
-html.tv #nav button{flex-direction:row;justify-content:center;gap:9px;padding:9px 0;font-size:13px}
-html.tv header{top:54px}
-html.tv body.hasnav main{padding-bottom:40px}
-html.tv #favs{padding-top:calc(72px + var(--safe-t))}
+/* on a TV the tab bar sits at the top, where Up always reaches it
+   (its look is in the TV layer at the end of this sheet) */
 /* room for the ring inside the sideways rows */
 html.kbd .strip{padding:8px 8px 10px;margin:-8px -8px -8px}
 html.kbd .card,html.kbd .row,html.kbd .ep,html.kbd .hi,html.kbd button{scroll-margin-top:170px;scroll-margin-bottom:96px}
@@ -1096,31 +1083,137 @@ html[dir=rtl] #settings .row .ch svg{transform:scaleX(-1)}
 .st-foot b{color:var(--muted);letter-spacing:1.6px;font-size:12px}
 .st-foot .fl{width:54px;height:3px;border-radius:3px;opacity:.7;
   background:linear-gradient(90deg,#ED2024 0 33.33%,#FFFFFF 33.33% 66.66%,#2AA14B 66.66% 100%)}
-/* ---------- a TV is watched from across the room, and its edges can be cut off ---------- */
-html.tv header{padding:8px 3% 8px}
-html.tv main{padding:6px 3% calc(40px + var(--safe-b))}
-html.tv .brand .w1,html.tv .brand .w2{font-size:17px;letter-spacing:3px}
-html.tv .brand small{font-size:8.5px;margin-top:3px}
-html.tv .iconbtn{width:38px;height:38px;border-radius:12px}
-html.tv .ann{margin-top:7px;padding:5px 10px;font-size:11px}
-html.tv .catsel{margin-top:8px;padding:9px 12px}
-html.tv .chips{padding-top:8px}
-html.tv .chip{padding:6px 13px;font-size:12px}
-html.tv .hero h1{font-size:17px;margin:0 0 7px}
-html.tv .hero .go{padding:7px 16px;font-size:11.5px}
-html.tv .heroDots{margin-top:6px}
-html.tv .hrow{margin-top:14px}
-html.tv .rhead{margin-bottom:8px}
-html.tv .rhead h3{font-size:13.5px}
-/* more channels on screen, each still large enough to read from the sofa */
-html.tv .grid{grid-template-columns:repeat(8,minmax(0,1fr));gap:11px}
-html.tv .strip .card{width:92px}
-html.tv .strip.big .card{width:104px}
-html.tv .name{font-size:10.5px;padding-top:7px;min-height:34px}
-html.tv .card .epg{font-size:10px}
+/* ---------- the TV layer ----------
+   Everything below applies only when the app says it is on a television
+   (html.tv, set from AndroidPlayer.isTv()); a phone never reads any of it.
 
-html.tv .st-top{padding-top:12px}
-html.tv #settings .st-in{max-width:760px}
+   A TV is watched from across the room, its edges can be cut off, and the
+   same screen may be 720p, 1080p or 4K - which the web view reports as
+   anything from about 960 to 1920 CSS pixels wide. So nothing here is a
+   fixed pixel size: every measure is a number of --s, a unit that grows with
+   the screen's width (1 --s is 1px on a 1280-wide view). */
+html.tv{--s:1px;--tx:4.5vw;--ty:4vh}
+@supports (width:clamp(1px,1vw,2px)){html.tv{--s:clamp(.75px,.078vw,2px)}}
+html.tv{--navh:calc(58 * var(--s) + 2.2vh)}
+
+/* the tab bar: centred pills at the top, inside the safe area */
+html.tv body{padding-top:var(--navh)}
+html.tv #nav{top:0;bottom:auto;height:var(--navh);align-items:center;justify-content:center;gap:calc(10 * var(--s));
+  border-top:0;border-bottom:1px solid var(--line);padding:2.2vh var(--tx) 0;background:rgba(7,10,14,.96)}
+html.tv #nav button{flex:none;flex-direction:row;gap:calc(10 * var(--s));padding:calc(9 * var(--s)) calc(24 * var(--s));
+  border-radius:999px;font-size:calc(15 * var(--s));letter-spacing:.2px;transition:background .18s,color .18s,transform .18s}
+html.tv #nav button svg{width:calc(21 * var(--s));height:calc(21 * var(--s))}
+html.tv #nav button.on{background:rgba(232,179,60,.14);color:var(--accent2)}
+html.kbd.tv #nav button:focus{outline:0;background:linear-gradient(100deg,var(--accent),var(--accent2));color:#1A1203;
+  transform:scale(1.06);box-shadow:0 6px 22px rgba(232,179,60,.35)}
+html.tv header{position:relative;top:auto;padding:calc(8 * var(--s)) var(--tx)}
+html.tv main{padding:calc(6 * var(--s)) var(--tx) calc(var(--ty) + 12 * var(--s))}
+html.tv body.hasnav main{padding-bottom:calc(var(--ty) + 12 * var(--s))}
+html.tv #favs{padding:calc(var(--navh) + 12 * var(--s)) var(--tx) var(--ty)}
+
+/* header */
+html.tv .brand .w1,html.tv .brand .w2{font-size:calc(21 * var(--s));letter-spacing:calc(3.4 * var(--s))}
+html.tv .brand small{font-size:calc(10.5 * var(--s));margin-top:calc(3 * var(--s))}
+html.tv .iconbtn{width:calc(46 * var(--s));height:calc(46 * var(--s));border-radius:calc(14 * var(--s))}
+html.tv .iconbtn svg{width:calc(22 * var(--s));height:calc(22 * var(--s))}
+html.tv .ann{margin-top:calc(8 * var(--s));padding:calc(7 * var(--s)) calc(14 * var(--s));font-size:calc(13.5 * var(--s))}
+html.tv .catsel{margin-top:calc(9 * var(--s));padding:calc(11 * var(--s)) calc(16 * var(--s))}
+html.tv .catsel .cs-tx s{font-size:calc(11 * var(--s))}
+html.tv .catsel .cs-tx b{font-size:calc(17 * var(--s))}
+html.tv .chips{padding-top:calc(10 * var(--s));gap:calc(9 * var(--s))}
+html.tv .chip{padding:calc(8 * var(--s)) calc(18 * var(--s));font-size:calc(14.5 * var(--s))}
+
+/* the banner */
+html.tv .heroBox{--hh:min(44vh,calc(300 * var(--s)))}
+html.tv .hero{padding:calc(14 * var(--s)) calc(30 * var(--s));gap:calc(24 * var(--s))}
+html.tv .hero .in{max-width:min(640px,52%)}
+html.tv .hero .kick{font-size:calc(12 * var(--s));margin-bottom:calc(9 * var(--s))}
+html.tv .hero h1{font-size:calc(34 * var(--s));margin:0 0 calc(14 * var(--s))}
+html.tv .hero .go{padding:calc(12 * var(--s)) calc(28 * var(--s));font-size:calc(16 * var(--s))}
+html.tv .hero.sq .hp{height:calc(var(--hh) * .72)}
+html.tv .hero .hp{height:calc(var(--hh) - 34 * var(--s))}
+html.tv .heroDots{margin-top:calc(9 * var(--s))}
+html.tv .heroDots i{width:calc(7 * var(--s));height:calc(7 * var(--s))}
+html.tv .heroDots i.on{width:calc(24 * var(--s))}
+
+/* the rows */
+html.tv .hrow{margin-top:calc(22 * var(--s))}
+html.tv .rhead{margin-bottom:calc(12 * var(--s))}
+html.tv .rhead h3{font-size:calc(22 * var(--s))}
+html.tv .rhead .bar{width:calc(4 * var(--s));height:calc(20 * var(--s))}
+html.tv .rhead .all{font-size:calc(15 * var(--s))}
+html.tv .strip{gap:calc(16 * var(--s))}
+html.tv .strip .card{width:calc(132 * var(--s))}
+html.tv .strip.big .card{width:calc(152 * var(--s))}
+html.tv .grid{grid-template-columns:repeat(auto-fill,minmax(calc(128 * var(--s)),1fr));gap:calc(18 * var(--s))}
+html.tv .grid.posters{grid-template-columns:repeat(auto-fill,minmax(calc(144 * var(--s)),1fr))}
+html.tv .name{font-size:calc(14 * var(--s));padding-top:calc(9 * var(--s));min-height:calc(42 * var(--s))}
+html.tv .card .epg{font-size:calc(12 * var(--s))}
+html.tv .rt{font-size:calc(12 * var(--s))}
+
+/* focus: a bright ring, a small lift, and room around it so nothing is clipped */
+html.kbd.tv .card{transition:transform .18s ease}
+html.kbd.tv .card:focus{transform:scale(1.07);position:relative;z-index:3}
+html.kbd.tv .card:focus .tile,html.kbd.tv .card:focus .poster{box-shadow:0 0 0 calc(3 * var(--s)) #fff,0 0 0 calc(7 * var(--s)) var(--accent),0 16px 36px rgba(0,0,0,.55)}
+html.kbd.tv .strip{padding:calc(16 * var(--s)) calc(18 * var(--s)) calc(24 * var(--s));margin:calc(-16 * var(--s)) calc(-18 * var(--s)) calc(-24 * var(--s));
+  scroll-padding-inline:calc(18 * var(--s))}
+html.kbd.tv .card,html.kbd.tv .row,html.kbd.tv .ep,html.kbd.tv .hi,html.kbd.tv button{scroll-margin-top:calc(var(--navh) + 40 * var(--s));scroll-margin-bottom:calc(70 * var(--s))}
+html.kbd.tv button:focus,html.kbd.tv .chip:focus,html.kbd.tv .row:focus,html.kbd.tv .ep:focus{outline-width:calc(3 * var(--s));outline-offset:calc(2 * var(--s))}
+html.kbd.tv .hero .go:focus{transform:scale(1.06)}
+html.kbd.tv .ep:focus,html.kbd.tv .row:focus{background:var(--surface2)}
+
+/* empty, loading and error states read from a distance too */
+html.tv .empty{padding:calc(80 * var(--s)) calc(20 * var(--s))}
+html.tv .empty div:first-child{font-size:calc(58 * var(--s))}
+html.tv .empty p{font-size:calc(19 * var(--s))}
+html.tv #toast{bottom:calc(var(--ty) + 14 * var(--s));font-size:calc(16 * var(--s));padding:calc(12 * var(--s)) calc(22 * var(--s))}
+html.tv #sync{bottom:calc(var(--ty) + 14 * var(--s));font-size:calc(14 * var(--s))}
+
+/* a film's or series' page */
+html.tv #detail{--bd:min(54vh,calc(430 * var(--s)));--gut:var(--tx)}
+html.tv .dhero{gap:calc(28 * var(--s));padding-top:calc(var(--bd) - 170 * var(--s))}
+html.tv .dhero .pw{width:calc(190 * var(--s))}
+html.tv .dhero h2{font-size:calc(36 * var(--s))}
+html.tv .dhero .meta,html.tv .dhero .meta span{font-size:calc(15 * var(--s))}
+html.tv .dgen i{font-size:calc(12.5 * var(--s));padding:calc(4 * var(--s)) calc(12 * var(--s))}
+html.tv .dorig{font-size:calc(15 * var(--s))}
+html.tv .dacts .dact{max-width:calc(720 * var(--s))}
+html.tv .dacts .dplay{font-size:calc(18 * var(--s));padding:calc(15 * var(--s)) calc(24 * var(--s));min-width:calc(240 * var(--s))}
+html.tv .dacts .dghost{font-size:calc(16 * var(--s));padding:calc(13 * var(--s)) calc(20 * var(--s))}
+html.tv .dsubs .chip{font-size:calc(14.5 * var(--s))}
+html.tv .dtag{font-size:calc(15.5 * var(--s))}
+html.tv .dplot{font-size:calc(17 * var(--s));max-width:calc(1000 * var(--s))}
+html.tv .dsec{font-size:calc(19 * var(--s))}
+html.tv .dcast div{width:calc(96 * var(--s))}
+html.tv .dcast img,html.tv .dcast em{width:calc(80 * var(--s));height:calc(80 * var(--s))}
+html.tv .dcast b{font-size:calc(13.5 * var(--s))}
+html.tv .dcast s{font-size:calc(12 * var(--s))}
+html.tv .dfacts div{font-size:calc(15.5 * var(--s))}
+html.tv .dfacts b{width:calc(96 * var(--s))}
+html.tv .ep{padding:calc(13 * var(--s)) calc(16 * var(--s))}
+html.tv .ep .tx b{font-size:calc(17 * var(--s))}
+html.tv .ep .tx s{font-size:calc(13.5 * var(--s))}
+html.tv .ep .ov{font-size:calc(14 * var(--s))}
+html.tv .ep .st{width:calc(170 * var(--s))}
+html.tv .ep .no{width:calc(40 * var(--s));height:calc(40 * var(--s));font-size:calc(15 * var(--s))}
+html.tv #dclose,html.tv #dfav{width:calc(48 * var(--s));height:calc(48 * var(--s));top:calc(var(--ty) * .7)}
+html.tv #dclose{inset-inline-end:var(--tx)}
+html.tv #dfav{inset-inline-end:calc(var(--tx) + 62 * var(--s))}
+html.tv #detail .chips{padding-inline:var(--tx)}
+
+/* pages and sheets: a centred panel, not a phone's full-width one */
+html.tv #sheet .pn{inset-inline:auto;left:50%;transform:translateX(-50%);width:min(calc(760 * var(--s)),84vw);border-radius:22px 22px 0 0;padding-bottom:var(--ty);animation-name:tvup}
+@keyframes tvup{from{transform:translate(-50%,100%)}to{transform:translate(-50%,0)}}
+html.tv .row{padding:calc(15 * var(--s)) calc(18 * var(--s))}
+html.tv .row .tx b{font-size:calc(17 * var(--s))}
+html.tv .row .tx s{font-size:calc(13.5 * var(--s))}
+html.tv #settings .st-in{max-width:min(calc(920 * var(--s)),84vw)}
+html.tv .st-top{padding:calc(14 * var(--s)) var(--tx) calc(10 * var(--s))}
+html.tv .st-top h1{font-size:calc(26 * var(--s))}
+html.tv .st-hero .tx b{font-size:calc(18 * var(--s))}
+html.tv .hr b{font-size:calc(16 * var(--s))}
+html.tv .hr s,html.tv .hr em{font-size:calc(14 * var(--s))}
+html.tv .gbtn,html.tv .hbtn{font-size:calc(16 * var(--s))}
 </style>
 </head>
 <body>
@@ -4332,6 +4425,7 @@ function openSeries(sid, name){
            + esc(t().seasonN + " " + k) + '</button>';
     }).join("");
     pickSeason(curSeason);
+    tvDetailFocus();
   };
 
   if(SERIES_CACHE[sid]) { done(SERIES_CACHE[sid]); return }
@@ -4372,7 +4466,11 @@ function movieBody(url, name, i){
          +  '<span>'+esc(d.left.replace("%s", fmtTime(sp.d - sp.p)))+'</span></div></div>';
   }
 
+  /* the buttons are drawn again when TMDB answers: a remote's highlight on one of them must survive that */
+  var had = document.activeElement, keep = "";
+  if(had && $("dAct").contains(had)) keep = had.classList.contains("dplay") ? ".dplay" : had.classList.contains("dghost") ? ".dghost" : "";
   $("dAct").innerHTML = html;
+  if(keep){ var nb = $("dAct").querySelector(keep); if(nb) nb.focus() }
 
   /* the panel's own names, when TMDB has not given the cast with faces */
   i = i || {};
@@ -4403,6 +4501,7 @@ function openMovie(url, name){
 
   movieBody(url, name, null);
   subsRow();
+  tvDetailFocus();
 
   DBASE.rating = (item && item.r) ? { v: String(item.r) } : null;
   dMetaSet([item && item.c ? cleanGroup(item.c) : ""], DBASE.rating);
@@ -4501,6 +4600,13 @@ $("dEps").addEventListener("click", function(e){
   playWithSubs(list, idx, subTargetEp(el.getAttribute("data-u"), el.getAttribute("data-n"), el.getAttribute("data-en")));
 });
 function closeDetail(){ layerClose("detail") }
+
+/* a remote's highlight starts on Play (a film) or on the first episode (a series) */
+function tvDetailFocus(){
+  if(!TV) return;
+  var el = $("dAct").querySelector(".dplay") || $("dEps").querySelector(".ep");
+  if(el) try{ navFocus(el) }catch(e){}
+}
 
 /* ==================== sheet ==================== */
 var sheetStack = [];
@@ -4854,6 +4960,9 @@ var LAYERS = [];
 function layerOpen(name){
   LAYERS.push(name);
   try{ history.pushState({ k: LAYERS.length }, "") }catch(e){}
+  /* with a remote there is no finger to tap something first: the page that
+     just opened gets the highlight (a film page puts it on Play itself) */
+  if(TV) setTimeout(function(){ try{ navRestore() }catch(e){} }, 80);
 }
 /* close the top n layers, the same way Back does */
 function layerBack(n){
