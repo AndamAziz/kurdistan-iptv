@@ -1,4 +1,14 @@
 [en]
+Television: a new look for Android TV, Google TV and Fire TV. Larger text and
+tiles that scale with the screen (720p to 4K), a safe margin so nothing is cut
+off at the edges, a clear highlight that follows the remote, and the highlight
+starts in the right place when a film page or the player opens. Back returns
+to the card you left.
+
+On newer phones (Android 15 and later) the app is kept clear of the status bar,
+the navigation bar and the camera notch, and the keyboard no longer covers the
+search box. Tablets and TVs are no longer forced into one screen orientation.
+
 Live channels no longer switch to another channel by themselves. When a
 provider's server drops a channel, the app now reconnects the same channel
 instead of moving on to the next one; if it cannot come back, it says so.
@@ -17,6 +27,16 @@ top, fading into the page, the poster on its edge with the title, rating and
 genres beside it, and a full-width Play button underneath.
 
 [ku]
+تەلەڤزیۆن: دیزاینێکی نوێ بۆ Android TV و Google TV و Fire TV. نووسین و
+کارتی گەورەتر کە لەگەڵ شاشەکە گەورە دەبن (لە 720p تا 4K)، کەناری سەلامەت
+بۆ ئەوەی هیچ شتێک لە لێوارەکان نەبڕدرێت، ڕووناکییەکی ڕوون کە شوێنی ڕیموتەکە
+دەکەوێت، و ڕووناکییەکە لە شوێنی دروست دەستپێدەکات کاتێک پەڕەی فیلم یان
+پلەیەر دەکرێتەوە. دوگمەی گەڕانەوە دەتگەڕێنێتەوە بۆ ئەو کارتەی بەجێت هێشت.
+
+لەسەر مۆبایلە نوێیەکان (Android 15 و سەرووتر) ئەپەکە لە شریتی دۆخ و شریتی
+ڕێنیشاندەر و نۆچی کامێرا دوور دەمێنێتەوە، و کیبۆرد چیتر خانەی گەڕان ناگرێتەوە.
+تابلێت و تەلەڤزیۆن چیتر بە زۆر لە یەک ئاراستەی شاشە نابەسترێنەوە.
+
 کەناڵە ڕاستەوخۆکان چیتر خۆیان ناگۆڕن بۆ کەناڵێکی تر. کاتێک سێرڤەری پرۆڤایدەر
 کەناڵێک دەپچڕێنێت، ئەپەکە هەمان کەناڵ دووبارە پەیوەست دەکاتەوە لە جیاتی
 ئەوەی بچێتە سەر کەناڵی دواتر؛ ئەگەر نەگەڕایەوە، پێت دەڵێت.
@@ -34,6 +54,15 @@ z و x هەمان کار دەکەن.
 تەنیشتی، و دوگمەی Play بە پانی لە خوارەوە.
 
 [ar]
+التلفزيون: مظهر جديد لـ Android TV وGoogle TV وFire TV. نصوص وبطاقات أكبر
+تتناسب مع الشاشة (من 720p إلى 4K)، وهامش آمن كي لا يُقتطع شيء من الأطراف،
+وتمييز واضح يتبع جهاز التحكم، ويبدأ التمييز في المكان الصحيح عند فتح صفحة
+فيلم أو المشغّل. وزر الرجوع يعيدك إلى البطاقة التي غادرتها.
+
+على الهواتف الأحدث (Android 15 وما بعده) يبقى التطبيق بعيداً عن شريط الحالة
+وشريط التنقل وشق الكاميرا، ولم تعد لوحة المفاتيح تغطي مربع البحث. ولم تعد
+الأجهزة اللوحية والتلفزيونات مُجبرة على اتجاه شاشة واحد.
+
 لم تعد القنوات المباشرة تنتقل إلى قناة أخرى من تلقاء نفسها. عندما يقطع خادم
 المزوّد قناةً، يعيد التطبيق الاتصال بالقناة نفسها بدلاً من الانتقال إلى التالية؛
 وإن لم تعد، يخبرك بذلك.

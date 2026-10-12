@@ -47,6 +47,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.media3.common.C
 import androidx.media3.common.Format
+import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -277,17 +278,46 @@ class MainActivity : ComponentActivity() {
         val mode = try {
             (getSystemService(Context.UI_MODE_SERVICE) as UiModeManager).currentModeType
         } catch (e: Exception) { 0 }
+        fun has(feature: String) = try { packageManager.hasSystemFeature(feature) } catch (e: Exception) { false }
+        /* A box that does not call itself a television in its UI mode (many cheap
+           Android boxes) still says so in its features: Leanback is what Google Play
+           itself uses to tell a TV, and Fire TV has its own. */
         mode == Configuration.UI_MODE_TYPE_TELEVISION ||
+            has("android.software.leanback") || has("android.hardware.type.television") ||
+            has("amazon.hardware.fire_tv") ||
             (try { !packageManager.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN) } catch (e: Exception) { false })
+    }
+
+    /** A phone keeps its two fixed positions (upright pages, sideways video). A TV is
+     *  never turned, and on a big screen (tablet, foldable, desktop window - 600 dp and
+     *  up) Android 16 ignores such requests anyway: the layout has to cope, so it is
+     *  left to the person and the device there. */
+    private val holdsOrientation: Boolean by lazy {
+        !isTv && resources.configuration.smallestScreenWidthDp < 600
+    }
+
+    /** Android 9 and 10: the only cutout mode that exists there */
+    @Suppress("DEPRECATION")
+    @androidx.annotation.RequiresApi(Build.VERSION_CODES.P)
+    private fun cutoutOnShortEdges() {
+        window.attributes = window.attributes.also {
+            it.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            window.attributes.layoutInDisplayCutoutMode =
-                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+        /* Let the picture run into the notch in landscape. ALWAYS (Android 11+) is what
+           the deprecated SHORT_EDGES became; Android 15 treats the old values as ALWAYS
+           anyway. Android 9 and 10 only have SHORT_EDGES. */
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.attributes = window.attributes.also {
+                it.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+            }
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            cutoutOnShortEdges()
         }
 
         webView = findViewById(R.id.webView)
@@ -313,6 +343,7 @@ class MainActivity : ComponentActivity() {
         findViewById<TextView>(R.id.liveBadge).text = getString(R.string.live)
         buildAspectAndLockUi()
         buildChansUi()
+        setupEdgeInsets()
         focusRing(findViewById(R.id.btnClose), round = true)
         focusRing(findViewById(R.id.btnRetry), round = false, radiusDp = 14)
 
@@ -1015,7 +1046,9 @@ class MainActivity : ComponentActivity() {
         webView.visibility = View.GONE
         errorBox.visibility = View.GONE
         loading.visibility = View.VISIBLE
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        /* a phone turns sideways for the picture; a TV or a big screen is left alone */
+        requestedOrientation = if (holdsOrientation) ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                               else ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         setFullscreen(true)
         if (playerBrightness >= 0f) setWindowBrightness(playerBrightness)
         setPipAuto(!radioOn())        /* radio mode takes Home for the sound instead */
@@ -1202,6 +1235,22 @@ class MainActivity : ComponentActivity() {
         }
         if (!locked) topBar.visibility = View.VISIBLE
         playerView.showController()          /* does nothing while locked */
+        if (isTv) focusPlayerForRemote()
+    }
+
+    /**
+     * With a remote nothing is tapped first, so the highlight must start somewhere that
+     * is safe: on Play / Pause, not on the close button (one press of OK would then
+     * leave the player). Nothing else about the player's keys is changed.
+     */
+    private fun focusPlayerForRemote() {
+        playerView.isFocusable = true
+        playerView.post {
+            if (playerLayer.visibility != View.VISIBLE || locked) return@post
+            val id = resources.getIdentifier("exo_play_pause", "id", packageName)
+            val target = if (id != 0) playerView.findViewById<View>(id) else null
+            if (target != null && target.isShown) target.requestFocus() else playerView.requestFocus()
+        }
     }
 
     /** Title and LIVE badge for whichever item is on screen. */
@@ -1422,11 +1471,95 @@ class MainActivity : ComponentActivity() {
         webView.visibility = View.VISIBLE
         webView.requestFocus()                /* the remote works in the page again */
 
-        /* a phone goes back upright; a TV stays as it is (portrait would turn its picture) */
-        requestedOrientation = if (isTv) ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-                               else ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        /* a phone goes back upright; a TV stays as it is (portrait would turn its picture),
+           and so does a tablet or any big window */
+        requestedOrientation = if (holdsOrientation) ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                               else ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         setFullscreen(false)
         resetLock()
+    }
+
+    // ---------------- window insets: edge-to-edge, notches, TV safe area ----------------
+
+    /** a view the insets move with its margins; the margins it was built with are kept */
+    private class EdgeMargins(val v: View, val start: Int, val top: Int, val end: Int, val bottom: Int,
+                              val useStart: Boolean, val useEnd: Boolean, val useTop: Boolean, val useBottom: Boolean)
+    private val edgeViews = ArrayList<EdgeMargins>()
+    private var topBarBase = IntArray(4)
+    private var ctrlBase = IntArray(4)
+    private var ctrlView: View? = null
+    /** system bars + cutout, as the window last reported them: left, top, right, bottom */
+    private var sysInset = IntArray(4)
+
+    private fun trackEdges(v: View?, start: Boolean = false, end: Boolean = false, top: Boolean = false, bottom: Boolean = false) {
+        val lp = v?.layoutParams as? ViewGroup.MarginLayoutParams ?: return
+        edgeViews.add(EdgeMargins(v, lp.marginStart, lp.topMargin, lp.marginEnd, lp.bottomMargin, start, end, top, bottom))
+    }
+
+    /**
+     * Android 15 draws every app edge to edge, and a notch can sit in a landscape
+     * picture's corner. Nothing may then sit under the status bar, the navigation bar or
+     * the notch - so the page is moved inside them, and the player's own buttons are
+     * kept clear of them while the picture itself still fills the screen.
+     * A TV adds a safe area of its own (overscan: many screens cut off their edges).
+     * Before Android 15 the system already keeps the page clear of the bars, and the
+     * numbers arrive here as zero - nothing changes there.
+     */
+    private fun setupEdgeInsets() {
+        topBarBase = intArrayOf(topBar.paddingLeft, topBar.paddingTop, topBar.paddingRight, topBar.paddingBottom)
+        trackEdges(bottomBar, end = true, bottom = true)
+        trackEdges(btnUnlock, start = true)
+        trackEdges(panel, end = true, top = true, bottom = true)
+        trackEdges(catCol, start = true, top = true, bottom = true)
+        trackEdges(btnCols, start = true)
+        trackEdges(chanCol, start = true, top = true, bottom = true)
+        val ctl = resources.getIdentifier("exo_controller", "id", packageName)
+        ctrlView = if (ctl != 0) playerView.findViewById(ctl) else null
+        ctrlView?.let { ctrlBase = intArrayOf(it.paddingLeft, it.paddingTop, it.paddingRight, it.paddingBottom) }
+
+        if (isTv) {
+            /* sofa distance: bigger title, bigger close button, bigger badge */
+            txtTitle.textSize = 22f
+            findViewById<TextView>(R.id.liveBadge).textSize = 14f
+            findViewById<TextView>(R.id.btnClose).layoutParams.let { it.width = dp(52); it.height = dp(52) }
+            findViewById<TextView>(R.id.btnClose).textSize = 22f
+        }
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { _, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+            /* The keyboard too: once the window is edge to edge (Android 15) it no longer
+               pushes the page up by itself, and the search box would sit behind it. */
+            val kb = insets.getInsets(WindowInsetsCompat.Type.ime())
+            sysInset = intArrayOf(bars.left, bars.top, bars.right, maxOf(bars.bottom, kb.bottom))
+            applyEdgeInsets()
+            WindowInsetsCompat.CONSUMED
+        }
+        applyEdgeInsets()
+    }
+
+    private fun applyEdgeInsets() {
+        val dm = resources.displayMetrics
+        val tvX = if (isTv) (dm.widthPixels * 0.045f).toInt() else 0
+        val tvY = if (isTv) (dm.heightPixels * 0.04f).toInt() else 0
+        val l = sysInset[0] + tvX; val t = sysInset[1] + tvY; val r = sysInset[2] + tvX; val b = sysInset[3] + tvY
+        val rtl = resources.configuration.layoutDirection == View.LAYOUT_DIRECTION_RTL
+        val st = if (rtl) r else l; val en = if (rtl) l else r
+
+        /* the page: inside the bars (a TV's own safe area is in the page's style sheet) */
+        (webView.layoutParams as? ViewGroup.MarginLayoutParams)?.let {
+            it.setMargins(sysInset[0], sysInset[1], sysInset[2], sysInset[3])
+            webView.layoutParams = it
+        }
+        /* the player: the picture fills the screen, the controls keep clear of the edges */
+        topBar.setPadding(topBarBase[0] + l, topBarBase[1] + t, topBarBase[2] + r, topBarBase[3])
+        ctrlView?.setPadding(ctrlBase[0] + l, ctrlBase[1], ctrlBase[2] + r, ctrlBase[3] + b)
+        for (e in edgeViews) {
+            val lp = e.v.layoutParams as? ViewGroup.MarginLayoutParams ?: continue
+            lp.marginStart = e.start + (if (e.useStart) st else 0)
+            lp.marginEnd = e.end + (if (e.useEnd) en else 0)
+            lp.topMargin = e.top + (if (e.useTop) t else 0)
+            lp.bottomMargin = e.bottom + (if (e.useBottom) b else 0)
+            e.v.layoutParams = lp
+        }
     }
 
     private fun setFullscreen(on: Boolean) {
@@ -1439,6 +1572,8 @@ class MainActivity : ComponentActivity() {
         } else {
             controller.show(WindowInsetsCompat.Type.systemBars())
         }
+        /* the numbers change with it: ask for them again */
+        ViewCompat.requestApplyInsets(findViewById(R.id.root))
     }
 
     // ---------------- picture shape + screen lock ----------------
