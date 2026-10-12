@@ -1,4 +1,11 @@
 [en]
+Television: Live TV now looks like a TV guide. A menu runs down the side
+(Live TV, Movies, Series, Favorites, Settings), the categories sit in their own
+column with the number of channels in each, and the channels are a list with
+number, logo and name, plus a Search channels button. The remote's left and
+right arrows step between the categories and the channels. Older TVs whose
+system browser is out of date now show the channel logos and film posters too.
+
 Television: a new look for Android TV, Google TV and Fire TV. Larger text and
 tiles that scale with the screen (720p to 4K), a safe margin so nothing is cut
 off at the edges, a clear highlight that follows the remote, and the highlight
@@ -27,6 +34,13 @@ top, fading into the page, the poster on its edge with the title, rating and
 genres beside it, and a full-width Play button underneath.
 
 [ku]
+تەلەڤزیۆن: کەناڵە ڕاستەوخۆکان ئێستا وەک ڕێبەری تەلەڤزیۆن دەردەکەون. مێنیوێک
+لە لایەکەوە (کەناڵ، فیلم، زنجیرە، دڵخواز، ڕێکخستن)، پۆلەکان لە ستوونێکی جیا
+لەگەڵ ژمارەی کەناڵەکانیان، و کەناڵەکان وەک لیستێک بە ژمارە و لۆگۆ و ناو، لەگەڵ
+دوگمەی گەڕان. تیرە چەپ و ڕاستی ڕیموتەکە لەنێوان پۆل و کەناڵەکان دەگوازێتەوە.
+لەسەر تەلەڤزیۆنە کۆنەکان کە وێبی سیستەمەکەیان کۆنە، لۆگۆی کەناڵ و پۆستەری
+فیلمەکان ئێستا پیشان دەدرێن.
+
 تەلەڤزیۆن: دیزاینێکی نوێ بۆ Android TV و Google TV و Fire TV. نووسین و
 کارتی گەورەتر کە لەگەڵ شاشەکە گەورە دەبن (لە 720p تا 4K)، کەناری سەلامەت
 بۆ ئەوەی هیچ شتێک لە لێوارەکان نەبڕدرێت، ڕووناکییەکی ڕوون کە شوێنی ڕیموتەکە
@@ -54,6 +68,12 @@ z و x هەمان کار دەکەن.
 تەنیشتی، و دوگمەی Play بە پانی لە خوارەوە.
 
 [ar]
+التلفزيون: أصبحت القنوات المباشرة تبدو كدليل تلفزيوني. قائمة على الجانب
+(مباشر، أفلام، مسلسلات، المفضلة، الإعدادات)، والفئات في عمود مستقل مع عدد
+القنوات في كل منها، والقنوات كقائمة برقم وشعار واسم، مع زر البحث عن القنوات.
+سهما اليسار واليمين في جهاز التحكم ينقلان بين الفئات والقنوات. وعلى
+التلفزيونات القديمة ذات المتصفح القديم تظهر الآن شعارات القنوات وملصقات الأفلام.
+
 التلفزيون: مظهر جديد لـ Android TV وGoogle TV وFire TV. نصوص وبطاقات أكبر
 تتناسب مع الشاشة (من 720p إلى 4K)، وهامش آمن كي لا يُقتطع شيء من الأطراف،
 وتمييز واضح يتبع جهاز التحكم، ويبدأ التمييز في المكان الصحيح عند فتح صفحة

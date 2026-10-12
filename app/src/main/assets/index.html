@@ -137,15 +137,15 @@ section{margin-top:22px}
 @media(hover:hover) and (pointer:fine){.card:active{transform:scale(.96)}}
 .tile{position:relative;aspect-ratio:1;border-radius:var(--r-lg);overflow:hidden;background:var(--surface);
   border:1px solid var(--line);box-shadow:0 10px 24px rgba(0,0,0,.45)}
-.tile::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+.tile::after{content:"";position:absolute;top:0;right:0;bottom:0;left:0;border-radius:inherit;pointer-events:none;
   background:linear-gradient(160deg,rgba(255,255,255,.07),transparent 46%)}
-.mono{position:absolute;inset:0;display:grid;place-items:center;direction:ltr;font-weight:800;
+.mono{position:absolute;top:0;right:0;bottom:0;left:0;display:grid;place-items:center;direction:ltr;font-weight:800;
   font-size:clamp(14px,4.9vw,22px);letter-spacing:1.4px;color:rgba(255,255,255,.74);
   text-shadow:0 2px 10px rgba(0,0,0,.45)}
 /* Channel logos arrive as their own little pictures, most of them on their
    own white paper. The less dark frame left around that paper, the more
    the logo reads as the face of the tile instead of a sticker on it. */
-.tile img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:11%;background:#0D131B}
+.tile img{position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%;object-fit:contain;padding:11%;background:#0D131B}
 .dot{position:absolute;top:9px;inset-inline-start:9px;width:7px;height:7px;border-radius:99px;
   background:var(--live);box-shadow:0 0 0 3px rgba(47,191,113,.18);animation:pulse 2.1s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
@@ -214,7 +214,7 @@ section{margin-top:22px}
    directions need opposite rules to end up looking the same: reversed where
    the text runs left to right, plain where it runs right to left. */
 .hero{
-  position:absolute;inset:0;cursor:pointer;opacity:0;visibility:hidden;
+  position:absolute;top:0;right:0;bottom:0;left:0;cursor:pointer;opacity:0;visibility:hidden;
   display:flex;flex-direction:row-reverse;align-items:center;justify-content:space-between;
   gap:clamp(14px,4vw,26px);
   padding:14px clamp(16px,4.6vw,30px);box-sizing:border-box;text-align:start;
@@ -222,7 +222,7 @@ section{margin-top:22px}
 }
 html[dir=rtl] .hero{flex-direction:row}
 .hero.on{opacity:1;visibility:visible}
-.hero .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+.hero .bg{position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%;object-fit:cover;
   object-position:50% 26%;
   filter:blur(2px) saturate(1.12) brightness(.74);transform:scale(1.04);opacity:1}
 /* A picture made to be wide needs almost no blur - it fits the shape already.
@@ -240,7 +240,7 @@ html[dir=rtl] .hero{flex-direction:row}
 .hero.on .bg{animation:heroKen 11s ease-out both}
 @keyframes heroKen{from{transform:scale(1.1)}to{transform:scale(1.03)}}
 /* darkest where the words are, so the title reads over any picture */
-.hero .sc{position:absolute;inset:0;
+.hero .sc{position:absolute;top:0;right:0;bottom:0;left:0;
   background:linear-gradient(to right,rgba(7,10,14,.78) 0%,rgba(7,10,14,.42) 28%,rgba(7,10,14,.06) 58%,transparent 76%),
              linear-gradient(0deg,rgba(7,10,14,.36),transparent 52%),
              radial-gradient(140% 96% at 50% 50%,transparent 62%,rgba(7,10,14,.26) 100%)}
@@ -254,16 +254,16 @@ html[dir=rtl] .hero{flex-direction:row}
   transform:scale(.96);opacity:0;
   transition:transform .9s cubic-bezier(.2,.8,.2,1),opacity .9s ease}
 .hero.on .hp{transform:none;opacity:1}
-.hero .hp .mono{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+.hero .hp .mono{position:absolute;top:0;right:0;bottom:0;left:0;display:flex;align-items:center;justify-content:center;
   font-size:clamp(22px,6vw,34px);font-weight:900;color:rgba(255,255,255,.5);letter-spacing:1px}
-.hero .hp img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.hero .hp img{position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%;object-fit:cover;display:block}
 /* a live channel: its logo on a soft plate, square. Channel logos are drawn
    for white paper, so the plate is light - but a warm off-white, not a hole
    punched in the screen. */
 .hero.sq .hp{height:calc(var(--hh) * .62);aspect-ratio:1/1;border-radius:18px;
   background:linear-gradient(160deg,#FCFDFE,#E6EAEF)!important;
   box-shadow:0 16px 34px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.3)}
-.hero.sq .hp img{object-fit:contain;inset:13%;width:74%;height:74%}
+.hero.sq .hp img{object-fit:contain;top:13%;left:13%;width:74%;height:74%}
 .hero.sq .hp .mono{color:rgba(17,24,34,.3)}
 
 /* Nothing to show. A white plate only makes sense under a logo drawn for
@@ -390,6 +390,7 @@ html[dir=rtl] .rhead .all svg{transform:scaleX(-1)}
 }
 #nav button.on{color:var(--accent2)}
 #nav svg{display:block}
+#nav .logo,#nav .sp,#nav button[data-s=settings]{display:none}
 body.hasnav main{padding-bottom:calc(96px + var(--safe-b))}
 
 /* ---------- poster cards (movies / series) ---------- */
@@ -425,7 +426,7 @@ body.hasnav main{padding-bottom:calc(96px + var(--safe-b))}
 }
 .poster{position:relative;aspect-ratio:2/3;border-radius:var(--r-md);overflow:hidden;
   background:var(--surface);border:1px solid var(--line);box-shadow:0 10px 24px rgba(0,0,0,.45)}
-.poster img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.poster img{position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%;object-fit:cover}
 /* A picture the page has not asked for yet must never cover the letters that
    stand in for it, and it must still take up room - an element with no room
    is never seen coming, so it would never be asked for at all. */
@@ -440,7 +441,7 @@ img.rdy{animation:imgIn .25s ease both}
   border-radius:8px;padding:3px 7px;font-size:10.5px;font-weight:800;color:var(--accent2)}
 
 /* ---------- series detail ---------- */
-#detail{position:fixed;inset:0;z-index:70;background:var(--bg);overflow-y:auto;display:none}
+#detail{position:fixed;top:0;right:0;bottom:0;left:0;z-index:70;background:var(--bg);overflow-y:auto;display:none}
 #detail.on{display:block}
 /* ---- the header: a cinematic band ----
    The film's own still runs the full width at the top and fades into the
@@ -456,7 +457,7 @@ img.rdy{animation:imgIn .25s ease both}
 .dbg.on{opacity:1}
 /* the poster standing in for a still: soft, so it reads as light, not as a picture */
 .dbg.soft{filter:blur(18px) saturate(1.25) brightness(.72)}
-.dbg::after{content:"";position:absolute;inset:0;
+.dbg::after{content:"";position:absolute;top:0;right:0;bottom:0;left:0;
   background:linear-gradient(180deg,rgba(7,10,14,.62) 0%,rgba(7,10,14,0) 26%,rgba(7,10,14,.12) 52%,rgba(7,10,14,.78) 82%,var(--bg) 100%),
              radial-gradient(120% 90% at 50% 40%,transparent 55%,rgba(7,10,14,.45) 100%)}
 .dhero>.pw,.dhero>.dinfo{position:relative;z-index:1}
@@ -526,7 +527,7 @@ img.rdy{animation:imgIn .25s ease both}
 .dsubs .sp,#subWait .sp{width:12px;height:12px;border:2px solid rgba(255,255,255,.25);border-top-color:var(--accent2);
   border-radius:50%;display:inline-block;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-#subWait{position:fixed;inset:0;z-index:95;background:rgba(7,10,14,.72);display:none;place-items:center;
+#subWait{position:fixed;top:0;right:0;bottom:0;left:0;z-index:95;background:rgba(7,10,14,.72);display:none;place-items:center;
   backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 #subWait.on{display:grid}
 #subWait .pn{width:min(320px,86vw);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);
@@ -571,7 +572,7 @@ img.rdy{animation:imgIn .25s ease both}
 .ep:active{transform:scale(.98)}
 
 /* ---------- the first two seconds ---------- */
-#splash{position:fixed;inset:0;z-index:120;background:var(--bg);
+#splash{position:fixed;top:0;right:0;bottom:0;left:0;z-index:120;background:var(--bg);
   display:grid;place-items:center;overflow:hidden;transition:opacity .45s ease}
 #splash.gone{opacity:0;pointer-events:none}
 #splash::before{content:"";position:absolute;inset:-22% -32% auto;height:58%;pointer-events:none;
@@ -604,7 +605,7 @@ html.tv .sp-logo{width:124px;height:105px;margin-bottom:14px}
 html.tv #splash h1{font-size:23px}
 
 /* ---------- activation ---------- */
-#gate{position:fixed;inset:0;z-index:90;background:var(--bg);display:grid;place-items:center;
+#gate{position:fixed;top:0;right:0;bottom:0;left:0;z-index:90;background:var(--bg);display:grid;place-items:center;
   padding:22px;overflow:hidden}
 #gate.hide{display:none}
 /* two soft lights behind everything, the way a good sign-in screen looks */
@@ -677,9 +678,9 @@ html.tv .gc svg{width:14px;height:14px}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-9px)}75%{transform:translateX(9px)}}
 
 /* ---------- sheet ---------- */
-#sheet{position:fixed;inset:0;z-index:80;display:none}
+#sheet{position:fixed;top:0;right:0;bottom:0;left:0;z-index:80;display:none}
 #sheet.on{display:block}
-#sheet .bd{position:absolute;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(3px)}
+#sheet .bd{position:absolute;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.6);backdrop-filter:blur(3px)}
 #sheet .pn{position:absolute;inset-inline:0;bottom:0;max-height:88vh;overflow-y:auto;background:var(--bg2);
   border-radius:26px 26px 0 0;border-top:1px solid var(--line);
   padding:10px 16px calc(24px + var(--safe-b));animation:up .28s cubic-bezier(.2,.9,.3,1)}
@@ -748,12 +749,12 @@ html.tv .pinwrap .pin{width:46px;height:52px;font-size:20px}
 html.tv .pinwrap .keys{max-width:230px;margin-top:12px}
 
 /* ---------- settings page (opened from the ☰ button, covers the bottom bar) ---------- */
-#settings{position:fixed;inset:0;z-index:60;background:var(--bg);overflow-y:auto;display:none;
+#settings{position:fixed;top:0;right:0;bottom:0;left:0;z-index:60;background:var(--bg);overflow-y:auto;display:none;
   padding:calc(16px + var(--safe-t)) 16px calc(30px + var(--safe-b))}
 #settings.on{display:block}
 
 /* ---------- favourites tab (the bottom bar stays on top) ---------- */
-#favs{position:fixed;inset:0;z-index:25;background:var(--bg);overflow-y:auto;display:none;
+#favs{position:fixed;top:0;right:0;bottom:0;left:0;z-index:25;background:var(--bg);overflow-y:auto;display:none;
   padding:calc(16px + var(--safe-t)) 14px calc(100px + var(--safe-b))}
 #favs.on{display:block}
 #favs section{margin-top:18px}
@@ -799,7 +800,7 @@ html.tv .pinwrap .keys{max-width:230px;margin-top:12px}
 .hi .th{position:relative;flex:none;width:54px;height:54px;border-radius:13px;overflow:hidden;display:grid;
   place-items:center;direction:ltr;font-weight:900;font-size:14px;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.4)}
 .hi .th.pt{width:44px;height:64px;border-radius:10px;font-size:11px}
-.hi .th img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:10%;background:#0D131B}
+.hi .th img{position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%;object-fit:contain;padding:10%;background:#0D131B}
 .hi .th.pt img{object-fit:cover;padding:0}
 .hi .tx{flex:1;min-width:0}
 .hi .tx b{display:block;font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1096,20 +1097,31 @@ html.tv{--s:1px;--tx:4.5vw;--ty:4vh}
 @supports (width:clamp(1px,1vw,2px)){html.tv{--s:clamp(.75px,.078vw,2px)}}
 html.tv{--navh:calc(58 * var(--s) + 2.2vh)}
 
-/* the tab bar: centred pills at the top, inside the safe area */
-html.tv body{padding-top:var(--navh)}
-html.tv #nav{top:0;bottom:auto;height:var(--navh);align-items:center;justify-content:center;gap:calc(10 * var(--s));
-  border-top:0;border-bottom:1px solid var(--line);padding:2.2vh var(--tx) 0;background:rgba(7,10,14,.96)}
-html.tv #nav button{flex:none;flex-direction:row;gap:calc(10 * var(--s));padding:calc(9 * var(--s)) calc(24 * var(--s));
-  border-radius:999px;font-size:calc(15 * var(--s));letter-spacing:.2px;transition:background .18s,color .18s,transform .18s}
-html.tv #nav button svg{width:calc(21 * var(--s));height:calc(21 * var(--s))}
+/* the menu: a column down the side (the right side when the page reads right to left) */
+html.tv{--rail:calc(176 * var(--s))}
+html.tv body{padding-top:0;padding-left:var(--rail);padding-right:0}
+html[dir=rtl].tv body{padding-left:0;padding-right:var(--rail)}
+html.tv #nav{top:0;bottom:0;left:0;right:auto;width:var(--rail);height:auto;display:none;flex-direction:column;align-items:stretch;justify-content:flex-start;
+  border-top:0;border-right:1px solid var(--line);padding:var(--ty) calc(12 * var(--s));background:#0A0F16;box-sizing:border-box;
+  -webkit-backdrop-filter:none;backdrop-filter:none}
+html.tv #nav.on{display:flex}
+html[dir=rtl].tv #nav{left:auto;right:0;border-right:0;border-left:1px solid var(--line)}
+html.tv #nav .logo{display:block;text-align:center;font-weight:800;letter-spacing:calc(2.4 * var(--s));font-size:calc(13 * var(--s));color:var(--accent2);padding:0 0 calc(16 * var(--s))}
+html.tv #nav button{flex:none;display:flex;flex-direction:row;align-items:center;justify-content:flex-start;width:100%;margin:0 0 calc(8 * var(--s));
+  padding:calc(12 * var(--s)) calc(14 * var(--s));border-radius:calc(12 * var(--s));font-size:calc(16 * var(--s));text-align:start;
+  transition:background .18s,color .18s;box-sizing:border-box}
+html.tv #nav button svg{width:calc(24 * var(--s));height:calc(24 * var(--s));flex:none;margin-right:calc(12 * var(--s))}
+html[dir=rtl].tv #nav button svg{margin-right:0;margin-left:calc(12 * var(--s))}
 html.tv #nav button.on{background:rgba(232,179,60,.14);color:var(--accent2)}
-html.kbd.tv #nav button:focus{outline:0;background:linear-gradient(100deg,var(--accent),var(--accent2));color:#1A1203;
-  transform:scale(1.06);box-shadow:0 6px 22px rgba(232,179,60,.35)}
+html.tv #nav .sp{flex:1;min-height:calc(8 * var(--s))}
+html.kbd.tv #nav button:focus{outline:0;background:linear-gradient(100deg,var(--accent),var(--accent2));color:#1A1203;box-shadow:0 4px 16px rgba(232,179,60,.3)}
+html.tv #nav button[data-s=settings]{display:flex}
 html.tv header{position:relative;top:auto;padding:calc(8 * var(--s)) var(--tx)}
 html.tv main{padding:calc(6 * var(--s)) var(--tx) calc(var(--ty) + 12 * var(--s))}
 html.tv body.hasnav main{padding-bottom:calc(var(--ty) + 12 * var(--s))}
-html.tv #favs{padding:calc(var(--navh) + 12 * var(--s)) var(--tx) var(--ty)}
+html.tv #favs{padding:var(--ty) var(--tx)}
+html.tv #favs{left:var(--rail)}
+html[dir=rtl].tv #favs{left:0;right:var(--rail)}
 
 /* header */
 html.tv .brand .w1,html.tv .brand .w2{font-size:calc(21 * var(--s));letter-spacing:calc(3.4 * var(--s))}
@@ -1157,7 +1169,7 @@ html.kbd.tv .card:focus{transform:scale(1.07);position:relative;z-index:3}
 html.kbd.tv .card:focus .tile,html.kbd.tv .card:focus .poster{box-shadow:0 0 0 calc(3 * var(--s)) #fff,0 0 0 calc(7 * var(--s)) var(--accent),0 16px 36px rgba(0,0,0,.55)}
 html.kbd.tv .strip{padding:calc(16 * var(--s)) calc(18 * var(--s)) calc(24 * var(--s));margin:calc(-16 * var(--s)) calc(-18 * var(--s)) calc(-24 * var(--s));
   scroll-padding-inline:calc(18 * var(--s))}
-html.kbd.tv .card,html.kbd.tv .row,html.kbd.tv .ep,html.kbd.tv .hi,html.kbd.tv button{scroll-margin-top:calc(var(--navh) + 40 * var(--s));scroll-margin-bottom:calc(70 * var(--s))}
+html.kbd.tv .card,html.kbd.tv .row,html.kbd.tv .ep,html.kbd.tv .hi,html.kbd.tv button{scroll-margin-top:calc(40 * var(--s));scroll-margin-bottom:calc(70 * var(--s))}
 html.kbd.tv button:focus,html.kbd.tv .chip:focus,html.kbd.tv .row:focus,html.kbd.tv .ep:focus{outline-width:calc(3 * var(--s));outline-offset:calc(2 * var(--s))}
 html.kbd.tv .hero .go:focus{transform:scale(1.06)}
 html.kbd.tv .ep:focus,html.kbd.tv .row:focus{background:var(--surface2)}
@@ -1214,6 +1226,75 @@ html.tv .st-hero .tx b{font-size:calc(18 * var(--s))}
 html.tv .hr b{font-size:calc(16 * var(--s))}
 html.tv .hr s,html.tv .hr em{font-size:calc(14 * var(--s))}
 html.tv .gbtn,html.tv .hbtn{font-size:calc(16 * var(--s))}
+
+/* Live TV on a television: categories on one side, channels as a list on the other */
+html.tv.tvb .catsel,html.tv.tvb .ann{display:none}
+html.tv.tvb main{padding:0 calc(26 * var(--s)) 0 calc(18 * var(--s))}
+html[dir=rtl].tv.tvb main{padding:0 calc(18 * var(--s)) 0 calc(26 * var(--s))}
+html.tv.tvb header{padding:0 calc(26 * var(--s)) 0 calc(18 * var(--s));border-bottom:0;background:transparent}
+html.tv.tvb header::before,html.tv.tvb header::after{display:none}
+.tvb2{display:flex;align-items:stretch;height:calc(100vh - 8vh);padding-top:calc(var(--ty) * .6);box-sizing:border-box;direction:ltr}
+html[dir=rtl] .tvb2{direction:rtl}
+.tvcats{flex:none;width:30%;max-width:calc(380 * var(--s));overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
+  padding:calc(6 * var(--s)) calc(10 * var(--s)) calc(30 * var(--s)) 0;box-sizing:border-box;border-right:1px solid var(--line)}
+html[dir=rtl] .tvcats{padding:calc(6 * var(--s)) 0 calc(30 * var(--s)) calc(10 * var(--s));border-right:0;border-left:1px solid var(--line)}
+.tvcats h3{margin:0 0 calc(10 * var(--s));padding:0 calc(8 * var(--s));font-size:calc(13 * var(--s));letter-spacing:calc(1.4 * var(--s));text-transform:uppercase;color:var(--muted2)}
+.tvcat{display:flex;align-items:center;justify-content:space-between;margin:0 0 calc(4 * var(--s));padding:calc(12 * var(--s)) calc(14 * var(--s));
+  border-radius:calc(10 * var(--s));font-size:calc(16 * var(--s));font-weight:700;color:var(--muted);cursor:pointer;direction:inherit;box-sizing:border-box}
+.tvcat b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:inherit}
+.tvcat i{flex:none;font-style:normal;font-size:calc(13 * var(--s));color:var(--muted2);margin:0 calc(4 * var(--s)) 0 calc(10 * var(--s))}
+html[dir=rtl] .tvcat i{margin:0 calc(10 * var(--s)) 0 calc(4 * var(--s))}
+.tvcat.on{background:rgba(232,179,60,.14);color:var(--accent2)}
+html.kbd .tvcat:focus{outline:0;background:linear-gradient(100deg,var(--accent),var(--accent2));color:#1A1203}
+html.kbd .tvcat:focus i{color:#3A2A06}
+.tvlist{flex:1;min-width:0;display:flex;flex-direction:column;padding:0 0 0 calc(18 * var(--s))}
+html[dir=rtl] .tvlist{padding:0 calc(18 * var(--s)) 0 0}
+.tvhd{flex:none;display:flex;align-items:center;justify-content:space-between;padding:calc(6 * var(--s)) 0 calc(12 * var(--s))}
+.tvhd h2{margin:0;font-size:calc(24 * var(--s));font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tvhd span{flex:none;font-size:calc(15 * var(--s));color:var(--muted2);margin:0 calc(14 * var(--s))}
+.tvsrch{flex:none;display:flex;align-items:center;min-width:calc(250 * var(--s));padding:calc(11 * var(--s)) calc(16 * var(--s));border-radius:calc(12 * var(--s));
+  background:var(--surface);border:1px solid var(--line);color:var(--muted2);font-size:calc(15 * var(--s));font-family:inherit;cursor:pointer}
+.tvsrch svg{width:calc(20 * var(--s));height:calc(20 * var(--s));margin:0 calc(10 * var(--s)) 0 0;flex:none}
+html[dir=rtl] .tvsrch svg{margin:0 0 0 calc(10 * var(--s))}
+html.kbd .tvsrch:focus{outline:0;border-color:var(--accent2);box-shadow:0 0 0 calc(3 * var(--s)) var(--accent2)}
+.tvrows{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:calc(4 * var(--s)) calc(8 * var(--s)) calc(40 * var(--s)) 0;direction:inherit}
+.tvrow{display:flex;align-items:center;margin:0 0 calc(6 * var(--s));padding:calc(8 * var(--s)) calc(14 * var(--s));border-radius:calc(12 * var(--s));
+  background:var(--surface);border:1px solid transparent;cursor:pointer;box-sizing:border-box;width:auto}
+.tvrow .no{flex:none;width:calc(54 * var(--s));text-align:center;font-size:calc(16 * var(--s));font-weight:700;color:var(--muted2)}
+.tvrow .lg{position:relative;flex:none;width:calc(84 * var(--s));height:calc(52 * var(--s));margin:0 calc(16 * var(--s));border-radius:calc(8 * var(--s));overflow:hidden;background:#0D131B}
+.tvrow .lg img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;padding:0;background:transparent}
+.tvrow .lg .mono{position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;font-size:calc(16 * var(--s));letter-spacing:0}
+.tvrow .nm{flex:1;min-width:0;text-align:start}
+.tvrow .nm b{display:block;font-size:calc(19 * var(--s));font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tvrow .nm .epg{display:block;margin-top:calc(3 * var(--s));font-size:calc(13.5 * var(--s));color:var(--muted2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-height:0}
+.tvrow .st{flex:none;width:calc(9 * var(--s));height:calc(9 * var(--s));border-radius:50%;background:var(--live);margin:0 calc(4 * var(--s))}
+.tvrow.fav .nm b::after{content:" \2605";color:var(--accent2)}
+html.kbd.tv .card.tvrow:focus{transform:none;background:var(--surface2);border-color:var(--accent2);box-shadow:0 0 0 calc(3 * var(--s)) var(--accent2)}
+html.kbd.tv .card.tvrow:focus .no{color:var(--accent2)}
+.tvmore{padding:calc(16 * var(--s));text-align:center;color:var(--muted2);font-size:calc(14 * var(--s))}
+.tvnone{padding:calc(70 * var(--s)) 0;text-align:center;color:var(--muted2);font-size:calc(19 * var(--s))}
+
+/* Old television web views (before Chrome 88) know neither aspect-ratio nor
+   flex gaps; give the pieces that depended on them a size of their own so the
+   pictures and the cards never collapse to nothing. */
+@supports not (aspect-ratio:1){
+  .tile{height:0;padding-bottom:100%}
+  .poster{height:0;padding-bottom:150%}
+  .hero .hp{width:calc((var(--hh) - 42px) * .6667)}
+  .hero.sq .hp{width:calc(var(--hh) * .62)}
+  .dhero .pw{height:168px}
+  .ep .st{height:63px}
+  html.tv .hero .hp{width:calc((var(--hh) - 34 * var(--s)) * .6667)}
+  html.tv .hero.sq .hp{width:calc(var(--hh) * .72)}
+  html.tv .dhero .pw{height:calc(285 * var(--s))}
+  html.tv .ep .st{height:calc(96 * var(--s))}
+}
+html.nogap .strip>.card{margin-right:14px}
+html.nogap .chips>*{margin-right:8px}
+html.nogap.tv .strip>.card{margin-right:calc(16 * var(--s))}
+html[dir=rtl].nogap .strip>.card,html[dir=rtl].nogap .chips>*{margin-right:0;margin-left:12px}
+html.tv.tvb,html.tv.tvb body{overflow:hidden}
+html.tv.tvb header .top{display:none}
 </style>
 </head>
 <body>
@@ -1279,10 +1360,13 @@ html.tv .gbtn,html.tv .hbtn{font-size:calc(16 * var(--s))}
 </div>
 
 <nav id="nav">
+  <div class="logo" id="navLogo">KURDISTAN IPTV</div>
   <button data-s="live" onclick="navTap('live')"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="8" width="19" height="12.5" rx="2.6"/><path d="M8 3.5l4 4.2 4-4.2"/></svg><span id="navLive"></span></button>
   <button data-s="movies" onclick="navTap('movies')"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.4"/><path d="M8 4v16M16 4v16M3 12h18"/></svg><span id="navMovies"></span></button>
   <button data-s="series" onclick="navTap('series')"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="14" rx="2.4"/><path d="M7 3l3 3M17 3l-3 3"/></svg><span id="navSeries"></span></button>
   <button data-s="favs" onclick="navTap('favs')"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg><span id="navFavs"></span></button>
+  <div class="sp"></div>
+  <button data-s="settings" onclick="openSettings()"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span id="navSet"></span></button>
 </nav>
 
 <div id="detail">
@@ -1360,7 +1444,7 @@ var T = {
       noVod:"هیچ فیلمێک نییە",noSer:"هیچ زنجیرەیەک نییە",onlyXtream:"تەنها بۆ لیستی Xtream",
       tag:"پەخشی ڕاستەوخۆ",ann:"بەخێربێیت بۆ KURDISTAN IPTV — پەخشی ڕاستەوخۆی کەناڵە کوردی و نێودەوڵەتییەکان",
       recent:"بەردەوامبە لە بینین",none:"هیچ کەناڵێک نەدۆزرایەوە",lang:"زمان",
-      catLabel:"پۆل",catSearch:"گەڕان لە پۆلەکان…",
+      catLabel:"پۆل",chN:"کەناڵ",catSearch:"گەڕان لە پۆلەکان…",
       enter:"کۆدی چالاککردن داخڵ بکە",act:"چالاککردن",wrong:"کۆدەکە هەڵەیە",
       gcAsk:"کۆدت نییە؟ پەیوەندیمان پێوە بکە",gcMail:"ئیمەیڵ",gcCopied:"کۆپی کرا",
       actChecking:"چاوەڕێ بکە…",actExpired:"ماوەی ئەم کۆدە تەواو بووە",
@@ -1432,7 +1516,7 @@ var T = {
       noVod:"No movies here",noSer:"No series here",onlyXtream:"Xtream playlists only",
       tag:"LIVE STREAMING",ann:"Welcome to KURDISTAN IPTV — live Kurdish and international channels",
       recent:"Continue watching",none:"No channels found",lang:"Language",
-      catLabel:"Category",catSearch:"Search categories…",
+      catLabel:"Category",chN:"channels",catSearch:"Search categories…",
       enter:"Enter your activation code",act:"Activate",wrong:"Wrong code",
       gcAsk:"No code yet? Get in touch",gcMail:"Email",gcCopied:"Copied",
       actChecking:"Please wait…",actExpired:"This code has ended",
@@ -1504,7 +1588,7 @@ var T = {
       noVod:"لا توجد أفلام",noSer:"لا توجد مسلسلات",onlyXtream:"لقوائم Xtream فقط",
       tag:"بث مباشر",ann:"مرحباً بك في KURDISTAN IPTV — بث مباشر للقنوات الكردية والعالمية",
       recent:"متابعة المشاهدة",none:"لا توجد قنوات",lang:"اللغة",
-      catLabel:"الفئة",catSearch:"ابحث في الفئات…",
+      catLabel:"الفئة",chN:"قناة",catSearch:"ابحث في الفئات…",
       enter:"أدخل رمز التفعيل",act:"تفعيل",wrong:"الرمز غير صحيح",
       gcAsk:"ليس لديك رمز؟ تواصل معنا",gcMail:"البريد",gcCopied:"تم النسخ",
       actChecking:"يرجى الانتظار…",actExpired:"انتهت صلاحية هذا الرمز",
@@ -2427,10 +2511,12 @@ function drawNav(){
   $("navMovies").textContent = d.movies;
   $("navSeries").textContent = d.series;
   $("navFavs").textContent = d.navFavs;
+  $("navSet").textContent = d.menu;
   $("search").placeholder = x ? d.searchAll : d.search;
   var btns = document.querySelectorAll("#nav button");
   for(var i = 0; i < btns.length; i++){
     var sName = btns[i].getAttribute("data-s");
+    if(sName === "settings"){ btns[i].className = settingsOn() ? "on" : ""; continue }
     if(sName === "favs"){ btns[i].className = favOn ? "on" : ""; continue }
     btns[i].className = (!favOn && SECTION === sName ? "on" : "");
     btns[i].style.display = (sName !== "live" && !x) ? "none" : "";
@@ -3230,12 +3316,16 @@ function currentTitle(q){
 }
 function render(){
   imgReset();
+  document.documentElement.classList.remove("tvb");
   var q = ($("search").value || "").trim().toLowerCase();
   if(q){ heroStop(); renderSearch(); return }      /* search: channels + films + series */
   $("catsel").style.display = "";                  /* the category line comes back after a search */
   var src = items();
   view = q ? src.filter(function(c){ return c.n.toLowerCase().indexOf(q) > -1 })
            : (f === "ALL" ? src : src.filter(function(c){ return c.c === f }));
+
+  /* a television: the channels as a list beside their categories */
+  if(TV && SECTION === "live" && src.length){ heroStop(); tvBrowse(src); return }
 
   /* the home view: a hero and horizontal rows */
   heroStop();
@@ -3273,6 +3363,83 @@ function loadMore(){
   $("moreWrap").style.display = (shown < view.length) ? "block" : "none";
   imgScan();
 }
+/* ---------- television: categories + a list of channels ---------- */
+var TVC = 60, TVN = 0;
+function tvRowHTML(c, no){
+  var sid = epgOn() ? epgSid(c.u) : "";
+  var epg = sid ? '<span class="epg" data-e="'+esc(sid)+'">'+esc(epgFresh(EPG[sid]) ? epgLine(EPG[sid]) : "")+'</span>' : '';
+  var img = c.l ? '<img data-src="'+esc(c.l)+'" decoding="async" referrerpolicy="no-referrer" alt="">' : '';
+  return '<div class="card tvrow'+(isFav(c) ? " fav" : "")+'" data-u="'+esc(c.u)+'" data-n="'+esc(c.n)+'">'
+       + '<span class="no">'+no+'</span>'
+       + '<span class="lg" style="background:'+tileBg(hue(c.n))+'"><span class="mono">'+esc(initials(c.n))+'</span>'+img+'</span>'
+       + '<span class="nm"><b>'+esc(c.n)+'</b>'+epg+'</span><span class="st"></span></div>';
+}
+function tvMore(){
+  var box = $("tvrows");
+  if(!box || TVN >= view.length) return;
+  var next = view.slice(TVN, TVN + TVC), h = "", j;
+  for(j = 0; j < next.length; j++) h += tvRowHTML(next[j], TVN + j + 1);
+  box.insertAdjacentHTML("beforeend", h);
+  TVN += next.length;
+  imgScan();
+}
+function tvList(){
+  var d = t(), src = items(), box = $("tvrows");
+  view = (f === "ALL") ? src : src.filter(function(c){ return c.c === f });
+  TVN = 0;
+  $("tvT").textContent = currentTitle("");
+  $("tvCnt").textContent = view.length + " " + d.chN;
+  box.innerHTML = view.length ? "" : '<div class="tvnone">'+esc(d.none)+'</div>';
+  box.scrollTop = 0;
+  tvMore();
+}
+function tvFit(){
+  var b = $("tvb2");
+  if(!b) return;
+  var top = b.getBoundingClientRect().top + (window.pageYOffset || 0);
+  var h = window.innerHeight - top - Math.round(window.innerHeight * 0.04);
+  b.style.height = Math.max(240, h) + "px";
+}
+function tvPick(i){
+  f = i < 0 ? "ALL" : GROUPS[i];
+  var rows = document.querySelectorAll(".tvcat");
+  for(var k = 0; k < rows.length; k++)
+    rows[k].className = "row tvcat" + (+rows[k].getAttribute("data-tvc") === i ? " on" : "");
+  renderChips();
+  imgReset();
+  tvList();
+}
+function tvBrowse(src){
+  var d = t(), n = {}, i, h;
+  for(i = 0; i < src.length; i++) n[src[i].c] = (n[src[i].c] || 0) + 1;
+  var cur = (f === "ALL") ? -1 : GROUPS.indexOf(f);
+  var row = function(k, name, cnt){
+    return '<div class="row tvcat'+(k === cur ? " on" : "")+'" data-tvc="'+k+'" onclick="tvPick('+k+')"><b>'+esc(name)+'</b><i>'+cnt+'</i></div>';
+  };
+  h = '<div class="tvb2" id="tvb2"><div class="tvcats" id="tvcats"><h3>'+esc(d.catLabel)+'</h3>' + row(-1, d.all, src.length);
+  for(i = 0; i < GROUPS.length; i++) h += row(i, cleanGroup(GROUPS[i]), n[GROUPS[i]] || 0);
+  h += '</div><div class="tvlist"><div class="tvhd"><h2 id="tvT"></h2><span id="tvCnt"></span>'
+     + '<button class="tvsrch" onclick="toggleSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>'+esc(d.search.replace(/\.+$/, ""))+'</button></div>'
+     + '<div class="tvrows" id="tvrows"></div></div></div>';
+  $("main").innerHTML = h;
+  document.documentElement.classList.add("tvb");
+  $("tvrows").onscroll = function(){
+    if(this.scrollTop + this.clientHeight > this.scrollHeight - 700) tvMore();
+  };
+  window.scrollTo(0, 0);
+  tvFit();
+  tvList();
+  var on = document.querySelector(".tvcat.on");
+  if(on && on.scrollIntoView) try{ on.scrollIntoView({ block: "nearest" }) }catch(e){}
+}
+window.addEventListener("resize", function(){ if(document.documentElement.classList.contains("tvb")) tvFit() });
+document.addEventListener("focusin", function(e){
+  var r = e.target;
+  if(!r || !r.classList || !r.classList.contains("tvrow") || TVN >= view.length) return;
+  var box = $("tvrows");
+  if(box && Array.prototype.indexOf.call(box.children, r) > box.children.length - 14) tvMore();
+});
+
 /* One line that says which group you are in, and opens the list of them.
    A row of chips cannot show a hundred and nineteen categories; a list can. */
 function renderChips(){
@@ -3481,6 +3648,7 @@ function toggleSearch(){
   SQ_TYPE = "all";
   $("search").focus();
   searchWarm();                    /* films + series start loading while you type */
+  tvFit();
 }
 
 /* ==================== search: channels + films + series ====================
@@ -6101,7 +6269,7 @@ $("favs").addEventListener("click", function(e){
    here runs for touches: a phone behaves exactly as before. */
 var TV = false;
 try{ TV = !!(window.AndroidPlayer && AndroidPlayer.isTv && AndroidPlayer.isTv()) }catch(e){}
-var NAV_SEL = 'button, input, .card, .row, .ep, .hi, .hero.on, #pins, .rhead .all, .acc[tabindex]';
+var NAV_SEL = 'button, input, .card, .row, .tvcat, .ep, .hi, .hero.on, #pins, .rhead .all, .acc[tabindex]';
 var tvMem = {};                    /* last highlighted item, per page */
 var okDown = 0, okTimer = null, okFired = false;
 
@@ -6179,13 +6347,12 @@ function navNext(from, dir, items){
 function navRect(el){
   var r = el.getBoundingClientRect(), top = 0, bottom = window.innerHeight;
   var area = navArea(el), nav = $("nav"), hdr = document.querySelector("header");
-  var tvNav = document.documentElement.classList.contains("tv") && nav.classList.contains("on");
+  var tvNav = document.documentElement.classList.contains("tv");
   if(area === $("main")){
     top = hdr.getBoundingClientRect().bottom;
     if(!tvNav && nav.classList.contains("on")) bottom = nav.getBoundingClientRect().top;
   } else if(area === $("favs")){
-    if(tvNav) top = nav.getBoundingClientRect().bottom;
-    else if(nav.classList.contains("on")) bottom = nav.getBoundingClientRect().top;
+    if(!tvNav && nav.classList.contains("on")) bottom = nav.getBoundingClientRect().top;
   }
   var t = Math.max(r.top, top), b = Math.min(r.bottom, bottom);
   if(b <= t) return r;                        /* none of it is in the band: use where it really is */
@@ -6271,6 +6438,18 @@ document.addEventListener("keydown", function(e){
     kbdOn();
     var items = navItems();
     var cur = (ae && ae !== document.body && items.indexOf(ae) > -1) ? ae : null;
+    /* the two columns of Live TV: the side step goes straight across */
+    if(cur && (dir === "left" || dir === "right") && (cur.classList.contains("tvrow") || cur.classList.contains("tvcat"))){
+      var rtl = t().dir === "rtl", toCats = rtl ? (dir === "right") : (dir === "left");
+      if(cur.classList.contains("tvrow") && toCats){
+        var oc = document.querySelector(".tvcat.on");
+        if(oc){ navFocus(oc); e.preventDefault(); return }
+      } else if(cur.classList.contains("tvcat") && !toCats){
+        if(!cur.classList.contains("on")) cur.click();      /* the one you were on becomes the one you see */
+        var first = document.querySelector(".tvrow");
+        if(first){ navFocus(first); e.preventDefault(); return }
+      }
+    }
     var onHero = cur && cur.classList.contains("hero") && (dir === "left" || dir === "right");
     var next = onHero ? null : (cur ? navNext(cur, dir, items) : navStart(items));
     /* on the banner, left / right turn its pictures */
@@ -6329,6 +6508,15 @@ try{
   }).observe($("main"), { childList: true });
 }catch(e){}
 if(TV){ document.documentElement.classList.add("tv"); kbdOn() }
+/* an older web view ignores a gap between flex items; the classes keep a margin instead */
+try{
+  var gp = document.createElement("div");
+  gp.style.cssText = "display:flex;flex-direction:column;gap:3px;position:absolute;visibility:hidden";
+  gp.innerHTML = "<i></i><i></i>";
+  document.body.appendChild(gp);
+  if(gp.offsetHeight < 3) document.documentElement.classList.add("nogap");
+  document.body.removeChild(gp);
+}catch(e){}
 
 /* the guide fills itself in as cards appear, and again every minute */
 try{
