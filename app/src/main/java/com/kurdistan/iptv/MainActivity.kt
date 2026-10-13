@@ -13,6 +13,8 @@ import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.InsetDrawable
+import android.graphics.drawable.RippleDrawable
 import android.graphics.drawable.StateListDrawable
 import android.media.AudioManager
 import android.media.MediaCodecList
@@ -1254,38 +1256,40 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * The player's own round buttons (Play/Pause, rewind, forward, previous, next) get a gold
-     * ring that is the button's own background: it is drawn exactly inside the button's
-     * bounds, so it is centred on the icon. The default highlight is a ripple that is drawn
-     * relative to the button's parent and can sit off to one side when the controller is
-     * moved by the screen's safe margins. Only a remote ever focuses these, so a phone is
-     * unchanged.
+     * Every button of the player's own controls (Play/Pause, previous, next, rewind, forward,
+     * subtitles, settings, full screen ...) has the system ripple as its background. A ripple
+     * started by a remote's focus is drawn from a hotspot, not from the middle, so the gold
+     * highlight lands to one side of the button and cuts through it. Each of those ripples is
+     * replaced by a still ring that is drawn exactly inside the same view: centred on the
+     * icon, the same on every device. Icons are never touched (rewind and forward keep their
+     * picture as their own background; the ring goes on the frame around them, which shows
+     * its child's focus). Only a remote focuses these, so a phone is unchanged.
      */
     private fun styleTvControls() {
-        val names = listOf("exo_play_pause", "exo_prev", "exo_next", "exo_rew", "exo_ffwd",
-            "exo_rew_with_amount", "exo_ffwd_with_amount")
-        val done = HashSet<View>()
-        for (n in names) {
-            val id = resources.getIdentifier(n, "id", packageName)
-            if (id == 0) continue
-            var v: View = playerView.findViewById(id) ?: continue
-            /* the thing that takes the highlight: the view itself, or the focusable box around it */
-            if (!v.isFocusable) { val par = v.parent as? View; if (par != null && par.isFocusable) v = par }
-            if (!done.add(v)) continue
-            val ring = GradientDrawable().apply {
-                shape = GradientDrawable.OVAL
+        val root: View = ctrlView ?: playerView
+        fun ring(v: View) {
+            val r = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = dp(200).toFloat()        /* a circle on a square button, a pill otherwise */
                 setColor(0x33E8B33C)
                 setStroke(dp(3), 0xFFE8B33C.toInt())
             }
             v.background = StateListDrawable().apply {
-                addState(intArrayOf(android.R.attr.state_focused), ring)
+                addState(intArrayOf(android.R.attr.state_focused), InsetDrawable(r, dp(2)))
                 addState(IntArray(0), ColorDrawable(Color.TRANSPARENT))
             }
-            v.foreground = null
+            if (Build.VERSION.SDK_INT >= 26) v.defaultFocusHighlightEnabled = false
             v.stateListAnimator = null
-            (v.parent as? ViewGroup)?.clipChildren = false
-            (v.parent as? ViewGroup)?.clipToPadding = false
         }
+        fun walk(v: View) {
+            if (v is ViewGroup) {
+                v.clipChildren = false
+                v.clipToPadding = false
+                for (i in 0 until v.childCount) walk(v.getChildAt(i))
+            }
+            if (v !== root && v.background is RippleDrawable) ring(v)
+        }
+        walk(root)
     }
 
     /** Title and LIVE badge for whichever item is on screen. */
