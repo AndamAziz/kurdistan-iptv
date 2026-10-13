@@ -1253,6 +1253,41 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /**
+     * The player's own round buttons (Play/Pause, rewind, forward, previous, next) get a gold
+     * ring that is the button's own background: it is drawn exactly inside the button's
+     * bounds, so it is centred on the icon. The default highlight is a ripple that is drawn
+     * relative to the button's parent and can sit off to one side when the controller is
+     * moved by the screen's safe margins. Only a remote ever focuses these, so a phone is
+     * unchanged.
+     */
+    private fun styleTvControls() {
+        val names = listOf("exo_play_pause", "exo_prev", "exo_next", "exo_rew", "exo_ffwd",
+            "exo_rew_with_amount", "exo_ffwd_with_amount")
+        val done = HashSet<View>()
+        for (n in names) {
+            val id = resources.getIdentifier(n, "id", packageName)
+            if (id == 0) continue
+            var v: View = playerView.findViewById(id) ?: continue
+            /* the thing that takes the highlight: the view itself, or the focusable box around it */
+            if (!v.isFocusable) { val par = v.parent as? View; if (par != null && par.isFocusable) v = par }
+            if (!done.add(v)) continue
+            val ring = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(0x33E8B33C)
+                setStroke(dp(3), 0xFFE8B33C.toInt())
+            }
+            v.background = StateListDrawable().apply {
+                addState(intArrayOf(android.R.attr.state_focused), ring)
+                addState(IntArray(0), ColorDrawable(Color.TRANSPARENT))
+            }
+            v.foreground = null
+            v.stateListAnimator = null
+            (v.parent as? ViewGroup)?.clipChildren = false
+            (v.parent as? ViewGroup)?.clipToPadding = false
+        }
+    }
+
     /** Title and LIVE badge for whichever item is on screen. */
     private fun applyItemChrome(index: Int) {
         txtTitle.text = titles.getOrNull(index) ?: ""
@@ -1523,6 +1558,7 @@ class MainActivity : ComponentActivity() {
             findViewById<TextView>(R.id.liveBadge).textSize = 14f
             findViewById<TextView>(R.id.btnClose).layoutParams.let { it.width = dp(52); it.height = dp(52) }
             findViewById<TextView>(R.id.btnClose).textSize = 22f
+            styleTvControls()
         }
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { _, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
