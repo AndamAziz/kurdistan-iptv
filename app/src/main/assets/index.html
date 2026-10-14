@@ -4337,7 +4337,12 @@ function hashStr(x){ var h = 5381; x = String(x); for(var i = 0; i < x.length; i
 
 /* ---- what has been made: stream address (or film) -> language -> file ---- */
 function subMap(){ var o = null; try{ o = JSON.parse(lsGet("kiptv_subs", "{}")) }catch(e){} return o || {} }
-function subHave(key, lang){ var m = subMap(); return m[key] && m[key][lang] || null }
+/* KU_V: Kurdish files made before the Google fixes of this version are made again once */
+var KU_V = 2;
+function subHave(key, lang){
+  var m = subMap(), r = m[key] && m[key][lang] || null;
+  return r && lang === "ku-ai" && (r.v || 0) < KU_V ? null : r;
+}
 function subKeep(keys, lang, rec){
   var m = subMap();
   keys.forEach(function(k){ if(!k) return; m[k] = m[k] || {}; m[k][lang] = rec; m[k].at = Date.now() });
@@ -4649,7 +4654,13 @@ function gClean(x){
     return l.replace(/\[[^\]]*\]|\([^)]*\)|\u266A|\u266B/g, " ")
             .replace(/^(\s*-?\s*)[A-Z][A-Z .'-]{1,24}:\s*/, "$1")
             .replace(/\s{2,}/g, " ").trim();
-  }).filter(function(l){ return l && !/^-\s*$/.test(l) }).join("\n");
+  }).filter(function(l){ return l && !/^-\s*$/.test(l) }).reduce(function(acc, l, k, all){
+    /* one sentence broken over two lines is sent as one line: Google translates each line
+       on its own and fills a half line with nonsense ("Walt." became "2020"). Two speakers
+       ("- Yes." / "- No.") stay on their own lines. */
+    var dialogue = all.length > 1 && all.every(function(x){ return /^-/.test(x) });
+    return k === 0 ? l : acc + (dialogue ? "\n" : " ") + l;
+  }, "");
 }
 /* One sentence often runs over two or three cues. Translated piece by piece, Kurdish - verb
    last - comes out broken; so a sentence goes whole and is shared back over its cues. */
@@ -4780,6 +4791,7 @@ function prepareSub(tg, lang, onPct, noHash){
         var f = subSave("s" + hashStr(qk) + "_" + lang + ".srt", text);
         if(!f) throw new Error(t().subNoSave);
         var rec = { f: f };
+        if(lang === "ku-ai") rec.v = KU_V;
         subKeep([tg.u, qk], lang, rec);
         return rec;
       };
