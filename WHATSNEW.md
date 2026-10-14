@@ -1,4 +1,9 @@
 [en]
+Kurdish subtitles from Google read better: a sentence broken over two lines of
+one subtitle is translated as one sentence (Google used to fill a half line with
+nonsense such as a year). Kurdish files made before this version are made again
+once, the next time they are chosen.
+
 Subtitles in the player now really work: the page's replies never reached the
 player before (each reply carried the wrong number of values and was refused),
 so a tap only showed loading and then "No answer". Now progress, Ready and
@@ -65,6 +70,10 @@ top, fading into the page, the poster on its edge with the title, rating and
 genres beside it, and a full-width Play button underneath.
 
 [ku]
+ژێرنووسی کوردی Google باشتر دەخوێنرێتەوە: ڕستەیەک کە بە دوو دێڕی یەک ژێرنووس
+دابەشکراوە وەک یەک ڕستە وەردەگێڕدرێت (پێشتر Google نیوە دێڕی پڕ دەکردەوە بە شتی بێمانا
+وەک ساڵێک). فایلی کوردی کۆن یەک جار دووبارە دروست دەکرێتەوە کاتێک هەڵدەبژێردرێت.
+
 ژێرنووس لە ناو پلەیەر ئێستا بە ڕاستی کار دەکات: پێشتر وەڵامی پەیجەکە نەدەگەیشتە
 پلەیەر (ژمارەی بەهاکان هەڵە بوو و ڕەت دەکرایەوە)، بۆیە کلیک تەنها لۆدینگ و دواتر
 «وەڵام نەهات»ی پیشان دەدا. ئێستا ڕێژە، ئامادەبوون و هەڵەکان دەگەن و زمانەکە دەکرێتەوە.
@@ -126,6 +135,10 @@ z و x هەمان کار دەکەن.
 تەنیشتی، و دوگمەی Play بە پانی لە خوارەوە.
 
 [ar]
+ترجمة Google الكردية أوضح: الجملة المقسومة على سطرين في الترجمة الواحدة تُترجم
+جملةً واحدة (كان Google يملأ نصف السطر بكلام بلا معنى كسنةٍ ما). وتُعاد الملفات الكردية
+القديمة مرة واحدة عند اختيارها.
+
 الترجمة داخل المشغّل تعمل الآن فعلاً: لم تكن ردود الصفحة تصل إلى المشغّل (كل رد
 كان يحمل عدداً خاطئاً من القيم فيُرفض)، فكان الضغط يُظهر التحميل ثم «لا إجابة». الآن
 تصل النسبة والجاهزية والأخطاء وتعمل اللغة. وترجمة Google الكردية أفضل: لغة المصدر
