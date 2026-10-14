@@ -3991,7 +3991,7 @@ function tmdbApply(v, tok){
   DTMDB = v;
   var d = t();
   if(v.bd){
-    var src = TMDB_IMG + "w780" + v.bd, im = new Image();
+    var src = TMDB_IMG + "w1280" + v.bd, im = new Image();     /* TMDB's widest still: sharp on a TV too */
     im.onload = function(){
       if(tok !== DTOK) return;
       $("dBg").style.backgroundImage = 'url("' + src + '")';
