@@ -1,4 +1,12 @@
 [en]
+Subtitles in the player now really work: the page's replies never reached the
+player before (each reply carried the wrong number of values and was refused),
+so a tap only showed loading and then "No answer". Now progress, Ready and
+errors arrive, and the language switches on. Google's Kurdish is better: the
+source language is named, a sentence that runs over two or three lines is
+translated whole and shared back over them, and sound notes and speaker names
+such as [music] or JOHN: are left out.
+
 Subtitle language buttons in the player settings now always answer: a tap
 shows a small spinner, a thin progress bar and the percent on that row, a failed
 try stays on the row in red with a Get button to try again, and a page that does
@@ -57,6 +65,12 @@ top, fading into the page, the poster on its edge with the title, rating and
 genres beside it, and a full-width Play button underneath.
 
 [ku]
+ژێرنووس لە ناو پلەیەر ئێستا بە ڕاستی کار دەکات: پێشتر وەڵامی پەیجەکە نەدەگەیشتە
+پلەیەر (ژمارەی بەهاکان هەڵە بوو و ڕەت دەکرایەوە)، بۆیە کلیک تەنها لۆدینگ و دواتر
+«وەڵام نەهات»ی پیشان دەدا. ئێستا ڕێژە، ئامادەبوون و هەڵەکان دەگەن و زمانەکە دەکرێتەوە.
+کوردی Google باشترە: زمانی سەرچاوە دیاری دەکرێت، ڕستەیەک کە بە دوو سێ دێڕدا دەڕوات
+بە تەواوی وەردەگێڕدرێت و دابەش دەکرێتەوە، و دەنگ و ناوی قسەکەر وەک [music] لادەبرێن.
+
 دوگمەی زمانەکانی ژێرنووس لە ڕێکخستنەکانی پلەیەر ئێستا هەمیشە وەڵام دەداتەوە:
 کلیک دەبێتە لۆدەرێکی بچووک، هێڵی پێشکەوتن و ڕێژە لەسەر هەمان ڕیز، هەڵە لەسەر
 ڕیزەکە بە سوور دەمێنێتەوە لەگەڵ دوگمەی دووبارە هەوڵدان، و ئەگەر پەیج وەڵام
@@ -112,6 +126,12 @@ z و x هەمان کار دەکەن.
 تەنیشتی، و دوگمەی Play بە پانی لە خوارەوە.
 
 [ar]
+الترجمة داخل المشغّل تعمل الآن فعلاً: لم تكن ردود الصفحة تصل إلى المشغّل (كل رد
+كان يحمل عدداً خاطئاً من القيم فيُرفض)، فكان الضغط يُظهر التحميل ثم «لا إجابة». الآن
+تصل النسبة والجاهزية والأخطاء وتعمل اللغة. وترجمة Google الكردية أفضل: لغة المصدر
+محددة، والجملة الممتدة على سطرين أو ثلاثة تُترجم كاملة ثم توزَّع، وتُحذف الأصوات
+وأسماء المتكلمين مثل [music].
+
 أزرار لغات الترجمة في إعدادات المشغّل تستجيب الآن دائماً: الضغط يُظهر مؤشر تحميل
 صغيراً وشريط تقدّم رفيعاً والنسبة على الصف نفسه، والمحاولة الفاشلة تبقى على الصف
 بالأحمر مع زر لإعادة المحاولة، وإن لم تجب الصفحة يُعلَم ذلك بعد ثوانٍ. والأفلام

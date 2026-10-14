@@ -4612,9 +4612,10 @@ var G_HOSTS = [
 ];
 var G_UA = "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Mobile Safari/537.36";
 var G_AT = 0;
+var G_SL = "auto";
 function gBatch(items, tries){
   tries = tries || 0;
-  var host = G_HOSTS[G_AT % G_HOSTS.length];
+  var host = G_HOSTS[G_AT % G_HOSTS.length].replace("sl=auto", "sl=" + encodeURIComponent(G_SL || "auto"));
   var body = items.map(function(c){ return "q=" + encodeURIComponent(c.q != null ? c.q : c.tx) }).join("&");
   return nativeHttp("POST", host, { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
                                     "User-Agent": G_UA, "Accept": "*/*" }, body).then(function(r){
@@ -4642,21 +4643,59 @@ function gBatch(items, tries){
 /* what was translated so far, per film: a stopped job carries on from there */
 var SUBPART = {};
 
-function aiSrt(srt, onPct, partKey, about){
+/* Sound notes and speaker names are not speech: "[door slams]", "(LAUGHS)", "JOHN:" */
+function gClean(x){
+  return String(x || "").split("\n").map(function(l){
+    return l.replace(/\[[^\]]*\]|\([^)]*\)|\u266A|\u266B/g, " ")
+            .replace(/^(\s*-?\s*)[A-Z][A-Z .'-]{1,24}:\s*/, "$1")
+            .replace(/\s{2,}/g, " ").trim();
+  }).filter(function(l){ return l && !/^-\s*$/.test(l) }).join("\n");
+}
+/* One sentence often runs over two or three cues. Translated piece by piece, Kurdish - verb
+   last - comes out broken; so a sentence goes whole and is shared back over its cues. */
+function gUnits(todo){
+  var units = [], u = null;
+  todo.forEach(function(c, k){
+    var prev = todo[k - 1];
+    var joins = u && prev && prev.i === c.i - 1 && u.cues.length < 3 && c.q && prev.q
+      && !/[.!?…:"”♪)\]]\s*$/.test(prev.q) && !/^\s*-/.test(c.q)
+      && (u.q.length + c.q.length) < 170 && prev.q.indexOf("\n") < 0 && c.q.indexOf("\n") < 0;
+    if(joins){ u.cues.push(c); u.q += " " + c.q.replace(/^\.\.\.\s*/, "") }
+    else { u = { i: c.i, cues: [c], q: c.q }; units.push(u) }
+  });
+  return units;
+}
+/* the Kurdish of a whole sentence, cut at spaces in the same proportions as the English cues */
+function gShare(text, cues){
+  if(cues.length === 1) return [text];
+  var w = String(text).replace(/\s+/g, " ").trim().split(" "), out = [], at = 0;
+  var lens = cues.map(function(c){ return Math.max(1, c.q.length) }), all = lens.reduce(function(a, b){ return a + b }, 0), acc = 0;
+  for(var k = 0; k < cues.length; k++){
+    acc += lens[k];
+    var end = k === cues.length - 1 ? w.length : Math.max(at + 1, Math.min(w.length - (cues.length - k - 1), Math.round(w.length * acc / all)));
+    out.push(w.slice(at, end).join(" "));
+    at = end;
+  }
+  return out;
+}
+function aiSrt(srt, onPct, partKey, about, srcLang){
   var eng = subEngine();
+  G_SL = srcLang && /^[a-z]{2}$/.test(srcLang) ? srcLang : "auto";
   if(eng !== "google" && !aiKey()) return Promise.reject(new Error(t().subNoAi));
   var cues = srtParse(srt);
   if(!cues.length) return Promise.reject(new Error("empty subtitle file"));
-  cues.forEach(function(c, i){ c.i = i + 1; if(eng === "google") c.q = cueSplit(c) });
+  cues.forEach(function(c, i){ c.i = i + 1; if(eng === "google") c.q = gClean(cueSplit(c)) });
   var part = partKey ? (SUBPART[partKey] = SUBPART[partKey] || { done: {} }) : { done: {} };
+  /* a cue that was only a sound note has nothing to say: it is left out */
+  if(eng === "google") cues.forEach(function(c){ if(!c.q && part.done[c.i] == null) part.done[c.i] = "" });
   var todo = cues.filter(function(c){ return part.done[c.i] == null });
   var batches = [];
   if(eng === "google"){
     /* about 4000 letters a request, the size the free service takes without complaint */
     var cur = [], len = 0;
-    todo.forEach(function(c){
-      if(cur.length && (len + c.tx.length > 4000 || cur.length >= 100)){ batches.push(cur); cur = []; len = 0 }
-      cur.push(c); len += c.tx.length + 3;
+    gUnits(todo).forEach(function(c){
+      if(cur.length && (len + c.q.length > 4000 || cur.length >= 100)){ batches.push(cur); cur = []; len = 0 }
+      cur.push(c); len += c.q.length + 3;
     });
     if(cur.length) batches.push(cur);
   } else {
@@ -4673,7 +4712,13 @@ function aiSrt(srt, onPct, partKey, about){
     if(failed || next >= batches.length) return Promise.resolve();
     var b = batches[next++];
     return run(b).then(function(by){
-      b.forEach(function(c){ if(by[c.i] != null && String(by[c.i]).trim()) part.done[c.i] = by[c.i] });
+      b.forEach(function(c){
+        if(by[c.i] == null || !String(by[c.i]).trim()) return;
+        if(c.cues){                                   /* a Google unit: one sentence over its cues */
+          var parts = gShare(by[c.i], c.cues);
+          c.cues.forEach(function(x, k){ part.done[x.i] = parts[k] || "" });
+        } else part.done[c.i] = by[c.i];
+      });
       done++;
       if(onPct) onPct(Math.round((cues.length - todo.length + done / batches.length * todo.length) / cues.length * 100));
       /* a breath between requests, so the free service does not count us as a flood */
@@ -4684,9 +4729,9 @@ function aiSrt(srt, onPct, partKey, about){
   for(var w = 0; w < Math.min(eng === "google" ? 1 : 5, batches.length); w++) crew.push(worker());
   return Promise.all(crew).then(function(){
     if(failed) throw failed;
-    cues.forEach(function(c){ if(part.done[c.i] != null) c.tx = eng === "google" ? cueJoin(c, part.done[c.i]) : kuLines(kuWrap(kuFix(part.done[c.i]))) });
+    cues.forEach(function(c){ if(part.done[c.i] != null) c.tx = eng === "google" ? (part.done[c.i] ? cueJoin(c, part.done[c.i]) : "") : kuLines(kuWrap(kuFix(part.done[c.i]))) });
     if(partKey) delete SUBPART[partKey];
-    return srtBuild(cues);
+    return srtBuild(cues.filter(function(c){ return String(c.tx).replace(/<[^>]*>|\{[^}]*\}|\u200F/g, "").trim() }));
   });
 }
 
@@ -4755,7 +4800,7 @@ function prepareSub(tg, lang, onPct, noHash){
           var fs = subSave("s" + hashStr(qk) + "_" + src.lang + ".srt", srt);
           if(fs && !subHave(tg.u, src.lang)) subKeep([tg.u, qk], src.lang, { f: fs });
         }catch(e){}
-        return aiSrt(srt, function(p){ tell(6 + Math.round(p * 0.94)) }, qk + "|" + subEngine(), subAbout(tg));
+        return aiSrt(srt, function(p){ tell(6 + Math.round(p * 0.94)) }, qk + "|" + subEngine(), subAbout(tg), src.lang);
       }).then(function(text){ delete SUBPART["src:" + qk]; return store(text) });
     });
   });
@@ -4847,8 +4892,19 @@ function tgFor(u){
   return null;
 }
 function subLangCode(l){ return l === "ku-ai" ? "ckb" : l }
-function nativeSub(fn, a, b, c, d, e){
-  try{ if(window.AndroidPlayer && AndroidPlayer[fn]) AndroidPlayer[fn](a, b, c, d, e) }catch(x){}
+/* The app's methods are found by name AND by how many values they are given: subProgress
+   (3) called with 5 is "method not found" and nothing arrives. So each goes with exactly its own. */
+function nativeSub(fn){
+  var a = Array.prototype.slice.call(arguments, 1), o = window.AndroidPlayer;
+  try{
+    if(!o || !o[fn]) return;
+    switch(a.length){
+      case 2: o[fn](a[0], a[1]); break;
+      case 3: o[fn](a[0], a[1], a[2]); break;
+      case 4: o[fn](a[0], a[1], a[2], a[3]); break;
+      default: o[fn](a[0], a[1], a[2], a[3], a[4]);
+    }
+  }catch(x){}
 }
 /* which languages the player can offer for this stream, and in what state */
 window.kiptvSubInfo = function(u){
@@ -4880,7 +4936,7 @@ window.kiptvSubReq = function(u, lang){
   if(!tg){ nativeSub("subFail", u, lang, t().subNoId); return }
   lsSet("kiptv_sublang", lang);          /* the next episode follows the same choice */
   /* the stream is being played: its fingerprint is only used when it was read before */
-  prepareSub(tg, lang, function(p){ nativeSub("subProgress", u, lang, p) }, true).then(function(rec){
+  prepareSub(tg, lang, function(p){ nativeSub("subProgress", u, lang, Math.max(1, Math.min(100, Math.round(p) || 1))) }, true).then(function(rec){
     nativeSub("subReady", u, lang, subLangCode(lang), subLangName(lang), rec.f);
   }, function(e){
     var m = e && e.message ? e.message : String(e);
