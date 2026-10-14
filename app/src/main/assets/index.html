@@ -1479,7 +1479,7 @@ var T = {
       general:"گشتی",storage:"بیرگە",about:"دەربارە",builtIn:"بنەڕەتی",
       editList:"دەستکاریکردنی لیست",refresh:"ئێستا لیستەکە نوێ بکەرەوە",refreshShort:"نوێکردنەوە",
       lastUpd:"دوایین نوێکردنەوە",notYet:"هێشتا نا",
-      clearCache:"سڕینەوەی کاش",cacheSub:"کۆپی پاشەکەوتکراوی لیست · %s",
+      clearCache:"سڕینەوەی کاش",cacheFix:"پۆستەر یان زانیاری هەڵەی فیلم چاک دەکات",cacheCleared:"کاش سڕایەوە",cacheSub:"کۆپی پاشەکەوتکراوی لیست · %s",
       confirmClear:"کاشەکە بسڕدرێتەوە و لیستەکە دووبارە دابەزێنرێتەوە؟",
       version:"وەشان",plType:"جۆری لیست",
       updCheck:"پشکنینی وەشانی نوێ",updCheckSub:"ڕۆژی جارێک خۆی پشکنین دەکات",
@@ -1551,7 +1551,7 @@ var T = {
       general:"General",storage:"Storage",about:"About",builtIn:"BUILT-IN",
       editList:"Edit playlist",refresh:"Update playlist now",refreshShort:"Update",
       lastUpd:"Last updated",notYet:"Not yet",
-      clearCache:"Clear cache",cacheSub:"Saved copy of the playlist · %s",
+      clearCache:"Clear cache",cacheFix:"Fixes wrong posters or movie info",cacheCleared:"Cache cleared",cacheSub:"Saved copy of the playlist · %s",
       confirmClear:"Clear the cache and download the playlist again?",
       version:"Version",plType:"Playlist type",
       updCheck:"Check for updates",updCheckSub:"it looks once a day on its own",
@@ -1623,7 +1623,7 @@ var T = {
       general:"عام",storage:"التخزين",about:"حول التطبيق",builtIn:"افتراضية",
       editList:"تعديل القائمة",refresh:"تحديث القائمة الآن",refreshShort:"تحديث",
       lastUpd:"آخر تحديث",notYet:"ليس بعد",
-      clearCache:"مسح الذاكرة المؤقتة",cacheSub:"النسخة المحفوظة من القائمة · %s",
+      clearCache:"مسح الذاكرة المؤقتة",cacheFix:"يصلح الملصقات أو معلومات الأفلام الخاطئة",cacheCleared:"تم مسح الذاكرة المؤقتة",cacheSub:"النسخة المحفوظة من القائمة · %s",
       confirmClear:"مسح الذاكرة المؤقتة وتحميل القائمة من جديد؟",
       version:"الإصدار",plType:"نوع القائمة",
       updCheck:"البحث عن تحديث",updCheckSub:"يبحث مرة كل يوم من تلقاء نفسه",
@@ -3793,6 +3793,9 @@ $("search").addEventListener("input", function(){ SQ_SHOW = 48 });
 var TMDB_KEY = "dd107ddd176354c28a10d4afa3c91d34";
 var TMDB_IMG = "https://image.tmdb.org/t/p/";
 var TMDB_TTL = 7 * 86400000;
+var TMDB_MISS_TTL = 86400000;   /* "not found" is asked again the next day */
+var TMDB_SURE = 50;             /* below this a name is not trusted: the page keeps the panel's own facts */
+var TMDB_STRONG = 60;           /* the same name: the poster too is TMDB's */
 var DTOK = 0;              /* which page is open: a late answer for another one is dropped */
 var DBASE = {};            /* what the panel itself said about the open page */
 var DTMDB = null;          /* what TMDB said about it */
@@ -3804,7 +3807,7 @@ function tmdbStore(){
 }
 function tmdbHit(k){
   var h = tmdbStore()[k];
-  return (h && Date.now() - h.at < TMDB_TTL) ? h : null;
+  return (h && Date.now() - h.at < (h.v == null ? TMDB_MISS_TTL : TMDB_TTL)) ? h : null;
 }
 function tmdbKeep(k, v){
   var m = tmdbStore(), keys;
@@ -3828,41 +3831,113 @@ function tmdbGet(path, q){
 }
 function tmdbLang(){ return lang === "ar" ? "ar" : lang === "ku" ? "ku" : "en-US" }
 
-/* what to look for: the name without the panel's decorations, and its year */
+/* what to look for: the name without the panel's decorations, and its year.
+   q: the name TMDB is asked for (the Latin half of a name written twice),
+   alt: the other half, ar: the name is written in Arabic / Persian letters */
 function tmdbQuery(name){
-  var s = String(name || "");
+  var s = String(name || "")
+    .replace(/\b(4K|8K|UHD|FHD|HD|SD|HDR|HDR10|HEVC|H\.?26[45]|x26[45]|AVC|10bit|1080p|720p|480p|2160p|BluRay|BRRip|BDRip|WEB[\-\s]?DL|WEBRip|HDRip|DVDRip|HDTV|AAC|AC3|DTS|MULTI|DUAL|SUB|SUBBED|DUBBED|KURDISH|ENGLISH|ARABIC|PERSIAN|FARSI)\b/gi, " ");
   var y = (s.match(/[\(\[]\s*((?:19|20)\d{2})\s*[\)\]]/) || s.match(/(?:^|[\s\-])((?:19|20)\d{2})\s*$/) || [])[1] || "";
   s = s.replace(/[\(\[\{][^\)\]\}]*[\)\]\}]/g, " ")
        .replace(/^\s*\|?[A-Za-z]{2,3}\|\s*/, "")
        .replace(/^\s*[A-Z]{2,3}\s*[\-:|]\s+/, "")
-       .replace(/\b(4K|UHD|FHD|HD|SD|HEVC|H\.?26[45]|x26[45]|1080p|720p|2160p|MULTI|DUAL|SUB|SUBBED|DUBBED|KURDISH|ENGLISH|ARABIC)\b/gi, " ")
        .replace(/\s*[\-–]?\s*S\d{1,2}\s*E\d{1,3}.*$/i, "")
        .replace(/\s(19|20)\d{2}\s*$/, " ");
   /* a name written twice, in two scripts: the Latin half is the one TMDB knows */
   var parts = s.split(/\s[\-–|]\s|\|/).map(function(x){ return x.trim() }).filter(Boolean);
   var latin = parts.filter(function(x){ return /[A-Za-z]{2}/.test(x) && !/[؀-ۿ]/.test(x) });
-  s = (latin[0] || s).replace(/[\-–:|,.]+\s*$/, "").replace(/\s+/g, " ").trim();
-  return { q: s, y: y };
+  var arab = parts.filter(function(x){ return /[؀-ۿ]/.test(x) });
+  var tidy = function(x){ return String(x || "").replace(/[\-–:|,.]+\s*$/, "").replace(/\s+/g, " ").trim() };
+  s = tidy(latin[0] || s);
+  return { q: s, y: y, alt: latin[0] && arab[0] ? tidy(arab[0]) : "", ar: /[؀-ۿ]/.test(String(name || "")) };
 }
 
-function tmdbSearch(kind, Q){
+/* names compared without case, marks, spaces or the different ways of writing a letter */
+function tmdbNorm(x){
+  return String(x || "").toLowerCase()
+    .replace(/[ً-ٰٟـ]/g, "")
+    .replace(/[يى]/g, "ی").replace(/ك/g, "ک").replace(/ة/g, "ه").replace(/[أإآٱ]/g, "ا").replace(/ؤ/g, "و")
+    .replace(/&amp;/g, "&").replace(/&/g, " and ")
+    .normalize("NFKD").replace(/[̀-ͯ]/g, "")
+    .replace(/[^0-9a-z؀-ۿ]+/g, " ").trim();
+}
+
+/* how sure we are that a TMDB answer is this name: the same name counts most,
+   then the same year (one off is fine), then - for a Persian or Kurdish name or
+   group - a film made in that language. How well known it is only breaks a tie. */
+function tmdbScore(x, Q, local){
+  var want = tmdbNorm(Q.q), wantS = want.replace(/ /g, ""), best = 0;
+  [x.title, x.name, x.original_title, x.original_name].concat(x.alts || []).forEach(function(n){
+    var h = tmdbNorm(n), hs = h.replace(/ /g, ""), sc = 0;
+    if(!hs || !wantS) return;
+    if(hs === wantS) sc = 60;
+    else if(hs.replace(/^(the|a|an)/, "") === wantS.replace(/^(the|a|an)/, "")) sc = 50;
+    else if((hs.indexOf(wantS) >= 0 || wantS.indexOf(hs) >= 0)
+            && Math.min(hs.length, wantS.length) / Math.max(hs.length, wantS.length) >= 0.6) sc = 30;
+    else {
+      var a = want.split(" "), b = h.split(" "), same = a.filter(function(w){ return b.indexOf(w) >= 0 }).length;
+      sc = Math.round(20 * same / Math.max(a.length, b.length));
+    }
+    if(sc > best) best = sc;
+  });
+  var sc = best, y = parseInt(String(x.release_date || x.first_air_date || "").slice(0, 4), 10);
+  if(Q.y && y){ var dy = Math.abs(y - parseInt(Q.y, 10)); sc += dy === 0 ? 30 : dy === 1 ? 20 : -30 }
+  var ol = x.original_language || "";
+  /* this app is watched in Kurdistan: a film from the region wins an otherwise even tie */
+  if(local) sc += ol === "fa" ? 15 : /^(ku|ckb|ar|tr)$/.test(ol) ? 10 : -10;
+  else if(/^(fa|ku|ckb|ar|tr)$/.test(ol)) sc += 4;
+  sc += Math.min(3, Math.log(1 + (x.vote_count || 0)) / Math.LN10 * 1.5) + Math.min(1, (x.popularity || 0) / 50);
+  return sc;
+}
+
+/* the best answer for the name: { id, k (kind), sc (score) }, or null when no answer is sure enough.
+   Asked with the year, then without, then the other half of the name, then as the other kind */
+function tmdbSearch(kind, Q, group){
   if(!Q.q) return Promise.resolve(null);
-  var yk = kind === "movie" ? "year" : "first_air_date_year";
-  var ask = function(withYear){
-    return tmdbGet("/search/" + kind, "include_adult=false&query=" + encodeURIComponent(Q.q)
+  var local = Q.ar || /pers|fars|iran|kurd|فارس|ایران|کورد|كورد/i.test(String(group || ""));
+  var best = null, seen = {}, cand = [];
+  var ask = function(k, q, withYear){
+    var yk = k === "movie" ? "year" : "first_air_date_year";
+    var Qx = { q: q, y: Q.y };
+    var lq = /[؀-ۿ]/.test(q) ? "&language=fa-IR" : "";
+    return tmdbGet("/search/" + k, "include_adult=false&query=" + encodeURIComponent(q) + lq
                    + (withYear && Q.y ? "&" + yk + "=" + Q.y : ""))
-      .then(function(r){ return (r && r.results) || [] });
+      .then(function(r){
+        ((r && r.results) || []).forEach(function(x, n){
+          if(seen[k + x.id]) return;
+          seen[k + x.id] = 1;
+          var sc = tmdbScore(x, Qx, local);
+          if(n < 3) cand.push({ x: x, k: k, q: Qx });
+          if(!best || sc > best.sc) best = { id: x.id, k: k, sc: sc };
+        });
+      }, function(){});
   };
-  return ask(true).then(function(list){ return (list.length || !Q.y) ? list : ask(false) })
-    .then(function(list){
-      if(!list.length) return null;
-      var n = Q.q.toLowerCase();
-      var same = list.filter(function(x){
-        return String(x.title || x.name || "").toLowerCase() === n
-            || String(x.original_title || x.original_name || "").toLowerCase() === n;
-      });
-      return (same[0] || list[0]).id;
+  var steps = [];
+  [kind, kind === "movie" ? "tv" : "movie"].forEach(function(k){
+    [Q.q, Q.alt].filter(Boolean).forEach(function(q){
+      if(Q.y) steps.push([k, q, true]);
+      steps.push([k, q, false]);
     });
+  });
+  /* last: TMDB found it by another spelling ("Marmoulak" is "The Lizard"):
+     the first answers are weighed again with their other names */
+  var alts = function(){
+    return Promise.all(cand.slice(0, 4).map(function(c){
+      return tmdbGet("/" + c.k + "/" + c.x.id + "/alternative_titles").then(function(r){
+        c.x.alts = ((r && (r.titles || r.results)) || []).map(function(a){ return a.title });
+        var sc = tmdbScore(c.x, c.q, local);
+        if(!best || sc > best.sc) best = { id: c.x.id, k: c.k, sc: sc };
+      }, function(){});
+    })).then(function(){ return best && best.sc >= TMDB_SURE ? best : null });
+  };
+  var i = 0;
+  var next = function(){
+    if(best && best.sc >= TMDB_SURE) return best;
+    if(i >= steps.length) return cand.length ? alts() : null;
+    var st = steps[i++];
+    return ask(st[0], st[1], st[2]).then(next);
+  };
+  return Promise.resolve().then(next);
 }
 
 /* only what the page shows is kept */
@@ -3887,23 +3962,27 @@ function tmdbSlim(d, kind){
   };
 }
 
-/* kind: "movie" or "tv". Resolves to the facts, or null when TMDB does not know it */
-function tmdbFind(kind, name, tmdbId){
+/* kind: "movie" or "tv"; group: the panel's group, a hint for the language.
+   Resolves to the facts, or null when TMDB does not know the name for sure.
+   v.sure: the answer is certain enough to show TMDB's poster too */
+function tmdbFind(kind, name, tmdbId, group){
   var Q = tmdbQuery(name), L = tmdbLang();
   tmdbId = /^\d+$/.test(String(tmdbId || "").trim()) ? String(tmdbId).trim() : "";
-  var key = kind + ":" + (tmdbId ? "#" + tmdbId : Q.q.toLowerCase() + "|" + Q.y) + ":" + L;
+  var key = "2:" + kind + ":" + (tmdbId ? "#" + tmdbId : tmdbNorm(Q.q) + "|" + Q.y) + ":" + L;
   var hit = tmdbHit(key);
   if(hit) return Promise.resolve(hit.v);
-  return (tmdbId ? Promise.resolve(tmdbId) : tmdbSearch(kind, Q)).then(function(id){
-    if(!id) return null;
-    return tmdbGet("/" + kind + "/" + id, "language=" + L + "&append_to_response=credits,videos"
+  return (tmdbId ? Promise.resolve({ id: tmdbId, k: kind, sc: 100 }) : tmdbSearch(kind, Q, group)).then(function(m){
+    if(!m) return null;
+    var k = m.k, id = m.id;
+    return tmdbGet("/" + k + "/" + id, "language=" + L + "&append_to_response=credits,videos"
                    + "&include_video_language=" + L.slice(0, 2) + ",en,null")
       .then(function(d){
-        var v = tmdbSlim(d, kind);
+        var v = tmdbSlim(d, k);
+        v.sc = Math.round(m.sc); v.sure = m.sc >= TMDB_STRONG;
         if(v.ov) v.ovL = L;
         if(v.ov && v.tag || L === "en-US") return v;
         /* not written in this language yet: the story in English */
-        return tmdbGet("/" + kind + "/" + id, "language=en-US").then(function(e){
+        return tmdbGet("/" + k + "/" + id, "language=en-US").then(function(e){
           if(!v.ov && e.overview){ v.ov = e.overview; v.ovL = "en-US" }
           if(!v.tag) v.tag = (L === "ku" ? "" : e.tagline) || "";
           if(!v.g.length) v.g = (e.genres || []).map(function(x){ return x.name });
@@ -3958,12 +4037,14 @@ function detailReset(){
   $("dAct").innerHTML = ""; $("dMore").innerHTML = "";
   $("dSubs").innerHTML = ""; DSUB_AV = null;
   $("detail").classList.add("bare", "nopost");
+  $("dImg").removeAttribute("data-bad");
   return DTOK;
 }
 
 /* until TMDB sends the film's own still - or when it has none - the poster,
    softened, fills the band behind the header */
 $("dImg").addEventListener("load", function(){
+  this.removeAttribute("data-bad");
   $("detail").classList.remove("bare", "nopost");
   var bg = $("dBg");
   if(bg.classList.contains("on") && !bg.classList.contains("soft")) return;
@@ -3972,6 +4053,11 @@ $("dImg").addEventListener("load", function(){
 });
 
 $("dImg").addEventListener("error", function(){
+  if(!this.getAttribute("src")) return;
+  this.setAttribute("data-bad", "1");
+  /* the panel's poster is broken: the matched title's own, if TMDB has answered */
+  var tm = DTMDB && DTMDB.ps ? TMDB_IMG + "w500" + DTMDB.ps : "";
+  if(tm && this.src !== tm){ this.src = tm; return }
   $("detail").classList.add("nopost");
   if(!$("dBg").classList.contains("on")) $("detail").classList.add("bare");
 });
@@ -3990,17 +4076,30 @@ function tmdbApply(v, tok){
   if(!v || tok !== DTOK) return;
   DTMDB = v;
   var d = t();
+  /* every picture is of the matched title, and shown only once it has loaded:
+     the still behind the header (else its poster, softened); the poster itself
+     when the match is certain or the panel has none */
+  var preload = function(src, done){
+    var im = new Image();
+    im.onload = function(){ if(tok === DTOK) done(src) };
+    im.src = src;
+  };
   if(v.bd){
-    var src = TMDB_IMG + "w1280" + v.bd, im = new Image();     /* TMDB's widest still: sharp on a TV too */
-    im.onload = function(){
-      if(tok !== DTOK) return;
+    preload(TMDB_IMG + "w1280" + v.bd, function(src){     /* TMDB's widest still: sharp on a TV too */
       $("dBg").style.backgroundImage = 'url("' + src + '")';
       $("dBg").className = "dbg on";
       $("detail").classList.remove("bare");
-    };
-    im.src = src;
+    });
+  } else if(v.ps && v.sure){
+    preload(TMDB_IMG + "w780" + v.ps, function(src){
+      $("dBg").style.backgroundImage = 'url("' + src + '")';
+      $("dBg").className = "dbg on soft";
+      $("detail").classList.remove("bare");
+    });
   }
-  if(v.ps && !$("dImg").getAttribute("src")) $("dImg").src = TMDB_IMG + "w342" + v.ps;
+  if(v.ps && (v.sure || !$("dImg").getAttribute("src") || $("dImg").getAttribute("data-bad"))){
+    preload(TMDB_IMG + "w500" + v.ps, function(src){ $("dImg").src = src });
+  }
 
   /* the year is in the facts line - not a second time in the title */
   if(v.y) $("dName").textContent = String($("dName").textContent || "").replace(new RegExp("\\s*[\\(\\[]\\s*" + v.y + "\\s*[\\)\\]]\\s*$"), "");
@@ -4026,7 +4125,7 @@ function tmdbApply(v, tok){
   var h = "";
   if(v.cast.length){
     h += '<div class="dsec">' + esc(d.cast) + '</div><div class="dcast">' + v.cast.map(function(c){
-      return '<div>' + (c.p ? '<img loading="lazy" alt="" src="' + TMDB_IMG + 'w185' + esc(c.p) + '">'
+      return '<div>' + (c.p ? '<img loading="lazy" alt="" onerror="this.style.visibility=\'hidden\'" src="' + TMDB_IMG + 'w185' + esc(c.p) + '">'
                             : '<em>' + esc((c.n || "?").charAt(0)) + '</em>')
            + '<b>' + esc(c.n) + '</b>' + (c.c ? '<s>' + esc(c.c) + '</s>' : '') + '</div>';
     }).join("") + '</div>';
@@ -4398,7 +4497,7 @@ function subQuery(tg){
     return Promise.resolve({ ptmdb: tg.ptmdb, s: tg.s || 1, e: tg.e });
   }
   if(tg.tmdb) return Promise.resolve({ tmdb: tg.tmdb });
-  return tmdbFind("movie", tg.n, "").then(function(v){ return v ? { tmdb: v.id } : null });
+  return tmdbFind("movie", tg.n, "").then(function(v){ return v && v.k === "movie" ? { tmdb: v.id } : null });
 }
 function prepareSub(tg, lang, onPct){
   var have = subHave(tg.u, lang);
@@ -4563,6 +4662,8 @@ function openSeries(sid, name){
   var p = activeList();
   if(p.type !== "xtream") return;
   curMovie = null; curSeries = null; curSeason = null;
+  var sItem = null;
+  (DATA.series || []).some(function(x){ if(String(x.sid) === String(sid)){ sItem = x; return true } });
   detailFav("series", sid, name);
   if(!$("detail").classList.contains("on")) layerOpen("detail");   /* phone Back closes it */
   $("detail").classList.add("on");
@@ -4585,7 +4686,7 @@ function openSeries(sid, name){
     dMetaSet(bits, DBASE.rating);
     if(i.genre) $("dGen").innerHTML = String(i.genre).split(/\s*[,\/]\s*/).slice(0, 4).map(function(g){ return '<i>' + esc(g) + '</i>' }).join("");
     $("dPlot").textContent = i.plot || "";
-    tmdbFind("tv", i.name || name, i.tmdb || i.tmdb_id).then(function(v){ tmdbApply(v, tok) }).catch(function(){});
+    tmdbFind("tv", i.name || name, i.tmdb || i.tmdb_id || (sItem && sItem.tmdb), sItem && sItem.c).then(function(v){ tmdbApply(v, tok) }).catch(function(){});
     var seasons = [];
     for(var k in info.episodes) if(info.episodes.hasOwnProperty(k)) seasons.push(k);
     seasons.sort(function(a,b){ return (parseInt(a,10)||0) - (parseInt(b,10)||0) });
@@ -4610,7 +4711,7 @@ function openSeries(sid, name){
       if(tok !== DTOK) return;
       lastLoadError = (e && e.message) ? e.message : "network";
       $("dEps").innerHTML = '<div class="empty"><div>&#128533;</div><p>'+esc(t().loadFail)+'</p></div>';
-      tmdbFind("tv", name).then(function(v){ tmdbApply(v, tok) }).catch(function(){});
+      tmdbFind("tv", name, sItem && sItem.tmdb, sItem && sItem.c).then(function(v){ tmdbApply(v, tok) }).catch(function(){});
     });
 }
 
@@ -4677,7 +4778,7 @@ function openMovie(url, name){
   DBASE.rating = (item && item.r) ? { v: String(item.r) } : null;
   dMetaSet([item && item.c ? cleanGroup(item.c) : ""], DBASE.rating);
   var facts = function(tid){
-    tmdbFind("movie", name || (item && item.n), tid).then(function(v){ tmdbApply(v, tok) }).catch(function(){});
+    tmdbFind("movie", name || (item && item.n), tid, item && item.c).then(function(v){ tmdbApply(v, tok) }).catch(function(){});
   };
 
   /* the panel knows more about it - ask, but the page already works without it */
@@ -5209,7 +5310,7 @@ function fmtWhen(ts){
 }
 function cacheSize(){
   var n = 0;
-  try{ n = (localStorage.getItem("kiptv_cache") || "").length * 2 }catch(e){}
+  try{ n = ((localStorage.getItem("kiptv_cache") || "").length + (localStorage.getItem("kiptv_tmdb") || "").length) * 2 }catch(e){}
   /* ⁦ ... ⁩ keeps "7.1 MB" in that order inside Kurdish / Arabic text */
   var s = n === 0 ? "0 KB" : n < 1048576 ? Math.max(1, Math.round(n / 1024)) + " KB"
                                          : (n / 1048576).toFixed(1) + " MB";
@@ -5762,7 +5863,7 @@ function drawSettings(){
   h += setRowC("c-violet", '<b style="font-size:10px;font-weight:900">CC</b>', d.subTitle, d.subRowS, "openSheet('subs')", true,
                subPref() ? subLangName(subPref()) : d.subOff);
   if(act.type === "xtream") h += setRowC("c-violet", ICON.tv, d.epgTest, d.epgTestSub, "epgProbe()", true);
-  h += setRowC("c-red", ICON.disk, d.clearCache, "", "clearCache()", true, cacheSize());
+  h += setRowC("c-red", ICON.disk, d.clearCache, d.cacheFix, "clearCache()", true, cacheSize());
   h += setRowC("c-green", ICON.down, d.updCheck, d.updCheckSub, "updOpen()", true, appVerText());
   h += '</div>';
 
@@ -5813,10 +5914,20 @@ function pickList(id){ if(id !== activeId()) useList(id) }
 
 function refreshList(){ loadActive(true) }
 
+/* only what the app keeps to be quick: the saved playlist and TMDB's answers
+   (facts, posters, stills). Sign-in, playlists, favourites, Resume and the
+   subtitle choices stay. The lists are then downloaded again. */
 function clearCache(){
   if(!window.confirm(t().confirmClear)) return;
-  try{ localStorage.removeItem("kiptv_cache"); localStorage.removeItem("kiptv_cache_owner") }catch(e){}
+  try{
+    ["kiptv_cache", "kiptv_cache_owner", "kiptv_tmdb"].forEach(function(k){ localStorage.removeItem(k) });
+  }catch(e){}
+  TMDB_MEM = null;
+  SERIES_CACHE = {};
+  var sec = SECTION;
   loadActive(true);
+  if(sec !== SECTION && (sec === "movies" || sec === "series") && isXtream()) setSection(sec);
+  showToast(t().cacheCleared);
 }
 
 function removeList(id){
