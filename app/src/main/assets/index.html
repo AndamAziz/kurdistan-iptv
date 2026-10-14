@@ -152,6 +152,7 @@ section{margin-top:22px}
 .name{font-size:11.5px;font-weight:700;color:var(--muted);text-align:center;padding:9px 2px 0;
   line-height:1.35;min-height:41px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .card.press .name{color:var(--text)}
+.name .ku{display:block;font-weight:600;font-size:.92em;opacity:.7;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 #moreWrap{display:none;text-align:center;padding:26px 0 6px}
 #moreBtn{padding:13px 30px;border-radius:999px;border:1px solid var(--line);background:var(--surface);
@@ -2394,11 +2395,14 @@ function loadVod(p){
       for(var i = 0; i < list.length; i++){
         var v = list[i];
         if(!v || !v.stream_id) continue;
+        var P = parseVodName(v.name, "movie");
         out.push({
           c: map[String(v.category_id)] || "Other",
-          n: v.name || ("#" + v.stream_id),
+          n: P.displayName || ("#" + v.stream_id),
+          ku: P.titleKu,
+          raw: v.name || "",
           id: v.stream_id,
-          tmdb: v.tmdb || v.tmdb_id || "",
+          tmdb: P.tmdbId || v.tmdb || v.tmdb_id || "",
           u: streamURL(v.direct_source, d + "/movie/" + cr + "/" + v.stream_id + "." + (v.container_extension || "mp4"), d),
           l: artURL(v.stream_icon, d) || artURL(v.cover, d) || artURL(v.movie_image, d) || artURL(v.cover_big, d)
              || artURL(v.backdrop_path, d),
@@ -2423,20 +2427,29 @@ function loadSeries(p){
       cats.forEach(function(c){ map[String(c.category_id)] = c.category_name || "Other" });
     return xtGet(base, "get_series").then(function(list){
       if(Object.prototype.toString.call(list) !== "[object Array]") return [];
-      var out = [];
+      var out = [], byT = {};
       for(var i = 0; i < list.length; i++){
         var v = list[i];
         if(!v || !v.series_id) continue;
-        out.push({
+        var P = parseVodName(v.name, "tv"), tid = P.tmdbId || v.tmdb || v.tmdb_id || "";
+        /* the same TMDB number is the same series: one card, whatever the panel split it into */
+        if(tid && byT[tid]){ byT[tid].sids.push(v.series_id); continue }
+        var it = {
           c: map[String(v.category_id)] || "Other",
-          n: v.name || ("#" + v.series_id),
+          n: P.displayName || ("#" + v.series_id),
+          ku: P.titleKu,
+          raw: v.name || "",
+          tmdb: tid,
           u: "",                       /* series open a detail page, not a stream */
           l: artURL(v.cover, d) || artURL(v.stream_icon, d) || artURL(v.cover_big, d) || artURL(v.backdrop_path, d),
           bd: artURL(v.backdrop_path, d),
           r: v.rating || "",
           sid: v.series_id,
+          sids: [v.series_id],
           plot: v.plot || ""
-        });
+        };
+        if(tid) byT[tid] = it;
+        out.push(it);
       }
       return out;
     });
@@ -3134,10 +3147,11 @@ function cardHTML(c, forceSquare){
   }
   var rating = c.r ? '<span class="rt">&#9733; '+esc(String(c.r).slice(0,3))+'</span>' : '';
   var attrs = c.sid ? ' data-sid="'+esc(c.sid)+'"' : ' data-u="'+esc(c.u)+'"';
-  return '<div class="card'+(isFav(c) ? " fav" : "")+'"'+attrs+' data-n="'+esc(c.n)+'">'
+  var NP = nameParts(c);       /* the English name, and the Kurdish one on a second small line */
+  return '<div class="card'+(isFav(c) ? " fav" : "")+'"'+attrs+' data-n="'+esc(NP.n)+'">'
        +   '<div class="poster" style="background:'+bg+'">'
-       +     '<div class="mono">'+esc(c.n)+'</div>'+img+rating+pg
-       +   '</div><div class="name">'+esc(c.n)+'</div></div>';
+       +     '<div class="mono">'+esc(NP.n)+'</div>'+img+rating+pg
+       +   '</div><div class="name">'+esc(NP.n)+(NP.ku ? '<bdi class="ku">'+esc(NP.ku)+'</bdi>' : '')+'</div></div>';
 }
 /* ---------- home: hero + horizontal rows ---------- */
 /* Up to HERO_N items for the banner, spread across different groups so the
@@ -3225,15 +3239,16 @@ function slideHTML(c, first){
           + (art ? '<img src="'+art+'" decoding="async" referrerpolicy="no-referrer" onerror="heroImgErr(this)" alt="">' : '')
           + '</div>';
   var attrs = c.sid ? ' data-sid="'+esc(c.sid)+'"' : ' data-u="'+esc(c.u)+'"';
+  var nm = sq ? c.n : nameParts(c).n;
   var sub = [];
   if(c.r) sub.push("★ " + String(c.r).slice(0,3));
   if(c.c) sub.push(cleanGroup(c.c));
-  return '<div class="hero'+(first ? " on" : "")+(sq ? " sq" : "")+(art ? "" : " noart")+(wide ? " wide" : "")+'"'+attrs+' data-n="'+esc(c.n)+'" style="background:'+bg+'">'
+  return '<div class="hero'+(first ? " on" : "")+(sq ? " sq" : "")+(art ? "" : " noart")+(wide ? " wide" : "")+'"'+attrs+' data-n="'+esc(nm)+'" style="background:'+bg+'">'
        +   img + '<div class="sc"></div>' + pst
        +   '<div class="in"><div class="kick">'+(sq ? '<i></i>' : '')
        +       (c.nw ? '<b class="nwb">'+esc(t().isNew)+'</b>' : '')
        +       '<s>'+esc(sub.length ? sub.join("  ·  ") : t().featured)+'</s></div>'
-       +     '<h1>'+esc(c.n)+'</h1>'
+       +     '<h1>'+esc(nm)+'</h1>'
        +     '<span class="go">'+PLAY_TRI+esc(t().playNow)+'</span></div>'
        + '</div>';
 }
@@ -3677,15 +3692,34 @@ function isWordStart(s, at){
   if(at <= 0) return true;
   return /[\s\-_|:.,\/()\[\]]/.test(s.charAt(at - 1));
 }
+/* the titles TMDB gave a film or series, from the answers already kept */
+function tmdbTitlesOf(c){
+  var kind = c.sid ? "tv" : "movie", m = tmdbStore(), out = "";
+  ["en-US", tmdbLang()].forEach(function(L){
+    var h = m["3:" + kind + ":#" + c.tmdb + ":" + L];
+    if(h && h.v) out += " " + searchNorm((h.v.t || "") + " " + (h.v.o || ""));
+  });
+  return out.trim();
+}
 /* every word of the query must appear; names that start with it come first */
 function searchHits(list, q, toks){
   var out = [];
   for(var i = 0; i < list.length; i++){
     var c = list[i];
     if(!c || !c.n) continue;
-    var s = c._s || (c._s = searchNorm(c.n));
+    var s = c._s || (c._s = searchNorm(c.n + (c.ku ? " " + c.ku : "")));
     var ok = true;
     for(var k = 0; k < toks.length; k++) if(s.indexOf(toks[k]) < 0){ ok = false; break }
+    if(!ok && c.tmdb){
+      /* what TMDB calls it (kept from when the page was opened) counts too */
+      var tt = tmdbTitlesOf(c);
+      if(tt){
+        var s2 = s + " " + tt;
+        ok = true;
+        for(var k2 = 0; k2 < toks.length; k2++) if(s2.indexOf(toks[k2]) < 0){ ok = false; break }
+        if(ok) s = s2;
+      }
+    }
     if(!ok) continue;
     /* 0 starts with the query · 1 the whole query at a word · 2 the whole query
        anywhere · 3 the words apart, first one at a word · 4 anything else */
@@ -3782,6 +3816,49 @@ $("main").addEventListener("click", function(e){
 /* a new query starts from the first page again */
 $("search").addEventListener("input", function(){ SQ_SHOW = 48 });
 
+/* ==================== names: "English _ Kurdish {tmdb-123}" ====================
+   The provider names a film or a series "English name _ Kurdish name {tmdb-ID}",
+   an episode "... {tmdb-ID} - S01E03". One function reads that - everywhere the
+   page shows or compares a name it goes through here, so the tag is never
+   seen, the film's own TMDB number is used instead of a search, and a name
+   written the old way (no tag, no " _ ") comes out exactly as it went in. */
+var TMDB_TAGS = [
+  /[\{\[\(]\s*tmdb(?:id)?\s*[-:=_ ]\s*(\d{1,9})\s*[\}\]\)]/i,       /* {tmdb-123}  [tmdb=123]  (tmdb:123) */
+  /(?:^|[\s_\-])tmdb(?:id)?\s*[:=]\s*(\d{1,9})(?!\d)/i,                /* tmdb:123  tmdbid=123 */
+  /(?:^|\s)tmdb-(\d{1,9})(?!\d)/i                                      /* tmdb-123 */
+];
+var SE_TAIL = /\s*[\-–—]?\s*\bS(\d{1,2})\s*E(\d{1,3})\b.*$/i;
+function parseVodName(raw, mediaType){
+  var s = String(raw == null ? "" : raw), id = "", m, i, season = 0, episode = 0;
+  for(i = 0; i < TMDB_TAGS.length && !id; i++){
+    m = s.match(TMDB_TAGS[i]);
+    if(m){ id = m[1]; s = s.replace(m[0], " ") }
+  }
+  s = s.replace(/\s+/g, " ").trim();
+  if(mediaType !== "movie"){
+    m = s.match(SE_TAIL);
+    if(m){ season = parseInt(m[1], 10); episode = parseInt(m[2], 10); s = s.replace(SE_TAIL, "") }
+  }
+  s = s.replace(/[\s\-–—_|:,]+$/, "").replace(/\s+/g, " ").trim();
+  var parts = s.split(/\s+_\s+/);
+  var en = (parts[0] || "").trim(), ku = parts.slice(1).join(" _ ").trim();
+  /* the series key: the base name as the panel writes it, tag included */
+  var base = String(raw == null ? "" : raw).replace(SE_TAIL, "").replace(/\s+/g, " ").trim();
+  return { tmdbId: id, titleEn: en, titleKu: ku, displayName: en || ku || s,
+           seriesKey: id ? "tmdb:" + id : base.toLowerCase(), season: season, episode: episode,
+           tagged: !!id, hadEp: !!episode };
+}
+/* the name to show for something stored or built elsewhere (favourites, history);
+   a name that is already clean is returned as it is, without parsing */
+function nameParts(c){
+  var n = (c && c.n) || "";
+  if(c && c.ku !== undefined && !/[\{\[]\s*tmdb|tmdb[:=]/i.test(n)) return { n: n, ku: c.ku || "" };
+  if(!/tmdb|\s_\s/i.test(n)) return { n: n, ku: "" };
+  var P = parseVodName(n, "tv");
+  return { n: P.displayName, ku: P.titleKu };
+}
+function nameClean(n){ return nameParts({ n: n }).n }
+
 /* ==================== film and series facts (TMDB) ====================
    The panel says little about a film - often only its name and poster. The
    Movie Database knows the rest: the story, the rating, the cast with their
@@ -3798,6 +3875,7 @@ var TMDB_SURE = 50;             /* below this a name is not trusted: the page ke
 var TMDB_STRONG = 60;           /* the same name: the poster too is TMDB's */
 var DTOK = 0;              /* which page is open: a late answer for another one is dropped */
 var DBASE = {};            /* what the panel itself said about the open page */
+var DKU = "";              /* the Kurdish name from the panel's "English _ Kurdish" */
 var DTMDB = null;          /* what TMDB said about it */
 var TMDB_MEM = null;
 
@@ -3943,17 +4021,22 @@ function tmdbSearch(kind, Q, group){
 /* only what the page shows is kept */
 function tmdbSlim(d, kind){
   var cr = d.credits || {}, cast = cr.cast || [], crew = cr.crew || [];
+  /* TMDB's own English words for it, whatever language it was asked in */
+  var en = (((d.translations || {}).translations) || []).filter(function(x){ return x.iso_639_1 === "en" })[0];
+  en = (en && en.data) || {};
+  var imgs = d.images || {}, bds = imgs.backdrops || [], pss = imgs.posters || [];
+  var firstOf = function(l){ var x = l.filter(function(b){ return !b.iso_639_1 })[0] || l[0]; return x ? x.file_path : "" };
   var vids = (d.videos && d.videos.results) || [];
   var tr = vids.filter(function(v){ return v.site === "YouTube" && v.type === "Trailer" })[0]
         || vids.filter(function(v){ return v.site === "YouTube" && v.type === "Teaser" })[0];
   var date = d.release_date || d.first_air_date || "";
   var names = function(l){ return (l || []).map(function(x){ return x.name }).filter(Boolean) };
   return {
-    id: d.id, k: kind, t: d.title || d.name || "", o: d.original_title || d.original_name || "",
+    id: d.id, k: kind, t: en.title || en.name || d.title || d.name || "", o: d.original_title || d.original_name || "",
     y: String(date).slice(0, 4), rt: d.vote_average || 0, vc: d.vote_count || 0,
     run: d.runtime || (d.episode_run_time || [])[0] || 0,
-    g: names(d.genres), tag: d.tagline || "", ov: d.overview || "", ovL: "",
-    bd: d.backdrop_path || "", ps: d.poster_path || "",
+    g: names(d.genres), tag: d.tagline || "", ov: d.overview || "", ovL: "", enOv: en.overview || "",
+    bd: d.backdrop_path || firstOf(bds), ps: d.poster_path || firstOf(pss),
     dir: kind === "movie" ? names(crew.filter(function(x){ return x.job === "Director" })) : names(d.created_by),
     ctry: names(d.production_countries).slice(0, 2),
     ns: d.number_of_seasons || 0, ne: d.number_of_episodes || 0,
@@ -3963,25 +4046,28 @@ function tmdbSlim(d, kind){
 }
 
 /* kind: "movie" or "tv"; group: the panel's group, a hint for the language.
-   Resolves to the facts, or null when TMDB does not know the name for sure.
+   Resolves to the facts, or null when TMDB does not know it.
+   The name may carry the film's own number ("... {tmdb-123}"): that number is
+   asked for directly - no search, no scoring - and only when TMDB has never
+   heard of it (404) is the name searched, as before.
    v.sure: the answer is certain enough to show TMDB's poster too */
 function tmdbFind(kind, name, tmdbId, group){
-  var Q = tmdbQuery(name), L = tmdbLang();
-  tmdbId = /^\d+$/.test(String(tmdbId || "").trim()) ? String(tmdbId).trim() : "";
-  var key = "2:" + kind + ":" + (tmdbId ? "#" + tmdbId : tmdbNorm(Q.q) + "|" + Q.y) + ":" + L;
+  var P = parseVodName(name, kind === "movie" ? "movie" : "tv");
+  var Q = tmdbQuery(P.titleEn || P.displayName || name), L = tmdbLang();
+  tmdbId = P.tmdbId || (/^\d+$/.test(String(tmdbId || "").trim()) ? String(tmdbId).trim() : "");
+  var key = "3:" + kind + ":" + (tmdbId ? "#" + tmdbId : tmdbNorm(Q.q) + "|" + Q.y) + ":" + L;
   var hit = tmdbHit(key);
   if(hit) return Promise.resolve(hit.v);
-  return (tmdbId ? Promise.resolve({ id: tmdbId, k: kind, sc: 100 }) : tmdbSearch(kind, Q, group)).then(function(m){
-    if(!m) return null;
-    var k = m.k, id = m.id;
-    return tmdbGet("/" + k + "/" + id, "language=" + L + "&append_to_response=credits,videos"
-                   + "&include_video_language=" + L.slice(0, 2) + ",en,null")
+  var byId = function(k, id, sc){
+    return tmdbGet("/" + k + "/" + id, "language=" + L + "&append_to_response=credits,videos,images,translations"
+                   + "&include_video_language=" + L.slice(0, 2) + ",en,null&include_image_language=en,null,fa,ar")
       .then(function(d){
         var v = tmdbSlim(d, k);
-        v.sc = Math.round(m.sc); v.sure = m.sc >= TMDB_STRONG;
+        v.sc = Math.round(sc); v.sure = sc >= TMDB_STRONG;
         if(v.ov) v.ovL = L;
+        else if(v.enOv){ v.ov = v.enOv; v.ovL = "en-US" }
         if(v.ov && v.tag || L === "en-US") return v;
-        /* not written in this language yet: the story in English */
+        /* not written in this language yet: the tagline and genres in English */
         return tmdbGet("/" + k + "/" + id, "language=en-US").then(function(e){
           if(!v.ov && e.overview){ v.ov = e.overview; v.ovL = "en-US" }
           if(!v.tag) v.tag = (L === "ku" ? "" : e.tagline) || "";
@@ -3989,7 +4075,17 @@ function tmdbFind(kind, name, tmdbId, group){
           return v;
         }, function(){ return v });
       });
-  }).then(function(v){ tmdbKeep(key, v); return v });
+  };
+  var bySearch = function(){
+    return tmdbSearch(kind, Q, group).then(function(m){ return m ? byId(m.k, m.id, m.sc) : null });
+  };
+  var first = tmdbId
+    ? byId(kind, tmdbId, 100).catch(function(e){
+        if(/HTTP 404/.test(String(e && e.message))) return bySearch();   /* a number TMDB does not know */
+        throw e;
+      })
+    : bySearch();
+  return first.then(function(v){ tmdbKeep(key, v); return v });
 }
 
 /* one season's episodes: number, name, summary, still */
@@ -4030,7 +4126,7 @@ function dMetaSet(bits, rating){
 /* a new page: nothing of the last one is left on it */
 function detailReset(){
   DTOK++;
-  DBASE = {}; DTMDB = null;
+  DBASE = {}; DTMDB = null; DKU = "";
   $("dBg").className = "dbg"; $("dBg").style.backgroundImage = "";
   $("dOrig").textContent = ""; $("dGen").innerHTML = ""; $("dTag").textContent = "";
   $("dMeta").innerHTML = ""; $("dPlot").textContent = ""; $("dPlot").className = "dplot";
@@ -4101,11 +4197,13 @@ function tmdbApply(v, tok){
     preload(TMDB_IMG + "w500" + v.ps, function(src){ $("dImg").src = src });
   }
 
+  /* the big title is TMDB's own English title when the match is certain */
+  if(v.sure && v.t) $("dName").textContent = v.t;
   /* the year is in the facts line - not a second time in the title */
   if(v.y) $("dName").textContent = String($("dName").textContent || "").replace(new RegExp("\\s*[\\(\\[]\\s*" + v.y + "\\s*[\\)\\]]\\s*$"), "");
   var shown = String($("dName").textContent || "").toLowerCase(), shownQ = tmdbQuery(shown).q.toLowerCase();
   var alt = [v.t, v.o].filter(function(x){ return x && x.toLowerCase() !== shown && x.toLowerCase() !== shownQ })[0] || "";
-  $("dOrig").textContent = alt + (alt && v.y && alt.indexOf(v.y) < 0 ? "  (" + v.y + ")" : "");
+  $("dOrig").textContent = alt ? alt + (v.y && alt.indexOf(v.y) < 0 ? "  (" + v.y + ")" : "") : DKU;
 
   var bits = [v.y];
   if(v.k === "movie") bits.push(v.run ? fmtTime(v.run * 60000) : "");
@@ -4165,7 +4263,7 @@ function seasonFacts(k, tok){
       }
       var b = tx && tx.querySelector("b");
       /* a panel that names its episodes "Name - S01E03" gets their real names */
-      if(b && x.n && /S\d+\s*E\d+/i.test(b.textContent) && !/^(episode|الحلقة|حلقة)\s*\d+$/i.test(x.n))
+      if(b && x.n && (row.getAttribute("data-auto") || /S\d+\s*E\d+/i.test(b.textContent)) && !/^(episode|الحلقة|حلقة)\s*\d+$/i.test(x.n))
         b.textContent = x.n;
       if(x.ov && tx){
         var ov = document.createElement("span");
@@ -4663,12 +4761,16 @@ function openSeries(sid, name){
   if(p.type !== "xtream") return;
   curMovie = null; curSeries = null; curSeason = null;
   var sItem = null;
-  (DATA.series || []).some(function(x){ if(String(x.sid) === String(sid)){ sItem = x; return true } });
+  (DATA.series || []).some(function(x){ if(String(x.sid) === String(sid) || (x.sids || []).indexOf(String(sid)) > -1 || (x.sids || []).indexOf(+sid) > -1){ sItem = x; return true } });
+  name = nameClean(name || (sItem && sItem.n) || "");
+  var NPs = sItem ? nameParts(sItem) : nameParts({ n: name });
   detailFav("series", sid, name);
   if(!$("detail").classList.contains("on")) layerOpen("detail");   /* phone Back closes it */
   $("detail").classList.add("on");
   var tok = detailReset();
   $("dName").textContent = name || "";
+  DKU = NPs.ku || "";
+  $("dOrig").textContent = DKU;
   $("dSeasons").innerHTML = "";
   subsRow();
   $("dEps").innerHTML = '<div class="empty"><p>…</p></div>';
@@ -4677,7 +4779,9 @@ function openSeries(sid, name){
   var done = function(info){
     curSeries = info;
     var i = info.info || {};
-    $("dName").textContent = i.name || name || "";
+    var IP = parseVodName(i.name || "", "tv");     /* the panel writes the series name with its tag here too */
+    $("dName").textContent = IP.displayName || name || "";
+    if(!DKU && IP.titleKu){ DKU = IP.titleKu; $("dOrig").textContent = DKU }
     if(i.cover) $("dImg").src = i.cover;
     if(tok !== DTOK) return;
     var bits = [];
@@ -4686,7 +4790,7 @@ function openSeries(sid, name){
     dMetaSet(bits, DBASE.rating);
     if(i.genre) $("dGen").innerHTML = String(i.genre).split(/\s*[,\/]\s*/).slice(0, 4).map(function(g){ return '<i>' + esc(g) + '</i>' }).join("");
     $("dPlot").textContent = i.plot || "";
-    tmdbFind("tv", i.name || name, i.tmdb || i.tmdb_id || (sItem && sItem.tmdb), sItem && sItem.c).then(function(v){ tmdbApply(v, tok) }).catch(function(){});
+    tmdbFind("tv", (sItem && sItem.raw) || i.name || name, IP.tmdbId || (sItem && sItem.tmdb) || i.tmdb || i.tmdb_id, sItem && sItem.c).then(function(v){ tmdbApply(v, tok) }).catch(function(){});
     var seasons = [];
     for(var k in info.episodes) if(info.episodes.hasOwnProperty(k)) seasons.push(k);
     seasons.sort(function(a,b){ return (parseInt(a,10)||0) - (parseInt(b,10)||0) });
@@ -4701,9 +4805,27 @@ function openSeries(sid, name){
   };
 
   if(SERIES_CACHE[sid]) { done(SERIES_CACHE[sid]); return }
+  var more = (sItem && sItem.sids || []).filter(function(x){ return String(x) !== String(sid) });
   xtGet(xtBase(p), "get_series_info&series_id=" + encodeURIComponent(sid))
     .then(function(info){
       if(!info || !info.episodes) throw new Error("NO EPISODES");
+      if(!more.length) return info;
+      return Promise.all(more.map(function(o){
+        return xtGet(xtBase(p), "get_series_info&series_id=" + encodeURIComponent(o)).catch(function(){ return null });
+      })).then(function(others){
+        others.forEach(function(x){
+          if(!x || !x.episodes) return;
+          Object.keys(x.episodes).forEach(function(k){
+            var have = info.episodes[k];
+            if(!have){ info.episodes[k] = x.episodes[k]; return }
+            var ids = {}; have.forEach(function(e){ ids[e.id] = 1 });
+            x.episodes[k].forEach(function(e){ if(!ids[e.id]) have.push(e) });
+          });
+        });
+        return info;
+      });
+    })
+    .then(function(info){
       SERIES_CACHE[sid] = info;
       done(info);
     })
@@ -4711,7 +4833,7 @@ function openSeries(sid, name){
       if(tok !== DTOK) return;
       lastLoadError = (e && e.message) ? e.message : "network";
       $("dEps").innerHTML = '<div class="empty"><div>&#128533;</div><p>'+esc(t().loadFail)+'</p></div>';
-      tmdbFind("tv", name, sItem && sItem.tmdb, sItem && sItem.c).then(function(v){ tmdbApply(v, tok) }).catch(function(){});
+      tmdbFind("tv", (sItem && sItem.raw) || name, sItem && sItem.tmdb, sItem && sItem.c).then(function(v){ tmdbApply(v, tok) }).catch(function(){});
     });
 }
 
@@ -4757,6 +4879,8 @@ function movieBody(url, name, i){
 function openMovie(url, name){
   var item = null, src = DATA.movies || [];
   for(var i = 0; i < src.length; i++) if(src[i].u === url){ item = src[i]; break }
+  name = nameClean(name || (item && item.n) || "");
+  var NPm = item ? nameParts(item) : nameParts({ n: name });
   curMovie = { c:(item && item.c) || "", n:name || (item && item.n) || "",
                u:url, l:(item && item.l) || "", r:(item && item.r) || "" };
   curSeries = null; curSeason = null;
@@ -4768,6 +4892,8 @@ function openMovie(url, name){
   $("dSeasons").innerHTML = "";
   $("dEps").innerHTML = "";
   $("dName").textContent = name || "";
+  DKU = NPm.ku || "";
+  $("dOrig").textContent = DKU;          /* until TMDB says more: the Kurdish name under the English one */
   $("dImg").removeAttribute("src");
   if(item && item.l) $("dImg").src = item.l;
 
@@ -4778,7 +4904,7 @@ function openMovie(url, name){
   DBASE.rating = (item && item.r) ? { v: String(item.r) } : null;
   dMetaSet([item && item.c ? cleanGroup(item.c) : ""], DBASE.rating);
   var facts = function(tid){
-    tmdbFind("movie", name || (item && item.n), tid, item && item.c).then(function(v){ tmdbApply(v, tok) }).catch(function(){});
+    tmdbFind("movie", (item && item.raw) || name || (item && item.n), tid, item && item.c).then(function(v){ tmdbApply(v, tok) }).catch(function(){});
   };
 
   /* the panel knows more about it - ask, but the page already works without it */
@@ -4849,10 +4975,15 @@ function pickSeason(k){
     if(inf.release_date) sub.push(String(inf.release_date).slice(0,10));
     var sp = getPos(url);
     if(sp) sub.unshift(t().resume + " " + fmtTime(sp.p));
-    memo.push({ c:"SERIES", n:(curSeries.info && curSeries.info.name ? curSeries.info.name + " · " : "") + (e.title || ""), u:url, l:(curSeries.info && curSeries.info.cover) || "" });
-    return '<div class="ep" data-en="'+esc(String(e.episode_num || (idx+1)))+'" data-u="'+esc(url)+'" data-n="'+esc((curSeries.info && curSeries.info.name ? curSeries.info.name + " · " : "") + (e.title || (t().episodeN + " " + (idx+1))))+'">'
-         +   '<span class="no">'+(e.episode_num || (idx+1))+'</span>'
-         +   '<span class="tx"><b>'+esc(e.title || (t().episodeN + " " + (idx+1)))+'</b>'
+    var EP = parseVodName(e.title || "", "episode"), epNo = e.episode_num || (idx + 1);
+    var SN = nameClean((curSeries.info && curSeries.info.name) || "") || (DTMDB && DTMDB.t) || "";
+    /* "Series _ Kurdish {tmdb-1} - S01E03" is not an episode's name: say "Episode 3" (TMDB's own name replaces it) */
+    var auto = !e.title || EP.tagged || EP.hadEp || !EP.displayName || EP.displayName === SN;
+    var label = auto ? (t().episodeN + " " + epNo) : e.title;
+    memo.push({ c:"SERIES", n:(SN ? SN + " · " : "") + label, u:url, l:(curSeries.info && curSeries.info.cover) || "" });
+    return '<div class="ep" data-en="'+esc(String(epNo))+'"'+(auto ? ' data-auto="1"' : '')+' data-u="'+esc(url)+'" data-n="'+esc((SN ? SN + " · " : "") + label)+'">'
+         +   '<span class="no">'+epNo+'</span>'
+         +   '<span class="tx"><b>'+esc(label)+'</b>'
          +   (sub.length ? '<s>'+esc(sub.join("  ·  "))+'</s>' : '')+'</span>'
          + '</div>';
   }).join("") || '<div class="empty"><p>-</p></div>';
@@ -6343,7 +6474,7 @@ function histHTML(){
     }
     h += '<div class="hi" data-hi="'+i+'">'
        +   '<span class="th'+(poster ? " pt" : "")+'" style="background:'+bg+'">'+esc(initials(x.n || "?"))+img+'</span>'
-       +   '<span class="tx"><b>'+esc(x.n)+'</b><s>'+esc(sub.filter(Boolean).join("  ·  "))+'</s>'+bar+'</span>'
+       +   '<span class="tx"><b>'+esc(poster ? nameClean(x.n) : x.n)+'</b><s>'+esc(sub.filter(Boolean).join("  ·  "))+'</s>'+bar+'</span>'
        +   '<button class="x" data-hx="'+i+'">&#10005;</button>'
        + '</div>';
   });
@@ -6354,7 +6485,7 @@ function histHTML(){
 function histPlay(i){
   var x = HIST_VIEW[i]; if(!x) return;
   if(x.t === "movie"){
-    openMovie(x.u, x.n);
+    openMovie(x.u, nameClean(x.n));
     if(x.l && !$("dImg").getAttribute("src")) $("dImg").src = x.l;
     if(curMovie && curMovie.u === x.u){ if(!curMovie.l) curMovie.l = x.l || ""; if(!curMovie.c) curMovie.c = x.c || "" }
     return;
