@@ -202,6 +202,14 @@ class MainActivity : ComponentActivity() {
     /** a subtitle file the page made ready for one stream (OpenSubtitles, or Kurdish by Claude) */
     private data class SubF(val path: String, val lang: String, val label: String, val def: Boolean)
     private var subsByUrl: Map<String, List<SubF>> = emptyMap()
+
+    /** what the page says it can get for a stream: language -> ready / avail / none / try / nokey */
+    private class SubLang(val l: String, val s: String)
+    private val subInfoByUrl = HashMap<String, List<SubLang>>()
+    private val subInfoAt = HashMap<String, Long>()
+    /** "address|language" -> percent, while the page is getting that subtitle */
+    private val subBusy = HashMap<String, Int>()
+    private val SUB_ROWS = listOf("ku-ai", "en", "ar", "fa", "tr", "fr", "de", "es")
     private var refs: List<String?> = emptyList()
     private var curUa: String? = null
     private var curRef: String? = null
@@ -707,6 +715,58 @@ class MainActivity : ComponentActivity() {
             runOnUiThread { uiLang = if (l == "ku" || l == "ar") l else "en" }
         }
 
+        /** which subtitle languages the page can offer for a stream, and in what state:
+         *  json: {"langs":[{"l":"en","s":"avail"},...]} */
+        @android.webkit.JavascriptInterface
+        fun subInfo(url: String, json: String) {
+            try {
+                val a = JSONObject(json).optJSONArray("langs") ?: return
+                val out = ArrayList<SubLang>()
+                for (i in 0 until a.length()) {
+                    val o = a.getJSONObject(i)
+                    out.add(SubLang(o.optString("l"), o.optString("s")))
+                }
+                runOnUiThread {
+                    subInfoByUrl[url] = out
+                    subInfoAt[url] = System.currentTimeMillis()
+                    if (panelOn()) fillPanel()
+                }
+            } catch (e: Exception) { /* ignore malformed input */ }
+        }
+
+        @android.webkit.JavascriptInterface
+        fun subProgress(url: String, lang: String, pct: Int) {
+            runOnUiThread {
+                subBusy["$url|$lang"] = pct
+                if (panelOn()) fillPanel()
+            }
+        }
+
+        /** a subtitle file is ready: lang is the page's name for it (ku-ai, en ...), code its language code */
+        @android.webkit.JavascriptInterface
+        fun subReady(url: String, lang: String, code: String, label: String, path: String) {
+            runOnUiThread { onSubReady(url, lang, code, label, path) }
+        }
+
+        @android.webkit.JavascriptInterface
+        fun subFail(url: String, lang: String, message: String) {
+            runOnUiThread {
+                subBusy.remove("$url|$lang")
+                showHint(message.take(90))
+                if (panelOn()) fillPanel()
+            }
+        }
+
+        /** the page asks for the stream's OpenSubtitles hash; the answer comes back to kiptvHash(id, hash) */
+        @android.webkit.JavascriptInterface
+        fun movieHash(id: String, url: String) {
+            Thread {
+                val i = urls.indexOf(url)
+                val h = OsHash.compute(url, uas.getOrNull(i) ?: UA, refs.getOrNull(i)) ?: ""
+                runOnUiThread { js("window.kiptvHash&&kiptvHash(" + JSONObject.quote(id) + "," + JSONObject.quote(h) + ")") }
+            }.start()
+        }
+
         /** The whole live list, so the list inside the player can show every
          *  group - not only the one the page happens to be showing.
          *  json: [{"c":..,"n":..,"u":..,"l":..,"ua"?:..,"rf"?:..}, ...] */
@@ -795,10 +855,106 @@ class MainActivity : ComponentActivity() {
         return b.build()
     }
 
+    /** the player's current item, rebuilt with the subtitle files it now has, from the same place */
+    private fun reloadItem(i: Int, selectCode: String?) {
+        val p = player ?: return
+        val cur = try { p.getMediaItemAt(i).localConfiguration } catch (e: Exception) { null } ?: return
+        val pos = p.currentPosition
+        val play = p.playWhenReady
+        try {
+            if (selectCode != null) {
+                p.trackSelectionParameters = p.trackSelectionParameters.buildUpon()
+                    .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, false)
+                    .clearOverridesOfType(C.TRACK_TYPE_TEXT)
+                    .setPreferredTextLanguage(selectCode)
+                    .build()
+                prefs().edit().putString("textLang", selectCode).apply()
+            }
+            qualityPinned = false           /* a rebuilt item forgets a pinned quality */
+            p.replaceMediaItem(i, mediaItem(i, cur.uri.toString(), cur.mimeType))
+            p.seekTo(i, pos)
+            p.prepare()
+            p.playWhenReady = play
+        } catch (e: Exception) { }
+    }
+
+    /** a subtitle file the page has made or found: it joins the stream's list and is shown */
+    private fun onSubReady(url: String, lang: String, code: String, label: String, path: String) {
+        subBusy.remove("$url|$lang")
+        if (!File(path).isFile) { if (panelOn()) fillPanel(); return }
+        val old = subsByUrl[url] ?: emptyList()
+        val i = urls.indexOf(url)
+        if (old.any { it.path == path && it.lang == code }) {
+            /* it is already on the item: only make sure it is the one shown */
+            if (i >= 0 && i == player?.currentMediaItemIndex && !selectedIs(code)) selectCode(code)
+            if (panelOn()) fillPanel()
+            return
+        }
+        val list = old.filter { it.lang != code }.map { it.copy(def = false) } + SubF(path, code, label, true)
+        subsByUrl = subsByUrl + (url to list)
+        val p = player
+        if (p != null && i >= 0) {
+            if (i == p.currentMediaItemIndex) reloadItem(i, code)
+            else try {
+                /* a later episode: its item is rebuilt now, so the file is there when it starts */
+                val cur = p.getMediaItemAt(i).localConfiguration
+                if (cur != null) p.replaceMediaItem(i, mediaItem(i, cur.uri.toString(), cur.mimeType))
+            } catch (e: Exception) { }
+        }
+        if (panelOn()) playerView.post { if (panelOn()) fillPanel() }
+    }
+
+    private fun selectedIs(code: String): Boolean {
+        val gs = try { player?.currentTracks?.groups } catch (e: Exception) { null } ?: return false
+        for (g in gs) {
+            if (g.type != C.TRACK_TYPE_TEXT) continue
+            for (k in 0 until g.length) if (g.isTrackSelected(k) && g.getTrackFormat(k).language == code) return true
+        }
+        return false
+    }
+
+    private fun selectCode(code: String) {
+        val p = player ?: return
+        try {
+            p.trackSelectionParameters = p.trackSelectionParameters.buildUpon()
+                .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, false)
+                .clearOverridesOfType(C.TRACK_TYPE_TEXT)
+                .setPreferredTextLanguage(code)
+                .build()
+        } catch (e: Exception) { }
+    }
+
+    /* ---- talking to the page ---- */
+    private fun js(code: String) {
+        try { webView.evaluateJavascript(code, null) } catch (e: Exception) { }
+    }
+
+    private fun askSubInfo(u: String) {
+        if (u.isBlank()) return
+        js("window.kiptvSubInfo&&kiptvSubInfo(" + JSONObject.quote(u) + ")")
+    }
+
+    private fun askSub(u: String, lang: String) {
+        subBusy["$u|$lang"] = 0
+        js("window.kiptvSubReq&&kiptvSubReq(" + JSONObject.quote(u) + "," + JSONObject.quote(lang) + ")")
+    }
+
+    /** a film or an episode has started: the page gets the language last chosen, if it is not on it yet */
+    private fun askSubAuto(u: String?) {
+        if (u.isNullOrBlank() || !isVod(u)) return
+        js("window.kiptvSubAuto&&kiptvSubAuto(" + JSONObject.quote(u) + ")")
+    }
+
+    /** the choice made here is the choice for the next film and episode too */
+    private fun tellSubPref(lang: String) {
+        js("window.kiptvSubPref&&kiptvSubPref(" + JSONObject.quote(lang) + ")")
+    }
+
     /* ---- subtitle timing ----
        A subtitle file made for another release of the same film (a longer
        intro, another cut) runs early or late by the same amount all the way
-       through. The viewer moves it in half seconds; it is remembered for that
+       through. The viewer moves it in steps, or says "this line is being spoken
+       now" and the whole file is placed from that; it is remembered for that
        film, and the player reads a copy of the file with every time moved. */
     private fun subShiftKey(u: String?) = "subShift:" + (u ?: "").hashCode()
     private fun subShift(u: String?): Long = prefs().getLong(subShiftKey(u), 0L)
@@ -826,39 +982,66 @@ class MainActivity : ComponentActivity() {
         } catch (e: Exception) { path }
     }
 
-    /** moves the subtitles of what is playing by [delta] ms and carries on from the same place */
-    private fun moveSubs(delta: Long) {
+    /** the file of the subtitles being shown, when they are ours (a stream's own cannot be moved) */
+    private fun shownSide(u: String): SubF? {
+        val gs = try { player?.currentTracks?.groups } catch (e: Exception) { null } ?: return null
+        val side = subsByUrl[u] ?: return null
+        for (g in gs) {
+            if (g.type != C.TRACK_TYPE_TEXT) continue
+            for (k in 0 until g.length) {
+                if (!g.isTrackSelected(k)) continue
+                val f = g.getTrackFormat(k)
+                side.firstOrNull { it.lang == f.language && it.label == f.label }?.let { return it }
+            }
+        }
+        return null
+    }
+
+    /** sets the timing of what is playing to [ms] and carries on from the same place */
+    private fun setSubShift(ms: Long) {
         val p = player ?: return
         val i = p.currentMediaItemIndex
         val u = urls.getOrNull(i) ?: return
-        val now = if (delta == 0L) 0L else subShift(u) + delta
-        prefs().edit().putLong(subShiftKey(u), now.coerceIn(-600000L, 600000L)).apply()
-        val cur = p.currentMediaItem?.localConfiguration ?: return
-        val pos = p.currentPosition
-        try {
-            p.replaceMediaItem(i, mediaItem(i, cur.uri.toString(), cur.mimeType))
-            p.seekTo(i, pos)
-            p.prepare()
-            p.playWhenReady = true
-        } catch (e: Exception) { }
+        val code = shownSide(u)?.lang
+        prefs().edit().putLong(subShiftKey(u), ms.coerceIn(-600000L, 600000L)).apply()
+        reloadItem(i, code)
+        showHint(String.format(Locale.ROOT, "%+.1f s", subShift(u) / 1000.0))
         fillPanel()
     }
 
-    private fun subSyncRow(): LinearLayout {
+    /** moves the subtitles of what is playing by [delta] ms (0 puts them back) */
+    private fun moveSubs(delta: Long) {
+        val u = urls.getOrNull(player?.currentMediaItemIndex ?: -1) ?: return
+        setSubShift(if (delta == 0L) 0L else subShift(u) + delta)
+    }
+
+    /** "this line is being spoken now": the line nearest to this moment starts exactly now */
+    private fun syncToNow() {
+        val p = player ?: return
+        val u = urls.getOrNull(p.currentMediaItemIndex) ?: return
+        val side = shownSide(u) ?: return
+        val starts = try { SubSync.cueStarts(File(side.path).readText(Charsets.UTF_8)) } catch (e: Exception) { LongArray(0) }
+        val ms = SubSync.shiftToNow(starts, subShift(u), p.currentPosition)
+        if (ms == null) { showHint(tx("syncNone")); return }
+        setSubShift(ms)
+    }
+
+    private fun timingBlock(box: LinearLayout, u: String) {
+        box.addView(noteRow(tx("subSync")))
+        val cur = subShift(u)
         val row = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             setPadding(0, dp(4), 0, dp(4))
         }
-        val cur = subShift(urls.getOrNull(player?.currentMediaItemIndex ?: -1))
         fun btn(label: String, tagName: String, on: Boolean, act: () -> Unit) = TextView(this).apply {
             text = label
             gravity = Gravity.CENTER
             setTextColor(if (on) 0xFFFFD277.toInt() else Color.WHITE)
-            textSize = 12.5f
+            textSize = 12f
             if (on) setTypeface(typeface, Typeface.BOLD)
             background = panelBg(on)
-            setPadding(dp(4), dp(10), dp(4), dp(10))
+            setPadding(dp(2), dp(10), dp(2), dp(10))
             isClickable = true
             focusRing(this, round = false)
             tag = tagName
@@ -866,14 +1049,143 @@ class MainActivity : ComponentActivity() {
         }
         val secs = String.format(Locale.ROOT, "%+.1f s", cur / 1000.0)
         val items = listOf(
-            btn("−0.5", "subE", false) { moveSubs(-500) },
+            btn("−1", "subE1", false) { moveSubs(-1000) },
+            btn("−0.1", "subE", false) { moveSubs(-100) },
             btn(if (cur == 0L) "0.0 s" else secs, "subZ", cur != 0L) { if (cur != 0L) moveSubs(0) },
-            btn("+0.5", "subL", false) { moveSubs(500) })
+            btn("+0.1", "subL", false) { moveSubs(100) },
+            btn("+1", "subL1", false) { moveSubs(1000) })
         for ((k, v) in items.withIndex())
             row.addView(v, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
-                if (k > 0) marginStart = dp(6)
+                if (k > 0) marginStart = dp(5)
             })
-        return row
+        box.addView(row)
+        box.addView(subRow(tx("syncNow"), null, null, 0, false, true, "subNow") { syncToNow() })
+        box.addView(noteRow(tx("syncNote")))
+    }
+
+    /** one line of the subtitle list: the language, a small note, and on the end what state it is in
+     *  badge kind: 0 plain, 1 ready (green), 2 can be had (gold), 3 unavailable (grey) */
+    private fun subRow(name: String, note: String?, badge: String?, kind: Int, on: Boolean,
+                       enabled: Boolean, key: String, action: () -> Unit): LinearLayout =
+        LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            background = panelBg(on)
+            setPadding(dp(14), dp(11), dp(12), dp(11))
+            isClickable = true
+            focusRing(this, round = false)
+            tag = key
+            isSelected = on
+            alpha = if (enabled) 1f else 0.55f
+            setOnClickListener { action() }
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { bottomMargin = dp(6) }
+            val col = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
+            col.addView(TextView(context).apply {
+                text = (if (on) "✓   " else "") + name
+                setTextColor(if (on) 0xFFFFD277.toInt() else Color.WHITE)
+                textSize = 14f
+                if (on) setTypeface(typeface, Typeface.BOLD)
+            })
+            if (!note.isNullOrBlank()) col.addView(TextView(context).apply {
+                text = note
+                setTextColor(0xFF7F8B99.toInt())
+                textSize = 11f
+                setPadding(0, dp(2), 0, 0)
+            })
+            addView(col, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            if (!badge.isNullOrBlank()) addView(TextView(context).apply {
+                text = badge
+                textSize = 11.5f
+                gravity = Gravity.CENTER
+                setTypeface(typeface, Typeface.BOLD)
+                setTextColor(when (kind) { 1 -> 0xFF6FE3A0.toInt(); 2 -> 0xFFFFD277.toInt(); 3 -> 0xFF7F8B99.toInt(); else -> Color.WHITE })
+                background = GradientDrawable().apply {
+                    cornerRadius = dp(10).toFloat()
+                    setColor(when (kind) { 1 -> 0x1F2FBF71; 2 -> 0x26E8B33C; else -> 0x14FFFFFF })
+                }
+                setPadding(dp(10), dp(4), dp(10), dp(4))
+            }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                marginStart = dp(8)
+            })
+        }
+
+    /** a track's language as a two-letter code, whatever form the stream writes it in */
+    private fun iso2(code: String?): String {
+        val c = (code ?: "").lowercase(Locale.ROOT).substringBefore('-').substringBefore('_')
+        return when (c) {
+            "eng" -> "en"; "ara" -> "ar"; "fas", "per" -> "fa"; "tur" -> "tr"; "fra", "fre" -> "fr"
+            "deu", "ger" -> "de"; "spa" -> "es"; "kur" -> "ku"; "rus" -> "ru"; "ita" -> "it"
+            else -> c
+        }
+    }
+
+    /** the subtitle list: Off, every language with its state, the stream's own others, size, timing */
+    private fun fillSubtitles(box: LinearLayout, groups: List<Tracks.Group>) {
+        val u = urls.getOrNull(player?.currentMediaItemIndex ?: -1) ?: ""
+        val vod = isVod(u)
+        val side = subsByUrl[u] ?: emptyList()
+        class Tr(val g: Tracks.Group, val i: Int, val f: Format, val sel: Boolean, val side: SubF?)
+        val tracks = ArrayList<Tr>()
+        for (g in groups) {
+            if (g.type != C.TRACK_TYPE_TEXT) continue
+            for (i in 0 until g.length) {
+                if (!g.isTrackSupported(i)) continue
+                val f = g.getTrackFormat(i)
+                tracks.add(Tr(g, i, f, g.isTrackSelected(i), side.firstOrNull { it.lang == f.language && it.label == f.label }))
+            }
+        }
+        if (!vod && tracks.isEmpty()) { box.addView(noteRow(tx("noSubs"))); return }
+        val anySel = tracks.any { it.sel }
+        box.addView(subRow(tx("off"), null, null, 0, !anySel, true, "subOff") { subsOff(); if (vod) tellSubPref("") })
+
+        val used = HashSet<Tr>()
+        if (vod) {
+            val info = subInfoByUrl[u]
+            for (l in SUB_ROWS) {
+                val code = if (l == "ku-ai") "ckb" else l
+                val tr = tracks.firstOrNull { it.side != null && it.f.language == code }
+                    ?: (if (l == "ku-ai") null else tracks.firstOrNull { it.side == null && iso2(it.f.language) == l })
+                if (tr != null) used.add(tr)
+                val state = info?.firstOrNull { it.l == l }?.s
+                val pct = subBusy["$u|$l"]
+                val name = if (l == "ku-ai") (langName("ckb") ?: "Kurdish") + "  ·  AI" else (langName(l) ?: l)
+                val note = if (l == "ku-ai") tx("subKuNote") else null
+                when {
+                    tr != null -> box.addView(subRow(name, note, if (tr.sel) null else tx("subReadyB"), 1, tr.sel, true, "sub$l") {
+                        if (useTrack(tr.g, tr.i)) {
+                            prefs().edit().putString("textLang", tr.f.language ?: C.LANGUAGE_UNDETERMINED).apply()
+                            if (tr.side != null) tellSubPref(l)       /* our own file: the next episode follows it */
+                            closePanel(); showHint(name)
+                        }
+                    })
+                    pct != null -> box.addView(subRow(name, note, "$pct%", 2, false, true, "sub$l") { showHint(tx("subWorking")) })
+                    state == "none" -> box.addView(subRow(name, note, tx("subNA"), 3, false, false, "sub$l") { showHint(tx("subNA")) })
+                    state == "nokey" -> box.addView(subRow(name, note, tx("subNoKey"), 3, false, false, "sub$l") { showHint(tx("subNoKey")) })
+                    else -> box.addView(subRow(name, note, tx("subGet"), 2, false, true, "sub$l") { askSub(u, l); fillPanel() })
+                }
+            }
+            /* the page is asked once for what it can get; again when it is old */
+            val at = subInfoAt[u] ?: 0L
+            if (System.currentTimeMillis() - at > 90000L) { subInfoAt[u] = System.currentTimeMillis(); askSubInfo(u) }
+        }
+
+        /* the stream's own tracks that no language row above stands for */
+        val rest = tracks.filter { it !in used }
+        if (rest.isNotEmpty()) {
+            if (vod) box.addView(noteRow(tx("subHere")))
+            var m = 0
+            for (t in rest) {
+                m++
+                box.addView(subRow(textLabel(t.f, m), null, null, 0, t.sel, true, "trk$m") { chooseText(t.g, t.i) })
+            }
+        }
+
+        if (anySel || vod) {
+            box.addView(noteRow(tx("size")))
+            box.addView(sizeRow())
+        }
+        if (vod && shownSide(u) != null) timingBlock(box, u)
     }
 
     // ---------------- format plan ----------------
@@ -1057,6 +1369,7 @@ class MainActivity : ComponentActivity() {
 
         buildAndStart(index)
         handler.postDelayed(posTicker, 5000)
+        askSubAuto(u.getOrNull(index))      /* a film opened from the history has no subtitles made yet */
     }
 
     private fun buildAndStart(index: Int) {
@@ -1125,6 +1438,7 @@ class MainActivity : ComponentActivity() {
                     startWays(currentUrl ?: "")
                     plan = planFor(linkNow(i))
                     applyItemChrome(i)
+                    askSubAuto(currentUrl)      /* the next episode follows the language chosen */
                     applySpeed()        /* a film keeps the chosen speed, live is always 1× */
                     /* this channel wants a different agent - the data source
                        carries it, so start it over with one that matches */
@@ -1961,6 +2275,12 @@ class MainActivity : ComponentActivity() {
         "audio" to "Audio", "subs" to "Subtitles", "quality" to "Quality",
         "off" to "Off", "auto" to "Auto", "size" to "Text size",
         "subSync" to "Subtitle timing", "subSyncNote" to "Earlier if the words come late, later if they come early",
+        "subGet" to "Get", "subReadyB" to "Ready", "subNA" to "Not available", "subNoKey" to "Needs a key",
+        "subKuNote" to "Kurdish (Sorani), made by AI from the English",
+        "subHere" to "Inside this video", "subWorking" to "Preparing the subtitles…",
+        "syncNow" to "Sync to the line I hear now",
+        "syncNote" to "Tap just as someone starts to speak: the subtitles line up with the voice",
+        "syncNone" to "No subtitle line near this moment",
         "s1" to "Small", "s2" to "Normal", "s3" to "Large", "s4" to "Extra large",
         "noSubs" to "No subtitles in this video", "oneAudio" to "Only one audio track",
         "oneVideo" to "Only one quality", "track" to "Track",
@@ -1982,6 +2302,12 @@ class MainActivity : ComponentActivity() {
         "audio" to "دەنگ", "subs" to "ژێرنووس", "quality" to "کوالیتی",
         "off" to "بێ ژێرنووس", "auto" to "خۆکار", "size" to "قەبارەی نووسین",
         "subSync" to "کاتی ژێرنووس", "subSyncNote" to "ئەگەر نووسینەکە دوادەکەوێت زووتری بکە، ئەگەر پێشدەکەوێت درەنگتری بکە",
+        "subGet" to "وەرگرتن", "subReadyB" to "ئامادەیە", "subNA" to "بەردەست نییە", "subNoKey" to "کلیل پێویستە",
+        "subKuNote" to "کوردی (سۆرانی)، بە زیرەکی دەستکرد لە ئینگلیزییەوە دروستکراوە",
+        "subHere" to "ناو خودی ڤیدیۆکە", "subWorking" to "ژێرنووس ئامادە دەکرێت…",
+        "syncNow" to "لەگەڵ ئەو دێڕەی ئێستا دەیبیستم ڕێکی بخە",
+        "syncNote" to "کاتێک کەسێک دەست دەکات بە قسەکردن بیدە: ژێرنووس لەگەڵ دەنگەکە ڕێک دەکەوێت",
+        "syncNone" to "لەم کاتەدا هیچ دێڕێکی ژێرنووس نییە",
         "s1" to "بچووک", "s2" to "ئاسایی", "s3" to "گەورە", "s4" to "زۆر گەورە",
         "noSubs" to "ئەم ڤیدیۆیە ژێرنووسی نییە", "oneAudio" to "تەنها یەک دەنگ هەیە",
         "oneVideo" to "تەنها یەک کوالیتی هەیە", "track" to "تراک",
@@ -2003,6 +2329,12 @@ class MainActivity : ComponentActivity() {
         "audio" to "الصوت", "subs" to "الترجمة", "quality" to "الجودة",
         "off" to "بدون ترجمة", "auto" to "تلقائي", "size" to "حجم الخط",
         "subSync" to "توقيت الترجمة", "subSyncNote" to "أبكر إن تأخر النص، أو أخّره إن سبق الكلام",
+        "subGet" to "تحميل", "subReadyB" to "جاهزة", "subNA" to "غير متاحة", "subNoKey" to "تحتاج مفتاحاً",
+        "subKuNote" to "الكردية (السورانية)، مترجمة بالذكاء الاصطناعي من الإنجليزية",
+        "subHere" to "داخل الفيديو", "subWorking" to "جارٍ تجهيز الترجمة…",
+        "syncNow" to "مزامنة مع السطر الذي أسمعه الآن",
+        "syncNote" to "اضغط لحظة يبدأ أحدهم بالكلام: تتطابق الترجمة مع الصوت",
+        "syncNone" to "لا يوجد سطر ترجمة قريب من هذه اللحظة",
         "s1" to "صغير", "s2" to "عادي", "s3" to "كبير", "s4" to "كبير جداً",
         "noSubs" to "لا توجد ترجمة في هذا الفيديو", "oneAudio" to "يوجد صوت واحد فقط",
         "oneVideo" to "توجد جودة واحدة فقط", "track" to "مسار",
@@ -2621,7 +2953,7 @@ class MainActivity : ComponentActivity() {
     private fun collectRows(g: ViewGroup, out: MutableList<View>) {
         for (i in 0 until g.childCount) {
             val v = g.getChildAt(i)
-            if (v is ViewGroup) collectRows(v, out) else if (v.isFocusable) out.add(v)
+            if (v.isFocusable) out.add(v) else if (v is ViewGroup) collectRows(v, out)
         }
     }
 
@@ -2651,31 +2983,7 @@ class MainActivity : ComponentActivity() {
 
         /* subtitles */
         box.addView(sectionTitle("💬  " + tx("subs")))
-        val subRows = ArrayList<TextView>()
-        var anySub = false
-        var m = 0
-        for (g in groups) {
-            if (g.type != C.TRACK_TYPE_TEXT) continue
-            for (i in 0 until g.length) {
-                if (!g.isTrackSupported(i)) continue
-                m++
-                val sel = g.isTrackSelected(i)
-                if (sel) anySub = true
-                subRows.add(optionRow(textLabel(g.getTrackFormat(i), m), sel) { chooseText(g, i) })
-            }
-        }
-        if (m == 0) box.addView(noteRow(tx("noSubs")))
-        else {
-            box.addView(optionRow(tx("off"), !anySub) { subsOff() })
-            for (r in subRows) box.addView(r)
-            box.addView(noteRow(tx("size")))
-            box.addView(sizeRow())
-            if (!subsByUrl[urls.getOrNull(player?.currentMediaItemIndex ?: -1) ?: ""].isNullOrEmpty()) {
-                box.addView(noteRow(tx("subSync")))
-                box.addView(subSyncRow())
-                box.addView(noteRow(tx("subSyncNote")))
-            }
-        }
+        fillSubtitles(box, groups)
 
         /* quality */
         box.addView(sectionTitle("🎬  " + tx("quality")))

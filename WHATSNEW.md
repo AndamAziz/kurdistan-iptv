@@ -1,4 +1,14 @@
 [en]
+Subtitles in the player: the settings panel now lists every subtitle language
+(Kurdish AI, English, Arabic, Persian, Turkish, French, German, Spanish) for the
+film or episode you are watching, each marked Ready, Get, Not available or
+Needs a key. Tap one to fetch (or translate) it right there, with progress, and
+it switches on at once. It follows you to the next episode. Where possible the
+exact-release subtitle is found by the file's hash so it matches the voice.
+New timing controls: +/- 0.1 s, +/- 1 s and "Sync to the line I hear now".
+Kurdish AI subtitles are cleaned and wrapped more carefully and translated with
+more context.
+
 Films and series named "English name _ Kurdish name {tmdb-ID}" now show
 cleanly: the tag is never shown, the English name leads with the Kurdish name
 on a second line, and the film's own TMDB number is used to load its story,
@@ -41,6 +51,15 @@ top, fading into the page, the poster on its edge with the title, rating and
 genres beside it, and a full-width Play button underneath.
 
 [ku]
+ژێرنووس لە ناو پلەیەرەکە: لە ڕێکخستنەکانی پلەیەر ئێستا هەموو زمانەکانی ژێرنووس
+(کوردی AI، ئینگلیزی، عەرەبی، فارسی، تورکی، فەڕەنسی، ئەڵمانی، ئیسپانی) بۆ ئەو
+فیلم یان ئەلقەیەی دەیبینیت دەردەکەون، بە نیشانەی ئامادە، وەرگرتن، بەردەست نییە یان
+پێویستی بە کلیلە. کلیک لە یەکێکیان بکە با لەوێ بهێنرێت یان وەربگێڕدرێت و یەکسەر
+دەکرێتەوە، و دەچێتە ئەلقەی دواتریش. ئەگەر بکرێت ژێرنووسی هەمان وەشانی فایلەکە بە
+هاش دەدۆزرێتەوە تا لەگەڵ دەنگ یەکسان بێت. کۆنتڕۆڵی کات: +/- 0.1 چرکە، +/- 1 چرکە و
+«لەگەڵ ئەو دێڕەی ئێستا دەیبیستم یەکسانی بکە». ژێرنووسی کوردی AI بە وردی پاک دەکرێتەوە
+و بە تێگەیشتنی زیاتر وەردەگێڕدرێت.
+
 فیلم و زنجیرە کە ناوەکانیان بەم شێوەیەن "ناوی ئینگلیزی _ ناوی کوردی {tmdb-ID}"
 ئێستا بە پاکی پیشان دەدرێن: تاگەکە هەرگیز نابینرێت، ناوی ئینگلیزی یەکەمە و کوردییەکە
 لە دێڕێکی بچووکی دووەمدا، و ژمارەی TMDB ی خودی فیلمەکە بەکاردێت بۆ هێنانی چیرۆک،
@@ -81,6 +100,13 @@ z و x هەمان کار دەکەن.
 تەنیشتی، و دوگمەی Play بە پانی لە خوارەوە.
 
 [ar]
+الترجمة داخل المشغّل: تعرض لوحة الإعدادات الآن كل لغات الترجمة (الكردية AI،
+الإنجليزية، العربية، الفارسية، التركية، الفرنسية، الألمانية، الإسبانية) للفيلم أو
+الحلقة الحالية، مع حالة: جاهزة أو جلب أو غير متوفرة أو تحتاج مفتاحاً. اضغط للجلب أو
+الترجمة فوراً مع نسبة التقدم وتعمل مباشرة، وتنتقل معك إلى الحلقة التالية. وعند الإمكان
+تُطابَق ترجمة النسخة نفسها عبر بصمة الملف لتتوافق مع الصوت. وأدوات توقيت جديدة:
+±0.1 ث و±1 ث و«زامن مع الجملة التي أسمعها الآن». والترجمة الكردية AI أنظف وأدق سياقاً.
+
 الأفلام والمسلسلات المسماة "الاسم الإنجليزي _ الاسم الكردي {tmdb-ID}" تظهر الآن بشكل
 نظيف: لا تظهر الوسمة أبداً، والاسم الإنجليزي أولاً والكردي في سطر صغير ثانٍ، ويُستخدم
 رقم TMDB الخاص بالفيلم لجلب القصة والسنة والممثلين والتقييم والملصق والصورة العريضة
