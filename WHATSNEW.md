@@ -1,4 +1,11 @@
 [en]
+Films and series named "English name _ Kurdish name {tmdb-ID}" now show
+cleanly: the tag is never shown, the English name leads with the Kurdish name
+on a second line, and the film's own TMDB number is used to load its story,
+year, cast, rating, poster and wide picture - no guessing by name. Episodes
+read "Episode 1" instead of the long tagged name, and search finds a title by
+its English or Kurdish name.
+
 Television: Live TV now looks like a TV guide. A menu runs down the side
 (Live TV, Movies, Series, Favorites, Settings), the categories sit in their own
 column with the number of channels in each, and the channels are a list with
@@ -34,6 +41,12 @@ top, fading into the page, the poster on its edge with the title, rating and
 genres beside it, and a full-width Play button underneath.
 
 [ku]
+فیلم و زنجیرە کە ناوەکانیان بەم شێوەیەن "ناوی ئینگلیزی _ ناوی کوردی {tmdb-ID}"
+ئێستا بە پاکی پیشان دەدرێن: تاگەکە هەرگیز نابینرێت، ناوی ئینگلیزی یەکەمە و کوردییەکە
+لە دێڕێکی بچووکی دووەمدا، و ژمارەی TMDB ی خودی فیلمەکە بەکاردێت بۆ هێنانی چیرۆک،
+ساڵ، ئەکتەر، هەڵسەنگاندن، پۆستەر و وێنەی پان - بەبێ گریمانە بە ناو. ئیپیسۆدەکان
+"Episode 1" ن لە جیاتی ناوە درێژە تاگدارەکە، و گەڕان بە ناوی ئینگلیزی یان کوردی دەدۆزێتەوە.
+
 تەلەڤزیۆن: کەناڵە ڕاستەوخۆکان ئێستا وەک ڕێبەری تەلەڤزیۆن دەردەکەون. مێنیوێک
 لە لایەکەوە (کەناڵ، فیلم، زنجیرە، دڵخواز، ڕێکخستن)، پۆلەکان لە ستوونێکی جیا
 لەگەڵ ژمارەی کەناڵەکانیان، و کەناڵەکان وەک لیستێک بە ژمارە و لۆگۆ و ناو، لەگەڵ
@@ -68,6 +81,12 @@ z و x هەمان کار دەکەن.
 تەنیشتی، و دوگمەی Play بە پانی لە خوارەوە.
 
 [ar]
+الأفلام والمسلسلات المسماة "الاسم الإنجليزي _ الاسم الكردي {tmdb-ID}" تظهر الآن بشكل
+نظيف: لا تظهر الوسمة أبداً، والاسم الإنجليزي أولاً والكردي في سطر صغير ثانٍ، ويُستخدم
+رقم TMDB الخاص بالفيلم لجلب القصة والسنة والممثلين والتقييم والملصق والصورة العريضة
+دون تخمين بالاسم. والحلقات تظهر "Episode 1" بدل الاسم الطويل، والبحث يجد العنوان
+بالاسم الإنجليزي أو الكردي.
+
 التلفزيون: أصبحت القنوات المباشرة تبدو كدليل تلفزيوني. قائمة على الجانب
 (مباشر، أفلام، مسلسلات، المفضلة، الإعدادات)، والفئات في عمود مستقل مع عدد
 القنوات في كل منها، والقنوات كقائمة برقم وشعار واسم، مع زر البحث عن القنوات.
