@@ -4393,7 +4393,7 @@ function osQuery(q){
                  : "tmdb_id=" + q.tmdb + "&type=movie";
 }
 /* which languages exist for it - looking costs nothing of the daily limit */
-function osSearch(q){
+function osSearchBase(q){
   var qs = osQuery(q), key = "os2:" + qs, hit = tmdbHit(key);
   if(hit) return Promise.resolve(hit.v);
   /* only the languages offered here, so a popular film's first page is not all English */
@@ -4416,6 +4416,62 @@ function osSearch(q){
     var v = Object.keys(by).map(function(k){ return by[k] });
     tmdbKeep(key, v);
     return v;
+  });
+}
+/* The same, but when the app could read the stream's own fingerprint (the
+   OpenSubtitles "movie hash") a file made for exactly this release comes first:
+   its words land on the voice with no shifting at all. No answer, no hash, or
+   no exact file: the ordinary list, as before. */
+function osSearch(q, hash){
+  return osSearchBase(q).then(function(base){
+    if(!hash) return base;
+    var key = "os3:" + osQuery(q) + "|" + hash, hit = tmdbHit(key);
+    var merge = function(ex){
+      var by = {};
+      base.forEach(function(x){ by[x.lang] = x });
+      ex.forEach(function(x){ by[x.lang] = x });
+      return Object.keys(by).map(function(k){ return by[k] });
+    };
+    if(hit) return merge(hit.v || []);
+    var langs = SUB_LANGS.filter(function(l){ return l !== "ku-ai" }).concat(["ku"]).join(",");
+    return osJson("GET", "/subtitles?moviehash=" + encodeURIComponent(hash) + "&moviehash_match=only&languages=" + langs
+                  + "&order_by=download_count&order_direction=desc").then(function(j){
+      var ex = {};
+      ((j && j.data) || []).forEach(function(d){
+        var a = d.attributes || {}, f = (a.files || [])[0], l = String(a.language || "").toLowerCase();
+        if(!f || !f.file_id || !l || a.moviehash_match === false || ex[l]) return;
+        ex[l] = { id: f.file_id, lang: l, mt: a.machine_translated || a.ai_translated ? 1 : 0, sc: 100, exact: true };
+      });
+      var v = Object.keys(ex).map(function(k){ return ex[k] });
+      tmdbKeep(key, v);
+      return merge(v);
+    }, function(){ return base });
+  });
+}
+/* the stream's fingerprint, read by the app (two small pieces of the file). Only
+   for films and episodes, never while the same account is playing it, and kept. */
+var HASHW = {}, HASHN = 0;
+window.kiptvHash = function(id, h){ var cb = HASHW[id]; if(cb) cb(h || "") };
+function hashStore(){ var o = null; try{ o = JSON.parse(lsGet("kiptv_hash", "{}")) }catch(e){} return o || {} }
+function osHashFor(u, onlyKept){
+  var kept = hashStore()[u];
+  if(kept) return Promise.resolve(kept);
+  if(onlyKept || !/^https?:/i.test(String(u || "")) || !(window.AndroidPlayer && AndroidPlayer.movieHash)) return Promise.resolve("");
+  return new Promise(function(res){
+    var id = "k" + (++HASHN), done = false;
+    var fin = function(h){
+      if(done) return;
+      done = true; delete HASHW[id];
+      if(h){
+        var m = hashStore(), ks = Object.keys(m);
+        if(ks.length > 200) delete m[ks[0]];
+        m[u] = h; lsSet("kiptv_hash", JSON.stringify(m));
+      }
+      res(h || "");
+    };
+    HASHW[id] = fin;
+    setTimeout(function(){ fin("") }, 9000);
+    try{ AndroidPlayer.movieHash(id, u) }catch(e){ fin("") }
   });
 }
 function osDownload(fileId){
@@ -4448,6 +4504,46 @@ function srtBuild(cues){
   return cues.map(function(c, i){ return (i + 1) + "\n" + c.tm + "\n" + c.tx }).join("\n\n") + "\n";
 }
 
+/* ---- what a Kurdish subtitle needs after any engine has made it ----
+   Arabic-script letters that Google sometimes writes the Arabic way are put right
+   (ي ى -> ی, ك -> ک), a long single line is broken in two near its middle so it
+   fits the screen, and every line is marked as right-to-left so a name in Latin
+   letters or a dash at the start does not throw the punctuation to the wrong end. */
+function kuFix(x){
+  return String(x == null ? "" : x)
+    .replace(/[يى]/g, "ی").replace(/ك/g, "ک").replace(/ـ/g, "").replace(/ھ/g, "ه")
+    .replace(/[ \t]+\n/g, "\n").replace(/[ \t]{2,}/g, " ")
+    .replace(/\s+([،؟!؛:])/g, "$1");
+}
+function kuWrap(x, max){
+  max = max || 42;
+  if(x.indexOf("\n") >= 0 || x.length <= max) return x;
+  var mid = x.length / 2, best = -1, bd = 1e9;
+  for(var i = 0; i < x.length; i++){
+    if(x.charAt(i) !== " ") continue;
+    var d = Math.abs(i - mid) - (/[،,.!?؟…]/.test(x.charAt(i - 1)) ? 6 : 0);
+    if(d < bd){ bd = d; best = i }
+  }
+  return best < 0 ? x : x.slice(0, best) + "\n" + x.slice(best + 1);
+}
+function kuLines(x){
+  return String(x).split("\n").map(function(l){ return l.trim() ? "\u200F" + l.replace(/^\u200F/, "") : l }).join("\n");
+}
+/* what is taken off a cue before a free engine sees it, and put back after */
+function cueSplit(c){
+  var tx = String(c.tx || ""), pre = "", post = "";
+  var a = tx.match(/^(\s*\{\\[^}]*\})+/);
+  if(a){ pre = a[0].trim(); tx = tx.slice(a[0].length) }
+  var it = tx.match(/^\s*<i>([\s\S]*)<\/i>\s*$/i);
+  if(it){ tx = it[1]; pre += "<i>"; post = "</i>" }
+  c.pre = pre; c.post = post;
+  return tx.replace(/<\/?[a-z][^>]*>/gi, "").replace(/\{\\[^}]*\}/g, "").trim();
+}
+function cueJoin(c, text){
+  var t2 = kuLines(kuWrap(kuFix(text)));
+  return (c.pre || "") + t2 + (c.post || "");
+}
+
 /* ---- Kurdish, made by Claude ---- */
 var AI_SYS = "You translate film and TV subtitles into Central Kurdish (Sorani), written in the Kurdish Arabic "
   + "script (with ە ێ ۆ ڕ ڵ ڤ گ چ پ ژ). Write natural spoken Sorani, the way a good Kurdish subtitler would: "
@@ -4460,12 +4556,15 @@ var AI_SCHEMA = { type: "object", additionalProperties: false, required: ["cues"
   properties: { cues: { type: "array", items: { type: "object", additionalProperties: false, required: ["i", "t"],
     properties: { i: { type: "integer" }, t: { type: "string" } } } } } };
 
-function aiBatch(items){
+function aiBatch(items, ctx){
   var model = aiModel(), opus = /opus/.test(model);
   var body = {
     model: model, max_tokens: 16000, system: AI_SYS,
     output_config: { effort: "low", format: { type: "json_schema", schema: AI_SCHEMA } },
-    messages: [{ role: "user", content: "Translate these subtitle cues into Sorani Kurdish.\n\n"
+    messages: [{ role: "user", content: "Translate these subtitle cues into Sorani Kurdish."
+      + (ctx && ctx.about ? "\n\nWhat it is (for context only, do not translate): " + ctx.about : "")
+      + (ctx && ctx.before && ctx.before.length ? "\n\nThe lines just before the first cue (context only, do not translate): " + JSON.stringify(ctx.before) : "")
+      + "\n\nKeep one Kurdish spelling for each name throughout. Do not merge, split or drop cues.\n\n"
       + JSON.stringify({ cues: items.map(function(c){ return { i: c.i, t: c.tx } }) }) }]
   };
   var head = { "x-api-key": aiKey(), "anthropic-version": "2023-06-01", "content-type": "application/json" };
@@ -4487,17 +4586,17 @@ function aiBatch(items){
   });
 }
 /* one batch, made smaller when it does not fit and tried again when the line drops */
-function aiBatchSafe(items, tries){
-  return aiBatch(items).catch(function(e){
+function aiBatchSafe(items, tries, ctx){
+  return aiBatch(items, ctx).catch(function(e){
     if(e.split && items.length > 10){
       var h = Math.ceil(items.length / 2);
-      return aiBatchSafe(items.slice(0, h), 0).then(function(a){
-        return aiBatchSafe(items.slice(h), 0).then(function(b){ for(var k in b) a[k] = b[k]; return a });
+      return aiBatchSafe(items.slice(0, h), 0, ctx).then(function(a){
+        return aiBatchSafe(items.slice(h), 0, ctx).then(function(b){ for(var k in b) a[k] = b[k]; return a });
       });
     }
     if(e.retry && (tries || 0) < 3)
       return new Promise(function(ok){ setTimeout(ok, 2500 * ((tries || 0) + 1)) })
-        .then(function(){ return aiBatchSafe(items, (tries || 0) + 1) });
+        .then(function(){ return aiBatchSafe(items, (tries || 0) + 1, ctx) });
     throw e;
   });
 }
@@ -4516,7 +4615,7 @@ var G_AT = 0;
 function gBatch(items, tries){
   tries = tries || 0;
   var host = G_HOSTS[G_AT % G_HOSTS.length];
-  var body = items.map(function(c){ return "q=" + encodeURIComponent(c.tx) }).join("&");
+  var body = items.map(function(c){ return "q=" + encodeURIComponent(c.q != null ? c.q : c.tx) }).join("&");
   return nativeHttp("POST", host, { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
                                     "User-Agent": G_UA, "Accept": "*/*" }, body).then(function(r){
     var j = null; try{ j = JSON.parse(r.text) }catch(e){}
@@ -4543,12 +4642,12 @@ function gBatch(items, tries){
 /* what was translated so far, per film: a stopped job carries on from there */
 var SUBPART = {};
 
-function aiSrt(srt, onPct, partKey){
+function aiSrt(srt, onPct, partKey, about){
   var eng = subEngine();
   if(eng !== "google" && !aiKey()) return Promise.reject(new Error(t().subNoAi));
   var cues = srtParse(srt);
   if(!cues.length) return Promise.reject(new Error("empty subtitle file"));
-  cues.forEach(function(c, i){ c.i = i + 1 });
+  cues.forEach(function(c, i){ c.i = i + 1; if(eng === "google") c.q = cueSplit(c) });
   var part = partKey ? (SUBPART[partKey] = SUBPART[partKey] || { done: {} }) : { done: {} };
   var todo = cues.filter(function(c){ return part.done[c.i] == null });
   var batches = [];
@@ -4563,7 +4662,12 @@ function aiSrt(srt, onPct, partKey){
   } else {
     for(var i = 0; i < todo.length; i += 120) batches.push(todo.slice(i, i + 120));
   }
-  var run = eng === "google" ? function(b){ return gBatch(b, 0) } : function(b){ return aiBatchSafe(b, 0) };
+  var run = eng === "google" ? function(b){ return gBatch(b, 0) } : function(b){
+    /* a few lines before the batch tell Claude who is talking and about what */
+    var at = cues.indexOf(b[0]);
+    var before = cues.slice(Math.max(0, at - 4), at).map(function(c){ return c.tx });
+    return aiBatchSafe(b, 0, { about: about || "", before: before });
+  };
   var done = 0, next = 0, failed = null;
   var worker = function(){
     if(failed || next >= batches.length) return Promise.resolve();
@@ -4580,7 +4684,7 @@ function aiSrt(srt, onPct, partKey){
   for(var w = 0; w < Math.min(eng === "google" ? 1 : 5, batches.length); w++) crew.push(worker());
   return Promise.all(crew).then(function(){
     if(failed) throw failed;
-    cues.forEach(function(c){ if(part.done[c.i] != null) c.tx = part.done[c.i] });
+    cues.forEach(function(c){ if(part.done[c.i] != null) c.tx = eng === "google" ? cueJoin(c, part.done[c.i]) : kuLines(kuWrap(kuFix(part.done[c.i]))) });
     if(partKey) delete SUBPART[partKey];
     return srtBuild(cues);
   });
@@ -4597,21 +4701,35 @@ function subQuery(tg){
   if(tg.tmdb) return Promise.resolve({ tmdb: tg.tmdb });
   return tmdbFind("movie", tg.n, "").then(function(v){ return v && v.k === "movie" ? { tmdb: v.id } : null });
 }
-function prepareSub(tg, lang, onPct){
+/* a short description of the film for the AI: its name, year, kinds and the start of the story */
+function subAbout(tg){
+  var id = tg.kind === "episode" ? tg.ptmdb : tg.tmdb, kind = tg.kind === "episode" ? "tv" : "movie";
+  var v = id ? (tmdbHit("3:" + kind + ":#" + id + ":en-US") || {}).v : null;
+  var a = (v && v.t) ? v.t + (v.y ? " (" + v.y + ")" : "") : String(tg.n || "");
+  if(tg.kind === "episode") a += ", season " + (tg.s || 1) + " episode " + (tg.e || "");
+  if(v && v.g && v.g.length) a += ". " + v.g.join(", ");
+  if(v && v.ov) a += ". " + String(v.ov).slice(0, 240);
+  return a;
+}
+/* noHash: do not ask the app to read the stream now (it is being played) - use a kept one only */
+function prepareSub(tg, lang, onPct, noHash){
   var have = subHave(tg.u, lang);
   if(have) return Promise.resolve(have);
   var k = tg.u + "|" + lang;
   if(SUBJOB[k]){ if(onPct) SUBJOB[k].cbs.push(onPct); return SUBJOB[k].p }
   var job = { cbs: onPct ? [onPct] : [], pct: 0 };
   var tell = function(p){ job.pct = p; job.cbs.forEach(function(f){ try{ f(p) }catch(e){} }) };
-  var qk = "";
+  var qk = "", hash = "";
+  tell(1);
   job.p = subQuery(tg).then(function(q){
     if(!q) throw new Error(t().subNoId);
-    qk = "q:" + osQuery(q);
+    return osHashFor(tg.u, noHash).then(function(h){ hash = h; return q });
+  }).then(function(q){
+    qk = "q:" + osQuery(q) + (hash ? "|h" + hash : "");
     var same = subHave(qk, lang);          /* made already, for this film from another list */
     if(same){ subKeep([tg.u], lang, same); return same }
     tell(2);
-    return osSearch(q).then(function(list){
+    return osSearch(q, hash).then(function(list){
       var pick = function(l){ return list.filter(function(x){ return x.lang === l })[0] };
       var store = function(text){
         var f = subSave("s" + hashStr(qk) + "_" + lang + ".srt", text);
@@ -4637,7 +4755,7 @@ function prepareSub(tg, lang, onPct){
           var fs = subSave("s" + hashStr(qk) + "_" + src.lang + ".srt", srt);
           if(fs && !subHave(tg.u, src.lang)) subKeep([tg.u, qk], src.lang, { f: fs });
         }catch(e){}
-        return aiSrt(srt, function(p){ tell(6 + Math.round(p * 0.94)) }, qk + "|" + subEngine());
+        return aiSrt(srt, function(p){ tell(6 + Math.round(p * 0.94)) }, qk + "|" + subEngine(), subAbout(tg));
       }).then(function(text){ delete SUBPART["src:" + qk]; return store(text) });
     });
   });
@@ -4695,8 +4813,72 @@ function subPick(l){
   subsRow();
 }
 
+/* ==================== subtitles from inside the player ====================
+   The player's own settings list every language, say which are ready or can be
+   had, and ask this page to get one - the page has the keys, the cache and the
+   translation. What is made is handed back to the player as a file. What the
+   player may ask for is known by the stream's address: films by their list
+   entry, episodes by the series' TMDB number, season and episode, remembered
+   when the episodes were listed. */
+var PLAYTG = {};
+function tgFor(u){
+  if(PLAYTG[u]) return PLAYTG[u];
+  var m = (DATA.movies || []).filter(function(c){ return c.u === u })[0];
+  return m ? { u: u, n: m.n, kind: "movie", tmdb: m.tmdb || "" } : null;
+}
+function subLangCode(l){ return l === "ku-ai" ? "ckb" : l }
+function nativeSub(fn, a, b, c, d, e){
+  try{ if(window.AndroidPlayer && AndroidPlayer[fn]) AndroidPlayer[fn](a, b, c, d, e) }catch(x){}
+}
+/* which languages the player can offer for this stream, and in what state */
+window.kiptvSubInfo = function(u){
+  var tg = tgFor(u);
+  var base = SUB_LANGS.map(function(l){ return { l: l, code: subLangCode(l), n: subLangName(l), s: "none" } });
+  var send = function(why){ nativeSub("subInfo", u, JSON.stringify({ langs: base, why: why || "" })) };
+  if(!tg){ send("id"); return }
+  var settle = function(av, noKey){
+    base.forEach(function(b){
+      if(subHave(tg.u, b.l)) b.s = "ready";
+      else if(noKey) b.s = "nokey";
+      else if(!av) b.s = "try";
+      else if(b.l === "ku-ai") b.s = av.length ? "avail" : "none";
+      else b.s = av.some(function(x){ return x.lang === b.l }) ? "avail" : "none";
+    });
+    send("");
+  };
+  if(!osKey()){ settle(null, true); return }
+  subQuery(tg).then(function(q){
+    if(!q){ base.forEach(function(b){ b.s = subHave(tg.u, b.l) ? "ready" : "none" }); send("id"); return }
+    return osHashFor(tg.u, true).then(function(h){ return osSearch(q, h) }).then(settle, function(){ settle(null) });
+  }).catch(function(){ settle(null) });
+};
+/* the player wants one language for this stream */
+window.kiptvSubReq = function(u, lang){
+  var tg = tgFor(u);
+  if(!tg){ nativeSub("subFail", u, lang, t().subNoId); return }
+  lsSet("kiptv_sublang", lang);          /* the next episode follows the same choice */
+  /* the stream is being played: its fingerprint is only used when it was read before */
+  prepareSub(tg, lang, function(p){ nativeSub("subProgress", u, lang, p) }, true).then(function(rec){
+    nativeSub("subReady", u, lang, subLangCode(lang), subLangName(lang), rec.f);
+  }, function(e){
+    var m = e && e.message ? e.message : String(e);
+    nativeSub("subFail", u, lang, m + (/Google/.test(m) ? "  ·  " + t().subAgain : ""));
+  });
+};
+/* an episode or film that has just started: the language last chosen, if it is not on it yet */
+window.kiptvSubAuto = function(u){
+  var l = subPref();
+  if(!l || !tgFor(u)) return;
+  var have = subHave(u, l);
+  if(have) nativeSub("subReady", u, l, subLangCode(l), subLangName(l), have.f);
+  else window.kiptvSubReq(u, l);
+};
+/* the choice made in the player is the choice for the next film too */
+window.kiptvSubPref = function(l){ lsSet("kiptv_sublang", l || "") };
+
 /* ---- playing: the chosen subtitles first, when they are not ready yet ---- */
 function playWithSubs(list, idx, tg){
+  if(tg && list[idx]) PLAYTG[list[idx].u] = tg;
   var l = subPref();
   if(!l || !tg || subHave(tg.u, l)){ playQueue(list, idx); return }
   var d = t(), box = $("subWait");
@@ -4998,6 +5180,7 @@ $("dEps").addEventListener("click", function(e){
   var rows = this.getElementsByClassName("ep"), list = [], idx = 0;
   for(var i = 0; i < rows.length; i++){
     list.push({ n: rows[i].getAttribute("data-n"), u: rows[i].getAttribute("data-u") });
+    PLAYTG[rows[i].getAttribute("data-u")] = subTargetEp(rows[i].getAttribute("data-u"), rows[i].getAttribute("data-n"), rows[i].getAttribute("data-en"));
     if(rows[i] === el) idx = i;
   }
   playWithSubs(list, idx, subTargetEp(el.getAttribute("data-u"), el.getAttribute("data-n"), el.getAttribute("data-en")));
