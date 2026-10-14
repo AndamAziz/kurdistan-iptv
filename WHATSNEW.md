@@ -1,4 +1,10 @@
 [en]
+Subtitle language buttons in the player settings now always answer: a tap
+shows a small spinner, a thin progress bar and the percent on that row, a failed
+try stays on the row in red with a Get button to try again, and a page that does
+not answer says so after a few seconds. Films and episodes opened from Continue
+watching now find their subtitles too.
+
 Subtitles in the player: the settings panel now lists every subtitle language
 (Kurdish AI, English, Arabic, Persian, Turkish, French, German, Spanish) for the
 film or episode you are watching, each marked Ready, Get, Not available or
@@ -51,6 +57,12 @@ top, fading into the page, the poster on its edge with the title, rating and
 genres beside it, and a full-width Play button underneath.
 
 [ku]
+دوگمەی زمانەکانی ژێرنووس لە ڕێکخستنەکانی پلەیەر ئێستا هەمیشە وەڵام دەداتەوە:
+کلیک دەبێتە لۆدەرێکی بچووک، هێڵی پێشکەوتن و ڕێژە لەسەر هەمان ڕیز، هەڵە لەسەر
+ڕیزەکە بە سوور دەمێنێتەوە لەگەڵ دوگمەی دووبارە هەوڵدان، و ئەگەر پەیج وەڵام
+نەداتەوە پاش چەند چرکەیەک دەڵێت. فیلم و ئەلقەی کراوە لە «بەردەوامبوون لە بینین»
+ژێرنووسیشیان دەدۆزرێتەوە.
+
 ژێرنووس لە ناو پلەیەرەکە: لە ڕێکخستنەکانی پلەیەر ئێستا هەموو زمانەکانی ژێرنووس
 (کوردی AI، ئینگلیزی، عەرەبی، فارسی، تورکی، فەڕەنسی، ئەڵمانی، ئیسپانی) بۆ ئەو
 فیلم یان ئەلقەیەی دەیبینیت دەردەکەون، بە نیشانەی ئامادە، وەرگرتن، بەردەست نییە یان
@@ -100,6 +112,11 @@ z و x هەمان کار دەکەن.
 تەنیشتی، و دوگمەی Play بە پانی لە خوارەوە.
 
 [ar]
+أزرار لغات الترجمة في إعدادات المشغّل تستجيب الآن دائماً: الضغط يُظهر مؤشر تحميل
+صغيراً وشريط تقدّم رفيعاً والنسبة على الصف نفسه، والمحاولة الفاشلة تبقى على الصف
+بالأحمر مع زر لإعادة المحاولة، وإن لم تجب الصفحة يُعلَم ذلك بعد ثوانٍ. والأفلام
+والحلقات المفتوحة من «متابعة المشاهدة» تجد ترجمتها أيضاً.
+
 الترجمة داخل المشغّل: تعرض لوحة الإعدادات الآن كل لغات الترجمة (الكردية AI،
 الإنجليزية، العربية، الفارسية، التركية، الفرنسية، الألمانية، الإسبانية) للفيلم أو
 الحلقة الحالية، مع حالة: جاهزة أو جلب أو غير متوفرة أو تحتاج مفتاحاً. اضغط للجلب أو

@@ -4821,10 +4821,30 @@ function subPick(l){
    entry, episodes by the series' TMDB number, season and episode, remembered
    when the episodes were listed. */
 var PLAYTG = {};
+function tgFix(tg){
+  /* an episode whose series number was not known when it was listed: the name may carry it */
+  try{
+    if(tg && tg.kind === "episode" && (!tg.ptmdb || !tg.e)){
+      var p = parseVodName(tg.n, "episode");
+      if(!tg.ptmdb && p.tmdbId) tg.ptmdb = p.tmdbId;
+      if(!tg.e && p.episode){ tg.e = p.episode; tg.s = p.season || tg.s || 1 }
+    }
+  }catch(e){}
+  return tg;
+}
 function tgFor(u){
-  if(PLAYTG[u]) return PLAYTG[u];
+  if(PLAYTG[u]) return tgFix(PLAYTG[u]);
   var m = (DATA.movies || []).filter(function(c){ return c.u === u })[0];
-  return m ? { u: u, n: m.n, kind: "movie", tmdb: m.tmdb || "" } : null;
+  if(m) return { u: u, n: m.n, kind: "movie", tmdb: m.tmdb || "" };
+  /* opened from Continue watching: the history knows what it was */
+  try{
+    var h = histList().filter(function(x){ return x.u === u })[0];
+    if(h){
+      if(h.t === "episode") return tgFix({ u: u, n: h.n, kind: "episode", ptmdb: "", s: 1, e: 0 });
+      if(h.t === "movie") return { u: u, n: h.n, kind: "movie", tmdb: parseVodName(h.n, "movie").tmdbId || "" };
+    }
+  }catch(e){}
+  return null;
 }
 function subLangCode(l){ return l === "ku-ai" ? "ckb" : l }
 function nativeSub(fn, a, b, c, d, e){
@@ -4832,7 +4852,8 @@ function nativeSub(fn, a, b, c, d, e){
 }
 /* which languages the player can offer for this stream, and in what state */
 window.kiptvSubInfo = function(u){
-  var tg = tgFor(u);
+  var tg = null;
+  try{ tg = tgFor(u) }catch(e){}
   var base = SUB_LANGS.map(function(l){ return { l: l, code: subLangCode(l), n: subLangName(l), s: "none" } });
   var send = function(why){ nativeSub("subInfo", u, JSON.stringify({ langs: base, why: why || "" })) };
   if(!tg){ send("id"); return }
@@ -4854,6 +4875,7 @@ window.kiptvSubInfo = function(u){
 };
 /* the player wants one language for this stream */
 window.kiptvSubReq = function(u, lang){
+ try{
   var tg = tgFor(u);
   if(!tg){ nativeSub("subFail", u, lang, t().subNoId); return }
   lsSet("kiptv_sublang", lang);          /* the next episode follows the same choice */
@@ -4864,6 +4886,7 @@ window.kiptvSubReq = function(u, lang){
     var m = e && e.message ? e.message : String(e);
     nativeSub("subFail", u, lang, m + (/Google/.test(m) ? "  ·  " + t().subAgain : ""));
   });
+ }catch(e){ nativeSub("subFail", u, lang, String(e && e.message ? e.message : e)) }
 };
 /* an episode or film that has just started: the language last chosen, if it is not on it yet */
 window.kiptvSubAuto = function(u){
