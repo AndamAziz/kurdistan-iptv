@@ -209,6 +209,10 @@ class MainActivity : ComponentActivity() {
     private val subInfoAt = HashMap<String, Long>()
     /** "address|language" -> percent, while the page is getting that subtitle */
     private val subBusy = HashMap<String, Int>()
+    /** "address|language" -> why the last try failed, kept on the row until it is tried again */
+    private val subErr = HashMap<String, String>()
+    /** address -> the page's reason when it could not tell what can be had ("id": the title is not known) */
+    private val subWhy = HashMap<String, String>()
     private val SUB_ROWS = listOf("ku-ai", "en", "ar", "fa", "tr", "fr", "de", "es")
     private var refs: List<String?> = emptyList()
     private var curUa: String? = null
@@ -720,7 +724,9 @@ class MainActivity : ComponentActivity() {
         @android.webkit.JavascriptInterface
         fun subInfo(url: String, json: String) {
             try {
-                val a = JSONObject(json).optJSONArray("langs") ?: return
+                val root = JSONObject(json)
+                val a = root.optJSONArray("langs") ?: return
+                val why = root.optString("why")
                 val out = ArrayList<SubLang>()
                 for (i in 0 until a.length()) {
                     val o = a.getJSONObject(i)
@@ -728,6 +734,7 @@ class MainActivity : ComponentActivity() {
                 }
                 runOnUiThread {
                     subInfoByUrl[url] = out
+                    subWhy[url] = why
                     subInfoAt[url] = System.currentTimeMillis()
                     if (panelOn()) fillPanel()
                 }
@@ -752,6 +759,7 @@ class MainActivity : ComponentActivity() {
         fun subFail(url: String, lang: String, message: String) {
             runOnUiThread {
                 subBusy.remove("$url|$lang")
+                subErr["$url|$lang"] = message.take(140)
                 showHint(message.take(90))
                 if (panelOn()) fillPanel()
             }
@@ -935,7 +943,19 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun askSub(u: String, lang: String) {
-        subBusy["$u|$lang"] = 0
+        val key = "$u|$lang"
+        subBusy[key] = 0
+        subErr.remove(key)
+        /* if the page never answers (it is asleep, or it failed before it could say so), the row says so
+           and can be tried again - a tap must never look like nothing happened */
+        handler.postDelayed({
+            if (subBusy[key] == 0) {
+                subBusy.remove(key)
+                subErr[key] = tx("subSilent")
+                if (panelOn()) fillPanel()
+            }
+        }, 25000L)
+        try { webView.resumeTimers() } catch (e: Exception) { }
         js("window.kiptvSubReq&&kiptvSubReq(" + JSONObject.quote(u) + "," + JSONObject.quote(lang) + ")")
     }
 
@@ -1066,12 +1086,12 @@ class MainActivity : ComponentActivity() {
     /** one line of the subtitle list: the language, a small note, and on the end what state it is in
      *  badge kind: 0 plain, 1 ready (green), 2 can be had (gold), 3 unavailable (grey) */
     private fun subRow(name: String, note: String?, badge: String?, kind: Int, on: Boolean,
-                       enabled: Boolean, key: String, action: () -> Unit): LinearLayout =
+                       enabled: Boolean, key: String, progress: Int = -1, warn: Boolean = false,
+                       action: () -> Unit): LinearLayout =
         LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
+            orientation = LinearLayout.VERTICAL
             background = panelBg(on)
-            setPadding(dp(14), dp(11), dp(12), dp(11))
+            setPadding(dp(14), dp(11), dp(12), dp(if (progress >= 0) 8 else 11))
             isClickable = true
             focusRing(this, round = false)
             tag = key
@@ -1080,6 +1100,10 @@ class MainActivity : ComponentActivity() {
             setOnClickListener { action() }
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { bottomMargin = dp(6) }
+            val line = LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+            }
             val col = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
             col.addView(TextView(context).apply {
                 text = (if (on) "✓   " else "") + name
@@ -1089,12 +1113,16 @@ class MainActivity : ComponentActivity() {
             })
             if (!note.isNullOrBlank()) col.addView(TextView(context).apply {
                 text = note
-                setTextColor(0xFF7F8B99.toInt())
+                setTextColor(if (warn) 0xFFFF8A80.toInt() else 0xFF7F8B99.toInt())
                 textSize = 11f
                 setPadding(0, dp(2), 0, 0)
             })
-            addView(col, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-            if (!badge.isNullOrBlank()) addView(TextView(context).apply {
+            line.addView(col, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            if (progress >= 0) line.addView(ProgressBar(context, null, android.R.attr.progressBarStyleSmall).apply {
+                isIndeterminate = true
+                indeterminateTintList = android.content.res.ColorStateList.valueOf(0xFFFFD277.toInt())
+            }, LinearLayout.LayoutParams(dp(16), dp(16)).apply { marginStart = dp(8) })
+            if (!badge.isNullOrBlank()) line.addView(TextView(context).apply {
                 text = badge
                 textSize = 11.5f
                 gravity = Gravity.CENTER
@@ -1108,6 +1136,14 @@ class MainActivity : ComponentActivity() {
             }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
                 marginStart = dp(8)
             })
+            addView(line, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+            /* a thin bar along the foot of the row while a subtitle is being made */
+            if (progress >= 0) addView(ProgressBar(context, null, android.R.attr.progressBarStyleHorizontal).apply {
+                max = 100
+                this.progress = progress.coerceIn(2, 100)
+                progressTintList = android.content.res.ColorStateList.valueOf(0xFFFFD277.toInt())
+                progressBackgroundTintList = android.content.res.ColorStateList.valueOf(0x22FFFFFF)
+            }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(3)).apply { topMargin = dp(8) })
         }
 
     /** a track's language as a two-letter code, whatever form the stream writes it in */
@@ -1159,12 +1195,16 @@ class MainActivity : ComponentActivity() {
                             closePanel(); showHint(name)
                         }
                     })
-                    pct != null -> box.addView(subRow(name, note, "$pct%", 2, false, true, "sub$l") { showHint(tx("subWorking")) })
+                    pct != null -> box.addView(subRow(name, tx("subWorking"), if (pct > 0) "$pct%" else null, 2, false, true, "sub$l", progress = pct) { showHint(tx("subWorking")) })
                     state == "none" -> box.addView(subRow(name, note, tx("subNA"), 3, false, false, "sub$l") { showHint(tx("subNA")) })
                     state == "nokey" -> box.addView(subRow(name, note, tx("subNoKey"), 3, false, false, "sub$l") { showHint(tx("subNoKey")) })
-                    else -> box.addView(subRow(name, note, tx("subGet"), 2, false, true, "sub$l") { askSub(u, l); fillPanel() })
+                    else -> {
+                        val err = subErr["$u|$l"]
+                        box.addView(subRow(name, err ?: note, tx("subGet"), 2, false, true, "sub$l", warn = err != null) { askSub(u, l); fillPanel() })
+                    }
                 }
             }
+            if (subWhy[u] == "id") box.addView(noteRow(tx("subNoId")))
             /* the page is asked once for what it can get; again when it is old */
             val at = subInfoAt[u] ?: 0L
             if (System.currentTimeMillis() - at > 90000L) { subInfoAt[u] = System.currentTimeMillis(); askSubInfo(u) }
@@ -2240,8 +2280,9 @@ class MainActivity : ComponentActivity() {
     private fun showHint(text: String) {
         txtHint.text = text
         txtHint.visibility = View.VISIBLE
+        txtHint.bringToFront()          /* above the panel and its dimmed backdrop */
         txtHint.removeCallbacks(hideHint)
-        txtHint.postDelayed(hideHint, 1200)
+        txtHint.postDelayed(hideHint, if (text.length > 24) 2600L else 1200L)
     }
 
     /** the player closed: leave everything unlocked for next time */
@@ -2278,6 +2319,7 @@ class MainActivity : ComponentActivity() {
         "subGet" to "Get", "subReadyB" to "Ready", "subNA" to "Not available", "subNoKey" to "Needs a key",
         "subKuNote" to "Kurdish (Sorani), made by AI from the English",
         "subHere" to "Inside this video", "subWorking" to "Preparing the subtitles…",
+        "subSilent" to "No answer - tap to try again", "subNoId" to "This title is not known to TMDB, so subtitles may not be found",
         "syncNow" to "Sync to the line I hear now",
         "syncNote" to "Tap just as someone starts to speak: the subtitles line up with the voice",
         "syncNone" to "No subtitle line near this moment",
@@ -2305,6 +2347,7 @@ class MainActivity : ComponentActivity() {
         "subGet" to "وەرگرتن", "subReadyB" to "ئامادەیە", "subNA" to "بەردەست نییە", "subNoKey" to "کلیل پێویستە",
         "subKuNote" to "کوردی (سۆرانی)، بە زیرەکی دەستکرد لە ئینگلیزییەوە دروستکراوە",
         "subHere" to "ناو خودی ڤیدیۆکە", "subWorking" to "ژێرنووس ئامادە دەکرێت…",
+        "subSilent" to "وەڵام نەهات - دووبارە کلیک بکە", "subNoId" to "ئەم ناونیشانە لە TMDB نەناسراوە، بۆیە ڕەنگە ژێرنووس نەدۆزرێتەوە",
         "syncNow" to "لەگەڵ ئەو دێڕەی ئێستا دەیبیستم ڕێکی بخە",
         "syncNote" to "کاتێک کەسێک دەست دەکات بە قسەکردن بیدە: ژێرنووس لەگەڵ دەنگەکە ڕێک دەکەوێت",
         "syncNone" to "لەم کاتەدا هیچ دێڕێکی ژێرنووس نییە",
@@ -2332,6 +2375,7 @@ class MainActivity : ComponentActivity() {
         "subGet" to "تحميل", "subReadyB" to "جاهزة", "subNA" to "غير متاحة", "subNoKey" to "تحتاج مفتاحاً",
         "subKuNote" to "الكردية (السورانية)، مترجمة بالذكاء الاصطناعي من الإنجليزية",
         "subHere" to "داخل الفيديو", "subWorking" to "جارٍ تجهيز الترجمة…",
+        "subSilent" to "لا إجابة - اضغط للمحاولة مجدداً", "subNoId" to "هذا العنوان غير معروف في TMDB، وقد لا توجد ترجمة له",
         "syncNow" to "مزامنة مع السطر الذي أسمعه الآن",
         "syncNote" to "اضغط لحظة يبدأ أحدهم بالكلام: تتطابق الترجمة مع الصوت",
         "syncNone" to "لا يوجد سطر ترجمة قريب من هذه اللحظة",
