@@ -1,4 +1,8 @@
 [en]
+Football on the Live TV home screen: the welcome bar now also runs live
+scores, the next kick-offs and the latest results from the big leagues, in one
+line, live matches first. Search and category now sit side by side.
+
 Kurdish subtitles from Google read better: a sentence broken over two lines of
 one subtitle is translated as one sentence (Google used to fill a half line with
 nonsense such as a year). Kurdish files made before this version are made again
@@ -70,6 +74,10 @@ top, fading into the page, the poster on its edge with the title, rating and
 genres beside it, and a full-width Play button underneath.
 
 [ku]
+تۆپی پێ لە پەڕەی سەرەکی TV ڕاستەوخۆ: شریتی بەخێرهاتن ئێستا ئەنجامی ڕاستەوخۆ،
+یارییەکانی داهاتوو و دوایین ئەنجامەکانی لیگە گەورەکان پیشان دەدات، لە یەک دێڕدا و
+یاری ڕاستەوخۆ یەکەم. گەڕان و پۆل ئێستا لە تەنیشت یەکترن.
+
 ژێرنووسی کوردی Google باشتر دەخوێنرێتەوە: ڕستەیەک کە بە دوو دێڕی یەک ژێرنووس
 دابەشکراوە وەک یەک ڕستە وەردەگێڕدرێت (پێشتر Google نیوە دێڕی پڕ دەکردەوە بە شتی بێمانا
 وەک ساڵێک). فایلی کوردی کۆن یەک جار دووبارە دروست دەکرێتەوە کاتێک هەڵدەبژێردرێت.
@@ -135,6 +143,10 @@ z و x هەمان کار دەکەن.
 تەنیشتی، و دوگمەی Play بە پانی لە خوارەوە.
 
 [ar]
+كرة القدم في الصفحة الرئيسية للبث المباشر: شريط الترحيب يعرض الآن النتائج
+المباشرة والمباريات القادمة وآخر النتائج من الدوريات الكبرى في سطر واحد، والمباريات
+المباشرة أولاً. البحث والفئة الآن جنباً إلى جنب.
+
 ترجمة Google الكردية أوضح: الجملة المقسومة على سطرين في الترجمة الواحدة تُترجم
 جملةً واحدة (كان Google يملأ نصف السطر بكلام بلا معنى كسنةٍ ما). وتُعاد الملفات الكردية
 القديمة مرة واحدة عند اختيارها.
