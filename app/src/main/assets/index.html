@@ -47,12 +47,42 @@ header{position:sticky;top:0;z-index:20;padding:calc(10px + var(--safe-t)) 14px 
   border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 11px;font-size:12px;overflow:hidden}
 .ann i{font-style:normal;flex:none;display:flex}
 .ann-wrap{flex:1;overflow:hidden;white-space:nowrap}
-.ann-wrap span{display:inline-block;white-space:nowrap;animation:marq 26s linear infinite;
+.ann-wrap > span{display:inline-block;white-space:nowrap;animation:marq 26s linear infinite;
   animation-delay:-13s;color:var(--muted);font-weight:600}
 @keyframes marq{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
+/* the football ticker runs inside the same bar: one line, measured in px so a
+   long line keeps the same speed as a short one */
+.ann-wrap.tk{direction:ltr;height:15px;line-height:15px}
+.ann-wrap.tk > span{animation:tick var(--tk-d,30s) linear infinite;animation-delay:0s;
+  transform:translateX(var(--tk-a,100%))}
+@keyframes tick{from{transform:translateX(var(--tk-a,100%))}to{transform:translateX(var(--tk-b,-100%))}}
+.tk-m{display:inline-flex;align-items:center;gap:6px;margin-inline-end:22px;color:var(--text);font-weight:700}
+.tk-m bdi{unicode-bidi:isolate}
+.tk-m em{font-style:normal;font-weight:800;color:var(--accent2);font-variant-numeric:tabular-nums}
+.tk-s{font-size:9.5px;font-weight:800;letter-spacing:.8px;color:var(--muted2);text-transform:uppercase}
+.tk-l{color:#ff5a5f}
+.tk-l::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:#ED2024;
+  margin-inline-end:4px;vertical-align:1px;animation:tkdot 1.6s ease-in-out infinite}
+@keyframes tkdot{50%{opacity:.35}}
+.tk-w{margin-inline-end:22px}
+.tk-sep{color:var(--line);margin-inline-end:22px}
 
 .searchbox{display:none;margin-top:10px;position:relative}
 .searchbox.on{display:block}
+/* search and category side by side; the search box is the wider one */
+.sfrow{display:flex;gap:8px;margin-top:10px;align-items:stretch}
+.sfrow .searchbox{display:block;margin-top:0;flex:1.5 1 0;min-width:0}
+.sfrow .searchbox input{height:100%;min-height:46px;padding-block:0;text-overflow:ellipsis}
+.sfrow .catsel{margin-top:0;flex:1 1 0;min-width:0;width:auto;gap:8px;padding:7px 10px;border-radius:var(--r-sm)}
+.sfrow .catsel .cs-tx b{font-size:13.5px}
+.sfrow .catsel .cs-n{display:none}
+@media (max-width:359px){
+  .sfrow{gap:6px}
+  .sfrow .searchbox input{font-size:14px;padding-inline:11px 34px}
+  .sfrow .searchbox b{inset-inline-end:10px}
+  .sfrow .catsel .cs-ic{display:none}
+  .sfrow .catsel{padding:7px 8px}
+}
 .searchbox input{width:100%;padding:13px 42px 13px 14px;background:var(--surface);
   border:1px solid var(--line);border-radius:var(--r-sm);color:var(--text);font-size:15px;outline:none}
 .searchbox input:focus{border-color:rgba(232,179,60,.55)}
@@ -1134,6 +1164,13 @@ html.tv .iconbtn{width:calc(46 * var(--s));height:calc(46 * var(--s));border-rad
 html.tv .iconbtn svg{width:calc(22 * var(--s));height:calc(22 * var(--s))}
 html.tv .ann{margin-top:calc(8 * var(--s));padding:calc(7 * var(--s)) calc(14 * var(--s));font-size:calc(13.5 * var(--s))}
 html.tv .catsel{margin-top:calc(9 * var(--s));padding:calc(11 * var(--s)) calc(16 * var(--s))}
+html.tv .sfrow{display:block;margin-top:0}
+html.tv .sfrow .searchbox{display:none;margin-top:10px}
+html.tv .sfrow .searchbox.on{display:block}
+html.tv .sfrow .searchbox input{height:auto;padding-block:13px}
+html.tv .sfrow .catsel{width:100%;margin-top:calc(9 * var(--s));padding:calc(11 * var(--s)) calc(16 * var(--s));border-radius:15px}
+html.tv .sfrow .catsel .cs-n{display:block}
+html.tv .sfrow .catsel .cs-tx b{font-size:calc(17 * var(--s))}
 html.tv .catsel .cs-tx s{font-size:calc(11 * var(--s))}
 html.tv .catsel .cs-tx b{font-size:calc(17 * var(--s))}
 html.tv .chips{padding-top:calc(10 * var(--s));gap:calc(9 * var(--s))}
@@ -1339,15 +1376,17 @@ html.tv.tvb header .top{display:none}
 
   <div class="ann">
     <i><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#E8B33C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10v4a1 1 0 001 1h3l5 4V5L7 9H4a1 1 0 00-1 1z"/><path d="M16.5 8.5a5 5 0 010 7"/><path d="M19.5 5.5a9 9 0 010 13"/></svg></i>
-    <div class="ann-wrap"><span id="annText"></span></div>
+    <div class="ann-wrap" id="annWrap"><span id="annText"></span></div>
   </div>
 
+  <div class="sfrow">
   <div class="searchbox" id="sbox">
     <input id="search" autocomplete="off">
     <b><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg></b>
   </div>
 
   <button class="catsel" id="catsel" onclick="openSheet('pick')"></button>
+  </div>
 </header>
 
 <main id="main"></main>
@@ -1429,6 +1468,9 @@ var ACT_URL   = "https://dbmxnhsnipbpycmdmmer.supabase.co/functions/v1/kiptv-che
 /* once a code has been accepted, the app keeps working this long without
    being able to ask again - a week of bad internet locks nobody out */
 var ACT_GRACE = 7 * 24 * 3600 * 1000;
+/* the football scores in the welcome bar: our own server asks the football
+   API (the key stays there) and every device shares its answer */
+var FOOT_URL  = "https://dbmxnhsnipbpycmdmmer.supabase.co/functions/v1/kiptv-football";
 var PAGE_SIZE = 48;
 
 /* ==================== i18n ==================== */
@@ -1448,7 +1490,7 @@ var T = {
       noVod:"هیچ فیلمێک نییە",noSer:"هیچ زنجیرەیەک نییە",onlyXtream:"تەنها بۆ لیستی Xtream",
       tag:"پەخشی ڕاستەوخۆ",ann:"بەخێربێیت بۆ KURDISTAN IPTV — پەخشی ڕاستەوخۆی کەناڵە کوردی و نێودەوڵەتییەکان",
       recent:"بەردەوامبە لە بینین",none:"هیچ کەناڵێک نەدۆزرایەوە",lang:"زمان",
-      catLabel:"پۆل",chN:"کەناڵ",catSearch:"گەڕان لە پۆلەکان…",
+      catLabel:"پۆل",tkLive:"ڕاستەوخۆ",tkHt:"نیوەکات",tkFt:"کۆتایی",tkTom:"سبەی",chN:"کەناڵ",catSearch:"گەڕان لە پۆلەکان…",
       enter:"کۆدی چالاککردن داخڵ بکە",act:"چالاککردن",wrong:"کۆدەکە هەڵەیە",
       gcAsk:"کۆدت نییە؟ پەیوەندیمان پێوە بکە",gcMail:"ئیمەیڵ",gcCopied:"کۆپی کرا",
       actChecking:"چاوەڕێ بکە…",actExpired:"ماوەی ئەم کۆدە تەواو بووە",
@@ -1520,7 +1562,7 @@ var T = {
       noVod:"No movies here",noSer:"No series here",onlyXtream:"Xtream playlists only",
       tag:"LIVE STREAMING",ann:"Welcome to KURDISTAN IPTV — live Kurdish and international channels",
       recent:"Continue watching",none:"No channels found",lang:"Language",
-      catLabel:"Category",chN:"channels",catSearch:"Search categories…",
+      catLabel:"Category",tkLive:"Live",tkHt:"HT",tkFt:"FT",tkTom:"Tomorrow",chN:"channels",catSearch:"Search categories…",
       enter:"Enter your activation code",act:"Activate",wrong:"Wrong code",
       gcAsk:"No code yet? Get in touch",gcMail:"Email",gcCopied:"Copied",
       actChecking:"Please wait…",actExpired:"This code has ended",
@@ -1592,7 +1634,7 @@ var T = {
       noVod:"لا توجد أفلام",noSer:"لا توجد مسلسلات",onlyXtream:"لقوائم Xtream فقط",
       tag:"بث مباشر",ann:"مرحباً بك في KURDISTAN IPTV — بث مباشر للقنوات الكردية والعالمية",
       recent:"متابعة المشاهدة",none:"لا توجد قنوات",lang:"اللغة",
-      catLabel:"الفئة",chN:"قناة",catSearch:"ابحث في الفئات…",
+      catLabel:"الفئة",tkLive:"مباشر",tkHt:"استراحة",tkFt:"انتهت",tkTom:"غداً",chN:"قناة",catSearch:"ابحث في الفئات…",
       enter:"أدخل رمز التفعيل",act:"تفعيل",wrong:"الرمز غير صحيح",
       gcAsk:"ليس لديك رمز؟ تواصل معنا",gcMail:"البريد",gcCopied:"تم النسخ",
       actChecking:"يرجى الانتظار…",actExpired:"انتهت صلاحية هذا الرمز",
@@ -3516,7 +3558,7 @@ function applyLang(){
   document.documentElement.lang = lang;
   document.documentElement.dir = d.dir;
   $("tagline").textContent = activeList().name;
-  $("annText").textContent = d.ann;
+  tkDraw();
   $("search").placeholder = d.search;
   $("gate-sub").textContent = d.enter;
   gcDraw();
@@ -3668,6 +3710,90 @@ function toggleSearch(){
   searchWarm();                    /* films + series start loading while you type */
   tvFit();
 }
+
+/* The tapped search box is the same search the magnifier opens */
+$("search").addEventListener("focus", function(){
+  if(TV || $("sbox").classList.contains("on")) return;
+  $("sbox").classList.add("on");
+  layerOpen("search");
+  SQ_TYPE = "all";
+  searchWarm();
+});
+
+/* ==================== football ticker ====================
+   One line in the welcome bar: live matches, then the next kick-offs, then
+   the last results, with the welcome message going round with them. Every
+   score comes from FOOT_URL; with no answer the bar is the welcome line it
+   always was. */
+var TK = [], TK_HTML = "", TK_TIMER = 0;
+
+function tkTime(iso){
+  var k = new Date(iso), now = new Date();
+  if(isNaN(k)) return "";
+  var hm = ("0" + k.getHours()).slice(-2) + ":" + ("0" + k.getMinutes()).slice(-2);
+  var tom = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  return k.toDateString() === tom.toDateString() ? t().tkTom + " " + hm : hm;
+}
+function tkScore(m){
+  return (m.hs == null || m.as == null) ? "–" : m.hs + " – " + m.as;
+}
+function tkItem(m){
+  var d = t(), st;
+  if(m.s === "live") st = '<span class="tk-s tk-l">' + esc(d.tkLive) + (m.min ? ' <bdi dir="ltr">' + (+m.min) + "&#8242;</bdi>" : "") + '</span>';
+  else if(m.s === "ht") st = '<span class="tk-s tk-l">' + esc(d.tkHt) + '</span>';
+  else if(m.s === "ft") st = '<span class="tk-s">' + esc(d.tkFt) + '</span>';
+  else st = '<span class="tk-s">' + esc(tkTime(m.t)) + '</span>';
+  var mid = m.s === "ns" ? '<em>vs</em>' : '<em>' + esc(tkScore(m)) + '</em>';
+  return '<span class="tk-m">' + st + '<bdi>' + esc(m.home) + '</bdi>' + mid + '<bdi>' + esc(m.away) + '</bdi></span>';
+}
+function tkDraw(){
+  var d = t(), sp = $("annText"), w = $("annWrap");
+  if(!TK.length){
+    TK_HTML = "";
+    w.classList.remove("tk");
+    sp.textContent = d.ann;
+    return;
+  }
+  var h = '<bdi class="tk-w">' + esc(d.ann) + '</bdi><span class="tk-sep">&#9679;</span>';
+  for(var i = 0; i < TK.length; i++) h += tkItem(TK[i]);
+  if(h === TK_HTML) return;        /* the same line keeps running where it is */
+  TK_HTML = h;
+  w.classList.add("tk");
+  sp.innerHTML = h;
+  var a = w.clientWidth, b = sp.scrollWidth;
+  sp.style.setProperty("--tk-a", a + "px");
+  sp.style.setProperty("--tk-b", -b + "px");
+  sp.style.setProperty("--tk-d", Math.max(12, Math.round((a + b) / 42)) + "s");
+  sp.style.animation = "none"; void sp.offsetWidth; sp.style.animation = "";
+}
+function tkLoad(){
+  clearTimeout(TK_TIMER);
+  if(!window.fetch) return;
+  if(document.hidden){ TK_TIMER = setTimeout(tkLoad, 60000); return }
+  fetch(viaApp(FOOT_URL + "?v=1"), { method: "GET" })
+    .then(function(r){ return r.text() })
+    .then(function(x){
+      var o = null;
+      try{ o = JSON.parse(x) }catch(e){}
+      if(o && o.ok === true && Array.isArray(o.matches)){
+        var rank = function(m){ return (m.s === "live" || m.s === "ht") ? 0 : m.s === "ns" ? 1 : 2 };
+        TK = o.matches.filter(function(m){ return m && m.home && m.away && rank(m) < 3 && /^(live|ht|ns|ft)$/.test(m.s) })
+          .sort(function(p, q){
+            var r = rank(p) - rank(q);
+            if(r) return r;
+            return rank(p) === 2 ? Date.parse(q.t) - Date.parse(p.t) : Date.parse(p.t) - Date.parse(q.t);
+          }).slice(0, 20);
+      }
+      tkDraw();
+    })
+    .catch(function(){})
+    .then(function(){
+      var live = TK.some(function(m){ return m.s === "live" || m.s === "ht" });
+      TK_TIMER = setTimeout(tkLoad, live ? 60000 : 300000);
+    });
+}
+window.addEventListener("resize", function(){ TK_HTML = ""; tkDraw() });
+setTimeout(tkLoad, 1500);
 
 /* ==================== search: channels + films + series ====================
    Everything in the active playlist is searched at once and shown by type,
