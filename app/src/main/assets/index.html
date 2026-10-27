@@ -29,6 +29,10 @@ header{position:sticky;top:0;z-index:20;padding:calc(10px + var(--safe-t)) 14px 
   border:1px solid var(--line);background:var(--surface);color:var(--text);cursor:pointer;transition:.18s}
 .iconbtn:active{transform:scale(.92);background:var(--surface2)}
 .iconbtn svg{display:block}
+/* the search box under the welcome bar is the search on a phone; the
+   magnifier stays only where that box is hidden (a TV). Its place is kept,
+   so the logo stays in the middle */
+html:not(.tv) .srchbtn{visibility:hidden;pointer-events:none}
 /* The name is white, as a wordmark should be. What marks it as ours is the
    hairline under it: red, white, green - the flag, three pixels tall. */
 .brand{flex:1;min-width:0;text-align:center;line-height:1;user-select:none}
@@ -1366,7 +1370,7 @@ html.tv.tvb header .top{display:none}
 
 <header>
   <div class="top">
-    <button class="iconbtn" onclick="toggleSearch()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg></button>
+    <button class="iconbtn srchbtn" onclick="toggleSearch()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg></button>
     <div class="brand">
       <span class="wm"><span class="w1">KURDISTAN</span> <span class="w2">IPTV</span></span>
       <small id="tagline"></small>

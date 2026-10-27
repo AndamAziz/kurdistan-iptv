@@ -3,7 +3,10 @@ package com.kurdistan.iptv
 import android.content.Context
 import android.os.SystemClock
 import androidx.media3.common.MimeTypes
+import android.net.Uri
 import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.DataSpec
+import androidx.media3.datasource.TransferListener
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.cronet.CronetDataSource
 import androidx.media3.datasource.cronet.CronetUtil
@@ -256,9 +259,16 @@ class StreamNet(private val context: Context) {
     private val factories = ConcurrentHashMap<String, HttpDataSource.Factory>()
 
     fun dataSourceFactory(): DataSource.Factory = DataSource.Factory {
+        RedirectMemo(httpFactory().createDataSource(), redirects)
+    }
+
+    /* where a film's address was sent last time (see RedirectMemo) */
+    val redirects = RedirectMemo.Store()
+
+    private fun httpFactory(): HttpDataSource.Factory {
         val w = way
         val r = referer
-        factories.getOrPut(w.key() + "|" + (r ?: "")) {
+        return factories.getOrPut(w.key() + "|" + (r ?: "")) {
             val h = HashMap(PLAYER_HEADERS)
             if (r != null) h["Referer"] = r
             val eng = if (w.cr) cronet() else null
@@ -284,7 +294,7 @@ class StreamNet(private val context: Context) {
                 if (w.h1) h["Accept-Encoding"] = "identity"
                 OkHttpDataSource.Factory(client(w)).setUserAgent(w.ua).setDefaultRequestProperties(h)
             }
-        }.createDataSource()
+        }
     }
 
     // ---------------- the ways, in the order they are tried ----------------
@@ -551,5 +561,85 @@ class StreamNet(private val context: Context) {
             cur = ways.firstOrNull { it.key() !in tried && helps(it, r.why) } ?: break
         }
         return Search(null, lastCode, trail.joinToString(" "))
+    }
+}
+
+/**
+ * A film or an episode (an .mp4, .mkv ... file, not a live stream) is opened
+ * several times before its first picture: an mp4 whose index is at the end is
+ * read at the start, then at the end, then at the start again, and every seek
+ * opens it once more. An Xtream panel answers each of those with a redirect to
+ * the server that really has the file, so every open paid for a trip to the
+ * panel first. FFmpeg (VLC, mpv) keeps the address it was sent to and asks
+ * there directly the next time; this does the same.
+ *
+ * Only files are remembered, never a live channel or an HLS playlist, and for
+ * a short time. When the remembered address refuses (an expired token, a
+ * server that wants the panel every time), the original address is asked as
+ * before and that film is not remembered again.
+ */
+class RedirectMemo(private val upstream: DataSource, private val store: Store) : DataSource {
+
+    class Store {
+        private class Hop(val to: String, val at: Long)
+        private val hops = ConcurrentHashMap<String, Hop>()
+        private val refused = ConcurrentHashMap.newKeySet<String>()
+
+        fun get(from: String): String? {
+            val h = hops[from] ?: return null
+            if (SystemClock.elapsedRealtime() - h.at > KEEP_MS) { hops.remove(from); return null }
+            return h.to
+        }
+        fun put(from: String, to: String) {
+            if (from == to || from in refused) return
+            if (hops.size > 64) hops.clear()
+            hops[from] = Hop(to, SystemClock.elapsedRealtime())
+        }
+        fun refuse(from: String) { hops.remove(from); refused.add(from) }
+    }
+
+    companion object {
+        const val KEEP_MS = 15 * 60 * 1000L
+        private val FILE_RX = Regex("\\.(mp4|m4v|mkv|avi|mov|webm|flv|wmv|mpg|mpeg|3gp)$", RegexOption.IGNORE_CASE)
+
+        /** a film or an episode file: what a redirect may be remembered for */
+        fun isFile(u: Uri): Boolean {
+            val s = u.scheme?.lowercase()
+            if (s != "http" && s != "https") return false
+            val path = (u.path ?: "").lowercase()
+            if (path.endsWith(".m3u8") || path.endsWith(".m3u") || path.endsWith(".ts") || path.endsWith(".mpd")) return false
+            return FILE_RX.containsMatchIn(path) || path.contains("/movie/") || path.contains("/series/")
+        }
+    }
+
+    override fun addTransferListener(transferListener: TransferListener) =
+        upstream.addTransferListener(transferListener)
+
+    override fun open(dataSpec: DataSpec): Long {
+        val key = if (isFile(dataSpec.uri)) dataSpec.uri.toString() else null
+        val hop = key?.let { store.get(it) }
+        if (hop != null) {
+            try {
+                return upstream.open(dataSpec.buildUpon().setUri(Uri.parse(hop)).build())
+            } catch (e: java.io.IOException) {
+                /* the place it was sent to no longer takes it: ask as before */
+                try { upstream.close() } catch (x: java.io.IOException) { }
+                store.refuse(key)
+            }
+        }
+        val n = upstream.open(dataSpec)
+        if (key != null) upstream.uri?.toString()?.let { store.put(key, it) }
+        return n
+    }
+
+    override fun read(buffer: ByteArray, offset: Int, length: Int): Int =
+        upstream.read(buffer, offset, length)
+
+    override fun getUri(): Uri? = upstream.uri
+
+    override fun getResponseHeaders(): Map<String, List<String>> = upstream.responseHeaders
+
+    override fun close() {
+        upstream.close()
     }
 }
