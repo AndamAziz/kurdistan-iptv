@@ -575,27 +575,35 @@ class StreamNet(private val context: Context) {
  *
  * Only files are remembered, never a live channel or an HLS playlist, and for
  * a short time. When the remembered address refuses (an expired token, a
- * server that wants the panel every time), the original address is asked as
- * before and that film is not remembered again.
+ * server that wants the panel every time) or answers with something else than
+ * it did the first time (a web page instead of the film), the original
+ * address is asked as before and that film is not remembered again. Any
+ * playback error forgets every address, so retries run exactly as before.
  */
 class RedirectMemo(private val upstream: DataSource, private val store: Store) : DataSource {
 
     class Store {
-        private class Hop(val to: String, val at: Long)
+        class Hop(val to: String, val type: String, val at: Long)
         private val hops = ConcurrentHashMap<String, Hop>()
         private val refused = ConcurrentHashMap.newKeySet<String>()
 
-        fun get(from: String): String? {
+        fun get(from: String): Hop? {
             val h = hops[from] ?: return null
             if (SystemClock.elapsedRealtime() - h.at > KEEP_MS) { hops.remove(from); return null }
-            return h.to
+            return h
         }
-        fun put(from: String, to: String) {
+        fun put(from: String, to: String, type: String) {
             if (from == to || from in refused) return
             if (hops.size > 64) hops.clear()
-            hops[from] = Hop(to, SystemClock.elapsedRealtime())
+            hops[from] = Hop(to, type, SystemClock.elapsedRealtime())
         }
-        fun refuse(from: String) { hops.remove(from); refused.add(from) }
+        fun refuse(from: String) {
+            hops.remove(from)
+            if (refused.size > 256) refused.clear()
+            refused.add(from)
+        }
+        /** after a playback error: every film is asked through its panel again */
+        fun clear() = hops.clear()
     }
 
     companion object {
@@ -620,17 +628,26 @@ class RedirectMemo(private val upstream: DataSource, private val store: Store) :
         val hop = key?.let { store.get(it) }
         if (hop != null) {
             try {
-                return upstream.open(dataSpec.buildUpon().setUri(Uri.parse(hop)).build())
-            } catch (e: java.io.IOException) {
-                /* the place it was sent to no longer takes it: ask as before */
+                val n = upstream.open(dataSpec.buildUpon().setUri(Uri.parse(hop.to)).build())
+                if (type() == hop.type) return n
+                /* answered, but not with what it gave the first time (a page
+                   saying the link has run out): not the film */
                 try { upstream.close() } catch (x: java.io.IOException) { }
-                store.refuse(key)
+            } catch (e: java.io.IOException) {
+                /* the place it was sent to no longer takes it */
+                try { upstream.close() } catch (x: java.io.IOException) { }
             }
+            store.refuse(key)                 /* ask as before, and keep asking so */
         }
         val n = upstream.open(dataSpec)
-        if (key != null) upstream.uri?.toString()?.let { store.put(key, it) }
+        if (key != null) upstream.uri?.toString()?.let { store.put(key, it, type()) }
         return n
     }
+
+    /** what kind of answer came back, as the server named it */
+    private fun type(): String = upstream.responseHeaders.entries
+        .firstOrNull { it.key.equals("Content-Type", true) }?.value?.firstOrNull()
+        ?.substringBefore(';')?.trim()?.lowercase() ?: ""
 
     override fun read(buffer: ByteArray, offset: Int, length: Int): Int =
         upstream.read(buffer, offset, length)
