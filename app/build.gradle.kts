@@ -24,6 +24,8 @@ android {
          play   - the bundle for Google Play. Play forbids an app installing
                   itself, so this one asks Google Play for its update instead.
        Same applicationId, same key, same version number. */
+    testOptions { unitTests.isIncludeAndroidResources = true }
+
     flavorDimensions += "store"
     productFlavors {
         create("direct") { dimension = "store" }
@@ -109,4 +111,14 @@ dependencies {
     // Google Play's own in-app update screen (used only by the Play build;
     // the GitHub build carries it too but never calls it)
     implementation("com.google.android.play:app-update:2.1.0")
+
+    /* the player's own network code, tested with the real player against a
+       local server (./gradlew testDirectDebugUnitTest) */
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.14.1")
+    testImplementation("androidx.media3:media3-test-utils:$media3")
+    testImplementation("androidx.media3:media3-test-utils-robolectric:$media3")
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
+    testImplementation("androidx.test:core:1.6.1")
+    testImplementation("androidx.test.ext:junit:1.2.1")
 }

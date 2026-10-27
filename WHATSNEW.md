@@ -1,4 +1,9 @@
 [en]
+Films and episodes (mp4, mkv ...) start sooner and seek faster: the address a
+panel sends the player to is kept for that film, as VLC does, instead of asking
+the panel again for every piece. The duplicate search button at the top is gone;
+the search box is the search.
+
 Football on the Live TV home screen: the welcome bar now also runs live
 scores, the next kick-offs and the latest results from the big leagues, in one
 line, live matches first. Search and category now sit side by side.
@@ -74,6 +79,11 @@ top, fading into the page, the poster on its edge with the title, rating and
 genres beside it, and a full-width Play button underneath.
 
 [ku]
+فیلم و ئەڵقەکان (mp4، mkv ...) خێراتر دەست پێدەکەن و خێراتر دەچنە پێش: ئەو
+ناونیشانەی پانێڵ پلەیەری بۆ دەنێرێت بۆ ئەو فیلمە دەمێنێتەوە، وەک VLC، لە جیاتی
+ئەوەی بۆ هەر پارچەیەک دووبارە پرسیار لە پانێڵ بکات. دوگمەی دووەمی گەڕان لە سەرەوە
+لابرا؛ خانەی گەڕان خۆی گەڕانەکەیە.
+
 تۆپی پێ لە پەڕەی سەرەکی TV ڕاستەوخۆ: شریتی بەخێرهاتن ئێستا ئەنجامی ڕاستەوخۆ،
 یارییەکانی داهاتوو و دوایین ئەنجامەکانی لیگە گەورەکان پیشان دەدات، لە یەک دێڕدا و
 یاری ڕاستەوخۆ یەکەم. گەڕان و پۆل ئێستا لە تەنیشت یەکترن.
@@ -143,6 +153,10 @@ z و x هەمان کار دەکەن.
 تەنیشتی، و دوگمەی Play بە پانی لە خوارەوە.
 
 [ar]
+الأفلام والحلقات (mp4 وmkv ...) تبدأ أسرع والتقديم أسرع: يُحفظ العنوان الذي
+يرسل إليه اللوحُ المشغّلَ لذلك الفيلم، كما يفعل VLC، بدل سؤال اللوح من جديد عن كل جزء.
+أُزيل زر البحث المكرر في الأعلى؛ مربع البحث هو البحث.
+
 كرة القدم في الصفحة الرئيسية للبث المباشر: شريط الترحيب يعرض الآن النتائج
 المباشرة والمباريات القادمة وآخر النتائج من الدوريات الكبرى في سطر واحد، والمباريات
 المباشرة أولاً. البحث والفئة الآن جنباً إلى جنب.
