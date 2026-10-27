@@ -11,9 +11,10 @@
 //                      or "footballdata" (football-data.org)   default apisports
 //   FOOTBALL_LEAGUES   comma list of league ids (apisports) or competition
 //                      codes (footballdata); empty = the provider default below
-//   FOOTBALL_TTL       seconds between real requests; default 900 for
-//                      apisports (100 requests a day on the free plan), 60 for
-//                      footballdata
+//   FOOTBALL_TTL       seconds between real requests; default 1080 for
+//                      apisports (the free plan has 100 requests a day: 80 for
+//                      today, 8 for tomorrow's kick-offs every 3 hours), 60
+//                      for footballdata
 //
 // Answer: { ok, updated, matches:[{ s, min, home, away, hs, as, t, lg }] }
 //   s   "live" | "ht" | "ns" | "ft"      t  kick-off, ISO 8601 UTC
@@ -42,7 +43,8 @@ type Match = {
 const PROVIDER = (Deno.env.get("FOOTBALL_PROVIDER") || "apisports").toLowerCase();
 const KEY = Deno.env.get("FOOTBALL_API_KEY") || "";
 const TTL = Number(Deno.env.get("FOOTBALL_TTL")) ||
-  (PROVIDER === "footballdata" ? 60 : 900);
+  (PROVIDER === "footballdata" ? 60 : 1080);
+const TOMORROW_EVERY = 3 * 3600; // apisports: tomorrow's list changes slowly
 
 // the big European leagues and cups, the Saudi Pro League, World Cup, Euro
 const AS_LEAGUES = [39, 140, 135, 78, 61, 2, 3, 848, 307, 1, 4];
@@ -60,9 +62,9 @@ function day(offset: number): string {
 }
 
 // ---- api-football (api-sports.io) --------------------------------------
-async function fromApiSports(): Promise<Match[]> {
+async function fromApiSports(offset: number): Promise<Match[]> {
   const want = new Set(leagues());
-  const r = await fetch("https://v3.football.api-sports.io/fixtures?date=" + day(0), {
+  const r = await fetch("https://v3.football.api-sports.io/fixtures?date=" + day(offset), {
     headers: { "x-apisports-key": KEY },
   });
   const j = await r.json();
@@ -144,10 +146,12 @@ Deno.serve(async (req) => {
 
   const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   const { data: row } = await db.from("kiptv_football_cache").select("body, fetched_at").eq("id", 1).maybeSingle();
+  // the app only gets ok / updated / matches; the rest is the function's memory
+  const out = (b: any) => b ? { ok: b.ok, updated: b.updated, matches: b.matches || [] } : b;
   const age = row ? (Date.now() - Date.parse(row.fetched_at)) / 1000 : Infinity;
-  if (row && age < TTL) return reply(row.body);
+  if (row && age < TTL) return reply(out(row.body));
 
-  if (!KEY) return reply(row?.body || { ok: false, reason: "nokey", matches: [] });
+  if (!KEY) return reply(out(row?.body) || { ok: false, reason: "nokey", matches: [] });
 
   // claim the refresh first, so a crowd of devices arriving together makes
   // one request to the provider and not a hundred
@@ -155,17 +159,32 @@ Deno.serve(async (req) => {
   if (row) {
     const { data: won } = await db.from("kiptv_football_cache")
       .update({ fetched_at: stamp }).eq("id", 1).eq("fetched_at", row.fetched_at).select("id");
-    if (!won || !won.length) return reply(row.body);
+    if (!won || !won.length) return reply(out(row.body));
   }
 
   try {
-    const matches = order(PROVIDER === "footballdata" ? await fromFootballData() : await fromApiSports());
-    const body = { ok: true, updated: stamp, matches };
-    await db.from("kiptv_football_cache").upsert({ id: 1, body, fetched_at: stamp });
+    let list: Match[], extra: Record<string, unknown> = {};
+    if (PROVIDER === "footballdata") list = await fromFootballData();
+    else {
+      // today every TTL; tomorrow (kept in the cache row) every 3 hours
+      const old = row?.body || {};
+      let tom: Match[] = Array.isArray(old.tom) ? old.tom : [];
+      let tomAt: string = old.tom_at || "";
+      if (old.tom_day !== day(1) || !tomAt || (Date.now() - Date.parse(tomAt)) / 1000 >= TOMORROW_EVERY) {
+        try { tom = await fromApiSports(1); tomAt = stamp } catch (e) {
+          console.error(String(e));
+          if (old.tom_day !== day(1)) { tom = []; tomAt = "" } // yesterday's "tomorrow" is not news
+        }
+      }
+      list = (await fromApiSports(0)).concat(tom);
+      extra = { tom, tom_at: tomAt, tom_day: day(1) };
+    }
+    const body = { ok: true, updated: stamp, matches: order(list) };
+    await db.from("kiptv_football_cache").upsert({ id: 1, body: { ...body, ...extra }, fetched_at: stamp });
     return reply(body);
   } catch (e) {
     console.error(String(e));
     // the last good answer is still true enough to show; nothing is made up
-    return reply(row?.body || { ok: false, reason: "provider", matches: [] });
+    return reply(out(row?.body) || { ok: false, reason: "provider", matches: [] });
   }
 });
