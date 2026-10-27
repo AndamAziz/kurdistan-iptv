@@ -1522,6 +1522,7 @@ class MainActivity : ComponentActivity() {
                 }
 
                 override fun onPlayerError(error: PlaybackException) {
+                    net.redirects.clear()            /* every retry asks the panel again, as before */
                     if (dead) return
                     val i = p.currentMediaItemIndex
                     /* a live HLS stream the player fell behind: back to the live edge */
