@@ -12,6 +12,9 @@
     <author href="https://andam.uk">Andam Aziz</author>
     <icon src="icon.png"/>
 
+    <!-- Samsung's pre-test requires the screen size: a TV app runs on every size -->
+    <feature name="http://tizen.org/feature/screen.size.all"/>
+
     <!-- playlists, posters and streams come from any server the user adds -->
     <access origin="*" subdomains="true"/>
     <tizen:allow-navigation>*</tizen:allow-navigation>
