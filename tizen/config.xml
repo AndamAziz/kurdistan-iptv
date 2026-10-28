@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- KURDISTAN IPTV for Samsung Smart TV (Tizen 6.0 and later).
+     build.js copies this into tizen/build/ and fills in the version. -->
+<widget xmlns="http://www.w3.org/ns/widgets"
+        xmlns:tizen="http://tizen.org/ns/widgets"
+        id="http://andam.uk/kurdistaniptv" version="@VERSION@" viewmodes="maximized">
+    <tizen:application id="KurdIPTV01.KurdistanIPTV" package="KurdIPTV01" required_version="6.0"/>
+    <tizen:profile name="tv-samsung"/>
+    <content src="index.html"/>
+    <name>KURDISTAN IPTV</name>
+    <description>Live Kurdish and international TV, movies and series from your own IPTV playlist.</description>
+    <author href="https://andam.uk">Andam Aziz</author>
+    <icon src="icon.png"/>
+
+    <!-- Samsung's pre-test requires the screen size: a TV app runs on every size -->
+    <feature name="http://tizen.org/feature/screen.size.all"/>
+
+    <!-- playlists, posters and streams come from any server the user adds -->
+    <access origin="*" subdomains="true"/>
+    <tizen:allow-navigation>*</tizen:allow-navigation>
+    <tizen:content-security-policy>default-src * 'unsafe-inline' 'unsafe-eval' data: blob:</tizen:content-security-policy>
+
+    <tizen:privilege name="http://tizen.org/privilege/internet"/>
+    <tizen:privilege name="http://tizen.org/privilege/tv.inputdevice"/>
+
+    <tizen:setting screen-orientation="landscape" context-menu="disable"
+                   background-support="disable" encryption="disable"
+                   install-location="auto" hwkey-event="enable"/>
+</widget>
