@@ -2807,6 +2807,16 @@ function rememberEpisodes(list){
 var UPD_API   = "https://api.github.com/repos/AndamAziz/kurdistan-iptv-releases/releases/latest";
 var UPD_EVERY = 24 * 3600 * 1000;
 var UPD = null;                       /* what the last look found, for the sheet */
+/* The Amazon build is updated by the Amazon Appstore alone: no looking, and
+   no update row or bar (the TV builds set the same flag themselves) */
+(function(){
+  try{ if(!(window.AndroidPlayer && AndroidPlayer.storeUpdatesOnly && AndroidPlayer.storeUpdatesOnly())) return }
+  catch(e){ return }
+  window.KIPTV_NOUPD = true;
+  var css = document.createElement("style");
+  css.textContent = '#setBody [onclick="updOpen()"],#updBar{display:none!important}';
+  document.head.appendChild(css);
+})();
 
 /* "1.0|105" from the app itself; empty in a plain browser */
 function appVer(){
@@ -2884,6 +2894,7 @@ function updWorth(r){
 }
 
 function updCheck(manual){
+  if(window.KIPTV_NOUPD) return Promise.resolve(null);
   var kept = updState();
   if(!manual && kept.t && Date.now() - kept.t < UPD_EVERY){
     if(updWorth(kept.b ? { build: kept.b } : null)) updShow();

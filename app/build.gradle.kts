@@ -23,6 +23,10 @@ android {
                   the permission for that).
          play   - the bundle for Google Play. Play forbids an app installing
                   itself, so this one asks Google Play for its update instead.
+         amazon - the APK for the Amazon Appstore (Fire TV). Nothing from
+                  Google Play Services or Google Play inside (Amazon refuses
+                  those libraries, and a Fire TV has neither); the Appstore
+                  updates it. app/src/nogms stands in for app/src/gms.
        Same applicationId, same key, same version number. */
     testOptions { unitTests.isIncludeAndroidResources = true }
 
@@ -30,6 +34,21 @@ android {
     productFlavors {
         create("direct") { dimension = "store" }
         create("play") { dimension = "store" }
+        create("amazon") { dimension = "store" }
+    }
+
+    /* The Google parts (Chrome's network code, Google Play's update screen)
+       live in app/src/gms for the GitHub and Play builds; the Amazon build
+       gets app/src/nogms, which has none. Amazon checks certificates the way
+       the Play build does (its Lenient.kt and the roots beside it). */
+    sourceSets {
+        getByName("direct") { java.srcDir("src/gms/java") }
+        getByName("play") { java.srcDir("src/gms/java") }
+        getByName("amazon") {
+            java.srcDir("src/nogms/java")
+            java.srcDir("src/play/java")
+            resources.srcDir("src/play/resources")
+        }
     }
 
     /* The same key signs every release build, so an APK installs over the one
@@ -100,7 +119,8 @@ dependencies {
     /* one more way to ask: Chrome's own network code (Cronet), from Google
        Play Services - nothing added to the APK. A server that turns away
        Android's built-in TLS still answers the browser it serves every day. */
-    implementation("androidx.media3:media3-datasource-cronet:$media3")
+    "directImplementation"("androidx.media3:media3-datasource-cronet:$media3")
+    "playImplementation"("androidx.media3:media3-datasource-cronet:$media3")
     /* the system's own media controls (lock screen, headset buttons) while
        the sound keeps playing in the background */
     implementation("androidx.media3:media3-session:$media3")
@@ -109,8 +129,9 @@ dependencies {
     implementation("io.github.anilbeesetti:nextlib-media3ext:1.7.1-0.9.0")
 
     // Google Play's own in-app update screen (used only by the Play build;
-    // the GitHub build carries it too but never calls it)
-    implementation("com.google.android.play:app-update:2.1.0")
+    // the GitHub build carries it too but never calls it; Amazon has none)
+    "directImplementation"("com.google.android.play:app-update:2.1.0")
+    "playImplementation"("com.google.android.play:app-update:2.1.0")
 
     /* the player's own network code, tested with the real player against a
        local server (./gradlew testDirectDebugUnitTest) */

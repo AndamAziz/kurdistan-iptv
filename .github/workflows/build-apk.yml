@@ -81,6 +81,16 @@ jobs:
         continue-on-error: true
         run: gradle bundlePlayRelease --no-daemon --stacktrace
 
+      # The Amazon Appstore (Fire TV) takes an APK: the "amazon" build, with
+      # nothing from Google Play Services or Google Play inside (Amazon
+      # refuses those libraries). It lands beside the others in the APK
+      # artifact (amazon/release/) and is never published anywhere by itself.
+      # Like the bundle, if it fails it fails alone.
+      - name: Build the APK for Amazon
+        if: env.KEYSTORE_FILE != ''
+        continue-on-error: true
+        run: gradle assembleAmazonRelease --no-daemon --stacktrace
+
       - name: Forget the key
         if: always()
         run: rm -f "$RUNNER_TEMP/kiptv.jks"

@@ -141,14 +141,11 @@ class MainActivity : ComponentActivity() {
        Two builds come out of the same code. The one from GitHub / Uptodown
        may install its own update (it carries REQUEST_INSTALL_PACKAGES); the
        one from Google Play may not - Play forbids it - so it asks Google
-       Play for its own full-screen update instead. Either way the person
-       never leaves the app to fetch a file. */
-    private val playUpdates by lazy {
-        com.google.android.play.core.appupdate.AppUpdateManagerFactory.create(this)
-    }
-    private val playUpdateLauncher = registerForActivityResult(
-        androidx.activity.result.contract.ActivityResultContracts.StartIntentSenderForResult()
-    ) { r -> if (r.resultCode != RESULT_OK) updToPage("cancel", 0, 0) }
+       Play for its own full-screen update instead (StoreUpdate.kt). Either
+       way the person never leaves the app to fetch a file. The Amazon build
+       does neither: the Amazon Appstore updates it, so the page shows no
+       update row there. */
+    private val storeUpdate = StoreUpdate(this) { st -> updToPage(st, 0, 0) }
 
     /** progress and outcome back to the page: window.kiptvUpd(state, done, total) */
     private fun updToPage(st: String, a: Long, b: Long) = runOnUiThread {
@@ -156,33 +153,14 @@ class MainActivity : ComponentActivity() {
             webView.evaluateJavascript("window.kiptvUpd&&window.kiptvUpd('$st',$a,$b)", null)
     }
 
-    /** true for the GitHub / Uptodown build, false for the Google Play one */
+    /** true for the GitHub / Uptodown build, false for the Google Play and Amazon ones */
     private fun canSelfInstall(): Boolean = try {
         @Suppress("DEPRECATION")
         val p = packageManager.getPackageInfo(packageName, PackageManager.GET_PERMISSIONS)
         p.requestedPermissions?.contains("android.permission.REQUEST_INSTALL_PACKAGES") == true
     } catch (e: Exception) { false }
 
-    private fun playUpdate(resumeOnly: Boolean = false) {
-        playUpdates.appUpdateInfo
-            .addOnSuccessListener { info ->
-                val avail = info.updateAvailability()
-                val go = avail == com.google.android.play.core.install.model.UpdateAvailability.UPDATE_AVAILABLE ||
-                    avail == com.google.android.play.core.install.model.UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS
-                if (resumeOnly && avail != com.google.android.play.core.install.model.UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS)
-                    return@addOnSuccessListener
-                if (go && info.isUpdateTypeAllowed(com.google.android.play.core.install.model.AppUpdateType.IMMEDIATE)) {
-                    try {
-                        playUpdates.startUpdateFlowForResult(
-                            info, playUpdateLauncher,
-                            com.google.android.play.core.appupdate.AppUpdateOptions
-                                .newBuilder(com.google.android.play.core.install.model.AppUpdateType.IMMEDIATE).build()
-                        )
-                    } catch (e: Exception) { updToPage("noplay", 0, 0) }
-                } else if (!resumeOnly) updToPage("noplay", 0, 0)
-            }
-            .addOnFailureListener { if (!resumeOnly) updToPage("noplay", 0, 0) }
-    }
+    private fun playUpdate(resumeOnly: Boolean = false) = storeUpdate.run(resumeOnly)
 
     private lateinit var topBar: View
 
@@ -539,6 +517,10 @@ class MainActivity : ComponentActivity() {
          * done, total)), then Android's installer opens on it. Either way the
          * person never leaves the app to fetch a file.
          */
+        /** true in the Amazon build: the page then shows no update row at all */
+        @android.webkit.JavascriptInterface
+        fun storeUpdatesOnly(): Boolean = StoreUpdate.STORE_ONLY
+
         @android.webkit.JavascriptInterface
         fun installUpdate(url: String) {
             if (!canSelfInstall()) { runOnUiThread { playUpdate() }; return }
