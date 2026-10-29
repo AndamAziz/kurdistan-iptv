@@ -11,7 +11,9 @@
  *   - the self-updater stays quiet: updates come from the LG Content Store.
  *
  * The version is x.y.z and must go up with every upload to the LG Seller
- * Lounge; it defaults to 1.0.<number of commits>.
+ * Lounge; it defaults to 1.0.<number of commits>. LG publishes a 1920x1080
+ * package on UHD TVs only, so the Full HD TVs get their own: run it again
+ * with RES=1280x720 for the second .ipk (same page, it fits either size).
  */
 const fs = require("fs");
 const path = require("path");
@@ -52,7 +54,8 @@ for (const name of ["channels.js", "welcome.mp3"]) fs.copyFileSync(path.join(ass
 for (const name of ["webos-player.js", "icon.png", "largeIcon.png", "splash.png"])
   fs.copyFileSync(path.join(__dirname, name), path.join(out, name));
 fs.writeFileSync(path.join(out, "appinfo.json"),
-  fs.readFileSync(path.join(__dirname, "appinfo.json"), "utf8").replace("@VERSION@", version));
+  fs.readFileSync(path.join(__dirname, "appinfo.json"), "utf8").replace("@VERSION@", version)
+    .replace('"1920x1080"', JSON.stringify(process.env.RES || "1920x1080")));
 
-console.log("webos/build ready - version " + version);
+console.log("webos/build ready - version " + version + ", " + (process.env.RES || "1920x1080"));
 for (const f of fs.readdirSync(out)) console.log("  " + f.padEnd(18) + fs.statSync(path.join(out, f)).size + " bytes");
