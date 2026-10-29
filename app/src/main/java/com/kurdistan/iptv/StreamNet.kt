@@ -8,10 +8,6 @@ import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.TransferListener
 import androidx.media3.datasource.DefaultHttpDataSource
-import androidx.media3.datasource.cronet.CronetDataSource
-import androidx.media3.datasource.cronet.CronetUtil
-import org.chromium.net.CronetEngine
-import java.util.concurrent.Executors
 import androidx.media3.datasource.HttpDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import okhttp3.Cookie
@@ -142,33 +138,10 @@ class StreamNet(private val context: Context) {
     private val prefs = context.getSharedPreferences("kiptv_net", Context.MODE_PRIVATE)
 
     /* Chrome's network code, from Google Play Services when the device has
-       them. Built once, the first time a way needs it, off the main thread. */
-    private val crExec = Executors.newFixedThreadPool(4)
-    @Volatile private var crTried = false
-    @Volatile private var crEngine: CronetEngine? = null
-    private fun cronet(): CronetEngine? {
-        if (crTried) return crEngine
-        synchronized(this) {
-            if (!crTried) {
-                crEngine = try {
-                    CronetUtil.buildCronetEngine(context.applicationContext, null, true)
-                } catch (e: Throwable) { null }
-                crTried = true
-            }
-        }
-        return crEngine
-    }
-    init {
-        /* ask Play Services for its Cronet early, so it is ready when needed */
-        try {
-            com.google.android.gms.net.CronetProviderInstaller.installProvider(context.applicationContext)
-        } catch (e: Throwable) { }
-    }
+       them (Chrome.kt; the Amazon build has none) */
+    private val chrome = Chrome(context)
     /** whether the Chrome ways can be offered on this device at all */
-    val cronetOk: Boolean get() = try {
-        com.google.android.gms.common.GoogleApiAvailability.getInstance()
-            .isGooglePlayServicesAvailable(context) == com.google.android.gms.common.ConnectionResult.SUCCESS
-    } catch (e: Throwable) { false }
+    val cronetOk: Boolean get() = chrome.ok
 
     /** false in the Google Play build, which always checks certificates */
     val lenientOk: Boolean = Lenient.apply(OkHttpClient.Builder())
@@ -271,14 +244,9 @@ class StreamNet(private val context: Context) {
         return factories.getOrPut(w.key() + "|" + (r ?: "")) {
             val h = HashMap(PLAYER_HEADERS)
             if (r != null) h["Referer"] = r
-            val eng = if (w.cr) cronet() else null
-            if (eng != null) {
-                CronetDataSource.Factory(eng, crExec)
-                    .setUserAgent(w.ua)
-                    .setConnectionTimeoutMs(10000)
-                    .setReadTimeoutMs(20000)
-                    .setHandleSetCookieRequests(true)
-                    .setDefaultRequestProperties(h)
+            val crf = if (w.cr) chrome.factory(w.ua, h) else null
+            if (crf != null) {
+                crf
             } else if (w.sys || w.cr) {
                 /* Android's own HTTP code. Its range header is set after these,
                    so a seek still asks for the right place */
@@ -459,10 +427,8 @@ class StreamNet(private val context: Context) {
         try {
             var hop = 0
             while (hop++ < 8) {
-                val eng = if (w.cr) cronet() else null
-                if (w.cr && eng == null) return Tried(null, Why.OTHER, 0)
-                val c = (if (eng != null) eng.openConnection(URL(target)) else URL(target).openConnection())
-                    as HttpURLConnection
+                val c = if (w.cr) chrome.open(URL(target)) ?: return Tried(null, Why.OTHER, 0)
+                    else URL(target).openConnection() as HttpURLConnection
                 c.instanceFollowRedirects = false
                 c.connectTimeout = 10000
                 c.readTimeout = 15000
