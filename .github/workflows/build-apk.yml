@@ -136,8 +136,11 @@ jobs:
             echo "No RELEASE_TOKEN in the secrets - nothing published."
             exit 0
           fi
-          # the universal APK (every processor) - the one the app updates with
-          APK=$(ls app/build/outputs/apk/direct/release/*universal*.apk app/build/outputs/apk/direct/release/*.apk 2>/dev/null | head -1)
+          # the universal APK (every processor) - the one the app updates with.
+          # Asked for on its own: ls sorts everything it is given, so one ls of
+          # both patterns would put the arm64 APK first.
+          APK=$(ls app/build/outputs/apk/direct/release/*-universal-*.apk 2>/dev/null | head -1)
+          [ -n "$APK" ] || APK=$(ls app/build/outputs/apk/direct/release/*.apk 2>/dev/null | head -1)
           if [ -z "$APK" ]; then
             echo "No signed APK was built - nothing published."
             exit 0
