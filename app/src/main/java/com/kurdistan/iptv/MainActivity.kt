@@ -90,6 +90,8 @@ class MainActivity : ComponentActivity() {
 
     /** what radio mode's notification shows, and the session it is built around */
     companion object {
+        /** how long the player's controls stay up after the last touch or key */
+        const val AUTO_HIDE_MS = 4000L
         @Volatile var liveSession: MediaSession? = null
         @Volatile var nowTitle: String = ""
     }
@@ -339,11 +341,12 @@ class MainActivity : ComponentActivity() {
         focusRing(findViewById(R.id.btnClose), round = true)
         focusRing(findViewById(R.id.btnRetry), round = false, radiusDp = 14)
 
-        playerView.controllerShowTimeoutMs = 3500
+        playerView.controllerShowTimeoutMs = AUTO_HIDE_MS.toInt()
         playerView.setControllerVisibilityListener(
             PlayerView.ControllerVisibilityListener { visibility ->
                 topBar.visibility = visibility
                 bottomBar.visibility = visibility
+                if (visibility == View.VISIBLE) armAutoHide()
             }
         )
 
@@ -3161,7 +3164,40 @@ class MainActivity : ComponentActivity() {
             playerLayer.visibility == View.VISIBLE && !locked && !panelOn() &&
             !chansOn() && !inPip
 
+    /* ---------- the controls hide by themselves ----------
+       The player's own timer (controllerShowTimeoutMs) does not always
+       restart: shown while a channel was still opening, or brought back by a
+       button of ours, the controls could stay up until tapped away. This one
+       is ours: AUTO_HIDE_MS after the last touch or key, while the picture
+       plays, the controls and both bars go. While paused, with a panel or the
+       channel list open, or with an error showing, they stay. */
+    private val autoHide = Runnable { autoHideNow() }
+
+    private fun armAutoHide() {
+        handler.removeCallbacks(autoHide)
+        if (::playerLayer.isInitialized && playerLayer.visibility == View.VISIBLE)
+            handler.postDelayed(autoHide, AUTO_HIDE_MS)
+    }
+
+    private fun autoHideNow() {
+        if (playerLayer.visibility != View.VISIBLE || locked || inPip) return
+        val p = player ?: return
+        val playing = p.playWhenReady &&
+            p.playbackState != Player.STATE_IDLE && p.playbackState != Player.STATE_ENDED
+        val busy = (::panel.isInitialized && panelOn()) || chansOn() || errorBox.visibility == View.VISIBLE
+        if (!playing || busy) { armAutoHide(); return }      /* look again a little later */
+        playerView.hideController()
+        topBar.visibility = View.GONE
+        bottomBar.visibility = View.GONE
+    }
+
+    override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
+        if (::playerLayer.isInitialized && playerLayer.visibility == View.VISIBLE) armAutoHide()
+        return super.dispatchKeyEvent(event)
+    }
+
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        if (::playerLayer.isInitialized && playerLayer.visibility == View.VISIBLE) armAutoHide()
         if (!swipeAllowed()) {
             if (::swipe.isInitialized && ev.actionMasked == MotionEvent.ACTION_DOWN) swipe.end()
             return super.dispatchTouchEvent(ev)

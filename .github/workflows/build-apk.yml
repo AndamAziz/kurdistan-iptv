@@ -63,11 +63,12 @@ jobs:
           fi
 
       # The APK is the "direct" build: the one on GitHub and Uptodown, which
-      # downloads and installs its own updates from inside the app.
+      # downloads and installs its own updates from inside the app. -PabiSplits
+      # adds two smaller APKs beside the universal one (arm64-v8a, armeabi-v7a).
       - name: Build the APK
         run: |
           if [ -n "$KEYSTORE_FILE" ]; then
-            gradle assembleDirectRelease --no-daemon --stacktrace
+            gradle assembleDirectRelease -PabiSplits --no-daemon --stacktrace
           else
             gradle assembleDirectDebug --no-daemon --stacktrace
           fi
@@ -135,7 +136,8 @@ jobs:
             echo "No RELEASE_TOKEN in the secrets - nothing published."
             exit 0
           fi
-          APK=$(ls app/build/outputs/apk/direct/release/*.apk 2>/dev/null | head -1)
+          # the universal APK (every processor) - the one the app updates with
+          APK=$(ls app/build/outputs/apk/direct/release/*universal*.apk app/build/outputs/apk/direct/release/*.apk 2>/dev/null | head -1)
           if [ -z "$APK" ]; then
             echo "No signed APK was built - nothing published."
             exit 0
@@ -160,6 +162,15 @@ jobs:
             --title "KURDISTAN IPTV 1.0 (${GITHUB_RUN_NUMBER})" \
             --notes "$NOTES"
           echo "Published v1.0.${GITHUB_RUN_NUMBER} to $RELEASE_REPO"
+          # The smaller per-processor APKs go in afterwards, so the universal
+          # one stays the first .apk of the release, the one the app takes.
+          for ABI in arm64-v8a armeabi-v7a; do
+            ONE=$(ls app/build/outputs/apk/direct/release/*-${ABI}-*.apk 2>/dev/null | head -1)
+            [ -n "$ONE" ] || continue
+            cp "$ONE" "KURDISTAN-IPTV-${GITHUB_RUN_NUMBER}-${ABI}.apk"
+            gh release upload "v1.0.${GITHUB_RUN_NUMBER}" "KURDISTAN-IPTV-${GITHUB_RUN_NUMBER}-${ABI}.apk" \
+              --repo "$RELEASE_REPO" || echo "Could not add the ${ABI} APK - the release is complete without it."
+          done
 
   # ---------------------------------------------------------------------------
   # The Windows app: the same page, carried by Electron, playing with mpv.

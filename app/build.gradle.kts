@@ -86,6 +86,20 @@ android {
         }
     }
 
+    /* Besides the one APK that runs everywhere (arm64, armv7, x86 - the one
+       GitHub, Uptodown, Amazon and the in-app update use), CI asks with
+       -PabiSplits for two smaller ones, one per kind of processor, for people
+       who want only theirs. Same version number: someone installs one of
+       them, never two. Google Play takes the bundle, which is never split here. */
+    splits {
+        abi {
+            isEnable = project.hasProperty("abiSplits")
+            reset()
+            include("arm64-v8a", "armeabi-v7a")
+            isUniversalApk = true
+        }
+    }
+
     /* a warning must never stop the build */
     lint {
         checkReleaseBuilds = false
