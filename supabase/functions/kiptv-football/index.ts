@@ -20,6 +20,8 @@
 //   s   "live" | "ht" | "ns" | "ft"      t  kick-off, ISO 8601 UTC
 // Nothing is invented: no key, or the provider failing with nothing cached,
 // gives { ok:false, matches:[] } and the app shows only its welcome line.
+// Nothing out of date either: an answer older than STALE_AFTER is not shown
+// at all, and a match whose time has clearly passed is dropped (see fresh()).
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
@@ -45,6 +47,7 @@ const KEY = Deno.env.get("FOOTBALL_API_KEY") || "";
 const TTL = Number(Deno.env.get("FOOTBALL_TTL")) ||
   (PROVIDER === "footballdata" ? 60 : 1080);
 const TOMORROW_EVERY = 3 * 3600; // apisports: tomorrow's list changes slowly
+const STALE_AFTER = 6 * 3600; // an older answer would show yesterday as today
 
 // the big European leagues and cups, the Saudi Pro League, World Cup, Euro
 const AS_LEAGUES = [39, 140, 135, 78, 61, 2, 3, 848, 307, 1, 4];
@@ -140,6 +143,29 @@ function order(list: Match[]): Match[] {
     .slice(0, 30);
 }
 
+// What the app is shown, checked against the clock at the moment of asking.
+// The cache can be old (the provider down, an account suspended): a kick-off
+// it calls upcoming may have been played long ago, and the app shows only the
+// time, so it would look like today. Such an answer is dropped whole; within
+// it, a match is dropped once its own state can no longer be true.
+function fresh(b: any) {
+  if (!b) return b;
+  const now = Date.now();
+  const updated = Date.parse(b.updated || "");
+  if (!b.ok || !(now - updated < STALE_AFTER * 1000)) {
+    return { ok: false, reason: b.ok ? "stale" : b.reason, updated: b.updated, matches: [] };
+  }
+  const H = 3600000;
+  const matches = (b.matches || []).filter((m: Match) => {
+    const k = Date.parse(m.t);
+    if (isNaN(k)) return false;
+    if (m.s === "ns") return k > now - 3 * H;          // not started, three hours after kick-off: it has
+    if (m.s === "live" || m.s === "ht") return k > now - 4 * H; // no match runs four hours
+    return k > now - 30 * H;                           // results stay a day, as in order()
+  });
+  return { ok: true, updated: b.updated, matches };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   const reply = (o: unknown) => new Response(JSON.stringify(o), { headers: CORS });
@@ -147,7 +173,7 @@ Deno.serve(async (req) => {
   const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   const { data: row } = await db.from("kiptv_football_cache").select("body, fetched_at").eq("id", 1).maybeSingle();
   // the app only gets ok / updated / matches; the rest is the function's memory
-  const out = (b: any) => b ? { ok: b.ok, updated: b.updated, matches: b.matches || [] } : b;
+  const out = (b: any) => fresh(b);
   const age = row ? (Date.now() - Date.parse(row.fetched_at)) / 1000 : Infinity;
   if (row && age < TTL) return reply(out(row.body));
 
@@ -181,7 +207,7 @@ Deno.serve(async (req) => {
     }
     const body = { ok: true, updated: stamp, matches: order(list) };
     await db.from("kiptv_football_cache").upsert({ id: 1, body: { ...body, ...extra }, fetched_at: stamp });
-    return reply(body);
+    return reply(fresh(body));
   } catch (e) {
     console.error(String(e));
     // the last good answer is still true enough to show; nothing is made up
