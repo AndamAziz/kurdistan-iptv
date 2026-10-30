@@ -171,7 +171,11 @@ jobs:
             ONE=$(ls app/build/outputs/apk/direct/release/*-${ABI}-*.apk 2>/dev/null | head -1)
             [ -n "$ONE" ] || continue
             cp "$ONE" "KURDISTAN-IPTV-${GITHUB_RUN_NUMBER}-${ABI}.apk"
+            # and under a name that never changes, like KURDISTAN-IPTV.apk:
+            #   .../releases/latest/download/KURDISTAN-IPTV-armeabi-v7a.apk
+            cp "$ONE" "KURDISTAN-IPTV-${ABI}.apk"
             gh release upload "v1.0.${GITHUB_RUN_NUMBER}" "KURDISTAN-IPTV-${GITHUB_RUN_NUMBER}-${ABI}.apk" \
+              "KURDISTAN-IPTV-${ABI}.apk" \
               --repo "$RELEASE_REPO" || echo "Could not add the ${ABI} APK - the release is complete without it."
           done
 
