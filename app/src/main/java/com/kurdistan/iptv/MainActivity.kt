@@ -836,6 +836,13 @@ class MainActivity : ComponentActivity() {
         val subs = urls.getOrNull(i)?.let { subsByUrl[it] }
         if (!subs.isNullOrEmpty()) {
             val shift = subShift(urls.getOrNull(i))
+            /* Media3 takes an item with the same address as the same item and
+               only updates it in place (canUpdateMediaItem looks at the address,
+               not at the subtitle files), so a subtitle fetched during playback
+               never reached the picture until the film was opened again. This
+               key changes whenever the files or their timing change, so the
+               player builds the item anew with them; nothing here is cached. */
+            b.setCustomCacheKey("subs:" + shift + ":" + subs.joinToString("|") { it.path + "#" + it.lang + (if (it.def) "*" else "") }.hashCode())
             b.setSubtitleConfigurations(subs.map { s ->
                 MediaItem.SubtitleConfiguration.Builder(Uri.fromFile(File(shiftedSrt(s.path, shift))))
                     .setMimeType(if (s.path.endsWith(".vtt", true)) MimeTypes.TEXT_VTT else MimeTypes.APPLICATION_SUBRIP)

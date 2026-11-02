@@ -100,7 +100,8 @@ async function fromApiSports(offset: number): Promise<Match[]> {
 
 // ---- football-data.org -------------------------------------------------
 async function fromFootballData(): Promise<Match[]> {
-  const u = "https://api.football-data.org/v4/matches?dateFrom=" + day(-1) + "&dateTo=" + day(1) +
+  // dateTo is exclusive: day(2) brings in tomorrow's kick-offs as well
+  const u = "https://api.football-data.org/v4/matches?dateFrom=" + day(-1) + "&dateTo=" + day(2) +
     "&competitions=" + leagues().join(",");
   const r = await fetch(u, { headers: { "X-Auth-Token": KEY } });
   const j = await r.json();
