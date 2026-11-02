@@ -1872,14 +1872,43 @@ function parseM3U(txt){
   return out;
 }
 
+/* A panel that says "too many requests" (429) or "busy" (503) is asked again
+   a little later, twice, the way it asks: Cloudflare in front of many panels
+   turns away a burst of requests for a few seconds. Whatever still fails is
+   given back as one readable line: a server's own error page is HTML, and
+   that page shown as it is means nothing to anyone. */
+function fetchPatient(u, tries){
+  tries = tries == null ? 2 : tries;
+  return fetch(u).then(function(r){
+    if((r.status === 429 || r.status === 503) && tries > 0){
+      var wait = parseInt(r.headers && r.headers.get ? r.headers.get("Retry-After") : "", 10);
+      wait = (wait > 0 && wait <= 20) ? wait * 1000 : (tries === 2 ? 2500 : 6000);
+      return new Promise(function(ok){ setTimeout(ok, wait) }).then(function(){ return fetchPatient(u, tries - 1) });
+    }
+    return r;
+  });
+}
+function httpError(status, txt){
+  var body = String(txt || "");
+  if(/^\s*</.test(body)){
+    var m = body.match(/<title[^>]*>([^<]{1,80})/i);
+    body = m ? m[1].replace(/\s+/g, " ").trim() : "";
+  }
+  var why = status === 429 ? "too many requests, the server asks to wait a minute"
+          : status === 503 ? "the server is busy"
+          : status === 401 || status === 403 ? "the server refused this account"
+          : status === 404 ? "not found on the server" : "";
+  return new Error("HTTP " + status + (why ? " \u2014 " + why : "") + (body ? " (" + body.slice(0, 80) + ")" : ""));
+}
+
 /* ==================== xtream api ====================
    Proper panels answer player_api.php even when get.php is filtered,
    and it gives categories and logos in one go. */
 function xtGet(base, action){
-  return fetch(viaApp(base + "&action=" + action))
+  return fetchPatient(viaApp(base + "&action=" + action))
     .then(function(r){
       return r.text().then(function(txt){
-        if(!r.ok) throw new Error("HTTP " + r.status + " " + txt.slice(0,110));
+        if(!r.ok) throw httpError(r.status, txt);
         if(txt.indexOf("PROXY_ERROR") === 0) throw new Error(txt.slice(0,140));
         DL_BYTES += byteLen(txt);
         var j;
@@ -7516,10 +7545,10 @@ function loadActive(force){
   refreshSettings();
 
   var job = (p.type === "xtream") ? loadXtream(p) :
-    fetch(viaApp(url))
+    fetchPatient(viaApp(url))
       .then(function(r){
         return r.text().then(function(txt){
-          if(!r.ok) throw new Error("HTTP " + r.status + " " + txt.slice(0,120));
+          if(!r.ok) throw httpError(r.status, txt);
           if(txt.indexOf("PROXY_ERROR") === 0) throw new Error(txt.slice(0,140));
           DL_BYTES += byteLen(txt);
           var list = parseM3U(txt);
