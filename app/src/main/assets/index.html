@@ -1918,6 +1918,24 @@ function xtGet(base, action){
       });
     });
 }
+/* An Xtream panel sends its categories in the order its owner set, but its
+   channels, films and series in the order they were added. The items are put
+   in the order of their category (stable: inside a category they keep the
+   panel's own order), so the groups come out exactly as the provider lists
+   them; anything in a category the panel did not list goes last. */
+function panelOrder(out, cats){
+  if(Object.prototype.toString.call(cats) !== "[object Array]" || !out.length) return out;
+  var rank = {};
+  cats.forEach(function(c, i){
+    var k = c && c.category_name ? c.category_name : "Other";
+    if(!(k in rank)) rank[k] = i;
+  });
+  var big = cats.length + 1;
+  return out.map(function(x, i){ return { x: x, i: i, r: (x.c in rank) ? rank[x.c] : big } })
+            .sort(function(a, b){ return a.r - b.r || a.i - b.i })
+            .map(function(o){ return o.x });
+}
+
 function loadXtream(p){
   var d = String(p.domain||"").replace(/\/+$/,"");
   var base = d + "/player_api.php?username=" + encodeURIComponent(p.user)
@@ -1945,7 +1963,7 @@ function loadXtream(p){
           l: artURL(s.stream_icon || s.logo, d)
         });
       }
-      return out;
+      return panelOrder(out, cats);
     });
   });
 }
@@ -2488,7 +2506,7 @@ function loadVod(p){
           r: v.rating || ""
         });
       }
-      return out;
+      return panelOrder(out, cats);
     });
   });
 }
@@ -2526,7 +2544,7 @@ function loadSeries(p){
         if(tid) byT[tid] = it;
         out.push(it);
       }
-      return out;
+      return panelOrder(out, cats);
     });
   });
 }
@@ -2692,15 +2710,19 @@ function catShowAll(sec){
   catsSave();
 }
 
-/* every group in the playlist, before anything is hidden - the Kurdish ones
-   first, then the biggest, exactly as the app has always ordered them */
+/* every group in the playlist, before anything is hidden, in the provider's
+   own order: the order its M3U lists them, or the order its Xtream panel
+   gives its categories (the loaders put the items in that order, see
+   panelOrder). The app adds no order of its own; the user can still move
+   groups in Settings, and "Default order" brings back the provider's. */
 function allGroups(sec){
   sec = sec || SECTION;
-  var src = sec === "live" ? CH : (DATA[sec] || []), n = {};
-  for(var i = 0; i < src.length; i++) n[src[i].c] = (n[src[i].c] || 0) + 1;
-  var g = Object.keys(n).sort(function(a,b){ return n[b] - n[a] });
-  var kur = g.filter(function(k){ return /kurd|كرد|کورد/i.test(k) });
-  return { list: kur.concat(g.filter(function(k){ return kur.indexOf(k) < 0 })), count: n };
+  var src = sec === "live" ? CH : (DATA[sec] || []), n = {}, list = [];
+  for(var i = 0; i < src.length; i++){
+    var c = src[i].c;
+    if(n[c]) n[c]++; else { n[c] = 1; list.push(c) }
+  }
+  return { list: list, count: n };
 }
 
 /* the saved order first, anything new after it */
