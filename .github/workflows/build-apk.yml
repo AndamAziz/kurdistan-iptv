@@ -127,6 +127,8 @@ jobs:
         run: rm -f "$RUNNER_TEMP/kiptv.jks"
 
       - name: Upload APK
+        # a full store must never stop the release below from being published
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: KURDISTAN-IPTV-apk
@@ -137,6 +139,8 @@ jobs:
       # R8 renames the release build's code. This file turns a release crash
       # report back into real names, so it is kept for every build.
       - name: Upload the R8 mapping
+        # a full store must never stop the release below from being published
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: KURDISTAN-IPTV-mapping
@@ -147,6 +151,8 @@ jobs:
       # kept for the job that sends it to Play. A missing one is only a warning
       # here: nothing else depends on it.
       - name: Upload the bundle
+        # a full store must never stop the release below from being published
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: KURDISTAN-IPTV-aab
@@ -303,6 +309,8 @@ jobs:
           npm run dist
 
       - name: Upload installer
+        # a full store must never stop the release below from being published
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: KURDISTAN-IPTV-windows
