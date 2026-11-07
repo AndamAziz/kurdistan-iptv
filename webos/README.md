@@ -19,7 +19,8 @@ MP4, MKV). Nothing in the Android, Windows or Samsung apps changes.
 | App | Arrows / OK, Magic Remote pointer | Move / choose (the app's own TV layout) |
 | App | Back | Closes what is open; on the home screen, press twice to go back to the TV |
 | Player | Back, Stop | Close the player |
-| Player | Up / Down, CH+ / CH− | Channel or episode before / after |
+| Player | Up / Down, CH+ / CH− | Channel or episode before / after; a channel list goes round at its ends |
+| Player | 0–9 | Type a channel's number (the "n / total" on screen); it opens by itself |
 | Player | Left / Right, ⏪ / ⏩ | Films: 10 s back / 30 s forward. Live: show the bar |
 | Player | OK, Play / Pause, pointer click | Films: pause / resume. Live: show the bar |
 | Player | Info | Show / hide the bar |

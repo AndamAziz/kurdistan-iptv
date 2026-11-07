@@ -7,6 +7,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # actions: write lets the first step below delete old build files
+    permissions:
+      contents: read
+      actions: write
 
     # the signing key and its passwords live in the repository's secrets,
     # never in the code. Without them the build still works, unsigned (debug).
@@ -19,6 +23,32 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      # A private repository has a small store for build files (500 MB on the
+      # free plan) and every build adds about 180 MB; once it is full, no build
+      # can hand on its files and the release is never published. Only the
+      # newest few of each kind are kept: the releases themselves live in the
+      # public releases repository, not here.
+      - name: Make room for this build's files
+        continue-on-error: true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --paginate "repos/${{ github.repository }}/actions/artifacts?per_page=100" \
+            --jq '.artifacts[] | select(.expired == false) | [.id, .name, .created_at] | @tsv' \
+            | sort -t$'\t' -k3,3r > "$RUNNER_TEMP/artifacts.tsv" || exit 0
+          declare -A KEEP=( [KURDISTAN-IPTV-apk]=3 [KURDISTAN-IPTV-aab]=2 [KURDISTAN-IPTV-windows]=2 [KURDISTAN-IPTV-mapping]=20 )
+          declare -A SEEN=()
+          gone=0
+          while IFS=$'\t' read -r id name created; do
+            [ -n "$id" ] || continue
+            SEEN[$name]=$(( ${SEEN[$name]:-0} + 1 ))
+            if [ "${SEEN[$name]}" -gt "${KEEP[$name]:-2}" ]; then
+              gh api -X DELETE "repos/${{ github.repository }}/actions/artifacts/$id" && gone=$((gone + 1))
+            fi
+          done < "$RUNNER_TEMP/artifacts.tsv"
+          echo "deleted $gone old artifact(s)"
 
       # The subtitle keys (OpenSubtitles, Claude) come from the repository's
       # secrets, never from the code. With none set, people enter their own
@@ -97,29 +127,38 @@ jobs:
         run: rm -f "$RUNNER_TEMP/kiptv.jks"
 
       - name: Upload APK
+        # a full store must never stop the release below from being published
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: KURDISTAN-IPTV-apk
           path: app/build/outputs/apk/*/*/*.apk
           if-no-files-found: error
+          retention-days: 14
 
       # R8 renames the release build's code. This file turns a release crash
       # report back into real names, so it is kept for every build.
       - name: Upload the R8 mapping
+        # a full store must never stop the release below from being published
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: KURDISTAN-IPTV-mapping
           path: app/build/outputs/mapping/*Release/mapping.txt
           if-no-files-found: warn
+          retention-days: 90
 
       # kept for the job that sends it to Play. A missing one is only a warning
       # here: nothing else depends on it.
       - name: Upload the bundle
+        # a full store must never stop the release below from being published
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: KURDISTAN-IPTV-aab
           path: app/build/outputs/bundle/playRelease/*.aab
           if-no-files-found: warn
+          retention-days: 3
 
       # The finished APK goes to a second, public repository that holds nothing
       # but releases. This source stays private; the app asks that public list
@@ -270,11 +309,14 @@ jobs:
           npm run dist
 
       - name: Upload installer
+        # a full store must never stop the release below from being published
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: KURDISTAN-IPTV-windows
           path: desktop/out/*.exe
           if-no-files-found: error
+          retention-days: 14
 
       - name: Add it to the release
         shell: bash

@@ -1584,7 +1584,7 @@ class MainActivity : ComponentActivity() {
         }
         if (!locked) topBar.visibility = View.VISIBLE
         playerView.showController()          /* does nothing while locked */
-        if (isTv) focusPlayerForRemote()
+        if (isTv || remoteSeen) focusPlayerForRemote()
     }
 
     /**
@@ -1641,6 +1641,13 @@ class MainActivity : ComponentActivity() {
 
     /** Title and LIVE badge for whichever item is on screen. */
     private fun applyItemChrome(index: Int) {
+        /* what Last / Recall goes back to: the channel on before this one */
+        urls.getOrNull(index)?.let { u ->
+            if (u != lastChanUrl) {
+                lastChanUrl?.let { if (!isVod(it)) prevChanUrl = it }
+                lastChanUrl = u
+            }
+        }
         txtTitle.text = titles.getOrNull(index) ?: ""
         nowTitle = titles.getOrNull(index) ?: ""
         val live = !isVod(urls.getOrNull(index) ?: "")
@@ -1843,6 +1850,7 @@ class MainActivity : ComponentActivity() {
         reportPosition()
         webView.evaluateJavascript("window.refreshHome&&refreshHome()", null)
         handler.removeCallbacksAndMessages(null)
+        numBuf = ""
         stopRadio()
         releaseSession()
         player?.release()
@@ -3199,8 +3207,213 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
-        if (::playerLayer.isInitialized && playerLayer.visibility == View.VISIBLE) armAutoHide()
+        if (::playerLayer.isInitialized && playerLayer.visibility == View.VISIBLE) {
+            armAutoHide()
+            if (remoteKey(event)) return true
+        }
         return super.dispatchKeyEvent(event)
+    }
+
+    // ---------------- the TV remote inside the player ----------------
+    /*
+     * A remote is a remote, not a mouse: every key does what it says on it, the way
+     * a TV's own channels do. With nothing on screen over the picture:
+     *   CH+ / CH-, Page up / down, ▲ / ▼     next / previous channel (or episode)
+     *   0-9                                  type a channel's number, it opens by itself
+     *   Last / Recall                        the channel before this one
+     *   OK                                   live: the channel list; a film: the controls
+     *   ◀ / ▶ (films)                        10 s back / 10 s forward
+     *   Guide, Menu, ☰                       the channel list; Menu on a film: the ⚙ panel
+     *   Info                                 show / hide the controls
+     *   Subtitles (captions)                 the ⚙ panel
+     *   Stop                                 close the player
+     * With the controls showing, the arrows and OK move between their buttons as before,
+     * and CH+ / CH- and the numbers still change the channel. The channel list and the
+     * ⚙ panel keep their own arrows and OK. Media keys (Play/Pause, ⏪ ⏩) stay with the
+     * player itself.
+     */
+    private var numBuf = ""
+    private var prevChanUrl: String? = null
+    private var lastChanUrl: String? = null
+    private val numGo = Runnable {
+        val n = numBuf; numBuf = ""
+        if (playerLayer.visibility == View.VISIBLE) n.toIntOrNull()?.let { jumpToNumber(it) }
+    }
+    /** a key whose press was taken here: its release is taken too, so nothing under it reacts */
+    private val keysTaken = HashSet<Int>()
+
+    /** a box that does not say it is a TV, driven by a remote all the same (some projectors) */
+    private var remoteSeen = false
+
+    private fun remoteKey(e: android.view.KeyEvent): Boolean {
+        val k = e.keyCode
+        if (k in android.view.KeyEvent.KEYCODE_DPAD_UP..android.view.KeyEvent.KEYCODE_DPAD_CENTER) remoteSeen = true
+        if (e.action == android.view.KeyEvent.ACTION_UP) return keysTaken.remove(k)
+        if (e.action != android.view.KeyEvent.ACTION_DOWN) return false
+        if (locked || inPip) return false
+        val took = remoteDown(e)
+        if (took) keysTaken.add(k)
+        return took
+    }
+
+    private fun remoteDown(e: android.view.KeyEvent): Boolean {
+        val k = e.keyCode
+        val p = player ?: return false
+        val live = !isVod(currentUrl ?: "")
+        val shown = playerView.isControllerFullyVisible
+        val overlay = chansOn() || panelOn()
+        fun done(act: () -> Unit): Boolean { act(); return true }
+
+        val digit = when (k) {
+            in android.view.KeyEvent.KEYCODE_0..android.view.KeyEvent.KEYCODE_9 -> k - android.view.KeyEvent.KEYCODE_0
+            in android.view.KeyEvent.KEYCODE_NUMPAD_0..android.view.KeyEvent.KEYCODE_NUMPAD_9 -> k - android.view.KeyEvent.KEYCODE_NUMPAD_0
+            else -> -1
+        }
+        if (digit >= 0 && !panelOn()) return done { typeDigit(digit) }
+
+        return when (k) {
+            android.view.KeyEvent.KEYCODE_CHANNEL_UP, android.view.KeyEvent.KEYCODE_PAGE_UP ->
+                if (overlay) false else done { zap(+1) }
+            android.view.KeyEvent.KEYCODE_CHANNEL_DOWN, android.view.KeyEvent.KEYCODE_PAGE_DOWN ->
+                if (overlay) false else done { zap(-1) }
+            android.view.KeyEvent.KEYCODE_MEDIA_NEXT -> if (overlay) false else done { zap(+1) }
+            android.view.KeyEvent.KEYCODE_MEDIA_PREVIOUS -> if (overlay) false else done { zap(-1) }
+            android.view.KeyEvent.KEYCODE_LAST_CHANNEL -> done { lastChannel() }
+            android.view.KeyEvent.KEYCODE_MEDIA_STOP -> done { hideNativePlayer() }
+            android.view.KeyEvent.KEYCODE_INFO -> if (overlay) false else done {
+                if (playerView.isControllerFullyVisible) playerView.hideController() else showControls()
+            }
+            android.view.KeyEvent.KEYCODE_GUIDE, android.view.KeyEvent.KEYCODE_TV_CONTENTS_MENU ->
+                done { if (chansOn()) closeChans() else openChans() }
+            android.view.KeyEvent.KEYCODE_MENU ->
+                done {
+                    when {
+                        chansOn() -> closeChans()
+                        panelOn() -> closePanel()
+                        live && chanAll.isNotEmpty() -> openChans()
+                        else -> openPanel()
+                    }
+                }
+            android.view.KeyEvent.KEYCODE_CAPTIONS -> done { if (panelOn()) closePanel() else openPanel() }
+            /* only while nothing is over the picture: then the arrows and OK are the
+               channel keys; with the controls up they move between the buttons */
+            android.view.KeyEvent.KEYCODE_DPAD_UP -> if (overlay || shown || !live) false else done { zap(-1) }
+            android.view.KeyEvent.KEYCODE_DPAD_DOWN -> if (overlay || shown || !live) false else done { zap(+1) }
+            android.view.KeyEvent.KEYCODE_DPAD_CENTER, android.view.KeyEvent.KEYCODE_ENTER,
+            android.view.KeyEvent.KEYCODE_NUMPAD_ENTER ->
+                if (overlay || shown || e.repeatCount > 0) false
+                else if (live && chanAll.isNotEmpty()) done { openChans() }
+                else false                             /* a film: the player shows its controls */
+            android.view.KeyEvent.KEYCODE_DPAD_LEFT ->
+                if (overlay || shown || live) false else done { seekBy(p, -10_000) }
+            android.view.KeyEvent.KEYCODE_DPAD_RIGHT ->
+                if (overlay || shown || live) false else done { seekBy(p, 10_000) }
+            else -> false
+        }
+    }
+
+    private fun showControls() {
+        playerView.showController()
+        focusPlayerForRemote()
+    }
+
+    private fun seekBy(p: ExoPlayer, ms: Long) {
+        try {
+            val dur = p.duration
+            var to = p.currentPosition + ms
+            if (to < 0) to = 0
+            if (dur > 0 && to > dur - 1000) to = dur - 1000
+            p.seekTo(to)
+            showHint((if (ms < 0) "⏪ " else "⏩ ") + fmtTime(to) + (if (dur > 0) " / " + fmtTime(dur) else ""))
+        } catch (e: Exception) { }
+    }
+
+    private fun fmtTime(ms: Long): String {
+        val s = ms / 1000
+        val h = s / 3600; val m = (s % 3600) / 60; val sec = s % 60
+        return if (h > 0) String.format(java.util.Locale.US, "%d:%02d:%02d", h, m, sec)
+               else String.format(java.util.Locale.US, "%d:%02d", m, sec)
+    }
+
+    /** one step along the list that is playing; a channel list goes round, a series stops at its ends */
+    private fun zap(d: Int) {
+        val p = player ?: return
+        val n = urls.size
+        if (n < 2) { showControls(); return }
+        val i = p.currentMediaItemIndex
+        val live = !isVod(currentUrl ?: "")
+        var to = i + d
+        if (to !in 0 until n) {
+            if (!live) { showHint(titles.getOrNull(i) ?: ""); return }
+            to = (to + n) % n
+        }
+        try { p.seekToDefaultPosition(to); p.playWhenReady = true } catch (e: Exception) { return }
+        playerView.hideController()
+        showHint(chanLabel(urls.getOrNull(to), titles.getOrNull(to)))
+    }
+
+    /** "12  Kurdistan 24": the number is the one the channel list shows */
+    private fun chanLabel(u: String?, name: String?): String {
+        val no = if (u == null) -1 else chanAll.indexOfFirst { it.u == u }
+        return (if (no >= 0) (no + 1).toString() + "   " else "") + (name ?: "")
+    }
+
+    private fun typeDigit(d: Int) {
+        if (numBuf.length >= 4) numBuf = ""
+        numBuf += d.toString()
+        handler.removeCallbacks(numGo)
+        val n = numBuf.toIntOrNull() ?: 0
+        val name = chanAll.getOrNull(n - 1)?.n
+        showHint(numBuf + " _" + (if (name != null) "   $name" else ""))
+        /* as many digits as the list has: the last one opens it at once */
+        val enough = numBuf.length >= chanAll.size.toString().length && chanAll.isNotEmpty()
+        handler.postDelayed(numGo, if (enough) 300L else 1500L)
+    }
+
+    /** the channel with this number in the channel list; with no list, this place in what is playing */
+    private fun jumpToNumber(no: Int) {
+        if (chanAll.isNotEmpty()) {
+            val k = no - 1
+            if (k !in chanAll.indices) { showHint("✕  $no"); return }
+            openChannelAt(k)
+            return
+        }
+        val p = player ?: return
+        val k = no - 1
+        if (k !in urls.indices) { showHint("✕  $no"); return }
+        try { p.seekToDefaultPosition(k); p.playWhenReady = true } catch (e: Exception) { }
+        showHint(chanLabel(urls[k], titles.getOrNull(k)))
+    }
+
+    /** chanAll[k], with next / previous walking the channels around it, as the list does */
+    private fun openChannelAt(k: Int) {
+        val ch = chanAll.getOrNull(k) ?: return
+        val here = urls.indexOf(ch.u)
+        closeChans()
+        if (here >= 0) {
+            try { player?.seekToDefaultPosition(here); player?.playWhenReady = true } catch (e: Exception) { }
+        } else {
+            vodSet = emptySet()
+            val from = maxOf(0, k - 150)
+            val to = minOf(chanAll.size, k + 150)
+            val win = chanAll.subList(from, to)
+            openQueue(win.map { it.u }, win.map { it.n },
+                      win.map { it.ua }, win.map { it.rf }, k - from, 0L)
+        }
+        playerView.hideController()
+        showHint(chanLabel(ch.u, ch.n))
+    }
+
+    /** Last / Recall: back to the channel watched before this one */
+    private fun lastChannel() {
+        val u = prevChanUrl ?: return
+        val k = chanAll.indexOfFirst { it.u == u }
+        if (k >= 0) { openChannelAt(k); return }
+        val i = urls.indexOf(u)
+        if (i >= 0) {
+            try { player?.seekToDefaultPosition(i); player?.playWhenReady = true } catch (e: Exception) { }
+            showHint(chanLabel(u, titles.getOrNull(i)))
+        }
     }
 
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
