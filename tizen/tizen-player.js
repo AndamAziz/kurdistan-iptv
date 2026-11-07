@@ -31,10 +31,11 @@
   var K = {
     BACK: 10009, EXIT: 10182, ENTER: 13, UP: 38, DOWN: 40, LEFT: 37, RIGHT: 39,
     PLAYPAUSE: 10252, PLAY: 415, PAUSE: 19, STOP: 413, FF: 417, RW: 412,
-    CHUP: 427, CHDOWN: 428, INFO: 457, ESC: 27
+    CHUP: 427, CHDOWN: 428, INFO: 457, ESC: 27, PRECH: 10190
   };
   var WANT_KEYS = ["MediaPlayPause", "MediaPlay", "MediaPause", "MediaStop", "MediaFastForward",
-                   "MediaRewind", "ChannelUp", "ChannelDown", "Info"];
+                   "MediaRewind", "ChannelUp", "ChannelDown", "Info", "PreviousChannel",
+                   "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
 
   function av() { return W.webapis && W.webapis.avplay ? W.webapis.avplay : null }
   function lang() { return (W.lang === "ku" || W.lang === "ar") ? W.lang : "en" }
@@ -268,7 +269,7 @@
   function open(list, index, startMs) {
     if (!list || !list.length) return;
     build();
-    P.list = list; P.on = true; P.tries = 0;
+    P.list = list; P.on = true; P.tries = 0; prevI = -1; NUM.buf = ""; clearTimeout(NUM.t);
     D.documentElement.classList.add("tzp-on");
     P.el.className = "on osd";
     playAt(Math.max(0, Math.min(list.length - 1, index | 0)), startMs | 0);
@@ -286,6 +287,47 @@
   }
 
   /* ---------------- the remote ---------------- */
+  /* Channels as on the TV itself: ▲ ▼ and CH+ CH- step through the list (a
+     channel list goes round at its ends, a series stops), the number keys type
+     a channel's number (the one shown as "n / total") and it opens by itself,
+     and Back / Recall returns to the channel watched before. */
+  var NUM = { buf: "", t: null }, prevI = -1;
+  function go(i) {
+    if (i === P.i) { osd(true); return }
+    prevI = P.i;
+    playAt(i);
+  }
+  function zap(d) {
+    var n = P.list.length;
+    if (n < 2) { osd(true); return }
+    var to = P.i + d;
+    if (to < 0 || to >= n) { if (!P.live) { osd(true); return } to = (to + n) % n }
+    go(to);
+  }
+  function lastChannel() {
+    if (prevI >= 0 && prevI < P.list.length) go(prevI); else osd(true);
+  }
+  function typeDigit(d) {
+    if (NUM.buf.length >= 4) NUM.buf = "";
+    NUM.buf += String(d);
+    clearTimeout(NUM.t);
+    var it = P.list[(+NUM.buf) - 1];
+    $("tzpNum").textContent = NUM.buf + " _" + (it && it.n ? "   " + it.n : "");
+    osd(true);
+    /* as many digits as the list has: the last one opens it at once */
+    var enough = NUM.buf.length >= String(P.list.length).length;
+    NUM.t = setTimeout(function () {
+      var n = +NUM.buf; NUM.buf = "";
+      if (!P.on) return;
+      if (n >= 1 && n <= P.list.length) go(n - 1); else drawInfo();
+    }, enough ? 300 : 1500);
+  }
+  function digitOf(k) {
+    if (k >= 48 && k <= 57) return k - 48;
+    if (k >= 96 && k <= 105) return k - 96;
+    return -1;
+  }
+
   var lastBack = 0;
   D.addEventListener("keydown", function (e) {
     var k = e.keyCode;
@@ -293,8 +335,10 @@
       var used = true;
       if (k === K.BACK || k === K.ESC || k === K.STOP || k === K.EXIT) close();
       else if (P.err && k === K.ENTER) { P.tries = 0; playAt(P.i) }
-      else if (k === K.UP || k === K.CHDOWN) { if (P.i > 0) playAt(P.i - 1); else osd(true) }
-      else if (k === K.DOWN || k === K.CHUP) { if (P.i + 1 < P.list.length) playAt(P.i + 1); else osd(true) }
+      else if (k === K.UP || k === K.CHDOWN) zap(-1);
+      else if (k === K.DOWN || k === K.CHUP) zap(+1);
+      else if (digitOf(k) >= 0) typeDigit(digitOf(k));
+      else if (k === K.PRECH) lastChannel();
       else if (k === K.LEFT || k === K.RW) seek(-10000);
       else if (k === K.RIGHT || k === K.FF) seek(30000);
       else if (k === K.ENTER || k === K.PLAYPAUSE) togglePause();

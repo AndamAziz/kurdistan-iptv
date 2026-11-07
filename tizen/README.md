@@ -19,7 +19,9 @@ Nothing in the Android or Windows apps changes.
 | App | Arrows / OK | Move / choose (the app's own TV layout) |
 | App | Back | Closes what is open; on the home screen, press twice to exit |
 | Player | Back, Stop | Close the player |
-| Player | Up / Down, CH+ / CH− | Channel or episode before / after |
+| Player | Up / Down, CH+ / CH− | Channel or episode before / after; a channel list goes round at its ends |
+| Player | 0–9 | Type a channel's number (the "n / total" on screen); it opens by itself |
+| Player | PRE-CH (Recall) | Back to the channel watched before |
 | Player | Left / Right, ⏪ / ⏩ | Films: 10 s back / 30 s forward. Live: show the bar |
 | Player | OK, Play/Pause | Films: pause / resume. Live: show the bar |
 | Player | Info | Show / hide the bar |
