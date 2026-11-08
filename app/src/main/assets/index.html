@@ -1543,7 +1543,7 @@ var T = {
       clearHist:"سڕینەوەی هەموو مێژوو",confirmClearHist:"هەموو مێژووی بینین بسڕێتەوە؟",episode:"ئیپسۆد",movie:"فیلم",liveOne:"کەناڵ",
       cats:"بەڕێوەبردنی پۆلەکان",catsSub:"شاردنەوە، ڕیزکردن و قفڵکردنی پۆلەکان",
       catsHint:"پۆلی شاراوە لە هیچ شوێنێکی ئەپەکە دەرناکەوێت. پۆلی قفڵکراویش تەنها بە کۆد دەکرێتەوە.",
-      catsNone:"هیچ پۆلێک لەم بەشەدا نییە",catsOrder:"ڕیزبەندی بنەڕەتی",catsShowAll:"هەموویان پیشان بدە",
+      catsNone:"هیچ پۆلێک لەم بەشەدا نییە",xtHint:"http://dns:port — /get.php ـی بۆ زیاد مەکە",catsOrder:"ڕیزبەندی بنەڕەتی",catsShowAll:"هەموویان پیشان بدە",
       hiddenW:"شاراوە",lockedW:"قفڵدراو",
       pinTitle:"کۆدی قفڵ",pinNew:"کۆدێکی نوێ لە چوار ژمارە دابنێ",pinAgain:"دووبارە هەمان کۆد بنووسەوە",
       pinAsk:"کۆدی قفڵ بنووسە",pinBad:"کۆدەکە هەڵەیە",pinNoMatch:"هەردوو کۆدەکە وەک یەک نین",
@@ -1615,7 +1615,7 @@ var T = {
       clearHist:"Clear all history",confirmClearHist:"Clear the whole watch history?",episode:"Episode",movie:"Movie",liveOne:"Live",
       cats:"Categories",catsSub:"Hide, reorder and lock your groups",
       catsHint:"A hidden group disappears from the whole app. A locked one opens only with the code.",
-      catsNone:"No groups in this section",catsOrder:"Default order",catsShowAll:"Show them all",
+      catsNone:"No groups in this section",xtHint:"http://dns:port — do not add /get.php",catsOrder:"Default order",catsShowAll:"Show them all",
       hiddenW:"Hidden",lockedW:"Locked",
       pinTitle:"Lock code",pinNew:"Set a new four-digit code",pinAgain:"Type the same code again",
       pinAsk:"Enter the lock code",pinBad:"Wrong code",pinNoMatch:"The two codes are not the same",
@@ -1687,7 +1687,7 @@ var T = {
       clearHist:"مسح السجل بالكامل",confirmClearHist:"مسح سجل المشاهدة بالكامل؟",episode:"حلقة",movie:"فيلم",liveOne:"مباشر",
       cats:"إدارة الفئات",catsSub:"إخفاء الفئات وترتيبها وقفلها",
       catsHint:"الفئة المخفية تختفي من التطبيق كله، والمقفلة لا تُفتح إلا بالرمز.",
-      catsNone:"لا توجد فئات في هذا القسم",catsOrder:"الترتيب الأصلي",catsShowAll:"إظهار الجميع",
+      catsNone:"لا توجد فئات في هذا القسم",xtHint:"http://dns:port — لا تضف /get.php",catsOrder:"الترتيب الأصلي",catsShowAll:"إظهار الجميع",
       hiddenW:"مخفية",lockedW:"مقفلة",
       pinTitle:"رمز القفل",pinNew:"اختر رمزاً جديداً من أربعة أرقام",pinAgain:"اكتب الرمز نفسه مرة أخرى",
       pinAsk:"اكتب رمز القفل",pinBad:"الرمز غير صحيح",pinNoMatch:"الرمزان غير متطابقين",
@@ -5606,7 +5606,7 @@ function drawSheet(){
          + fld("pl_domain", d.fDomain, "http://example.com:8080")
          + fld("pl_user", d.fUser, "")
          + fld("pl_pass", d.fPass, "")
-         + '<div class="hint">http://dns:port — /get.php ـی بۆ زیاد مەکە</div>'
+         + '<div class="hint">'+esc(d.xtHint)+'</div>'
          + '<div class="formErr" id="formErr"></div>'
          + '<button class="gbtn" onclick="saveForm(\'xtream\')">'+esc(d.save)+'</button>';
   }
