@@ -395,12 +395,12 @@ jobs:
       # Play shows a short "what's new" per language, at most 500 characters.
       # WHATSNEW.md already holds one in three languages, marked [en] [ku] [ar];
       # the English one is taken from it, so the same words reach both places.
-      # The file has to be named after the listing's language - en-US unless a
-      # repository variable named PLAY_LANG says otherwise.
+      # The file has to be named after the listing's language: en-GB (the
+      # listing's default) and en-US, plus a repository variable PLAY_LANG if set.
       - name: Take the release notes from WHATSNEW.md
         if: steps.bundle.outputs.found == 'yes'
         env:
-          PLAY_LANG: ${{ vars.PLAY_LANG || 'en-US' }}
+          PLAY_LANG: ${{ vars.PLAY_LANG || 'en-GB' }}
         run: |
           mkdir -p play/whatsnew
           python3 - <<'PY'
@@ -412,10 +412,19 @@ jobs:
           note = (m.group(1) if m else text).strip()
           if not note:
               note = "Bug fixes and improvements."
+          # Play takes 500 characters: whole paragraphs, newest first, as many as fit
           if len(note) > 500:
-              note = note[:497].rstrip() + "..."
-          lang = os.environ.get("PLAY_LANG") or "en-US"
-          io.open("play/whatsnew/whatsnew-" + lang, "w", encoding="utf-8").write(note)
+              keep = ""
+              for para in re.split(r"\n\s*\n", note):
+                  para = para.strip()
+                  if para and len(keep) + len(para) + 2 <= 500:
+                      keep = (keep + "\n\n" + para).strip()
+                  elif keep:
+                      break
+              note = keep or (note[:497].rstrip() + "...")
+          # the listing's default is English (UK); en-US is kept for the older setting
+          for lang in sorted({os.environ.get("PLAY_LANG") or "en-GB", "en-GB", "en-US"}):
+              io.open("play/whatsnew/whatsnew-" + lang, "w", encoding="utf-8").write(note)
           print(note)
           PY
 

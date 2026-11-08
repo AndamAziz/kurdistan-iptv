@@ -1,4 +1,6 @@
 [en]
+TV remote: CH+/CH-, Up/Down and Page keys change channel, number keys 0-9 open a channel by its number, Last/Recall returns to the previous channel and OK opens the channel list. Categories now follow your provider's own order for Live TV, Movies and Series. Subtitles fetched in the player show at once. Playlists retry by themselves when the server is busy. Player controls hide on their own. Football times fixed.
+
 Films and episodes (mp4, mkv ...) start sooner and seek faster: the address a
 panel sends the player to is kept for that film, as VLC does, instead of asking
 the panel again for every piece. The duplicate search button at the top is gone;
@@ -79,6 +81,8 @@ top, fading into the page, the poster on its edge with the title, rating and
 genres beside it, and a full-width Play button underneath.
 
 [ku]
+ریموتی TV: CH+/CH- و ▲▼ و Page کەناڵ دەگۆڕن، کلیلی ژمارەکان 0-9 کەناڵ بە ژمارەکەی دەکەنەوە، Last/Recall دەگەڕێتەوە بۆ کەناڵی پێشوو و OK لیستی کەناڵەکان دەکاتەوە. کەتەگۆرییەکانی کەناڵ و فیلم و زنجیرە ئێستا بە ریزبەندی پرۆڤایدەرەکەت دەردەکەون. سەبتایتلی ناو پلەیەر یەکسەر پیشان دەدرێت. پلەی لیست کاتێک سێرڤەر قەرەباڵغە خۆی دووبارە هەوڵ دەداتەوە. دوگمەکانی پلەیەر خۆیان دەشاردرێنەوە. کاتی یارییەکانی تۆپی پێ چاک کران.
+
 فیلم و ئەڵقەکان (mp4، mkv ...) خێراتر دەست پێدەکەن و خێراتر دەچنە پێش: ئەو
 ناونیشانەی پانێڵ پلەیەری بۆ دەنێرێت بۆ ئەو فیلمە دەمێنێتەوە، وەک VLC، لە جیاتی
 ئەوەی بۆ هەر پارچەیەک دووبارە پرسیار لە پانێڵ بکات. دوگمەی دووەمی گەڕان لە سەرەوە
@@ -153,6 +157,8 @@ z و x هەمان کار دەکەن.
 تەنیشتی، و دوگمەی Play بە پانی لە خوارەوە.
 
 [ar]
+ريموت التلفاز: أزرار CH+/CH- و▲▼ وPage تغيّر القناة، وأزرار الأرقام 0-9 تفتح القناة برقمها، وLast/Recall تعيد إلى القناة السابقة، وOK يفتح قائمة القنوات. الفئات تظهر الآن بترتيب مزوّدك نفسه للبث المباشر والأفلام والمسلسلات. الترجمة المجلوبة داخل المشغل تظهر فوراً. قوائم التشغيل تعيد المحاولة تلقائياً عند انشغال الخادم. أزرار المشغل تختفي تلقائياً. تم إصلاح أوقات المباريات.
+
 الأفلام والحلقات (mp4 وmkv ...) تبدأ أسرع والتقديم أسرع: يُحفظ العنوان الذي
 يرسل إليه اللوحُ المشغّلَ لذلك الفيلم، كما يفعل VLC، بدل سؤال اللوح من جديد عن كل جزء.
 أُزيل زر البحث المكرر في الأعلى؛ مربع البحث هو البحث.
