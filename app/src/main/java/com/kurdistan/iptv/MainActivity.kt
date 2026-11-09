@@ -402,6 +402,15 @@ class MainActivity : ComponentActivity() {
             ): WebResourceResponse? {
                 if (request.url.host != PROXY_HOST) return null
                 val target = request.url.getQueryParameter("u") ?: return null
+                /* a MAC Portal wants its own headers (its MAC cookie, its token) */
+                val extra = request.url.getQueryParameter("h")?.let { h ->
+                    try {
+                        val o = JSONObject(h)
+                        val m = HashMap<String, String>()
+                        o.keys().forEach { k -> m[k] = o.optString(k) }
+                        m
+                    } catch (e: Exception) { null }
+                }
                 val cors = hashMapOf(
                     "Access-Control-Allow-Origin" to "*",
                     "Access-Control-Allow-Headers" to "*",
@@ -414,7 +423,8 @@ class MainActivity : ComponentActivity() {
                     )
                 }
                 return try {
-                    val conn = fetchAllowingCloudflare(target)
+                    val conn = if (extra != null) openFollowingRedirects(target, extra["User-Agent"] ?: UA, extra)
+                               else fetchAllowingCloudflare(target)
                     val code = conn.responseCode
                     val body = if (code in 200..299) conn.inputStream else conn.errorStream
                     WebResourceResponse(
@@ -445,7 +455,8 @@ class MainActivity : ComponentActivity() {
     }
 
     /** HttpURLConnection will not follow http -> https redirects, so do it by hand. */
-    private fun openFollowingRedirects(startUrl: String, ua: String): HttpURLConnection {
+    private fun openFollowingRedirects(startUrl: String, ua: String,
+                                       extra: Map<String, String>? = null): HttpURLConnection {
         var url = startUrl
         var hops = 0
         while (true) {
@@ -456,6 +467,7 @@ class MainActivity : ComponentActivity() {
             c.setRequestProperty("User-Agent", ua)
             c.setRequestProperty("Accept", "*/*")
             c.setRequestProperty("Accept-Language", "en-US,en;q=0.9")
+            extra?.forEach { (k, v) -> if (k != "User-Agent") c.setRequestProperty(k, v) }
             val code = c.responseCode
             if (code in 300..399 && hops < 5) {
                 val next = c.getHeaderField("Location")
@@ -1227,6 +1239,8 @@ class MainActivity : ComponentActivity() {
     private fun guessFor(url: String): String? {
         val full = url.lowercase()
         val path = full.substringBefore('?')
+        /* a MAC Portal item: the page says what its stream usually is */
+        if (Stalker.isLink(url)) return if (full.contains("kiptv_ext=m3u8")) MimeTypes.APPLICATION_M3U8 else null
         return when {
             path.contains(".mpd") -> MimeTypes.APPLICATION_MPD
             path.contains(".m3u8") || path.endsWith(".m3u") -> MimeTypes.APPLICATION_M3U8
