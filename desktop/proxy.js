@@ -337,6 +337,60 @@ async function firstBite(r) {
   return { head: bite.value ? Buffer.from(bite.value) : Buffer.alloc(0), reader };
 }
 
+/* ------------------------------------------------------------------------------
+ * MAC Portal (Stalker / Ministra). The page keeps a channel's or a film's
+ * create_link request as its address, marked kiptv_stk=1; here it becomes the
+ * real address, asked with the portal's own headers (its MAC cookie and a
+ * token from a handshake) - the same job Stalker.kt does on Android.
+ * ---------------------------------------------------------------------------- */
+const MAG_UA = "Mozilla/5.0 (QtEmbedded; U; Linux; C) AppleWebKit/533.3 " +
+  "(KHTML, like Gecko) MAG200 stbapp ver: 2 rev: 250 Safari/533.3";
+const stkTokens = new Map();      /* api|mac -> { token, at } */
+const stkLinks = new Map();       /* request -> { url, at } */
+
+function stkHeaders(mac, token) {
+  const h = { "User-Agent": MAG_UA, "X-User-Agent": "Model: MAG250; Link: WiFi",
+              "Cookie": "mac=" + encodeURIComponent(mac) + "; stb_lang=en; timezone=UTC" };
+  if (token) h.Authorization = "Bearer " + token;
+  return h;
+}
+async function stkJs(url, mac, token) {
+  const r = await fetch(url, { headers: stkHeaders(mac, token), signal: AbortSignal.timeout(15000) });
+  const txt = await r.text();
+  try { return JSON.parse(txt).js || {} } catch (e) { throw new Error("portal: not JSON") }
+}
+async function stkToken(api, mac, fresh) {
+  const key = api + "|" + mac, have = stkTokens.get(key);
+  if (!fresh && have && Date.now() - have.at < 600000) return have.token;
+  const js = await stkJs(api + "?type=stb&action=handshake&token=&JsHttpRequest=1-xml&mac=" + encodeURIComponent(mac), mac, "");
+  if (!js.token) throw new Error("portal: " + (js.error || "no token"));
+  try { await stkJs(api + "?type=stb&action=get_profile&JsHttpRequest=1-xml&mac=" + encodeURIComponent(mac), mac, js.token) } catch (e) { }
+  stkTokens.set(key, { token: js.token, at: Date.now() });
+  return js.token;
+}
+function stkClean(cmd) {
+  let c = String(cmd || "").trim();
+  const sp = c.indexOf(" ");
+  if (sp > 0 && c.slice(0, sp).indexOf("://") < 0) c = c.slice(sp + 1).trim();
+  return c;
+}
+async function stkResolve(link, fresh) {
+  const kept = stkLinks.get(link);
+  if (!fresh && kept && Date.now() - kept.at < 45000) return kept.url;
+  const u = new URL(link);
+  const mac = u.searchParams.get("mac") || "";
+  const api = link.split("?")[0];
+  u.searchParams.delete("kiptv_stk");
+  u.searchParams.delete("kiptv_ext");
+  const ask = u.toString();
+  let js = await stkJs(ask, mac, await stkToken(api, mac, fresh));
+  if (js.error || !js.cmd) js = await stkJs(ask, mac, await stkToken(api, mac, true));
+  const url = stkClean(js.cmd);
+  if (!/^(https?|rtmp|rtsp):\/\//i.test(url)) throw new Error("portal: " + (js.error || "no address for this item"));
+  stkLinks.set(link, { url, at: Date.now() });
+  return url;
+}
+
 function start() {
   const server = http.createServer(async (req, res) => {
     if (req.method === "OPTIONS") { res.writeHead(200, HEAD); res.end(); return }
@@ -347,6 +401,16 @@ function start() {
       target = here.searchParams.get("u");
     } catch (e) { }
     if (!target) { res.writeHead(400, HEAD); res.end("PROXY_ERROR NoTarget"); return }
+
+    /* a MAC Portal item, as mpv opens it: the real address first */
+    if ((here.pathname === "/live" || here.pathname === "/seg") && target.indexOf("kiptv_stk=1") > -1) {
+      try { target = await stkResolve(target, false) }
+      catch (e) {
+        res.writeHead(599, HEAD);
+        res.end("PROXY_ERROR Portal: " + (e && e.message ? e.message : ""));
+        return;
+      }
+    }
 
     /* A stream, rather than something the page is fetching for itself.
        /live is the address mpv is given for a channel or a list; /seg is a
@@ -390,8 +454,14 @@ function start() {
       return;
     }
 
+    /* a MAC Portal question: asked with the headers the page sends along */
+    let extra = null;
+    try { const h = here.searchParams.get("h"); if (h) extra = JSON.parse(h) } catch (e) { extra = null }
+
     try {
-      const r = await fetchAllowingCloudflare(target);
+      const r = extra
+        ? await fetch(target, { redirect: "follow", headers: extra, signal: AbortSignal.timeout(CONNECT_MS + READ_MS) })
+        : await fetchAllowingCloudflare(target);
       const body = Buffer.from(await r.arrayBuffer());
       res.writeHead(r.status, Object.assign({}, HEAD, { "Content-Length": body.length }));
       res.end(body);

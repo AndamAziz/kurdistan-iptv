@@ -232,7 +232,7 @@ class StreamNet(private val context: Context) {
     private val factories = ConcurrentHashMap<String, HttpDataSource.Factory>()
 
     fun dataSourceFactory(): DataSource.Factory = DataSource.Factory {
-        RedirectMemo(httpFactory().createDataSource(), redirects)
+        StalkerSource(RedirectMemo(httpFactory().createDataSource(), redirects))
     }
 
     /* where a film's address was sent last time (see RedirectMemo) */
@@ -275,6 +275,8 @@ class StreamNet(private val context: Context) {
             if (w.cr && !crOk) return
             val e = if (w.lenient && !lenientOk) w.copy(lenient = false) else w
             if (e.swap == SWAP_EXT && (vod || !canSwapExt(url))) return
+            /* a MAC Portal request is not the stream: its address is not swapped */
+            if (e.swap != 0 && Stalker.isLink(url)) return
             out.putIfAbsent(e.key(), e)
         }
         /* The same order the Windows app uses. Secure DNS always comes before
@@ -508,7 +510,11 @@ class StreamNet(private val context: Context) {
     /** what a search found, its last HTTP answer, and every way's answer in turn */
     class Search(val found: Found?, val code: Int, val trail: String)
 
-    fun search(url: String, ua: String?, ref: String?, vod: Boolean, maxTries: Int): Search {
+    fun search(url0: String, ua: String?, ref: String?, vod: Boolean, maxTries: Int): Search {
+        /* a MAC Portal item: look for the stream it stands for */
+        val url = if (Stalker.isLink(url0)) try { Stalker.resolve(url0, fresh = true) } catch (e: Exception) {
+            return Search(null, 0, "portal:" + (e.message ?: "error"))
+        } else url0
         val ways = waysFor(url, ua, vod)
         val plain = Way(ua ?: VLC_UA)
         val tried = HashSet<String>()

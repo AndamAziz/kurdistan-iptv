@@ -1516,7 +1516,7 @@ var T = {
       spdImgSlow:"پۆستەرەکان لە سێرڤەری پرۆڤایدەرەوە خاون",spdImgFail:"پۆستەرەکە نەهات",
       chooseType:"جۆری لیستەکە هەڵبژێرە",
       xtream:"Xtream (پێشنیارکراو)",xtreamSub:"دۆمەین + ناو + وشەی نهێنی",
-      m3uUrl:"M3U بە لینک",m3uUrlSub:"لینکی ڕاستەوخۆی فایلی M3U",
+      m3uUrl:"M3U بە لینک",m3uUrlSub:"لینکی ڕاستەوخۆی فایلی M3U",macPortal:"MAC Portal",macPortalSub:"لینکی پۆرتاڵ + MAC ئەدرێس",fPortal:"لینکی پۆرتاڵ",fMac:"MAC ئەدرێس",macHint:"لینکی پۆرتاڵ وەک پرۆڤایدەرەکەت دەیدات، بۆ نموونە http://host:port/c/ — MAC وەک 00:1A:79:XX:XX:XX",errPortal:"لینکی پۆرتاڵ پێویستە",errMac:"MAC ئەدرێس بەم شێوەیەیە: 00:1A:79:XX:XX:XX",
       fName:"ناوی لیست",fUrl:"لینکی M3U",fDomain:"دۆمەین",fUser:"ناوی بەکارهێنەر",fPass:"وشەی نهێنی",
       save:"پاشەکەوت",del:"سڕینەوە",
       errName:"ناو پێویستە",errUrl:"لینک پێویستە و دەبێت بە http دەست پێبکات",
@@ -1588,7 +1588,7 @@ var T = {
       spdImgSlow:"posters are slow at the provider's end",spdImgFail:"the poster did not arrive",
       chooseType:"Choose playlist type",
       xtream:"Xtream (recommended)",xtreamSub:"Domain + username + password",
-      m3uUrl:"M3U by URL",m3uUrlSub:"Direct link to an M3U file",
+      m3uUrl:"M3U by URL",m3uUrlSub:"Direct link to an M3U file",macPortal:"MAC Portal",macPortalSub:"Portal URL + MAC address",fPortal:"Portal URL",fMac:"MAC address",macHint:"Portal URL as your provider gives it, e.g. http://host:port/c/ — MAC like 00:1A:79:XX:XX:XX",errPortal:"Portal URL is required",errMac:"A MAC address looks like 00:1A:79:XX:XX:XX",
       fName:"Playlist name",fUrl:"M3U URL",fDomain:"Domain",fUser:"Username",fPass:"Password",
       save:"Save",del:"Delete",
       errName:"Name is required",errUrl:"A URL starting with http is required",
@@ -1660,7 +1660,7 @@ var T = {
       spdImgSlow:"الملصقات بطيئة من خادم المزوّد",spdImgFail:"لم يصل الملصق",
       chooseType:"اختر نوع القائمة",
       xtream:"Xtream (موصى به)",xtreamSub:"النطاق + اسم المستخدم + كلمة السر",
-      m3uUrl:"M3U برابط",m3uUrlSub:"رابط مباشر لملف M3U",
+      m3uUrl:"M3U برابط",m3uUrlSub:"رابط مباشر لملف M3U",macPortal:"MAC Portal",macPortalSub:"رابط البوابة + عنوان MAC",fPortal:"رابط البوابة",fMac:"عنوان MAC",macHint:"رابط البوابة كما يعطيه مزوّدك، مثل http://host:port/c/ — وعنوان MAC مثل 00:1A:79:XX:XX:XX",errPortal:"رابط البوابة مطلوب",errMac:"عنوان MAC يكون بهذا الشكل: 00:1A:79:XX:XX:XX",
       fName:"اسم القائمة",fUrl:"رابط M3U",fDomain:"النطاق",fUser:"اسم المستخدم",fPass:"كلمة السر",
       save:"حفظ",del:"حذف",
       errName:"الاسم مطلوب",errUrl:"مطلوب رابط يبدأ بـ http",
@@ -1788,6 +1788,7 @@ function activeList(){
   return a[0];
 }
 function listUrl(p){
+  if(p.type === "mac") return (p.portal || "") + (p.mac ? "#" + p.mac : "");
   if(p.type === "xtream"){
     var d = String(p.domain||"").replace(/\/+$/,"");
     return d + "/player_api.php?username=" + encodeURIComponent(p.user)
@@ -2248,7 +2249,7 @@ function speedExtra(d){
 function speedBody(d){
   var p = activeList();
   var host = "";
-  try{ host = (p.type === "xtream" ? (p.domain || "") : (p.url || "")).replace(/^https?:\/\//,"").split("/")[0] }catch(e){}
+  try{ host = (p.type === "xtream" ? (p.domain || "") : p.type === "mac" ? (p.portal || "") : (p.url || "")).replace(/^https?:\/\//,"").split("/")[0] }catch(e){}
   if(!SPEED) return '<div class="row"><span class="tx"><b>…</b></span></div>';
   if(SPEED.state === "run"){
     return speedRow(d.spdServer, host)
@@ -2418,6 +2419,8 @@ var LOADED = { live: false, movies: false, series: false };
 var SERIES_CACHE = {};
 
 function isXtream(){ return activeList().type === "xtream" }
+/* films and series come from an Xtream panel or a MAC Portal */
+function hasVod(){ var ty = activeList().type; return ty === "xtream" || ty === "mac" }
 
 /* ---------- film, episode or channel ----------
    A classic panel says so in the address: /movie/..., /series/.... Panels
@@ -2437,7 +2440,10 @@ function vodKind(u){
   u = String(u || "");
   if(/\/movie\//.test(u)) return "movie";
   if(/\/series\//.test(u)) return "episode";
-  return VODK[u] || "";
+  /* a MAC Portal film or episode says so in its request */
+  if(VODK[u]) return VODK[u];
+  if(u.indexOf("kiptv_stk=1") > -1 && /[?&]type=vod(&|$)/.test(u)) return /[?&]series=[^&]/.test(u) ? "episode" : "movie";
+  return "";
 }
 
 /* ---------- where a channel's stream really is ----------
@@ -2549,6 +2555,338 @@ function loadSeries(p){
   });
 }
 
+/* ==================== MAC Portal (Stalker / Ministra) ====================
+   A portal knows a set-top box by its MAC address alone. It is asked in
+   steps: a handshake gives a token, the profile wakes it, and then the lists
+   (genres, channels, films, series) come in pages. A channel or a film is
+   not given by address but by a "cmd"; its address is asked for with
+   create_link when it is played. That request itself is what the app keeps
+   as the item's address (marked kiptv_stk=1), and the player turns it into
+   the real one each time it opens it - on Android in the player itself
+   (Stalker.kt), on the TVs and on Windows just before playing. */
+var STK_UA = "Mozilla/5.0 (QtEmbedded; U; Linux; C) AppleWebKit/533.3 (KHTML, like Gecko) MAG200 stbapp ver: 2 rev: 250 Safari/533.3";
+var STK = {};                 /* list id -> { api, token, at } */
+var STK_PAGES = 250;          /* at most this many pages of 14 per section */
+
+function macNorm(m){
+  var h = String(m || "").toUpperCase().replace(/[^0-9A-F]/g, "");
+  if(h.length !== 12) return "";
+  return h.match(/.{2}/g).join(":");
+}
+function stkRoot(portal){
+  var u = String(portal || "").trim().replace(/[?#].*$/, "");
+  u = u.replace(/\/(index\.html?)$/i, "").replace(/\/+$/, "");
+  return u.replace(/\/c$/i, "");
+}
+/* where the portal answers: what was typed, then the usual places */
+function stkCandidates(portal){
+  var typed = String(portal || "").trim().replace(/[?#].*$/, "");
+  var root = stkRoot(portal), out = [];
+  if(/\.php$/i.test(typed)) out.push(typed);
+  out.push(root + "/portal.php", root + "/server/load.php", root + "/stalker_portal/server/load.php");
+  if(/\/stalker_portal$/i.test(root)) out.push(root.replace(/\/stalker_portal$/i, "") + "/portal.php");
+  return out.filter(function(x, i){ return out.indexOf(x) === i });
+}
+function stkHeaders(mac, tok){
+  var h = { "User-Agent": STK_UA, "X-User-Agent": "Model: MAG250; Link: WiFi",
+            "Cookie": "mac=" + encodeURIComponent(mac) + "; stb_lang=en; timezone=UTC" };
+  if(tok) h.Authorization = "Bearer " + tok;
+  return h;
+}
+/* the request, with the portal's headers: through the app's own fetcher where
+   there is one (Android, Windows), straight from the page on the TVs - there
+   the MAC also rides in the address, as a browser cannot set a cookie */
+function stkFetch(url, mac, tok){
+  var h = stkHeaders(mac, tok);
+  var u;
+  if(window.KIPTV_PROXY) u = window.KIPTV_PROXY + encodeURIComponent(url) + "&h=" + encodeURIComponent(JSON.stringify(h));
+  else if(window.AndroidPlayer) u = "https://kiptv.local/p?u=" + encodeURIComponent(url) + "&h=" + encodeURIComponent(JSON.stringify(h));
+  if(u) return fetchPatient(u);
+  return fetch(url, tok ? { headers: { "Authorization": "Bearer " + tok } } : undefined);
+}
+function stkUrl(api, mac, q){
+  return api + "?" + q + "&JsHttpRequest=1-xml&mac=" + encodeURIComponent(mac);
+}
+function stkJson(r){
+  return r.text().then(function(txt){
+    if(txt.indexOf("PROXY_ERROR") === 0) throw new Error(txt.slice(0, 140));
+    if(!r.ok && r.status !== 401) throw httpError(r.status, txt);
+    DL_BYTES += byteLen(txt);
+    var j;
+    try{ j = JSON.parse(txt) }catch(e){ throw new Error("NOT JSON (" + txt.slice(0, 70).replace(/\s+/g, " ") + ")") }
+    return j;
+  });
+}
+function stkHandshake(api, mac){
+  return stkFetch(stkUrl(api, mac, "type=stb&action=handshake&token=&prehash=0"), mac, "")
+    .then(stkJson)
+    .then(function(j){
+      var js = j && j.js;
+      var tok = js && js.token;
+      if(!tok) throw new Error((js && js.error) ? String(js.error) : "NO TOKEN");
+      return tok;
+    });
+}
+/* the token for this list: the portal's place found once, the handshake
+   made again after ten minutes or when the portal says the token is old */
+function stkLogin(p, fresh){
+  var s = STK[p.id];
+  if(s && !fresh && Date.now() - s.at < 600000) return Promise.resolve(s);
+  var mac = macNorm(p.mac);
+  if(!mac) return Promise.reject(new Error("MAC ADDRESS"));
+  var tries = s && s.api ? [s.api] : stkCandidates(p.portal);
+  var lastErr = null;
+  var next = function(i){
+    if(i >= tries.length) return Promise.reject(lastErr || new Error("PORTAL NOT FOUND"));
+    return stkHandshake(tries[i], mac).then(function(tok){
+      return stkFetch(stkUrl(tries[i], mac, "type=stb&action=get_profile&hd=1&num_banks=2&stb_type=MAG250&image_version=218&video_out=hdmi&device_id=&device_id2=&signature=&auth_second_step=1&hw_version=1.7-BD-00&not_valid_token=0&ver=ImageDescription"), mac, tok)
+        .then(stkJson)
+        .then(function(j){
+          var js = (j && j.js) || {};
+          if(js.error) throw new Error(String(js.error));
+          if(String(js.blocked) === "1" || String(js.status) === "1" && js.block_msg) throw new Error(js.block_msg || "LOGIN REJECTED");
+          var info = { api: tries[i], token: tok, at: Date.now(), profile: js };
+          STK[p.id] = info;
+          return info;
+        });
+    }).catch(function(e){ lastErr = e; return next(i + 1) });
+  };
+  return next(0);
+}
+/* one question, asked again once with a new token if the old one is refused */
+function stkAsk(p, q){
+  var mac = macNorm(p.mac);
+  var ask = function(fresh){
+    return stkLogin(p, fresh).then(function(s){
+      return stkFetch(stkUrl(s.api, mac, q), mac, s.token).then(stkJson);
+    });
+  };
+  return ask(false).then(function(j){
+    var js = j && j.js;
+    if(js && js.error && /token|authori|auth/i.test(String(js.error))) return ask(true).then(function(j2){ return (j2 && j2.js) });
+    if(js && js.error) throw new Error(String(js.error));
+    return js;
+  });
+}
+/* every page of a list; a few at a time, never more than STK_PAGES */
+function stkPages(p, q){
+  return stkAsk(p, q + "&p=1").then(function(first){
+    var data = (first && first.data) || [];
+    var per = parseInt(first && first.max_page_items, 10) || data.length || 14;
+    var total = parseInt(first && first.total_items, 10) || data.length;
+    var pages = Math.min(STK_PAGES, Math.ceil(total / Math.max(1, per)));
+    if(pages <= 1) return data;
+    var rest = [], n = 2;
+    for(var k = 2; k <= pages; k++) rest.push(k);
+    var got = {};
+    var worker = function(){
+      if(!rest.length) return Promise.resolve();
+      var pg = rest.shift();
+      return stkAsk(p, q + "&p=" + pg).then(function(js){ got[pg] = (js && js.data) || [] })
+        .catch(function(){ got[pg] = [] })
+        .then(worker);
+    };
+    return Promise.all([worker(), worker(), worker()]).then(function(){
+      var out = data.slice();
+      for(var k2 = 2; k2 <= pages; k2++) out = out.concat(got[k2] || []);
+      return out;
+    });
+  });
+}
+/* the address an item is played with: its create_link request, marked */
+function stkLink(p, type, cmd, series){
+  var s = STK[p.id] || {};
+  var api = s.api || stkCandidates(p.portal)[0];
+  var c = String(cmd || "");
+  var q = "type=" + type + "&action=create_link&cmd=" + encodeURIComponent(c)
+        + (series ? "&series=" + encodeURIComponent(series) : "")
+        + "&forced_storage=0&disable_ad=0&download=0";
+  return stkUrl(api, macNorm(p.mac), q) + (/\.m3u8/i.test(c) ? "&kiptv_ext=m3u8" : "") + "&kiptv_stk=1";
+}
+function isStkLink(u){ return String(u || "").indexOf("kiptv_stk=1") > -1 }
+/* turn such a request into the real address - for the TVs and Windows */
+function stkResolve(u){
+  var m = String(u).match(/[?&]mac=([^&]+)/);
+  var mac = m ? decodeURIComponent(m[1]) : "";
+  var api = String(u).split("?")[0];
+  var ask = String(u).replace("&kiptv_stk=1", "").replace(/&kiptv_ext=[^&]*/, "");
+  var owner = null;
+  getLists().some(function(p){ if(p.type === "mac" && macNorm(p.mac) === mac){ owner = p; return true } });
+  var go = function(fresh){
+    var login = owner ? stkLogin(owner, fresh).then(function(s){ return s.token })
+                      : stkHandshake(api, mac);
+    return login.then(function(tok){ return stkFetch(ask, mac, tok).then(stkJson) });
+  };
+  var pick = function(j){
+    var js = (j && j.js) || {};
+    var c = String(js.cmd || "").trim();
+    var sp = c.indexOf(" ");
+    if(sp > 0 && c.slice(0, sp).indexOf("://") < 0) c = c.slice(sp + 1).trim();
+    return /^(https?|rtmp|rtsp):\/\//i.test(c) ? c : "";
+  };
+  return go(false).then(function(j){
+    var url = pick(j);
+    return url ? url : go(true).then(function(j2){
+      var u2 = pick(j2);
+      if(!u2) throw new Error("NO LINK");
+      return u2;
+    });
+  });
+}
+window.kiptvResolve = function(u){ return isStkLink(u) ? stkResolve(u) : Promise.resolve(u) };
+
+function stkLogo(u, p){
+  u = String(u || "").trim();
+  if(!u) return "";
+  if(/^https?:\/\//i.test(u) || u.slice(0, 2) === "//") return artURL(u);
+  var root = stkRoot(p.portal).replace(/\/stalker_portal$/i, "");
+  if(u.indexOf("/") < 0) return root + "/stalker_portal/misc/logos/320/" + u;
+  return artURL(u, root);
+}
+function stkCats(js){
+  return (Object.prototype.toString.call(js) === "[object Array]" ? js : [])
+    .filter(function(g){ return g && g.id !== "*" && String(g.id) !== "" })
+    .map(function(g){ return { id: String(g.id), category_name: g.title || g.name || "Other" } });
+}
+
+/* live ---------------------------------------------------------------- */
+function loadStalker(p){
+  return stkLogin(p, true).then(function(){
+    return stkAsk(p, "type=itv&action=get_genres");
+  }).then(function(gs){
+    var cats = stkCats(gs), map = {};
+    cats.forEach(function(c){ map[c.id] = c.category_name });
+    var keep = function(list){
+      var out = [];
+      for(var i = 0; i < list.length; i++){
+        var s = list[i];
+        if(!s || !s.cmd) continue;
+        out.push({ c: map[String(s.tv_genre_id)] || "Other", n: s.name || ("#" + s.id),
+                   u: stkLink(p, "itv", s.cmd), l: stkLogo(s.logo, p) });
+      }
+      return panelOrder(out, cats);
+    };
+    return stkAsk(p, "type=itv&action=get_all_channels").then(function(js){
+      var data = js && (js.data || (Object.prototype.toString.call(js) === "[object Array]" ? js : null));
+      if(data && data.length) return keep(data);
+      throw new Error("PAGES");
+    }).catch(function(){
+      return stkPages(p, "type=itv&action=get_ordered_list&genre=*&force_ch_link_check=&fav=0&sortby=number").then(keep);
+    }).then(function(out){
+      if(!out.length) throw new Error("NO CHANNELS");
+      return out;
+    });
+  });
+}
+
+/* films ---------------------------------------------------------------- */
+function loadStalkerVod(p){
+  return stkAsk(p, "type=vod&action=get_categories").then(function(cs){
+    var cats = stkCats(cs), map = {};
+    cats.forEach(function(c){ map[c.id] = c.category_name });
+    return stkPages(p, "type=vod&action=get_ordered_list&category=*&sortby=added&fav=0").then(function(list){
+      var out = [];
+      for(var i = 0; i < list.length; i++){
+        var v = list[i];
+        if(!v || !v.cmd || String(v.is_series) === "1") continue;
+        var P = parseVodName(v.name, "movie");
+        var u = stkLink(p, "vod", v.cmd);
+        VODK[u] = "movie";
+        out.push({
+          c: map[String(v.category_id)] || "Other",
+          n: P.displayName || ("#" + v.id),
+          ku: P.titleKu, raw: v.name || "", id: v.id,
+          tmdb: P.tmdbId || v.tmdb_id || "",
+          u: u,
+          l: stkLogo(v.screenshot_uri || v.cover || v.logo, p),
+          r: v.rating_imdb || v.rating_kinopoisk || ""
+        });
+      }
+      return panelOrder(out, cats);
+    });
+  });
+}
+
+/* series --------------------------------------------------------------- */
+function loadStalkerSeries(p){
+  var asItems = function(list, map){
+    var out = [];
+    for(var i = 0; i < list.length; i++){
+      var v = list[i];
+      if(!v || v.id == null) continue;
+      var P = parseVodName(v.name, "tv");
+      out.push({ c: map[String(v.category_id)] || "Other", n: P.displayName || ("#" + v.id),
+                 ku: P.titleKu, raw: v.name || "", tmdb: P.tmdbId || "", u: "",
+                 l: stkLogo(v.screenshot_uri || v.cover || v.logo, p), r: v.rating_imdb || "",
+                 sid: String(v.id), sids: [String(v.id)], plot: v.description || "" });
+    }
+    return out;
+  };
+  return stkAsk(p, "type=series&action=get_categories").catch(function(){ return [] }).then(function(cs){
+    var cats = stkCats(cs), map = {};
+    cats.forEach(function(c){ map[c.id] = c.category_name });
+    var job = cats.length
+      ? stkPages(p, "type=series&action=get_ordered_list&category=*&sortby=added&fav=0")
+      : Promise.resolve([]);
+    return job.then(function(list){
+      var out = asItems(list, map);
+      if(out.length) return panelOrder(out, cats);
+      /* some portals keep their series among the films */
+      return stkAsk(p, "type=vod&action=get_categories").then(function(vc){
+        var vcats = stkCats(vc), vmap = {};
+        vcats.forEach(function(c){ vmap[c.id] = c.category_name });
+        return stkPages(p, "type=vod&action=get_ordered_list&category=*&sortby=added&fav=0").then(function(vl){
+          var ser = vl.filter(function(v){ return v && String(v.is_series) === "1" });
+          ser.forEach(function(v){ v.kiptv_vod = 1 });
+          return panelOrder(asItems(ser, vmap), vcats);
+        });
+      }).catch(function(){ return [] });
+    });
+  });
+}
+/* one series as the film page expects it (the shape of Xtream's
+   get_series_info): seasons, each with its episodes and their addresses */
+function stkSeriesInfo(p, sid, sItem){
+  var type = "series";
+  var ep = function(num, title, link, img){
+    VODK[link] = "episode";
+    return { id: link, episode_num: num, title: title, container_extension: "",
+             kurl: link, info: { movie_image: img || "" } };
+  };
+  var fromSeasons = function(seasons){
+    var eps = {}, jobs = [];
+    seasons.forEach(function(s, i){
+      var num = parseInt(s.season_number, 10) || parseInt(String(s.name || "").replace(/\D+/g, ""), 10) || (i + 1);
+      var list = s.series;
+      if(typeof list === "string"){ try{ list = JSON.parse(list) }catch(e){ list = [] } }
+      if(list && list.length && s.cmd){
+        eps[num] = list.map(function(n){ return ep(n, t().episodeN ? t().episodeN + " " + n : "Episode " + n, stkLink(p, "vod", s.cmd, n), stkLogo(s.screenshot_uri, p)) });
+      } else {
+        jobs.push(stkPages(p, "type=" + type + "&action=get_ordered_list&movie_id=" + encodeURIComponent(sid) + "&season_id=" + encodeURIComponent(s.id) + "&episode_id=0").then(function(list2){
+          eps[num] = list2.filter(function(e){ return e && e.cmd }).map(function(e, k){
+            var en = parseInt(e.series_number || e.episode_number, 10) || (k + 1);
+            return ep(en, e.name || ("Episode " + en), stkLink(p, "vod", e.cmd), stkLogo(e.screenshot_uri, p));
+          });
+        }).catch(function(){}));
+      }
+    });
+    return Promise.all(jobs).then(function(){ return eps });
+  };
+  if(sItem && sItem.kiptv_vod) type = "vod";
+  var q = "type=" + type + "&action=get_ordered_list&movie_id=" + encodeURIComponent(sid) + "&season_id=0&episode_id=0";
+  return stkPages(p, q).then(function(seasons){
+    if(!seasons.length && type === "series"){
+      type = "vod";
+      return stkPages(p, "type=vod&action=get_ordered_list&movie_id=" + encodeURIComponent(sid) + "&season_id=0&episode_id=0");
+    }
+    return seasons;
+  }).then(fromSeasons).then(function(eps){
+    if(!Object.keys(eps).length) throw new Error("NO EPISODES");
+    return { info: { name: (sItem && sItem.raw) || "", cover: (sItem && sItem.l) || "", plot: (sItem && sItem.plot) || "" },
+             episodes: eps };
+  });
+}
+
 /* ---------- what the provider has added since the app last looked ----------
    Providers do not agree on dates. An Xtream panel sends "added" for films
    and nothing useful for channels; an M3U sends nothing at all. So the app
@@ -2589,9 +2927,10 @@ function markNew(list, sec){
 function loadSection(name){
   if(LOADED[name] || name === "live") return Promise.resolve();
   var p = activeList();
-  if(p.type !== "xtream"){ LOADED[name] = true; return Promise.resolve() }
+  if(p.type !== "xtream" && p.type !== "mac"){ LOADED[name] = true; return Promise.resolve() }
   showSync(t().sync + " · " + (name === "movies" ? t().movies : t().series), false);
-  return (name === "movies" ? loadVod(p) : loadSeries(p))
+  var mac = p.type === "mac";
+  return (name === "movies" ? (mac ? loadStalkerVod(p) : loadVod(p)) : (mac ? loadStalkerSeries(p) : loadSeries(p)))
     .then(function(list){
       DATA[name] = markNew(list || [], name);
       LOADED[name] = true;
@@ -2615,7 +2954,7 @@ function setSection(name){
 }
 
 function drawNav(){
-  var d = t(), x = isXtream(), favOn = favsOn();
+  var d = t(), x = hasVod(), favOn = favsOn();
   $("navLive").textContent = d.live;
   $("navMovies").textContent = d.movies;
   $("navSeries").textContent = d.series;
@@ -3468,7 +3807,7 @@ function render(){
   var html = "";
   if(!view.length){
     var msg = SECTION === "movies" ? t().noVod : (SECTION === "series" ? t().noSer : t().none);
-    if(!isXtream() && SECTION !== "live") msg = t().onlyXtream;
+    if(!hasVod() && SECTION !== "live") msg = t().onlyXtream;
     $("main").innerHTML = html + '<div class="empty"><div>&#128533;</div><p>'+esc(msg)+'</p></div>';
     return;
   }
@@ -3927,7 +4266,7 @@ function searchHits(list, q, toks){
 
 /* films and series of an Xtream playlist are loaded when you first search */
 function searchWarm(){
-  if(SQ_LOADING || !isXtream() || (LOADED.movies && LOADED.series)) return;
+  if(SQ_LOADING || !hasVod() || (LOADED.movies && LOADED.series)) return;
   SQ_LOADING = true;
   var owner = activeId();
   loadSection("movies")
@@ -5223,7 +5562,7 @@ var curSeries = null, curSeason = null, curMovie = null;
 
 function openSeries(sid, name){
   var p = activeList();
-  if(p.type !== "xtream") return;
+  if(p.type !== "xtream" && p.type !== "mac") return;
   curMovie = null; curSeries = null; curSeason = null;
   var sItem = null;
   (DATA.series || []).some(function(x){ if(String(x.sid) === String(sid) || (x.sids || []).indexOf(String(sid)) > -1 || (x.sids || []).indexOf(+sid) > -1){ sItem = x; return true } });
@@ -5271,7 +5610,7 @@ function openSeries(sid, name){
 
   if(SERIES_CACHE[sid]) { done(SERIES_CACHE[sid]); return }
   var more = (sItem && sItem.sids || []).filter(function(x){ return String(x) !== String(sid) });
-  xtGet(xtBase(p), "get_series_info&series_id=" + encodeURIComponent(sid))
+  (p.type === "mac" ? stkSeriesInfo(p, sid, sItem) : xtGet(xtBase(p), "get_series_info&series_id=" + encodeURIComponent(sid)))
     .then(function(info){
       if(!info || !info.episodes) throw new Error("NO EPISODES");
       if(!more.length) return info;
@@ -5432,7 +5771,7 @@ function pickSeason(k){
   var memo = [];
   $("dEps").innerHTML = eps.map(function(e, idx){
     var ext = e.container_extension || "mp4";
-    var url = streamURL(e.direct_source || (e.info && e.info.direct_source), d + "/series/" + cr + "/" + e.id + "." + ext, d);
+    var url = e.kurl || streamURL(e.direct_source || (e.info && e.info.direct_source), d + "/series/" + cr + "/" + e.id + "." + ext, d);
     if(!/\/(movie|series)\//.test(url)) VODK[url] = "episode";
     var inf = e.info || {};
     var sub = [];
@@ -5581,7 +5920,7 @@ function drawSheet(){
     title = d.lists;
     var cur = activeId();
     body = getLists().map(function(p){
-      var sub = p.type === "xtream" ? (p.domain||"") : (p.url||"");
+      var sub = p.type === "xtream" ? (p.domain||"") : p.type === "mac" ? ((p.portal||"") + "  ·  " + (p.mac||"")) : (p.url||"");
       return '<div class="row'+(p.id===cur?" on":"")+'">'
            +   '<span class="tx" onclick="useList(\''+p.id+'\')"><b>'+esc(p.name)+'</b><s>'+esc(sub)+'</s></span>'
            +   (p.id === DEFAULT_PLAYLIST.id ? '' :
@@ -5598,7 +5937,10 @@ function drawSheet(){
          +   '<span class="tx"><b>'+esc(d.xtream)+'</b><s>'+esc(d.xtreamSub)+'</s></span></div>'
          + '<div class="row" onclick="pushSheet(\'form_m3u\')">'
          +   '<span class="ic">'+ICON.link+'</span>'
-         +   '<span class="tx"><b>'+esc(d.m3uUrl)+'</b><s>'+esc(d.m3uUrlSub)+'</s></span></div>';
+         +   '<span class="tx"><b>'+esc(d.m3uUrl)+'</b><s>'+esc(d.m3uUrlSub)+'</s></span></div>'
+         + '<div class="row" onclick="pushSheet(\'form_mac\')">'
+         +   '<span class="ic">'+ICON.tv+'</span>'
+         +   '<span class="tx"><b>'+esc(d.macPortal)+'</b><s>'+esc(d.macPortalSub)+'</s></span></div>';
   }
   else if(v === "form_xtream"){
     title = d.xtream;
@@ -5610,6 +5952,15 @@ function drawSheet(){
          + '<div class="formErr" id="formErr"></div>'
          + '<button class="gbtn" onclick="saveForm(\'xtream\')">'+esc(d.save)+'</button>';
   }
+  else if(v === "form_mac"){
+    title = d.macPortal;
+    body = fld("pl_name", d.fName, "My provider")
+         + fld("pl_portal", d.fPortal, "http://example.com:8080/c/")
+         + fld("pl_mac", d.fMac, "00:1A:79:XX:XX:XX")
+         + '<div class="hint">'+esc(d.macHint)+'</div>'
+         + '<div class="formErr" id="formErr"></div>'
+         + '<button class="gbtn" onclick="saveForm(\'mac\')">'+esc(d.save)+'</button>';
+  }
   else if(v === "form_m3u"){
     title = d.m3uUrl;
     body = fld("pl_name", d.fName, "My playlist")
@@ -5620,7 +5971,11 @@ function drawSheet(){
   else if(v === "edit"){
     title = d.editList;
     var ep = findList(EDIT_ID);
-    if(ep && ep.type === "xtream")
+    if(ep && ep.type === "mac")
+      body = fld("pl_name", d.fName, "My provider")
+           + fld("pl_portal", d.fPortal, "http://example.com:8080/c/")
+           + fld("pl_mac", d.fMac, "00:1A:79:XX:XX:XX");
+    else if(ep && ep.type === "xtream")
       body = fld("pl_name", d.fName, "My provider")
            + fld("pl_domain", d.fDomain, "http://example.com:8080")
            + fld("pl_user", d.fUser, "")
@@ -5646,7 +6001,7 @@ var CATSEC = "live";
 
 function catSecOk(s){
   if(s === "live") return true;
-  return isXtream() && LOADED[s] && (DATA[s] || []).length > 0;
+  return hasVod() && LOADED[s] && (DATA[s] || []).length > 0;
 }
 function catSec(s){ if(catSecOk(s)){ CATSEC = s; drawSheet() } }
 function catAt(i){ return catOrder(allGroups(CATSEC))[i] }
@@ -5792,7 +6147,13 @@ function saveForm(type){
   var name = ($("pl_name").value || "").trim();
   if(!name){ err.textContent = d.errName; return }
   var p = { id: "p" + Date.now(), name: name, type: type };
-  if(type === "m3u"){
+  if(type === "mac"){
+    var portal = ($("pl_portal").value || "").trim();
+    if(!/^https?:\/\//i.test(portal)){ err.textContent = d.errPortal; return }
+    var mac = macNorm($("pl_mac").value);
+    if(!mac){ err.textContent = d.errMac; return }
+    p.portal = portal; p.mac = mac;
+  } else if(type === "m3u"){
     var url = ($("pl_url").value || "").trim();
     if(!/^https?:\/\//i.test(url)){ err.textContent = d.errUrl; return }
     p.url = url;
@@ -6026,7 +6387,7 @@ function nfmt(n){
 }
 function msTxt(ms){ return "\u2066" + Math.round(ms) + "\u00a0ms\u2069" }
 function hostOf(p){
-  try{ return (p.type === "xtream" ? (p.domain || "") : (p.url || "")).replace(/^https?:\/\//i, "").split("/")[0] }catch(e){ return "" }
+  try{ return (p.type === "xtream" ? (p.domain || "") : p.type === "mac" ? (p.portal || "") : (p.url || "")).replace(/^https?:\/\//i, "").split("/")[0] }catch(e){ return "" }
 }
 
 /* the account's status word, from what its panel answered */
@@ -6523,7 +6884,7 @@ function clearCache(){
   SERIES_CACHE = {};
   var sec = SECTION;
   loadActive(true);
-  if(sec !== SECTION && (sec === "movies" || sec === "series") && isXtream()) setSection(sec);
+  if(sec !== SECTION && (sec === "movies" || sec === "series") && hasVod()) setSection(sec);
   showToast(t().cacheCleared);
 }
 
@@ -6550,7 +6911,10 @@ function editList(id){
 function fillEdit(){
   var p = findList(EDIT_ID); if(!p) return;
   $("pl_name").value = p.name || "";
-  if(p.type === "xtream"){
+  if(p.type === "mac"){
+    $("pl_portal").value = p.portal || "";
+    $("pl_mac").value = p.mac || "";
+  } else if(p.type === "xtream"){
     $("pl_domain").value = p.domain || "";
     $("pl_user").value = p.user || "";
     $("pl_pass").value = p.pass || "";
@@ -6564,7 +6928,14 @@ function saveEdit(){
   var name = ($("pl_name").value || "").trim();
   if(!name){ err.textContent = d.errName; return }
   var p = { id: old.id, name: name, type: old.type };
-  if(old.type === "m3u"){
+  if(old.type === "mac"){
+    var portal = ($("pl_portal").value || "").trim();
+    if(!/^https?:\/\//i.test(portal)){ err.textContent = d.errPortal; return }
+    var mac = macNorm($("pl_mac").value);
+    if(!mac){ err.textContent = d.errMac; return }
+    p.portal = portal; p.mac = mac;
+    delete STK[p.id];
+  } else if(old.type === "m3u"){
     var url = ($("pl_url").value || "").trim();
     if(!/^https?:\/\//i.test(url)){ err.textContent = d.errUrl; return }
     p.url = url;
@@ -7567,6 +7938,7 @@ function loadActive(force){
   refreshSettings();
 
   var job = (p.type === "xtream") ? loadXtream(p) :
+            (p.type === "mac") ? loadStalker(p) :
     fetchPatient(viaApp(url))
       .then(function(r){
         return r.text().then(function(txt){

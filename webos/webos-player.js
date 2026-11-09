@@ -157,7 +157,21 @@
     P.i = i; P.live = !it.v; P.paused = false; P.err = false; P.pos = 0; P.dur = 0;
     drawInfo(); drawTime(); osd(true);
     status(w("loading"));
-    videoOpen(it, startMs || 0, gen);
+    portalLink(it, gen, function (one) {
+      if (gen !== P.gen || !P.on) return;
+      videoOpen(one, startMs || 0, gen);
+    });
+  }
+
+  /* a MAC Portal item's address is a request for it: the page asks the
+     portal (create_link) and the real address is played */
+  function portalLink(it, gen, go) {
+    if (!it.u || it.u.indexOf("kiptv_stk=1") < 0 || !W.kiptvResolve) { go(it); return }
+    W.kiptvResolve(it.u).then(function (real) {
+      var one = {}; for (var k in it) if (it.hasOwnProperty(k)) one[k] = it[k];
+      one.u = real;
+      go(one);
+    }, function (e) { if (gen === P.gen && P.on) failed(e) });
   }
 
   /* LG's pipeline picks the format from the type it is told; a live .ts or a

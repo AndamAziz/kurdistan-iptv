@@ -107,7 +107,9 @@ function playlistText(items, mode, via) {
     if (!it || !it.u) continue;
     const web = /^https?:/i.test(it.u);
     let line = it.u;
-    if (web && how === "all") line = "lavf://" + it.u;
+    /* a MAC Portal item is a request for its address: the go-between asks it */
+    if (web && via && it.u.indexOf("kiptv_stk=1") > -1) line = via + encodeURIComponent(it.u);
+    else if (web && how === "all") line = "lavf://" + it.u;
     else if (web && how === "proxy" && via && viaFirst(it.u, it.v)) line = via + encodeURIComponent(it.u);
     else if (web && how === "robust" && via)
       line = (viaFirst(it.u, it.v) || !seg ? via : seg) + encodeURIComponent(it.u);

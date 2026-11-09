@@ -170,7 +170,22 @@
     drawInfo(); drawTime(); osd(true);
     status(w("loading"));
     var a = av();
-    if (a) avOpen(a, it, startMs || 0, gen); else videoOpen(it, startMs || 0, gen);
+    var go = function (one) {
+      if (gen !== P.gen || !P.on) return;
+      if (a) avOpen(a, one, startMs || 0, gen); else videoOpen(one, startMs || 0, gen);
+    };
+    portalLink(it, gen, go);
+  }
+
+  /* a MAC Portal item's address is a request for it: the page asks the
+     portal (create_link) and the real address is played */
+  function portalLink(it, gen, go) {
+    if (!it.u || it.u.indexOf("kiptv_stk=1") < 0 || !W.kiptvResolve) { go(it); return }
+    W.kiptvResolve(it.u).then(function (real) {
+      var one = {}; for (var k in it) if (it.hasOwnProperty(k)) one[k] = it[k];
+      one.u = real;
+      go(one);
+    }, function (e) { if (gen === P.gen && P.on) failed(e) });
   }
 
   function avOpen(a, it, startMs, gen) {
