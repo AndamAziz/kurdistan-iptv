@@ -1,4 +1,6 @@
 [en]
+MAC Portal accounts in Settings: the health check now logs in to the portal instead of showing "No answer", and shows the account's state and end date, as for Xtream.
+
 New: MAC Portal. Add playlist now has a third choice next to Xtream and M3U: enter your provider's portal URL and your MAC address, and its live channels, films and series load in the provider's own order. Works on phones, Android TV, Fire TV, Samsung, LG and Windows.
 
 TV remote: CH+/CH-, Up/Down and Page keys change channel, number keys 0-9 open a channel by its number, Last/Recall returns to the previous channel and OK opens the channel list. Categories now follow your provider's own order for Live TV, Movies and Series. Subtitles fetched in the player show at once. Playlists retry by themselves when the server is busy. Player controls hide on their own. Football times fixed.
@@ -83,6 +85,8 @@ top, fading into the page, the poster on its edge with the title, rating and
 genres beside it, and a full-width Play button underneath.
 
 [ku]
+ئەکاونتی MAC Portal لە ڕێکخستنەکان: پشکنینی سێرڤەر ئێستا دەچێتە ناو پۆرتاڵەکە لەجیاتی «No answer»، و دۆخی ئەکاونت و ڕۆژی کۆتایی پیشان دەدات، وەک Xtream.
+
 نوێ: MAC Portal. لە «Add playlist» دا هەڵبژاردەیەکی سێیەم زیاد کرا لە پاڵ Xtream و M3U: لینکی پۆرتاڵی پرۆڤایدەرەکەت و MAC ئەدرێسەکەت بنووسە، و کەناڵە زیندووەکان و فیلم و زنجیرەکان بە ریزبەندی پرۆڤایدەرەکە بار دەبن. لەسەر مۆبایل، Android TV، Fire TV، Samsung، LG و Windows کار دەکات.
 
 ریموتی TV: CH+/CH- و ▲▼ و Page کەناڵ دەگۆڕن، کلیلی ژمارەکان 0-9 کەناڵ بە ژمارەکەی دەکەنەوە، Last/Recall دەگەڕێتەوە بۆ کەناڵی پێشوو و OK لیستی کەناڵەکان دەکاتەوە. کەتەگۆرییەکانی کەناڵ و فیلم و زنجیرە ئێستا بە ریزبەندی پرۆڤایدەرەکەت دەردەکەون. سەبتایتلی ناو پلەیەر یەکسەر پیشان دەدرێت. پلەی لیست کاتێک سێرڤەر قەرەباڵغە خۆی دووبارە هەوڵ دەداتەوە. دوگمەکانی پلەیەر خۆیان دەشاردرێنەوە. کاتی یارییەکانی تۆپی پێ چاک کران.
@@ -161,6 +165,8 @@ z و x هەمان کار دەکەن.
 تەنیشتی، و دوگمەی Play بە پانی لە خوارەوە.
 
 [ar]
+حسابات بوابة MAC في الإعدادات: فحص الخادم يسجّل الدخول إلى البوابة بدلاً من «No answer»، ويعرض حالة الحساب وتاريخ انتهائه كما في Xtream.
+
 جديد: بوابة MAC. أصبح في «إضافة قائمة» خيار ثالث بجانب Xtream وM3U: أدخل رابط بوابة مزوّدك وعنوان MAC، فتُحمَّل القنوات المباشرة والأفلام والمسلسلات بترتيب المزوّد نفسه. يعمل على الهاتف وAndroid TV وFire TV وسامسونج وLG وويندوز.
 
 ريموت التلفاز: أزرار CH+/CH- و▲▼ وPage تغيّر القناة، وأزرار الأرقام 0-9 تفتح القناة برقمها، وLast/Recall تعيد إلى القناة السابقة، وOK يفتح قائمة القنوات. الفئات تظهر الآن بترتيب مزوّدك نفسه للبث المباشر والأفلام والمسلسلات. الترجمة المجلوبة داخل المشغل تظهر فوراً. قوائم التشغيل تعيد المحاولة تلقائياً عند انشغال الخادم. أزرار المشغل تختفي تلقائياً. تم إصلاح أوقات المباريات.

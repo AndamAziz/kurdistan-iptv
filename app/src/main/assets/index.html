@@ -2279,6 +2279,7 @@ function speedBody(d){
    allows, how many are in use right now, and when it ends. This is the
    answer to "it plays here but not on the other device". */
 function speedAccount(p){
+  if(p.type === "mac") return stkLogin(p, false).then(function(s){ return stkUi(s.profile) }, function(){ return null });
   if(p.type !== "xtream" || !window.fetch) return Promise.resolve(null);
   return fetch(viaApp(xtBase(p)))
     .then(function(r){ return r.text() })
@@ -2331,6 +2332,11 @@ function speedPoster(){
 function speedTest(){
   var p = activeList();
   var url = p.type === "xtream" ? (xtBase(p) + "&action=get_live_streams") : (p.url || "");
+  /* a MAC portal has no list to download: the first channel's real address is
+     the provider's own line */
+  var macCh = null;
+  if(p.type === "mac") for(var ci = 0; ci < CH.length && !macCh; ci++) if(CH[ci] && isStkLink(CH[ci].u)) macCh = CH[ci].u;
+  if(macCh) url = macCh;
   SPEED = { state: "run", got: 0 };
   openSheet("speed");
   speedAccount(p).then(function(u){ if(SPEED){ SPEED.acc = u || "none"; drawSheet() } });
@@ -2360,7 +2366,7 @@ function speedTest(){
     if(el) el.textContent = fmtSize(got);
   };
 
-  fetch(viaApp(url)).then(function(r){
+  (isStkLink(url) ? stkResolve(url) : Promise.resolve(url)).then(function(u){ t0 = Date.now(); return fetch(viaApp(u)) }).then(function(r){
     if(!r.ok) throw new Error("HTTP " + r.status);
     if(!r.body || !r.body.getReader){          /* an older webview: take the whole answer */
       return r.text().then(function(txt){
@@ -6349,9 +6355,29 @@ function statsCats(id, sec, n){
    is it active, when does it end, how many connections are in use. Asked
    when the page opens, kept for ten minutes. */
 var ACCI = {};
+/* a MAC portal's profile in the same words an Xtream panel uses:
+   "2027-01-28 23:59:59" -> seconds, blocked -> not active */
+function stkUi(js){
+  js = js || {};
+  var exp = 0, m = /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?/.exec(String(js.expire_billing_date || js.end_date || ""));
+  if(m) exp = Math.floor(new Date(+m[1], +m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0)).getTime() / 1000);
+  return { status: String(js.blocked) === "1" ? "Banned" : "Active", exp_date: exp > 0 ? exp : "" };
+}
 function accAsk(p, force){
-  if(!p || p.type !== "xtream" || !window.fetch) return;
+  if(!p || !window.fetch) return;
   var a = ACCI[p.id];
+  if(p.type === "mac"){
+    if(a && !force && (a.busy || Date.now() - a.at < 600000)) return;
+    ACCI[p.id] = { busy: true, at: Date.now(), ui: a && a.ui, ms: a && a.ms };
+    var t1 = Date.now();
+    stkLogin(p, !!force).then(function(s){
+      ACCI[p.id] = { at: Date.now(), ms: Date.now() - t1, ui: stkUi(s.profile) };
+    }, function(){
+      ACCI[p.id] = { at: Date.now(), err: true };
+    }).then(function(){ refreshSettings() });
+    return;
+  }
+  if(p.type !== "xtream") return;
   if(a && !force && (a.busy || Date.now() - a.at < 600000)) return;
   ACCI[p.id] = { busy: true, at: Date.now(), ui: a && a.ui, ms: a && a.ms };
   var t0 = Date.now();
@@ -6393,7 +6419,7 @@ function hostOf(p){
 /* the account's status word, from what its panel answered */
 function accState(p){
   var d = t(), a = ACCI[p.id];
-  if(p.type !== "xtream") return null;
+  if(p.type !== "xtream" && p.type !== "mac") return null;
   if(!a || (a.busy && !a.ui)) return { cls: "grey", txt: "", spin: true };
   if(!a.ui) return { cls: "red", txt: d.hOff };
   var st = String(a.ui.status || "").toLowerCase(), exp = parseInt(a.ui.exp_date, 10);
@@ -6421,7 +6447,8 @@ function accNums(p, on){
 /* the playlist in use: one card - what it holds, the facts that matter, and
    the three things that can be done with it, each with its own word */
 function accCard(p){
-  var d = t(), a = ACCI[p.id] || {}, ui = a.ui, x = p.type === "xtream", n = accNums(p, true);
+  /* an Xtream panel and a MAC portal both have an account, films and series */
+  var d = t(), a = ACCI[p.id] || {}, ui = a.ui, x = p.type === "xtream" || p.type === "mac", n = accNums(p, true);
   var sub = x ? hostOf(p) + (a.ms ? "  ·  " + msTxt(a.ms) : "") : d.aPlaylist;
   var h = '<div class="acc on"><div class="acc-h">'
         +   '<span class="ibox '+(x ? "red" : "green")+'">'+(x ? SICON.server : SICON.wifi)+'</span>'
@@ -6473,7 +6500,7 @@ function accCard(p){
 /* another playlist: one quiet row. A tap switches to it; the dots open the
    rest (edit, delete) without switching first. */
 function accRow(p){
-  var d = t(), x = p.type === "xtream", n = accNums(p, false), st = x ? accState(p) : null;
+  var d = t(), x = p.type === "xtream" || p.type === "mac", n = accNums(p, false), st = x ? accState(p) : null;
   var sub = x ? hostOf(p) : d.aPlaylist + (n.L[0] ? "  ·  " + nfmt(n.L[0]) + " " + d.channels : "");
   var state = st ? '<span class="stx '+(st.cls || "ok")+'">'+(st.spin ? '<span class="sp"></span>' : esc(st.txt))+'</span>' : '';
   return '<div class="row" onclick="pickList(\''+esc(p.id)+'\')" tabindex="0">'
@@ -6524,6 +6551,13 @@ function probeStream(c){
       }
     }catch(e){}
     var t0 = Date.now();
+    if(!window.KIPTV_PROXY && isStkLink(c.u)){
+      stkResolve(c.u).then(function(u){
+        var c2 = {}; for(var k in c) c2[k] = c[k]; c2.u = u;
+        return probeStream(c2);
+      }).then(function(o){ if(o && o.ok) o.ms = Date.now() - t0; fin(o) }, function(e){ fin({ ok: false, code: 0, trail: String((e && e.message) || "portal") }) });
+      return;
+    }
     /* on Windows: through the same door the player uses, asked the same ways */
     var door = window.KIPTV_PROXY ? window.KIPTV_PROXY.replace(/\/p\?u=$/, "/live?probe=1&u=") + encodeURIComponent(c.u) : viaApp(c.u);
     fetch(door).then(function(r){
@@ -6644,12 +6678,12 @@ function hcVodPick(p){
 
 function hcRun(){
   if(HC && HC.state === "run") return;
-  var d = t(), p = activeList(), x = p.type === "xtream";
+  var d = t(), p = activeList(), x = p.type === "xtream", mac = p.type === "mac";
   HC = { state: "run", at: Date.now(), rows: {} };
   var order = ["net", "prov"];
-  if(x) order.push("acc");
+  if(x || mac) order.push("acc");
   order.push("live");
-  if(x) order.push("vod");
+  if(x || mac) order.push("vod");
   order.push("hevc", "ac3");
   order.forEach(function(k){ HC.rows[k] = { st: "run", m: "", s: "" } });
   HC.order = order;
@@ -6667,7 +6701,10 @@ function hcRun(){
 
   /* the provider, and what it says about the account */
   var t0 = Date.now();
-  var provAsk = x ? fetch(viaApp(xtBase(p))).then(function(r){ return r.text() })
+  /* a MAC portal has no list address: its answer is a new login (handshake
+     and profile), which also says until when the account runs */
+  var provAsk = mac ? stkLogin(p, true)
+              : x ? fetch(viaApp(xtBase(p))).then(function(r){ return r.text() })
                   : fetch(viaApp(p.url || "")).then(function(r){
                       if(!r.ok) throw new Error("HTTP " + r.status);
                       if(r.body && r.body.getReader){ var rd = r.body.getReader(); return rd.read().then(function(){ try{ rd.cancel() }catch(e){} return "" }) }
@@ -6675,7 +6712,14 @@ function hcRun(){
                     });
   jobs.push(provAsk.then(function(txt){
     var ms = Date.now() - t0;
-    if(x){
+    if(mac){
+      var su = stkUi(txt && txt.profile);
+      ACCI[p.id] = { at: Date.now(), ms: ms, ui: su };
+      hcSet("prov", ms > 2500 ? "warn" : "ok", msTxt(ms), hostOf(p));
+      var ss = accState(p);
+      hcSet("acc", ss && ss.cls === "red" ? "bad" : "ok", ss ? ss.txt : "",
+        d.aExp.replace("%s", dayOf(su.exp_date) || d.spdNoExp));
+    } else if(x){
       var o = null; try{ o = JSON.parse(txt) }catch(e){}
       var ui = o && o.user_info;
       if(!ui){ hcSet("prov", "bad", d.hOff, hostOf(p)); hcSet("acc", "bad", "—", ""); return }
@@ -6689,7 +6733,7 @@ function hcRun(){
     } else {
       hcSet("prov", ms > 2500 ? "warn" : "ok", msTxt(ms), hostOf(p));
     }
-  }, function(){ hcSet("prov", "bad", d.hOff, hostOf(p)); if(x) hcSet("acc", "bad", "—", "") }));
+  }, function(){ hcSet("prov", "bad", d.hOff, hostOf(p)); if(x || mac) hcSet("acc", "bad", "—", "") }));
 
   /* the device */
   var cd = codecInfo(), ac3 = !!(cd.ac3 || window.AndroidPlayer);
@@ -6722,7 +6766,7 @@ function hcRun(){
     });
   };
   jobs.push(probeRow("live", pickLive).then(function(){
-    if(x) return hcVodPick(p).then(function(v){ return probeRow("vod", v) });
+    if(x || mac) return hcVodPick(p).then(function(v){ return probeRow("vod", v) });
   }));
 
   Promise.all(jobs.map(function(j){ return j.catch(function(){}) })).then(function(){
