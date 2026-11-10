@@ -410,6 +410,9 @@ jobs:
               text = io.open("WHATSNEW.md", encoding="utf-8").read()
           m = re.search(r"\[en\]\s*(.*?)(?=\n\[(?:ku|ar)\]|\Z)", text, re.S)
           note = (m.group(1) if m else text).strip()
+          # what only the GitHub build has never reaches Google Play's notes
+          note = "\n\n".join(p for p in re.split(r"\n\s*\n", note)
+                             if p.strip() and not p.strip().startswith("GitHub build only:")).strip()
           if not note:
               note = "Bug fixes and improvements."
           # Play takes 500 characters: whole paragraphs, newest first, as many as fit

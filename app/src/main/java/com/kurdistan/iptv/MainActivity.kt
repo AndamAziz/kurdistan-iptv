@@ -481,6 +481,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /* the web player of Movies Online, when this build has it */
+    private fun embedIntent(): Intent? {
+        val i = Intent().setClassName(packageName, "com.kurdistan.iptv.EmbedActivity")
+        return try { if (packageManager.resolveActivity(i, 0) != null) i else null } catch (e: Exception) { null }
+    }
+
     inner class AndroidBridge(private val context: Context) {
         @android.webkit.JavascriptInterface
         fun playNative(url: String, title: String) {
@@ -494,6 +500,25 @@ class MainActivity : ComponentActivity() {
         /** the page asks this to show where the remote's focus is from the start */
         @android.webkit.JavascriptInterface
         fun isTv(): Boolean = this@MainActivity.isTv
+
+        /**
+         * Movies Online plays in VidAPI's web player, a screen only the GitHub
+         * build has (app/src/direct). The page offers it only when it is here.
+         */
+        @android.webkit.JavascriptInterface
+        fun embedOk(): Boolean = embedIntent() != null
+
+        /** {"title":..,"urls":[server 1, server 2..],"labels":[..],"close":..} */
+        @android.webkit.JavascriptInterface
+        fun openEmbed(spec: String) {
+            runOnUiThread {
+                val i = embedIntent() ?: return@runOnUiThread
+                try {
+                    player?.playWhenReady = false            /* never two pictures with sound */
+                    startActivity(i.putExtra("spec", spec))
+                } catch (e: Exception) { }
+            }
+        }
 
         /**
          * "1.0|105" - the name a person reads, and the number that only ever
