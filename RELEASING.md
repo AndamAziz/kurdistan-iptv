@@ -21,8 +21,12 @@ A checklist built from what went wrong before. Follow it for every new version.
       - `KURDISTAN-IPTV-arm64-v8a.apk` is about 8.7 MB.
       - `KURDISTAN-IPTV-armeabi-v7a.apk` is about 8.2 MB.
       - `KURDISTAN-IPTV-Setup.exe` is about 119 MB.
-- [ ] Google Play: the new version is in **Alpha**. Promote it to Production
-      from the Play Console when ready.
+- [ ] Google Play is **not** sent anything by a merge: each upload cancels the
+      review already under way and starts it again. When a review is not
+      running, send a build by hand: Actions → Build APK → Run workflow on
+      `main`, tick **send_to_play**. It lands in **Alpha**; promote it to
+      Production from the Play Console when ready, then wait for the review
+      before merging anything that should go to Play next.
 
 ## 3. Test on real devices before sending to the stores
 

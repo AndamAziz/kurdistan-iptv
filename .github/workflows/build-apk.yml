@@ -2,7 +2,15 @@ name: Build APK
 
 on:
   push:
+  # Actions -> Build APK -> Run workflow. Tick "send_to_play" to also send this
+  # build to Google Play; a push never does, because every new upload cancels
+  # the review already under way there and starts it again.
   workflow_dispatch:
+    inputs:
+      send_to_play:
+        description: "Also send this build to Google Play"
+        type: boolean
+        default: false
 
 jobs:
   build:
@@ -358,7 +366,8 @@ jobs:
   # ---------------------------------------------------------------------------
   play:
     needs: build
-    if: github.ref == 'refs/heads/main'
+    # only when asked for by hand (see workflow_dispatch above), never on a push
+    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && inputs.send_to_play
     runs-on: ubuntu-latest
     continue-on-error: true
 
