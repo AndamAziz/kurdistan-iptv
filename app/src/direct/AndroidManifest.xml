@@ -5,4 +5,13 @@
      updates the app itself. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+    <application>
+        <!-- Movies Online: VidAPI's web player, full screen, inside the app.
+             Only this build has it; the page asks Android whether it is here. -->
+        <activity
+            android:name=".EmbedActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|layoutDirection|uiMode"/>
+    </application>
 </manifest>
