@@ -28,6 +28,18 @@ A checklist built from what went wrong before. Follow it for every new version.
       Production from the Play Console when ready, then wait for the review
       before merging anything that should go to Play next.
 
+## Which file goes where (never mix them)
+
+| Store / users | File | Where to get it |
+|---|---|---|
+| GitHub, Downloader, APKPure (phones, Android TV) | `KURDISTAN-IPTV.apk` (universal), `-arm64-v8a.apk`, `-armeabi-v7a.apk` | `https://github.com/AndamAziz/kurdistan-iptv-releases/releases/latest/download/<file>`: always the newest; Downloader codes 4669811, 5228492, 8865694 point here |
+| Windows | `KURDISTAN-IPTV-Setup.exe` | same address as above |
+| Amazon Appstore (Fire TV) | `KURDISTAN-IPTV-Amazon.apk` (no channels, no starting playlist) | `https://github.com/AndamAziz/kurdistan-iptv-releases/releases/download/amazon/KURDISTAN-IPTV-Amazon.apk`: always the newest Amazon build; never put it on Downloader |
+| Google Play | the bundle (`.aab`) | sent by CI only when asked (Actions → Build APK → Run workflow → send_to_play) |
+| Samsung / LG | `.wgt` / `.ipk` | built by hand (table below) |
+
+The version number of every build is the CI run number (`1.0 (<run>)`, version code `<run>`).
+
 ## 3. Test on real devices before sending to the stores
 
 - [ ] Phone: live channel, film, series episode, subtitles.
@@ -40,7 +52,7 @@ sent with a bug blocks the next one until its test ends.
 
 | Store | File | Notes |
 |---|---|---|
-| Amazon | `amazon/release/app-amazon-release.apk` from the run's artifact | Check: versionCode = run number, cert SHA-256 `a1ae61bf…`, no `com/google/android/gms`, no install permission. Upload under **Upcoming Version → Replace** APK1. Category stays **Photo & Video → Video Player**. It must carry **no channels and no starting playlist** (its own `app/src/amazon/assets/channels.js`): Amazon refuses an app that streams from third-party sources out of the box. |
+| Amazon | `KURDISTAN-IPTV-Amazon.apk` from the fixed Amazon address above (or the run's `KURDISTAN-IPTV-Amazon-1.0-<run>` artifact) | Check: versionCode = run number, cert SHA-256 `a1ae61bf…`, no `com/google/android/gms`, no install permission. Upload under **Upcoming Version → Replace** APK1. Category stays **Photo & Video → Video Player**. It must carry **no channels and no starting playlist** (its own `app/src/amazon/assets/channels.js`): Amazon refuses an app that streams from third-party sources out of the box. |
 | Samsung | `node tizen/build.js 1.0.<run>`, then sign with `tizen.bat package -t wgt -s KurdIPTV -- .` | Only when no model group is still in Testing. Choose **Optional** update and **Yes** to minor defects. Never choose Mandatory. |
 | LG | `node webos/build.js 1.0.<run>` and `RES=1280x720 node webos/build.js 1.0.<run>`, then `ares-package` | Upload both `.ipk` files (1920x1080 and 1280x720). This is not possible while QA is running. |
 
