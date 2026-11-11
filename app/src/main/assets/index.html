@@ -2920,7 +2920,9 @@ function stkSeriesInfo(p, sid, sItem){
    player (EmbedActivity), never a browser or a new tab. Only the GitHub build
    has that player; everywhere else this playlist is not offered at all.
    Live TV in this playlist is the app's own channel list. */
-var VID_HOSTS = ["vaplayer.ru", "vidapi.site"];
+/* the owner's own site first: it carries the VidAPI token the player now asks
+   for (vaplayer.ru on its own answers "403 invalid api token") */
+var VID_HOSTS = ["mv.andam.uk", "vaplayer.ru", "vidapi.site"];
 var VID_PAGES = 2;                 /* pages of 20 per row */
 var VIDX = {};                     /* every title shown, by its address (films) or "s"+sid (series) */
 
@@ -2961,12 +2963,13 @@ function vidUrl(kind, id, s, e){
 function isVidLink(u){
   return /^https?:\/\/(?:www\.)?(?:vaplayer\.ru|vidapi\.xyz|vidapi\.site|mv\.andam\.uk)\/embed\/(?:movie|tv)\//i.test(String(u || ""));
 }
-/* the same title on every server, the first one first */
+/* the same title on every server, in VID_HOSTS order - also for a title kept
+   in the history or favourites under an older server's address */
 function vidServers(u){
   var m = String(u).match(/\/embed\/(movie|tv)\/([^?#]+)/i);
   if(!m) return [u];
   var tail = m[1].toLowerCase() + "/" + m[2];
-  var out = [u];
+  var out = [];
   VID_HOSTS.forEach(function(h){
     var x = "https://" + h + "/embed/" + tail;
     if(out.indexOf(x) < 0) out.push(x);
