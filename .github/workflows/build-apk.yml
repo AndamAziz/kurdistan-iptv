@@ -140,9 +140,32 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: KURDISTAN-IPTV-apk
-          path: app/build/outputs/apk/*/*/*.apk
+          # the GitHub build only; the Amazon APK has its own artifact below
+          path: app/build/outputs/apk/direct/*/*.apk
           if-no-files-found: error
           retention-days: 14
+
+      # The Amazon APK on its own, named for Amazon and for its version, so it
+      # is never taken for the GitHub one: KURDISTAN-IPTV-Amazon-1.0-<run>.apk
+      - name: Name the Amazon APK
+        id: amazon
+        continue-on-error: true
+        run: |
+          AMZ=$(ls app/build/outputs/apk/amazon/release/*.apk 2>/dev/null | head -1)
+          [ -n "$AMZ" ] || { echo "No Amazon APK was built."; exit 0; }
+          mkdir -p amazon-out
+          cp "$AMZ" "amazon-out/KURDISTAN-IPTV-Amazon-1.0-${GITHUB_RUN_NUMBER}.apk"
+          cp "$AMZ" "amazon-out/KURDISTAN-IPTV-Amazon.apk"
+          echo "found=yes" >> "$GITHUB_OUTPUT"
+
+      - name: Upload the Amazon APK
+        if: steps.amazon.outputs.found == 'yes'
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: KURDISTAN-IPTV-Amazon-1.0-${{ github.run_number }}
+          path: amazon-out/KURDISTAN-IPTV-Amazon-1.0-${{ github.run_number }}.apk
+          retention-days: 30
 
       # R8 renames the release build's code. This file turns a release crash
       # report back into real names, so it is kept for every build.
@@ -225,6 +248,36 @@ jobs:
               "KURDISTAN-IPTV-${ABI}.apk" \
               --repo "$RELEASE_REPO" || echo "Could not add the ${ABI} APK - the release is complete without it."
           done
+
+      # The Amazon APK, for uploading to the Amazon Appstore, kept apart from the
+      # app's own releases: one release tagged "amazon", marked pre-release so
+      # it is never "latest" (the app's update check and the Downloader links
+      # read only the latest release). Each build replaces its files, so one
+      # address always gives the newest Amazon APK:
+      #   .../releases/download/amazon/KURDISTAN-IPTV-Amazon.apk
+      - name: Publish the Amazon APK
+        if: github.ref == 'refs/heads/main' && steps.amazon.outputs.found == 'yes'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          RELEASE_REPO: AndamAziz/kurdistan-iptv-releases
+        run: |
+          [ -n "$GH_TOKEN" ] || { echo "No RELEASE_TOKEN - nothing published."; exit 0; }
+          TITLE="KURDISTAN IPTV for Amazon Appstore (Fire TV) - 1.0 (${GITHUB_RUN_NUMBER})"
+          NOTES="Amazon Appstore build only - not for phones or Downloader.
+          Version 1.0, version code ${GITHUB_RUN_NUMBER}. A player with no channels and no starting playlist.
+          Upload it in the Amazon Developer Console: Upcoming Version -> App Files -> APK1 -> Replace."
+          if gh release view amazon --repo "$RELEASE_REPO" >/dev/null 2>&1; then
+            gh release edit amazon --repo "$RELEASE_REPO" --title "$TITLE" --notes "$NOTES" --prerelease
+            for a in $(gh release view amazon --repo "$RELEASE_REPO" --json assets --jq '.assets[].name'); do
+              gh release delete-asset amazon "$a" --repo "$RELEASE_REPO" -y || true
+            done
+          else
+            gh release create amazon --repo "$RELEASE_REPO" --title "$TITLE" --notes "$NOTES" --prerelease --latest=false
+          fi
+          gh release upload amazon "amazon-out/KURDISTAN-IPTV-Amazon-1.0-${GITHUB_RUN_NUMBER}.apk" \
+            "amazon-out/KURDISTAN-IPTV-Amazon.apk" --repo "$RELEASE_REPO" --clobber
+          echo "Amazon APK: https://github.com/$RELEASE_REPO/releases/download/amazon/KURDISTAN-IPTV-Amazon.apk"
 
   # ---------------------------------------------------------------------------
   # The Windows app: the same page, carried by Electron, playing with mpv.
