@@ -1,4 +1,6 @@
 [en]
+GitHub build only: Movies Online now has a Kurdish row (films and series made in Kurdish), "See all" on any row keeps loading as you scroll instead of stopping at 40 titles, and anime, which VidAPI does not carry, is left out.
+
 GitHub build only: Movies Online. Add playlist has a new choice with nothing to type: films and series appear by themselves from TMDB in rows (trending, popular, new in cinemas, Turkish, Korean, Arabic, genres ...), with the same film and series pages, seasons and episodes, and search that also finds what is in no row. They play in VidAPI's player full screen inside the app, with a second server one tap away; pop-ups and other sites are blocked. Its Live TV comes from the playlist you choose in its form (ANDAM IPTV unless you pick your Xtream, MAC or M3U).
 
 MAC Portal accounts in Settings: the health check now logs in to the portal instead of showing "No answer", and shows the account's state and end date, as for Xtream.
@@ -87,6 +89,8 @@ top, fading into the page, the poster on its edge with the title, rating and
 genres beside it, and a full-width Play button underneath.
 
 [ku]
+تەنها ڤێرشنی GitHub: لە فیلم و زنجیرەی ئۆنلاین ڕیزێکی کوردی زیاد کرا، «بینینی هەموو» لە هەر ڕیزێک بە چوونە خوارەوە بەردەوام فیلمی زیاتر دێنێت لەبری ئەوەی لە 40 دا بوەستێت، و ئەنیمە لابرا چونکە VidAPI نییەتی.
+
 تەنها ڤێرشنی GitHub: فیلم و زنجیرەی ئۆنلاین. لە «زیادکردنی لیست» هەڵبژاردەیەکی نوێ هەیە کە هیچ لینکێکی ناوێت: فیلم و زنجیرەکان خۆیان لە TMDB وە دێن بە ڕیز (ترێند، بەناوبانگترین، تازە لە سینەما، تورکی، کۆری، عەرەبی، پۆلەکان ...)، بە هەمان پەڕەی فیلم و زنجیرە و وەرز و ئەڵقەکان، و گەڕانێک کە ئەوەش دەدۆزێتەوە کە لە هیچ ڕیزێکدا نییە. لە پلەیەری VidAPI بە شاشەی پڕ لە ناو ئەپەکە لێدەدرێن، سێرڤەری دووەم بە یەک دەستلێدان؛ popup و سایتی تر ڕێگری دەکرێن. کەناڵە زیندووەکانی لەو لیستەوە دێن کە لە فۆڕمەکەی هەڵیدەبژێریت (ANDAM IPTV، یان Xtream و MAC و M3U ی خۆت).
 
 ئەکاونتی MAC Portal لە ڕێکخستنەکان: پشکنینی سێرڤەر ئێستا دەچێتە ناو پۆرتاڵەکە لەجیاتی «No answer»، و دۆخی ئەکاونت و ڕۆژی کۆتایی پیشان دەدات، وەک Xtream.
@@ -169,6 +173,8 @@ z و x هەمان کار دەکەن.
 تەنیشتی، و دوگمەی Play بە پانی لە خوارەوە.
 
 [ar]
+نسخة GitHub فقط: صف كردي جديد في أفلام ومسلسلات أونلاين، و«عرض الكل» في أي صف يواصل التحميل أثناء التمرير بدل التوقف عند 40 عنواناً، وحُذف الأنمي لأن VidAPI لا يوفّره.
+
 نسخة GitHub فقط: أفلام ومسلسلات أونلاين. في «إضافة قائمة» خيار جديد بلا أي رابط: تظهر الأفلام والمسلسلات تلقائياً من TMDB في صفوف (الأكثر رواجاً، الأكثر شعبية، جديد السينما، تركي، كوري، عربي، التصنيفات ...)، بنفس صفحات الأفلام والمسلسلات والمواسم والحلقات، وبحث يجد أيضاً ما ليس في أي صف. تُشغَّل في مشغّل VidAPI بملء الشاشة داخل التطبيق مع خادم ثانٍ بلمسة واحدة، وتُمنع النوافذ المنبثقة والمواقع الأخرى. وقنواتها المباشرة من القائمة التي تختارها في نموذجها (ANDAM IPTV، أو Xtream أو MAC أو M3U الخاصة بك).
 
 حسابات بوابة MAC في الإعدادات: فحص الخادم يسجّل الدخول إلى البوابة بدلاً من «No answer»، ويعرض حالة الحساب وتاريخ انتهائه كما في Xtream.
