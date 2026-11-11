@@ -1504,7 +1504,7 @@ var T = {
       trailer:"ترەیلەر",creator:"دروستکەر",country:"وڵات",nSeasons:"%s وەرز",nEps:"%s ئیپسۆد",votes:"%s دەنگ",
       live:"کەناڵ",movies:"فیلم",series:"زنجیرە",seasonN:"وەرزی",episodeN:"ئیپسۆد",
       noVod:"هیچ فیلمێک نییە",noSer:"هیچ زنجیرەیەک نییە",onlyXtream:"تەنها بۆ لیستی Xtream",
-      tag:"پەخشی ڕاستەوخۆ",ann:"بەخێربێیت بۆ KURDISTAN IPTV — پەخشی ڕاستەوخۆی کەناڵە کوردی و نێودەوڵەتییەکان",
+      tag:"پەخشی ڕاستەوخۆ",ann:"بەخێربێیت بۆ KURDISTAN IPTV — پەخشی ڕاستەوخۆی کەناڵە کوردی و نێودەوڵەتییەکان",annBare:"بەخێربێیت بۆ KURDISTAN IPTV — پلەیەرێکی خێرا بۆ لیستی خۆت",
       recent:"بەردەوامبە لە بینین",none:"هیچ کەناڵێک نەدۆزرایەوە",lang:"زمان",
       catLabel:"پۆل",tkLive:"ڕاستەوخۆ",tkHt:"نیوەکات",tkFt:"کۆتایی",tkTom:"سبەی",chN:"کەناڵ",catSearch:"گەڕان لە پۆلەکان…",
       enter:"کۆدی چالاککردن داخڵ بکە",act:"چالاککردن",wrong:"کۆدەکە هەڵەیە",
@@ -1576,7 +1576,7 @@ var T = {
       trailer:"Trailer",creator:"Created by",country:"Country",nSeasons:"%s seasons",nEps:"%s episodes",votes:"%s votes",
       live:"Live TV",movies:"Movies",series:"Series",seasonN:"Season",episodeN:"Episode",
       noVod:"No movies here",noSer:"No series here",onlyXtream:"Xtream playlists only",
-      tag:"LIVE STREAMING",ann:"Welcome to KURDISTAN IPTV — live Kurdish and international channels",
+      tag:"LIVE STREAMING",ann:"Welcome to KURDISTAN IPTV — live Kurdish and international channels",annBare:"Welcome to KURDISTAN IPTV — a fast player for your own playlist",
       recent:"Continue watching",none:"No channels found",lang:"Language",
       catLabel:"Category",tkLive:"Live",tkHt:"HT",tkFt:"FT",tkTom:"Tomorrow",chN:"channels",catSearch:"Search categories…",
       enter:"Enter your activation code",act:"Activate",wrong:"Wrong code",
@@ -1648,7 +1648,7 @@ var T = {
       trailer:"الإعلان",creator:"من تأليف",country:"البلد",nSeasons:"%s مواسم",nEps:"%s حلقات",votes:"%s صوت",
       live:"القنوات",movies:"أفلام",series:"مسلسلات",seasonN:"الموسم",episodeN:"حلقة",
       noVod:"لا توجد أفلام",noSer:"لا توجد مسلسلات",onlyXtream:"لقوائم Xtream فقط",
-      tag:"بث مباشر",ann:"مرحباً بك في KURDISTAN IPTV — بث مباشر للقنوات الكردية والعالمية",
+      tag:"بث مباشر",ann:"مرحباً بك في KURDISTAN IPTV — بث مباشر للقنوات الكردية والعالمية",annBare:"مرحباً بك في KURDISTAN IPTV — مشغّل سريع لقائمتك الخاصة",
       recent:"متابعة المشاهدة",none:"لا توجد قنوات",lang:"اللغة",
       catLabel:"الفئة",tkLive:"مباشر",tkHt:"استراحة",tkFt:"انتهت",tkTom:"غداً",chN:"قناة",catSearch:"ابحث في الفئات…",
       enter:"أدخل رمز التفعيل",act:"تفعيل",wrong:"الرمز غير صحيح",
@@ -4488,13 +4488,15 @@ function tkItem(m){
 }
 function tkDraw(){
   var d = t(), sp = $("annText"), w = $("annWrap");
+  /* a player with nothing of its own (Amazon, VIDAA) does not speak of channels */
+  var ann = BARE ? d.annBare : d.ann;
   if(!TK.length){
     TK_HTML = "";
     w.classList.remove("tk");
-    sp.textContent = d.ann;
+    sp.textContent = ann;
     return;
   }
-  var h = '<bdi class="tk-w">' + esc(d.ann) + '</bdi><span class="tk-sep">&#9679;</span>';
+  var h = '<bdi class="tk-w">' + esc(ann) + '</bdi><span class="tk-sep">&#9679;</span>';
   for(var i = 0; i < TK.length; i++) h += tkItem(TK[i]);
   if(h === TK_HTML) return;        /* the same line keeps running where it is */
   TK_HTML = h;

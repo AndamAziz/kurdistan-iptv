@@ -37,6 +37,7 @@ A checklist built from what went wrong before. Follow it for every new version.
 | Amazon Appstore (Fire TV) | `KURDISTAN-IPTV-Amazon.apk` (no channels, no starting playlist) | `https://github.com/AndamAziz/kurdistan-iptv-releases/releases/download/amazon/KURDISTAN-IPTV-Amazon.apk`: always the newest Amazon build; never put it on Downloader |
 | Google Play | the bundle (`.aab`) | sent by CI only when asked (Actions → Build APK → Run workflow → send_to_play) |
 | Samsung / LG | `.wgt` / `.ipk` | built by hand (table below) |
+| VIDAA (Hisense) | `KURDISTAN-IPTV-VIDAA-<v>.zip` (player only, like Amazon) | `node vidaa/build.js <v>`; see `vidaa/README.md` |
 
 The version number of every build is the CI run number (`1.0 (<run>)`, version code `<run>`).
 
