@@ -40,7 +40,7 @@ sent with a bug blocks the next one until its test ends.
 
 | Store | File | Notes |
 |---|---|---|
-| Amazon | `amazon/release/app-amazon-release.apk` from the run's artifact | Check: versionCode = run number, cert SHA-256 `a1ae61bf…`, no `com/google/android/gms`, no install permission. Upload under **Upcoming Version → Replace** APK1. Category stays **Photo & Video → Video Player**. |
+| Amazon | `amazon/release/app-amazon-release.apk` from the run's artifact | Check: versionCode = run number, cert SHA-256 `a1ae61bf…`, no `com/google/android/gms`, no install permission. Upload under **Upcoming Version → Replace** APK1. Category stays **Photo & Video → Video Player**. It must carry **no channels and no starting playlist** (its own `app/src/amazon/assets/channels.js`): Amazon refuses an app that streams from third-party sources out of the box. |
 | Samsung | `node tizen/build.js 1.0.<run>`, then sign with `tizen.bat package -t wgt -s KurdIPTV -- .` | Only when no model group is still in Testing. Choose **Optional** update and **Yes** to minor defects. Never choose Mandatory. |
 | LG | `node webos/build.js 1.0.<run>` and `RES=1280x720 node webos/build.js 1.0.<run>`, then `ares-package` | Upload both `.ipk` files (1920x1080 and 1280x720). This is not possible while QA is running. |
 

@@ -1459,8 +1459,20 @@ var DEFAULT_PLAYLIST = {
   id: "andam",
   name: "ANDAM IPTV",
   type: "m3u",
-  url: "https://raw.githubusercontent.com/AndamAziz/Andamiptv/refs/heads/main/playlist.m3u"
+  url: window.DEFAULT_LIST_URL || ""
 };
+/* A player with nothing of its own (the Amazon build: its channels.js has no
+   channels and no starting playlist). The starting playlist is then only a
+   place-holder that is never shown: the user adds their own. */
+var BARE = !window.DEFAULT_LIST_URL;
+function bareEmpty(){ return BARE && activeId() === DEFAULT_PLAYLIST.id }
+function shownLists(){ return getLists().filter(function(p){ return !(BARE && p.id === DEFAULT_PLAYLIST.id) }) }
+/* what an older Amazon version kept from the starting playlist goes */
+if(BARE) try{
+  if(localStorage.getItem("kiptv_cache_owner") === DEFAULT_PLAYLIST.id){ localStorage.removeItem("kiptv_cache"); localStorage.removeItem("kiptv_cache_owner") }
+  var bareFav = JSON.parse(localStorage.getItem("kiptv_favs") || "{}");
+  if(bareFav && bareFav[DEFAULT_PLAYLIST.id]){ delete bareFav[DEFAULT_PLAYLIST.id]; localStorage.setItem("kiptv_favs", JSON.stringify(bareFav)) }
+}catch(e){}
 /* ---- activation ----------------------------------------------------
    Every code lives on the server, so one can be given out, switched off or
    given an end date without touching the app. PIN_CODE is the owner's own
@@ -1516,7 +1528,7 @@ var T = {
       spdImgSlow:"پۆستەرەکان لە سێرڤەری پرۆڤایدەرەوە خاون",spdImgFail:"پۆستەرەکە نەهات",
       chooseType:"جۆری لیستەکە هەڵبژێرە",
       xtream:"Xtream (پێشنیارکراو)",xtreamSub:"دۆمەین + ناو + وشەی نهێنی",
-      m3uUrl:"M3U بە لینک",m3uUrlSub:"لینکی ڕاستەوخۆی فایلی M3U",macPortal:"MAC Portal",macPortalSub:"لینکی پۆرتاڵ + MAC ئەدرێس",fPortal:"لینکی پۆرتاڵ",fMac:"MAC ئەدرێس",macHint:"لینکی پۆرتاڵ وەک پرۆڤایدەرەکەت دەیدات، بۆ نموونە http://host:port/c/ — MAC وەک 00:1A:79:XX:XX:XX",errPortal:"لینکی پۆرتاڵ پێویستە",errMac:"MAC ئەدرێس بەم شێوەیەیە: 00:1A:79:XX:XX:XX",vidName:"فیلم و زنجیرەی ئۆنلاین",vidSub:"فیلم و زنجیرە بە ئۆتۆماتیکی · TMDB + VidAPI",vidHint:"هیچ لینکێک پێویست نییە: فیلم و زنجیرە نوێکان خۆیان زیاد دەبن، بە پۆستەر و چیرۆک و وەرز و ئەڵقەکانیان. لە پلەیەری VidAPI لە ناو ئەپەکە لێدەدرێن.",vidLiveFrom:"کەناڵە زیندووەکان لە",vidServer:"سێرڤەری %s",vidClose:"داخستن",vidTrend:"ترێند لەم هەفتەیە",vidPopular:"بەناوبانگترین",vidCinema:"تازە لە سینەما",vidTop:"باشترین هەڵسەنگاندن",vidOnAir:"ئێستا پەخش دەکرێن",vidTurkish:"تورکی",vidKorean:"کۆری",vidArabic:"عەرەبی",vidIndian:"هیندی",vidPersian:"فارسی",vidAction:"ئاکشن",vidComedy:"کۆمیدی",vidDrama:"دراما",vidThriller:"سەرسامکەر",vidHorror:"ترسناک",vidScifi:"خەیاڵی زانستی",vidAdventure:"سەرکێشی",vidCrime:"تاوان",vidRomance:"ڕۆمانسی",vidAnim:"ئەنیمەیشن",vidFamily:"خێزانی",vidHistory:"مێژوویی",vidWar:"جەنگ",vidDocu:"دۆکیۆمێنتاری",vidMystery:"نهێنی",vidKids:"منداڵان",
+      m3uUrl:"M3U بە لینک",m3uUrlSub:"لینکی ڕاستەوخۆی فایلی M3U",macPortal:"MAC Portal",macPortalSub:"لینکی پۆرتاڵ + MAC ئەدرێس",fPortal:"لینکی پۆرتاڵ",fMac:"MAC ئەدرێس",macHint:"لینکی پۆرتاڵ وەک پرۆڤایدەرەکەت دەیدات، بۆ نموونە http://host:port/c/ — MAC وەک 00:1A:79:XX:XX:XX",errPortal:"لینکی پۆرتاڵ پێویستە",errMac:"MAC ئەدرێس بەم شێوەیەیە: 00:1A:79:XX:XX:XX",vidName:"فیلم و زنجیرەی ئۆنلاین",vidSub:"فیلم و زنجیرە بە ئۆتۆماتیکی · TMDB + VidAPI",vidHint:"هیچ لینکێک پێویست نییە: فیلم و زنجیرە نوێکان خۆیان زیاد دەبن، بە پۆستەر و چیرۆک و وەرز و ئەڵقەکانیان. لە پلەیەری VidAPI لە ناو ئەپەکە لێدەدرێن.",vidLiveFrom:"کەناڵە زیندووەکان لە",bareHint:"لیستی خۆت زیاد بکە بۆ دەستپێکردن: هەژماری Xtream، لینکی M3U یان MAC Portal ەکەت، وەک پرۆڤایدەرەکەت پێی داویت.",vidServer:"سێرڤەری %s",vidClose:"داخستن",vidTrend:"ترێند لەم هەفتەیە",vidPopular:"بەناوبانگترین",vidCinema:"تازە لە سینەما",vidTop:"باشترین هەڵسەنگاندن",vidOnAir:"ئێستا پەخش دەکرێن",vidTurkish:"تورکی",vidKorean:"کۆری",vidArabic:"عەرەبی",vidIndian:"هیندی",vidPersian:"فارسی",vidAction:"ئاکشن",vidComedy:"کۆمیدی",vidDrama:"دراما",vidThriller:"سەرسامکەر",vidHorror:"ترسناک",vidScifi:"خەیاڵی زانستی",vidAdventure:"سەرکێشی",vidCrime:"تاوان",vidRomance:"ڕۆمانسی",vidAnim:"ئەنیمەیشن",vidFamily:"خێزانی",vidHistory:"مێژوویی",vidWar:"جەنگ",vidDocu:"دۆکیۆمێنتاری",vidMystery:"نهێنی",vidKids:"منداڵان",
       fName:"ناوی لیست",fUrl:"لینکی M3U",fDomain:"دۆمەین",fUser:"ناوی بەکارهێنەر",fPass:"وشەی نهێنی",
       save:"پاشەکەوت",del:"سڕینەوە",
       errName:"ناو پێویستە",errUrl:"لینک پێویستە و دەبێت بە http دەست پێبکات",
@@ -1588,7 +1600,7 @@ var T = {
       spdImgSlow:"posters are slow at the provider's end",spdImgFail:"the poster did not arrive",
       chooseType:"Choose playlist type",
       xtream:"Xtream (recommended)",xtreamSub:"Domain + username + password",
-      m3uUrl:"M3U by URL",m3uUrlSub:"Direct link to an M3U file",macPortal:"MAC Portal",macPortalSub:"Portal URL + MAC address",fPortal:"Portal URL",fMac:"MAC address",macHint:"Portal URL as your provider gives it, e.g. http://host:port/c/ — MAC like 00:1A:79:XX:XX:XX",errPortal:"Portal URL is required",errMac:"A MAC address looks like 00:1A:79:XX:XX:XX",vidName:"Movies Online",vidSub:"Films and series, added by themselves · TMDB + VidAPI",vidHint:"Nothing to type: new films and series appear by themselves, with their posters, story, seasons and episodes. They play in VidAPI's player, inside the app.",vidLiveFrom:"Live TV from",vidServer:"Server %s",vidClose:"Close",vidTrend:"Trending this week",vidPopular:"Popular",vidCinema:"New in cinemas",vidTop:"Top rated",vidOnAir:"On the air",vidTurkish:"Turkish",vidKorean:"Korean",vidArabic:"Arabic",vidIndian:"Indian",vidPersian:"Persian",vidAction:"Action",vidComedy:"Comedy",vidDrama:"Drama",vidThriller:"Thriller",vidHorror:"Horror",vidScifi:"Science fiction",vidAdventure:"Adventure",vidCrime:"Crime",vidRomance:"Romance",vidAnim:"Animation",vidFamily:"Family",vidHistory:"History",vidWar:"War",vidDocu:"Documentary",vidMystery:"Mystery",vidKids:"Kids",
+      m3uUrl:"M3U by URL",m3uUrlSub:"Direct link to an M3U file",macPortal:"MAC Portal",macPortalSub:"Portal URL + MAC address",fPortal:"Portal URL",fMac:"MAC address",macHint:"Portal URL as your provider gives it, e.g. http://host:port/c/ — MAC like 00:1A:79:XX:XX:XX",errPortal:"Portal URL is required",errMac:"A MAC address looks like 00:1A:79:XX:XX:XX",vidName:"Movies Online",vidSub:"Films and series, added by themselves · TMDB + VidAPI",vidHint:"Nothing to type: new films and series appear by themselves, with their posters, story, seasons and episodes. They play in VidAPI's player, inside the app.",vidLiveFrom:"Live TV from",bareHint:"Add your own playlist to start: your Xtream account, M3U link or MAC Portal, as your provider gave it to you.",vidServer:"Server %s",vidClose:"Close",vidTrend:"Trending this week",vidPopular:"Popular",vidCinema:"New in cinemas",vidTop:"Top rated",vidOnAir:"On the air",vidTurkish:"Turkish",vidKorean:"Korean",vidArabic:"Arabic",vidIndian:"Indian",vidPersian:"Persian",vidAction:"Action",vidComedy:"Comedy",vidDrama:"Drama",vidThriller:"Thriller",vidHorror:"Horror",vidScifi:"Science fiction",vidAdventure:"Adventure",vidCrime:"Crime",vidRomance:"Romance",vidAnim:"Animation",vidFamily:"Family",vidHistory:"History",vidWar:"War",vidDocu:"Documentary",vidMystery:"Mystery",vidKids:"Kids",
       fName:"Playlist name",fUrl:"M3U URL",fDomain:"Domain",fUser:"Username",fPass:"Password",
       save:"Save",del:"Delete",
       errName:"Name is required",errUrl:"A URL starting with http is required",
@@ -1660,7 +1672,7 @@ var T = {
       spdImgSlow:"الملصقات بطيئة من خادم المزوّد",spdImgFail:"لم يصل الملصق",
       chooseType:"اختر نوع القائمة",
       xtream:"Xtream (موصى به)",xtreamSub:"النطاق + اسم المستخدم + كلمة السر",
-      m3uUrl:"M3U برابط",m3uUrlSub:"رابط مباشر لملف M3U",macPortal:"MAC Portal",macPortalSub:"رابط البوابة + عنوان MAC",fPortal:"رابط البوابة",fMac:"عنوان MAC",macHint:"رابط البوابة كما يعطيه مزوّدك، مثل http://host:port/c/ — وعنوان MAC مثل 00:1A:79:XX:XX:XX",errPortal:"رابط البوابة مطلوب",errMac:"عنوان MAC يكون بهذا الشكل: 00:1A:79:XX:XX:XX",vidName:"أفلام ومسلسلات أونلاين",vidSub:"أفلام ومسلسلات تُضاف تلقائياً · TMDB + VidAPI",vidHint:"لا حاجة لأي رابط: تظهر الأفلام والمسلسلات الجديدة تلقائياً مع الملصق والقصة والمواسم والحلقات، وتُشغَّل في مشغّل VidAPI داخل التطبيق.",vidLiveFrom:"القنوات المباشرة من",vidServer:"الخادم %s",vidClose:"إغلاق",vidTrend:"الأكثر رواجاً هذا الأسبوع",vidPopular:"الأكثر شعبية",vidCinema:"جديد السينما",vidTop:"الأعلى تقييماً",vidOnAir:"يُعرض الآن",vidTurkish:"تركي",vidKorean:"كوري",vidArabic:"عربي",vidIndian:"هندي",vidPersian:"فارسي",vidAction:"أكشن",vidComedy:"كوميديا",vidDrama:"دراما",vidThriller:"إثارة",vidHorror:"رعب",vidScifi:"خيال علمي",vidAdventure:"مغامرة",vidCrime:"جريمة",vidRomance:"رومانسي",vidAnim:"رسوم متحركة",vidFamily:"عائلي",vidHistory:"تاريخي",vidWar:"حرب",vidDocu:"وثائقي",vidMystery:"غموض",vidKids:"أطفال",
+      m3uUrl:"M3U برابط",m3uUrlSub:"رابط مباشر لملف M3U",macPortal:"MAC Portal",macPortalSub:"رابط البوابة + عنوان MAC",fPortal:"رابط البوابة",fMac:"عنوان MAC",macHint:"رابط البوابة كما يعطيه مزوّدك، مثل http://host:port/c/ — وعنوان MAC مثل 00:1A:79:XX:XX:XX",errPortal:"رابط البوابة مطلوب",errMac:"عنوان MAC يكون بهذا الشكل: 00:1A:79:XX:XX:XX",vidName:"أفلام ومسلسلات أونلاين",vidSub:"أفلام ومسلسلات تُضاف تلقائياً · TMDB + VidAPI",vidHint:"لا حاجة لأي رابط: تظهر الأفلام والمسلسلات الجديدة تلقائياً مع الملصق والقصة والمواسم والحلقات، وتُشغَّل في مشغّل VidAPI داخل التطبيق.",vidLiveFrom:"القنوات المباشرة من",bareHint:"أضف قائمتك للبدء: حساب Xtream أو رابط M3U أو بوابة MAC كما أعطاك إياها مزوّدك.",vidServer:"الخادم %s",vidClose:"إغلاق",vidTrend:"الأكثر رواجاً هذا الأسبوع",vidPopular:"الأكثر شعبية",vidCinema:"جديد السينما",vidTop:"الأعلى تقييماً",vidOnAir:"يُعرض الآن",vidTurkish:"تركي",vidKorean:"كوري",vidArabic:"عربي",vidIndian:"هندي",vidPersian:"فارسي",vidAction:"أكشن",vidComedy:"كوميديا",vidDrama:"دراما",vidThriller:"إثارة",vidHorror:"رعب",vidScifi:"خيال علمي",vidAdventure:"مغامرة",vidCrime:"جريمة",vidRomance:"رومانسي",vidAnim:"رسوم متحركة",vidFamily:"عائلي",vidHistory:"تاريخي",vidWar:"حرب",vidDocu:"وثائقي",vidMystery:"غموض",vidKids:"أطفال",
       fName:"اسم القائمة",fUrl:"رابط M3U",fDomain:"النطاق",fUser:"اسم المستخدم",fPass:"كلمة السر",
       save:"حفظ",del:"حذف",
       errName:"الاسم مطلوب",errUrl:"مطلوب رابط يبدأ بـ http",
@@ -4062,6 +4074,11 @@ function render(){
 
   var gcls = SECTION === "live" ? "grid" : "grid posters";
   var html = "";
+  if(bareEmpty()){
+    $("main").innerHTML = '<div class="empty"><div>&#128250;</div><p>'+esc(t().bareHint)+'</p>'
+      + '<button class="gbtn" style="max-width:320px;margin:18px auto 0" onclick="openSheet(\'type\')">+ '+esc(t().addList)+'</button></div>';
+    return;
+  }
   if(!view.length){
     var msg = SECTION === "movies" ? t().noVod : (SECTION === "series" ? t().noSer : t().none);
     if(!hasVod() && SECTION !== "live") msg = t().onlyXtream;
@@ -4219,7 +4236,7 @@ function applyLang(){
   var d = t();
   document.documentElement.lang = lang;
   document.documentElement.dir = d.dir;
-  $("tagline").textContent = activeList().name;
+  $("tagline").textContent = bareEmpty() ? "" : activeList().name;
   tkDraw();
   $("search").placeholder = d.search;
   $("gate-sub").textContent = d.enter;
@@ -6189,7 +6206,7 @@ function drawSheet(){
   else if(v === "lists"){
     title = d.lists;
     var cur = activeId();
-    body = getLists().map(function(p){
+    body = shownLists().map(function(p){
       var sub = p.type === "vid" ? t().vidSub : p.type === "xtream" ? (p.domain||"") : p.type === "mac" ? ((p.portal||"") + "  ·  " + (p.mac||"")) : (p.url||"");
       return '<div class="row'+(p.id===cur?" on":"")+'">'
            +   '<span class="tx" onclick="useList(\''+p.id+'\')"><b>'+esc(p.name)+'</b><s>'+esc(sub)+'</s></span>'
@@ -7129,14 +7146,16 @@ function drawSettings(){
      +   '<span class="spill'+(al.warn ? " gold" : "")+'">'+esc(al.short)+'</span></div>';
 
   /* is everything working */
-  h += hcHTML();
+  if(!bareEmpty()) h += hcHTML();        /* nothing to check before a playlist is added */
 
   /* the playlist in use */
-  h += setGroup(d.activeList);
-  h += accCard(act);
+  if(!bareEmpty()){
+    h += setGroup(d.activeList);
+    h += accCard(act);
+  }
 
   /* the others, and adding one */
-  var others = getLists().filter(function(p){ return p.id !== cur });
+  var others = shownLists().filter(function(p){ return p.id !== cur });
   h += '<div class="st-g">'+esc(d.otherLists)+(others.length ? '<em>'+nfmt(others.length)+'</em>' : '')+'</div>';
   h += '<div class="sgroup">' + others.map(accRow).join("")
      +   '<div class="row addrow" onclick="openSheet(\'type\')" tabindex="0"><span class="ic c-gold">'+SICON.plus+'</span>'
@@ -8247,7 +8266,7 @@ function fmtRate(bytesPerSec){
 
 function loadActive(force){
   var p = activeList(), url = listUrl(p);
-  $("tagline").textContent = p.name;
+  $("tagline").textContent = bareEmpty() ? "" : p.name;
   SECTION = "live";
   DATA = { live: [], movies: [], series: [] };
   LOADED = { live: false, movies: false, series: false };
@@ -8258,6 +8277,7 @@ function loadActive(force){
   refreshSettings();
   refreshFavs();
 
+  if(bareEmpty()){ CH = []; f = ""; setData([]); return }       /* nothing until the user adds a playlist */
   var cached = force ? null : loadCache(p.id);
   if(cached && cached.length) setData(cached);
   else if(!CH.length) setData((window.CHANNELS || []).map(function(c){ return {c:c.c,n:c.n,u:c.u,l:""} }));

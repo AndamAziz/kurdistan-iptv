@@ -4,6 +4,10 @@
    n = channel name        u = stream url
    Add a line, remove a line, or change a url. Keep the commas.
    =================================================================== */
+/* the playlist the app starts with (ANDAM IPTV). The Amazon build carries its
+   own channels.js (app/src/amazon/assets) with neither this nor any channel. */
+var DEFAULT_LIST_URL = "https://raw.githubusercontent.com/AndamAziz/Andamiptv/refs/heads/main/playlist.m3u";
+
 var CHANNELS = [
   { "c": "KURDISTAN",   "n": "RUDAW TV",            "u": "https://live.rudaw.net/hls/rudaw-tv/master.m3u8" },
   { "c": "KURDISTAN",   "n": "AVA MEDIA TV",        "u": "https://ava2.store/upload/ava.m3u8" },
