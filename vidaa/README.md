@@ -39,6 +39,7 @@ The build stops if the empty Amazon channel list is not empty.
 |---|---|
 | `.m3u8` (HLS) | The TV's own player if it has HLS, otherwise hls.js |
 | `.ts`, a live Xtream address | mpegts.js over Media Source, otherwise the TV |
+| a live `.ts` that the panel redirects to `.m3u8` (HLS panels) | mpegts.js fails, so the same channel is played again as `.m3u8` in hls.js; that server then starts in HLS for the rest of the session |
 | `.mp4`, `.mkv` … (films) | The TV's own `<video>` |
 | MAC Portal | The page asks the portal for the address first (as on LG) |
 
