@@ -2922,7 +2922,7 @@ function stkSeriesInfo(p, sid, sItem){
    Live TV in this playlist is the app's own channel list. */
 /* the owner's own site first: it carries the VidAPI token the player now asks
    for (vaplayer.ru on its own answers "403 invalid api token") */
-var VID_HOSTS = ["mv.andam.uk", "vaplayer.ru", "vidapi.site"];
+var VID_HOSTS = ["mv.andam.uk", "vaplayer.ru", "vidsrc.sh", "vidapi.site"];
 var VID_PAGES = 2;                 /* pages of 20 per row */
 var VIDX = {};                     /* every title shown, by its address (films) or "s"+sid (series) */
 
@@ -2961,7 +2961,7 @@ function vidUrl(kind, id, s, e){
 }
 /* any VidAPI-style player address - also one written into an M3U by hand */
 function isVidLink(u){
-  return /^https?:\/\/(?:www\.)?(?:vaplayer\.ru|vidapi\.xyz|vidapi\.site|mv\.andam\.uk)\/embed\/(?:movie|tv)\//i.test(String(u || ""));
+  return /^https?:\/\/(?:www\.)?(?:vaplayer\.ru|vidapi\.xyz|vidapi\.site|vidsrc\.sh|mv\.andam\.uk)\/embed\/(?:movie|tv)\//i.test(String(u || ""));
 }
 /* the same title on every server, in VID_HOSTS order - also for a title kept
    in the history or favourites under an older server's address */

@@ -54,6 +54,7 @@ class EmbedActivityTest {
         val c = shadowOf(w).webViewClient
         assertFalse("its own page", c.shouldOverrideUrlLoading(w, req("https://vaplayer.ru/asb.html?_=1")))
         assertFalse("the second server", c.shouldOverrideUrlLoading(w, req("https://vidapi.site/embed/movie/1")))
+        assertFalse("the vidsrc.sh server", c.shouldOverrideUrlLoading(w, req("https://vidsrc.sh/embed/movie/621")))
         assertFalse("a frame inside the player", c.shouldOverrideUrlLoading(w, req("https://nextgencloudfabric.com/embed/movie/1", main = false)))
         assertTrue("an advert taking the page", c.shouldOverrideUrlLoading(w, req("https://ads.example.com/landing")))
         assertTrue("another app", c.shouldOverrideUrlLoading(w, req("intent://x#Intent;end")))
