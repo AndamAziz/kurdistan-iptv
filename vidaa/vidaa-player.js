@@ -196,6 +196,16 @@
     if (/\.ts$/.test(u) || (!it.v && !/\.(mp4|mkv|m4v|mov|webm|avi)$/.test(u))) return "video/mp2t";
     return "";
   }
+  /* Many Xtream panels send live channels as HLS: a live .ts address answers
+     with a redirect to the same channel's .m3u8, which mpegts.js cannot read.
+     When a live .ts fails in mpegts.js we try the .m3u8 address in hls.js, and
+     remember that server so its next channel starts in HLS at once. If HLS
+     fails there too, the server is forgotten and the next try is .ts again. */
+  var HLS_HOSTS = {};
+  function hostOf(u) { var m = /^(https?:\/\/[^\/?#]+)/i.exec(String(u)); return m ? m[1].toLowerCase() : "" }
+  function isTsUrl(u) { return /\.ts(\?|#|$)/i.test(String(u)) }
+  function asHls(u) { return String(u).replace(/\.ts(\?|#|$)/i, ".m3u8$1") }
+
   function nativeHls(v) {
     try { return !!(v.canPlayType("application/vnd.apple.mpegurl") || v.canPlayType("application/x-mpegURL")) } catch (e) { return false }
   }
@@ -218,6 +228,12 @@
     v.onerror = function () { if (mine()) failed(v.error) };
     v.onloadedmetadata = function () { if (mine() && startMs > 0 && !P.live) v.currentTime = startMs / 1000 };
     var t = typeOf(it);
+    P.viaHls = false;
+    if (t === "video/mp2t" && P.live && isTsUrl(it.u) && HLS_HOSTS[hostOf(it.u)]) {
+      var one = {}; for (var k in it) if (it.hasOwnProperty(k)) one[k] = it[k];
+      one.u = asHls(it.u);
+      it = one; t = "application/x-mpegURL"; P.viaHls = true;
+    }
     /* HLS the TV cannot play itself: hls.js */
     if (t === "application/x-mpegURL" && !nativeHls(v) && W.Hls && W.Hls.isSupported()) {
       var h = new W.Hls({ startPosition: startMs > 0 && !P.live ? startMs / 1000 : -1, enableWorker: true,
@@ -238,7 +254,16 @@
       var m = W.mpegts.createPlayer({ type: "mpegts", isLive: P.live, url: it.u },
                                     { enableWorker: true, lazyLoad: false, liveBufferLatencyChasing: P.live });
       ENG = m;
-      m.on(W.mpegts.Events.ERROR, function (type, detail) { if (mine()) failed("ts " + type + " " + detail) });
+      m.on(W.mpegts.Events.ERROR, function (type, detail) {
+        if (!mine()) return;
+        /* a live .ts that is really HLS: go again at once as .m3u8 */
+        if (P.live && isTsUrl(it.u) && !HLS_HOSTS[hostOf(it.u)]) {
+          HLS_HOSTS[hostOf(it.u)] = true;
+          var i = P.i; setTimeout(function () { if (mine()) playAt(i) }, 0);
+          return;
+        }
+        failed("ts " + type + " " + detail);
+      });
       m.attachMediaElement(v);
       m.load();
       var mp = m.play(); if (mp && mp.catch) mp.catch(function () {});
@@ -257,6 +282,9 @@
   /* a live channel that drops is picked up again, a little slower each time;
      a film that cannot start says so, and OK tries again */
   function failed(why) {
+    /* HLS failed on a server we had moved to HLS: forget it, so the next try
+       is the .ts address again */
+    if (P.viaHls) { var cur = P.list[P.i]; if (cur) delete HLS_HOSTS[hostOf(cur.u)]; P.viaHls = false }
     if (P.live && P.tries < 3) {
       P.tries++;
       status(w("loading"));
