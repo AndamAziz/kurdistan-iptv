@@ -57,7 +57,7 @@ class EmbedActivity : Activity() {
     private var labels = listOf<String>()
     private var at = 0
     /* the sites this player may show as its main page */
-    private val allowed = mutableSetOf("vaplayer.ru", "vidapi.xyz", "vidapi.site", "mv.andam.uk")
+    private val allowed = mutableSetOf("vaplayer.ru", "vidapi.xyz", "vidapi.site", "vidsrc.sh", "mv.andam.uk")
 
     private var custom: View? = null
     private var customCb: WebChromeClient.CustomViewCallback? = null
