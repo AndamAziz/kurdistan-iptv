@@ -298,6 +298,50 @@
     return use ? { t: use.t, s: use.s, e: use.e, at: Date.now() } : null;
   }
 
+  /* ================= 5. http:// that the TV cannot reach ================= */
+  /* Someone types http://panel when the panel lives at https://panel. The
+     panel answers http with a redirect that carries no CORS header, and an
+     https page may not ask http at all - so in a TV browser nothing answers,
+     though the same account works on a phone. Before such a list loads, ask
+     the http address once; if it does not answer and the https one does, the
+     list is kept with https from then on. An http panel that answers is left
+     exactly as it is. */
+  function fieldOf(p) { return p.type === "xtream" ? "domain" : p.type === "mac" ? "portal" : p.type === "m3u" ? "url" : "" }
+  function probeOf(p, base) {
+    if (p.type === "xtream")
+      return base.replace(/\/+$/, "") + "/player_api.php?username=" + encodeURIComponent(p.user || "") + "&password=" + encodeURIComponent(p.pass || "");
+    if (p.type === "mac")
+      return stkRoot(base) + "/portal.php?type=stb&action=handshake&token=&prehash=0&JsHttpRequest=1-xml&mac=" + encodeURIComponent(macNorm(p.mac));
+    return base;
+  }
+  function answers(u) {
+    return fetch(u).then(function (r) {
+      try { if (r.body && r.body.cancel) r.body.cancel() } catch (e) {}
+      return r.status < 500;
+    }, function () { return false });
+  }
+  var baseLoad = W.loadActive, upTried = {};
+  W.loadActive = function () {
+    var self = this, args = arguments, p = activeList(), f = p && fieldOf(p), v = f ? String(p[f] || "") : "";
+    if (!f || !/^http:\/\//i.test(v) || upTried[p.id + "|" + v]) return baseLoad.apply(self, args);
+    upTried[p.id + "|" + v] = 1;
+    var sec = "https://" + v.slice(7);
+    answers(probeOf(p, v)).then(function (ok) {
+      return ok ? false : answers(probeOf(p, sec));
+    }).then(function (fix) {
+      if (!fix) return;
+      var a = getLists();
+      for (var i = 0; i < a.length; i++) if (a[i].id === p.id) a[i][f] = sec;
+      saveLists(a);
+      try { console.warn("vidaa-extras: " + v + " -> " + sec) } catch (e) {}
+    }).then(function () { baseLoad.apply(self, args) }, function () { baseLoad.apply(self, args) });
+  };
+  /* the page loaded its list before this file: look at that one now */
+  try {
+    var p0 = activeList(), f0 = p0 && fieldOf(p0);
+    if (f0 && /^http:\/\//i.test(String(p0[f0] || ""))) W.loadActive(true);
+  } catch (e) {}
+
   /* ======================= 4. clearer names ======================= */
   var NAMES = {
     en: { hNet: "Internet speed (Cloudflare)", hProv: "Your playlist's server", hLive: "Channel stream" },
