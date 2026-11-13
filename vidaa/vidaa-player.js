@@ -40,13 +40,13 @@
 
   function lang() { return (W.lang === "ku" || W.lang === "ar") ? W.lang : "en" }
   var WORDS = {
-    en: { loading: "Loading…", buffering: "Buffering…", fail: "This stream cannot be played right now", codec: "This TV cannot play the video format of this channel",
+    en: { loading: "Loading…", buffering: "Buffering…", fail: "This stream cannot be played right now", codec: "This TV cannot play the video format of this channel", q: "Quality", qAuto: "Auto", qOne: "This channel has one quality only",
           again: "OK: try again · Back: close", live: "LIVE", exit: "Press Back again to exit", paused: "Paused",
           all: "All channels", phint: "◀ ▶ category · OK watch · Back close" },
-    ku: { loading: "بارکردن…", buffering: "چاوەڕێ بکە…", fail: "ئەم پەخشە ئێستا لێنادرێت", codec: "ئەم تیڤییە ناتوانێت جۆری ڤیدیۆی ئەم کەناڵە لێبدات",
+    ku: { loading: "بارکردن…", buffering: "چاوەڕێ بکە…", fail: "ئەم پەخشە ئێستا لێنادرێت", codec: "ئەم تیڤییە ناتوانێت جۆری ڤیدیۆی ئەم کەناڵە لێبدات", q: "کوالیتی", qAuto: "خۆکار", qOne: "ئەم کەناڵە تەنها یەک کوالیتی هەیە",
           again: "OK: دووبارە · Back: داخستن", live: "ڕاستەوخۆ", exit: "بۆ دەرچوون جارێکی تر Back دابگرە", paused: "وەستێنراو",
           all: "هەموو کەناڵەکان", phint: "◀ ▶ پۆل · OK سەیرکردن · Back داخستن" },
-    ar: { loading: "جارٍ التحميل…", buffering: "جارٍ التخزين…", fail: "لا يمكن تشغيل هذا البث الآن", codec: "هذا التلفاز لا يدعم صيغة الفيديو لهذه القناة",
+    ar: { loading: "جارٍ التحميل…", buffering: "جارٍ التخزين…", fail: "لا يمكن تشغيل هذا البث الآن", codec: "هذا التلفاز لا يدعم صيغة الفيديو لهذه القناة", q: "الجودة", qAuto: "تلقائي", qOne: "لهذه القناة جودة واحدة فقط",
           again: "OK: إعادة · Back: إغلاق", live: "مباشر", exit: "اضغط رجوع مرة أخرى للخروج", paused: "متوقف",
           all: "كل القنوات", phint: "◀ ▶ الفئة · OK مشاهدة · Back إغلاق" }
   };
@@ -84,11 +84,14 @@
     "#wop .wop-ttl{font-size:44px;font-weight:700;display:flex;align-items:center;gap:22px}" +
     "#wop .wop-live{font-size:22px;font-weight:800;letter-spacing:2px;padding:6px 14px;border-radius:8px;background:#ED2024}" +
     "#wop .wop-num{font-size:26px;color:#c9d1dc;margin-top:8px}" +
+    "#wop .wop-keys{font-size:22px;color:#c9d1dc;margin-top:10px}#wop .wop-keys i{display:inline-block;width:16px;height:16px;border-radius:50%;margin:0 8px 0 0;vertical-align:-1px}" +
     "#wop .wop-prog{height:8px;border-radius:8px;background:#ffffff33;overflow:hidden}" +
     "#wop .wop-prog i{display:block;height:100%;width:0;background:#E8B33C}" +
     "#wop .wop-tm{display:flex;justify-content:space-between;font-size:26px;color:#dfe5ec;margin-top:14px}" +
     "#wop .wop-st{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:34px;font-weight:700;" +
     "padding:22px 40px;border-radius:18px;background:#0009;display:none;text-align:center;max-width:70%}" +
+    "#wopTip{position:absolute;top:40px;left:50%;transform:translateX(-50%);font-size:28px;font-weight:700;padding:14px 30px;" +
+    "border-radius:14px;background:#000b;color:#fff;display:none;white-space:pre;text-align:center;direction:ltr}#wopTip.on{display:block}" +
     "#wop .wop-st.on{display:block}#wop .wop-st small{display:block;font-size:24px;font-weight:400;color:#c9d1dc;margin-top:12px}" +
     /* the channel list over the picture */
     "#wop.pn .wop-bar{opacity:0!important}#wopPn{position:absolute;top:0;bottom:0;left:0;width:620px;background:linear-gradient(90deg,#05080ef2 80%,#05080e00);" +
@@ -108,10 +111,10 @@
     var el = D.createElement("div"); el.id = "wop";
     el.innerHTML = '<video id="wopVid" autoplay></video>' +
       '<div class="wop-bar wop-top"><div class="wop-ttl"><span class="wop-live" id="wopLive"></span><span id="wopName"></span></div>' +
-      '<div class="wop-num" id="wopNum"></div></div>' +
+      '<div class="wop-num" id="wopNum"></div><div class="wop-keys" id="wopKeys"></div></div>' +
       '<div class="wop-bar wop-bot" id="wopBot"><div class="wop-prog"><i id="wopFill"></i></div>' +
       '<div class="wop-tm"><span id="wopPos"></span><span id="wopDur"></span></div></div>' +
-      '<div class="wop-st" id="wopSt"></div><div id="wopPn"></div>';
+      '<div class="wop-st" id="wopSt"></div><div id="wopTip"></div><div id="wopPn"></div>';
     D.body.appendChild(el);
     /* a pointer remote or a mouse: a click on the picture is OK */
     el.addEventListener("click", function () { if (P.err) { P.tries = 0; playAt(P.i) } else togglePause() });
@@ -142,6 +145,8 @@
     $("wopLive").textContent = P.live ? w("live") : "";
     $("wopLive").style.display = P.live ? "" : "none";
     $("wopNum").textContent = P.list.length > 1 ? (P.i + 1) + " / " + P.list.length : "";
+    $("wopKeys").innerHTML = '<i style="background:#F2C200"></i>' + w("q") + ": " + qName(qMax()) +
+      ' &nbsp; <i style="background:#2F6FE0"></i>Info';
     $("wopBot").style.visibility = P.live ? "hidden" : "visible";
   }
   function drawTime() {
@@ -227,6 +232,55 @@
     try { return !!(W.mpegts && W.mpegts.isSupported() && W.mpegts.getFeatureList().mseLivePlayback) } catch (e) { return false }
   }
 
+  /* a short note over the picture (quality, the details for a report) */
+  var tipT = 0;
+  function tip(text, ms) {
+    var el = $("wopTip"); if (!el) return;
+    clearTimeout(tipT);
+    el.textContent = text || ""; el.className = text ? "on" : "";
+    if (text) tipT = setTimeout(function () { el.className = "" }, ms || 3500);
+  }
+
+  /* the highest picture the viewer allows: 0 = auto, else 720 or 480 lines.
+     On a phone the small screen keeps the quality down; a TV asks for 1080p,
+     which a weak Wi-Fi cannot always carry. Yellow changes it, it is kept. */
+  var QSTEPS = [0, 720, 480];
+  function qMax() { try { var q = +localStorage.getItem("vx_qmax"); return QSTEPS.indexOf(q) >= 0 ? q : 0 } catch (e) { return 0 } }
+  function qName(q) { return q ? q + "p" : w("qAuto") }
+  function qApply(h) {
+    if (!h || !h.levels || !h.levels.length) return false;
+    var q = qMax(), cap = -1, i;
+    if (q) {
+      cap = 0;
+      for (i = 0; i < h.levels.length; i++) if ((h.levels[i].height || 0) <= q && (h.levels[i].height || 0) >= (h.levels[cap].height || 0)) cap = i;
+    }
+    h.autoLevelCapping = cap;
+    if (cap >= 0 && h.currentLevel > cap) h.nextLevel = cap;
+    return h.levels.length > 1;
+  }
+  function qCycle() {
+    var q = QSTEPS[(QSTEPS.indexOf(qMax()) + 1) % QSTEPS.length];
+    try { localStorage.setItem("vx_qmax", String(q)) } catch (e) {}
+    var many = ENG && ENG.levels ? qApply(ENG) : false;
+    try { drawInfo() } catch (e) {}
+    tip(w("q") + ": " + qName(q) + (P.on && !many ? "\n" + w("qOne") : ""));
+  }
+  /* what the player is doing, for a photo when a channel misbehaves */
+  function details() {
+    var v = $("wopVid"), out = [], ahead = 0;
+    try { for (var i = 0; i < v.buffered.length; i++) if (v.buffered.start(i) <= v.currentTime + 0.5) ahead = Math.max(ahead, v.buffered.end(i) - v.currentTime) } catch (e) {}
+    var eng = ENG && ENG.levels ? "hls.js" : ENG ? "mpegts.js" : "native";
+    out.push(eng + "  " + (v.videoWidth || 0) + "x" + (v.videoHeight || 0) + "  buffer " + ahead.toFixed(1) + "s");
+    if (ENG && ENG.levels) {
+      var hs = []; for (var j = 0; j < ENG.levels.length; j++) hs.push(ENG.levels[j].height || "?");
+      out.push("levels " + (hs.join("/") || "-") + "  now " + ENG.currentLevel + "  cap " + ENG.autoLevelCapping +
+               "  net " + Math.round((ENG.bandwidthEstimate || 0) / 1000) + " kbps");
+    }
+    try { var q = v.getVideoPlaybackQuality && v.getVideoPlaybackQuality(); if (q) out.push("dropped " + q.droppedVideoFrames + " / " + q.totalVideoFrames) } catch (e) {}
+    out.push(w("q") + ": " + qName(qMax()) + "  ·  v" + BUILD);
+    return out.join("\n");
+  }
+
   /* hls.js tuned for TVs: a slow processor and Wi-Fi, little memory for media */
   var STALL_MS = 15000;
   var CODEC_ERR = { manifestIncompatibleCodecsError: 1, bufferIncompatibleCodecsError: 1, bufferAddCodecError: 1 };
@@ -236,7 +290,10 @@
       enableWorker: true, lowLatencyMode: false,
       /* start on a modest quality and let it climb: the first picture comes sooner */
       startLevel: -1, testBandwidth: true,
-      capLevelToPlayerSize: true, capLevelOnFPSDrop: true,
+      /* climb only with room to spare: a TV line that just carries 1080p stops */
+      abrBandWidthFactor: 0.8, abrBandWidthUpFactor: 0.5,
+      /* no cap to the screen size (it would overwrite the viewer's Quality); a TV is 1080p anyway */
+      capLevelToPlayerSize: false, capLevelOnFPSDrop: true,
       /* a little further from the live edge: more room before it has to wait */
       liveSyncDurationCount: 4, liveMaxLatencyDurationCount: 12, liveDurationInfinity: true,
       maxBufferLength: 20, maxMaxBufferLength: 40, maxBufferSize: 30 * 1000 * 1000,
@@ -282,6 +339,7 @@
     if (t === "application/x-mpegURL" && !nativeHls(v) && W.Hls && W.Hls.isSupported()) {
       var h = new W.Hls(hlsConfig(startMs)), recovers = 0;
       ENG = h;
+      h.on(W.Hls.Events.MANIFEST_PARSED, function () { if (mine()) qApply(h) });
       h.on(W.Hls.Events.ERROR, function (ev, d) {
         if (!mine() || !d) return;
         /* a format this TV has no decoder for (HEVC on many sets): say so,
@@ -551,6 +609,8 @@
       else if (k === K.PLAY) togglePause(false);
       else if (k === K.PAUSE) togglePause(true);
       else if (k === K.INFO) { if (P.el.classList.contains("osd")) osd(false); else osd(true) }
+      else if (k === 405) qCycle();                       /* yellow: quality */
+      else if (k === 406) tip(details(), 10000);          /* blue: details */
       else used = false;
       if (used) { e.preventDefault(); e.stopImmediatePropagation() }
       return;
