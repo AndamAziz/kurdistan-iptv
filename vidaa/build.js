@@ -61,6 +61,8 @@ page = patch(page, "<head>",
   '<script src="lib/hls.min.js"></script>\n<script src="lib/mpegts.min.js"></script>\n' +
   '<script src="vidaa-player.js"></script>', "the VIDAA scripts");
 page = patch(page, "function viaApp(u){\n", "function viaApp(u){\n  if(window.KIPTV_DIRECT) return u;\n", "direct requests");
+/* the VIDAA-only fixes (focus, M3U logos, guide, test names) load last */
+page = patch(page, "</body>", '<script src="vidaa-extras.js"></script>\n</body>', "the VIDAA extras");
 /* the MAC Portal requests too: on a TV there is no Android app to carry them,
    so the page asks the portal itself (the MAC rides in the address) */
 page = patch(page, "  if(window.KIPTV_PROXY) u = window.KIPTV_PROXY + encodeURIComponent(url)", "  if(window.KIPTV_DIRECT) u = \"\";\n  else if(window.KIPTV_PROXY) u = window.KIPTV_PROXY + encodeURIComponent(url)", "direct MAC Portal requests");
@@ -70,7 +72,7 @@ fs.writeFileSync(path.join(out, "index.html"), page);
 
 fs.copyFileSync(bare, path.join(out, "channels.js"));
 fs.copyFileSync(path.join(assets, "welcome.mp3"), path.join(out, "welcome.mp3"));
-for (const name of ["vidaa-player.js", "icon.png", "largeIcon.png", "splash.png"])
+for (const name of ["vidaa-player.js", "vidaa-extras.js", "icon.png", "largeIcon.png", "splash.png"])
   fs.copyFileSync(path.join(here, name), path.join(out, name));
 fs.mkdirSync(path.join(out, "lib"));
 for (const name of fs.readdirSync(path.join(here, "lib")))

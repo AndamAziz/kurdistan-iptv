@@ -13,6 +13,7 @@ MAC Portal. Nothing in the Android, Windows, Samsung or LG apps changes.
 | File | What it is |
 |---|---|
 | `vidaa-player.js` | `AndroidPlayer` for the TV: player, on-screen bar, remote keys |
+| `vidaa-extras.js` | VIDAA-only fixes, loaded last: remote focus (nearest row first, the highlight kept when a page is drawn again), M3U logos and groups in every spelling (`TVG-LOGO`, single quotes, `#EXTIMG`, `#EXTGRP` …), the guide (EPG) for M3U from its `url-tvg` XMLTV file, clearer speed-test names |
 | `lib/hls.min.js` | hls.js 1.5.20 (Apache-2.0): HLS on TVs that cannot play it themselves |
 | `lib/mpegts.min.js` | mpegts.js 1.8.0 (Apache-2.0): live MPEG-TS (Xtream) over Media Source |
 | `build.js` | Copies the page in, applies the TV changes, writes `build/` and `dist/*.zip` |

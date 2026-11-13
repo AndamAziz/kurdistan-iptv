@@ -1,0 +1,310 @@
+/*
+ * KURDISTAN IPTV for VIDAA - fixes and additions for the TV build only.
+ *
+ * Loaded after the page's own script (vidaa/build.js puts it just before
+ * </body>), so it can replace a few of the page's functions for this build
+ * alone. Nothing here reaches the Android, Amazon, Windows, Samsung or LG apps.
+ *
+ *   1. Remote focus: Up / Down go to the nearest row first, so Down from the
+ *      top of Settings reaches the first button below instead of jumping to the
+ *      bottom; Right on a channel row stays on it instead of leaving the list.
+ *   2. M3U parsing: logo and group in every common spelling - tvg-logo in any
+ *      letter case, single quotes or none, tvg-logo-small, logo, tvg-icon,
+ *      #EXTIMG and #EXTGRP lines - and the guide address (url-tvg).
+ *   3. Guide (EPG) for M3U playlists from their XMLTV file (url-tvg), matched
+ *      by tvg-id and, failing that, by channel name.
+ *   4. Clearer names in the server and speed test.
+ *
+ * Written for old TV browsers: ES5 only.
+ */
+(function () {
+  "use strict";
+  var W = window;
+  if (typeof W.navPick !== "function" || typeof W.parseM3U !== "function") return;
+
+  /* ============================ 1. focus ============================ */
+  var basePick = W.navPick;
+  W.navPick = function (from, dir, items) {
+    if (dir !== "up" && dir !== "down") return basePick(from, dir, items);
+    var a = navRect(from), ax = a.left + a.width / 2, ay = a.top + a.height / 2;
+    var c = [], minMain = Infinity;
+    for (var i = 0; i < items.length; i++) {
+      var el = items[i];
+      if (el === from || el.contains(from)) continue;
+      var b = navRect(el), bx = b.left + b.width / 2, by = b.top + b.height / 2;
+      if (dir === "down" ? (by <= ay + 1 || b.bottom <= a.bottom) : (by >= ay - 1 || b.top >= a.top)) continue;
+      var main = dir === "down" ? Math.max(0, b.top - a.bottom) : Math.max(0, a.top - b.bottom);
+      var ov = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+      c.push({ el: el, main: main, cross: ov > 0 ? 0 : Math.abs(bx - ax) });
+      if (main < minMain) minMain = main;
+    }
+    /* the nearest row first, then the item in it closest to straight ahead */
+    var best = null;
+    for (var j = 0; j < c.length; j++) {
+      if (c[j].main > minMain + 24) continue;
+      if (!best || c[j].cross < best.cross || (c[j].cross === best.cross && c[j].main < best.main)) best = c[j];
+    }
+    return best ? best.el : null;
+  };
+
+  /* Right on a channel row (Left in Kurdish and Arabic): there is nothing
+     beside it - stay, instead of jumping up to the search box */
+  W.addEventListener("keydown", function (e) {
+    var ae = document.activeElement;
+    if (!ae || !ae.classList || !ae.classList.contains("tvrow")) return;
+    var rtl = (t().dir === "rtl");
+    if ((e.key === "ArrowRight" && !rtl) || (e.key === "ArrowLeft" && rtl)) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    }
+  }, true);
+
+  /* A page that is drawn again (Settings when the speed test or the account
+     check finishes, a sheet, the channel list after a refresh) used to drop
+     the highlight: the item it was on no longer existed, so the remote did
+     nothing until it was pressed again, and then started from the top.
+     Remember the item before the page is drawn and put the highlight back on
+     the same item after. */
+  function focusKey(el) {
+    if (!el || el === document.body || !el.getAttribute) return null;
+    if (!document.documentElement.classList.contains("kbd")) return null;
+    return {
+      u: el.getAttribute("data-u") || "",
+      oc: el.getAttribute("onclick") || "",
+      tx: (el.textContent || "").replace(/\s+/g, " ").trim().slice(0, 60),
+      cl: (el.className || "").toString().split(" ")[0],
+      top: el.getBoundingClientRect().top
+    };
+  }
+  function focusBack(k) {
+    if (!k) return;
+    var ae = document.activeElement;
+    if (ae && ae !== document.body && document.contains(ae)) return;   /* it survived */
+    var items = navItems(), best = null, bestScore = -1;
+    for (var i = 0; i < items.length; i++) {
+      var el = items[i], s = 0;
+      if (k.u && el.getAttribute("data-u") === k.u) s += 8;
+      if (k.oc && el.getAttribute("onclick") === k.oc) s += 4;
+      if (k.tx && (el.textContent || "").replace(/\s+/g, " ").trim().slice(0, 60) === k.tx) s += 2;
+      if (k.cl && (el.className || "").toString().split(" ")[0] === k.cl) s += 1;
+      if (s > bestScore || (s === bestScore && best &&
+          Math.abs(el.getBoundingClientRect().top - k.top) < Math.abs(best.getBoundingClientRect().top - k.top))) {
+        best = el; bestScore = s;
+      }
+    }
+    if (best && bestScore >= 1) navFocus(best);
+  }
+  ["refreshSettings", "hcDraw", "drawSheet", "render", "renderChips"].forEach(function (name) {
+    var fn = W[name];
+    if (typeof fn !== "function") return;
+    W[name] = function () {
+      var k = focusKey(document.activeElement);
+      var r = fn.apply(this, arguments);
+      if (k) { focusBack(k); setTimeout(function () { focusBack(k) }, 0) }
+      return r;
+    };
+  });
+
+  /* ======================== 2. M3U parsing ========================= */
+  /* an attribute however it is written: any letter case, "x", 'x' or x */
+  W.lastAttr = function (L, name) {
+    var re = new RegExp("(?:^|[\\s,])" + name.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&") +
+      "\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)'|([^\\s,\"']+))", "gi");
+    var m, v = "";
+    while ((m = re.exec(L))) v = m[1] != null ? m[1] : (m[2] != null ? m[2] : (m[3] || ""));
+    return v;
+  };
+  function attr1(L, names) {
+    for (var i = 0; i < names.length; i++) { var v = W.lastAttr(L, names[i]); if (v) return v }
+    return "";
+  }
+  var LOGO = ["tvg-logo", "tvg-logo-small", "logo", "tvg-icon", "logo-url", "logo_url"];
+
+  var KX = W.KIPTV_VIDAA_X = { xmltv: [], idx: null, loading: null, at: 0, byU: null, byUFor: null, sidKey: {} };
+
+  var baseParse = W.parseM3U;
+  W.parseM3U = function (txt) {
+    txt = String(txt || "");
+    var lines = txt.split(/\r?\n/), info = {}, guide = [], pend = null, i, L;
+    for (i = 0; i < lines.length; i++) {
+      L = lines[i];
+      if (!L) continue;
+      if (L.charAt(0) === "#") {
+        if (L.slice(0, 7) === "#EXTM3U") {
+          var g = attr1(L, ["url-tvg", "x-tvg-url", "tvg-url"]);
+          if (g) g.split(",").forEach(function (u) { u = u.trim(); if (/^https?:\/\//i.test(u) && guide.indexOf(u) < 0) guide.push(u) });
+        } else if (L.slice(0, 7) === "#EXTINF") {
+          pend = { id: W.lastAttr(L, "tvg-id"), nm: W.lastAttr(L, "tvg-name") || L.slice(L.lastIndexOf(",") + 1).trim(),
+                   logo: attr1(L, LOGO), grp: W.lastAttr(L, "group-title") };
+        } else if (pend && L.slice(0, 8) === "#EXTIMG:") {
+          if (!pend.logo) pend.logo = L.slice(8).trim();
+        } else if (pend && L.slice(0, 8) === "#EXTGRP:") {
+          if (!pend.grp) pend.xgrp = L.slice(8).trim();
+        }
+      } else if (pend) {
+        var u = L.trim(), bar = u.indexOf("|");
+        if (bar > 0) u = u.slice(0, bar);
+        if (u) { info[u] = pend; pend = null }
+      }
+    }
+    var out = baseParse(txt);
+    for (i = 0; i < out.length; i++) {
+      var c = out[i], x = info[c.u];
+      if (!x) continue;
+      if (!c.l && x.logo) c.l = artURL(x.logo);
+      if (x.xgrp && (!c.c || c.c === "Other")) c.c = x.xgrp;
+      if (x.id) c.tv = x.id;
+      if (x.nm) c.tn = x.nm;
+    }
+    KX.xmltv = guide;
+    KX.idx = null; KX.loading = null; KX.byU = null;
+    try { var p = activeList(); if (p) localStorage.setItem("kiptv_vx_" + p.id, JSON.stringify(guide)) } catch (e) {}
+    return out;
+  };
+
+  /* ====================== 3. guide from XMLTV ====================== */
+  function guideUrls() {
+    if (KX.xmltv.length) return KX.xmltv;
+    try {
+      var p = activeList();
+      var g = p && JSON.parse(localStorage.getItem("kiptv_vx_" + p.id) || "[]");
+      if (g && g.length) KX.xmltv = g;
+    } catch (e) {}
+    return KX.xmltv;
+  }
+  function isM3u() { var p = activeList(); return !!(p && p.type === "m3u") }
+  function nameKey(s) {
+    return String(s || "").toLowerCase()
+      .replace(/\b(fhd|uhd|hd|sd|4k|hevc|h265|backup|\+1)\b/g, "")
+      .replace(/[^a-z0-9\u0600-\u06ff]+/g, "");
+  }
+
+  var baseOn = W.epgOn, baseSid = W.epgSid, baseAsk = W.epgAsk;
+  W.epgOn = function () { return baseOn() || (isM3u() && guideUrls().length > 0) };
+  W.epgSid = function (u) {
+    if (!isM3u()) return baseSid(u);
+    if (KX.byUFor !== CH) {
+      KX.byU = {}; KX.byUFor = CH;
+      for (var i = 0; i < CH.length; i++) if (CH[i] && CH[i].u) KX.byU[CH[i].u] = CH[i];
+    }
+    var c = KX.byU[u];
+    if (!c) return "";
+    var id = c.tv || "", nk = nameKey(c.tn || c.n);
+    if (!id && !nk) return "";
+    var sid = "t" + (id ? "i" + id : "n" + nk).replace(/[^A-Za-z0-9._-]/g, "_");
+    KX.sidKey[sid] = { id: id, nk: nk };
+    return sid;
+  };
+  W.epgAsk = function (sid) {
+    if (String(sid).charAt(0) !== "t") return baseAsk(sid);
+    var done = function (v) { try { epgSave(sid, v) } catch (e) {} epgBusy--; epgNext() };
+    xmlIndex().then(function (ix) { done(ix ? xmlPick(ix, KX.sidKey[sid]) : null) }, function () { done(null) });
+  };
+
+  /* "20261113043000 +0300" -> ms */
+  function xmlTime(s) {
+    var m = String(s || "").match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})?\s*([+-]\d{4})?/);
+    if (!m) return 0;
+    var ms = Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0));
+    if (m[7]) { var sg = m[7].charAt(0) === "-" ? -1 : 1; ms -= sg * ((+m[7].slice(1, 3)) * 60 + (+m[7].slice(3, 5))) * 60000 }
+    return ms;
+  }
+  function xmlText(s) {
+    return String(s || "").replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
+      .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'")
+      .replace(/&#(\d+);/g, function (a, n) { return String.fromCharCode(+n) }).replace(/&amp;/g, "&").trim();
+  }
+  /* the file as text; a .gz file is unpacked where the TV can */
+  function xmlFetch(u) {
+    return fetch(viaApp(u)).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.arrayBuffer();
+    }).then(function (buf) {
+      var b = new Uint8Array(buf);
+      if (b.length > 2 && b[0] === 0x1f && b[1] === 0x8b) {
+        if (!W.DecompressionStream || !W.Response || !W.Blob || !Blob.prototype.stream) throw new Error("NO GZIP");
+        return new Response(new Blob([b]).stream().pipeThrough(new DecompressionStream("gzip"))).text();
+      }
+      return new TextDecoder("utf-8").decode(b);
+    });
+  }
+  /* only what is needed: the channels in the list, from six hours ago to a day ahead */
+  function xmlBuild(txt) {
+    var want = {}, names = {}, ix = { byId: {}, byName: {} }, i;
+    for (i = 0; i < CH.length; i++) { var c = CH[i]; if (!c) continue; if (c.tv) want[c.tv] = 1; names[nameKey(c.tn || c.n)] = 1 }
+    var re = /<channel\b[^>]*\bid\s*=\s*"([^"]*)"[^>]*>([\s\S]*?)<\/channel>/g, m;
+    var idOfName = {};
+    while ((m = re.exec(txt))) {
+      var dn = /<display-name[^>]*>([\s\S]*?)<\/display-name>/g, d;
+      while ((d = dn.exec(m[2]))) { var k = nameKey(xmlText(d[1])); if (k && names[k] && !idOfName[k]) idOfName[k] = m[1] }
+    }
+    for (var nk0 in idOfName) want[idOfName[nk0]] = 1;
+    var now = Date.now(), from = now - 6 * 3600000, to = now + 24 * 3600000;
+    var pr = /<programme\b([^>]*)>([\s\S]*?)<\/programme>/g;
+    for (var key in idOfName) ix.byName[key] = idOfName[key];
+    /* a big guide is read a slice at a time, so the remote never freezes */
+    return new Promise(function (done) {
+      var slice = function () {
+        var n = 0;
+        while (n++ < 4000 && (m = pr.exec(txt))) take(m);
+        if (m) setTimeout(slice, 0); else done(ix);
+      };
+      slice();
+    });
+    function take(m) {
+      var at = m[1];
+      var ch = (at.match(/\bchannel\s*=\s*"([^"]*)"/) || [])[1];
+      if (!ch || !want[ch]) return;
+      var s = xmlTime((at.match(/\bstart\s*=\s*"([^"]*)"/) || [])[1]), e = xmlTime((at.match(/\bstop\s*=\s*"([^"]*)"/) || [])[1]);
+      if (!s || (e && e < from) || s > to) return;
+      var tt = m[2].match(/<title[^>]*>([\s\S]*?)<\/title>/);
+      if (!tt) return;
+      (ix.byId[ch] = ix.byId[ch] || []).push({ s: s, e: e, t: xmlText(tt[1]) });
+    }
+  }
+  function xmlIndex() {
+    if (KX.idx && Date.now() - KX.at < 6 * 3600000) return Promise.resolve(KX.idx);
+    if (KX.loading) return KX.loading;
+    var urls = guideUrls().slice(0, 3);
+    if (!urls.length) return Promise.resolve(null);
+    var merged = { byId: {}, byName: {} };
+    var step = function (n) {
+      if (n >= urls.length) return Promise.resolve(merged);
+      return xmlFetch(urls[n]).then(function (txt) {
+        /* a TV has little memory: a guide bigger than this is left out */
+        if (txt.length > 60000000) throw new Error("TOO BIG");
+        return xmlBuild(txt);
+      }).then(function (ix) {
+        var k;
+        for (k in ix.byId) if (!merged.byId[k]) merged.byId[k] = ix.byId[k];
+        for (k in ix.byName) if (!merged.byName[k]) merged.byName[k] = ix.byName[k];
+      }).catch(function (e) { try { console.warn("vidaa-extras: guide", urls[n], e && e.message) } catch (x) {} })
+        .then(function () { return step(n + 1) });
+    };
+    KX.loading = step(0).then(function (ix) { KX.idx = ix; KX.at = Date.now(); KX.loading = null; return ix });
+    return KX.loading;
+  }
+  function xmlPick(ix, key) {
+    if (!key) return null;
+    var list = (key.id && ix.byId[key.id]) || (key.nk && ix.byName[key.nk] && ix.byId[ix.byName[key.nk]]) || null;
+    if (!list || !list.length) return null;
+    var now = Date.now(), cur = null, nxt = null;
+    for (var i = 0; i < list.length; i++) {
+      var p = list[i];
+      if (p.s <= now && (!p.e || now < p.e)) { if (!cur || p.s > cur.s) cur = p }
+      else if (p.s > now && (!nxt || p.s < nxt.s)) nxt = p;
+    }
+    var use = cur || nxt;
+    return use ? { t: use.t, s: use.s, e: use.e, at: Date.now() } : null;
+  }
+
+  /* ======================= 4. clearer names ======================= */
+  var NAMES = {
+    en: { hNet: "Internet speed (Cloudflare)", hProv: "Your playlist's server", hLive: "Channel stream" },
+    ku: { hNet: "خێرایی ئینتەرنێت (Cloudflare)", hProv: "سێرڤەری لیستەکەت", hLive: "پەخشی کەناڵ" },
+    ar: { hNet: "سرعة الإنترنت (Cloudflare)", hProv: "خادم قائمتك", hLive: "بث القناة" }
+  };
+  try {
+    for (var lg in NAMES) if (T[lg]) for (var k in NAMES[lg]) T[lg][k] = NAMES[lg][k];
+  } catch (e) {}
+})();

@@ -341,7 +341,17 @@
     status("");
     if (P.el) P.el.className = "";
     D.documentElement.classList.remove("wop-on");
-    try { if (W.navRestore) setTimeout(W.navRestore, 0) } catch (e) {}
+    /* the highlight goes to the channel that was being watched (after CH+ or
+       the number keys that is not the one first opened), else where it was */
+    var cur = P.list[P.i], url = cur && cur.u;
+    setTimeout(function () {
+      try {
+        var rows = D.querySelectorAll(".card[data-u]"), hit = null;
+        for (var k = 0; k < rows.length && !hit; k++) if (rows[k].getAttribute("data-u") === url) hit = rows[k];
+        if (hit && W.navFocus) W.navFocus(hit);
+        else if (W.navRestore) W.navRestore();
+      } catch (e) {}
+    }, 0);
   }
 
   /* ---------------- the remote ---------------- */
