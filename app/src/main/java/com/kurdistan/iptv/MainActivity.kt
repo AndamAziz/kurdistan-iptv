@@ -342,11 +342,13 @@ class MainActivity : ComponentActivity() {
         focusRing(findViewById(R.id.btnRetry), round = false, radiusDp = 14)
 
         playerView.controllerShowTimeoutMs = AUTO_HIDE_MS.toInt()
+        playerView.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> loading.post { placeSpinner() } }
         playerView.setControllerVisibilityListener(
             PlayerView.ControllerVisibilityListener { visibility ->
                 topBar.visibility = visibility
                 bottomBar.visibility = visibility
                 if (visibility == View.VISIBLE) armAutoHide()
+                playerView.post { placeSpinner() }
             }
         )
 
@@ -1315,8 +1317,13 @@ class MainActivity : ComponentActivity() {
             .setEnableDecoderFallback(true)
             .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)
 
+        /* Start sooner (1.5 s of picture is enough to begin), and after a stop
+           wait for 4 s before going on, so it does not stop again at once.
+           Time comes before size: a 1080p channel fills the default byte
+           budget before the seconds asked for, and then reads no further. */
         val loadControl = DefaultLoadControl.Builder()
-            .setBufferDurationsMs(25000, 60000, 2500, 5000)
+            .setBufferDurationsMs(25000, 60000, 1500, 4000)
+            .setPrioritizeTimeOverSizeThresholds(true)
             .build()
 
         return ExoPlayer.Builder(this, renderers)
@@ -1526,7 +1533,7 @@ class MainActivity : ComponentActivity() {
 
                 override fun onPlaybackStateChanged(state: Int) {
                     when (state) {
-                        Player.STATE_BUFFERING -> loading.visibility = View.VISIBLE
+                        Player.STATE_BUFFERING -> { loading.visibility = View.VISIBLE; loading.post { placeSpinner() } }
                         Player.STATE_READY -> {
                             loading.visibility = View.GONE
                             if (!hasPlayed) {
@@ -1970,6 +1977,31 @@ class MainActivity : ComponentActivity() {
         applyEdgeInsets()
     }
 
+    /**
+     * The gold spinner goes exactly round Play / Pause while the controls show,
+     * and sits in the middle when they are hidden. The controls keep clear of a
+     * notch and the system bars, so on a phone held sideways that button is not
+     * at the middle of the screen, and a spinner left there circled beside it.
+     */
+    private fun placeSpinner() {
+        val id = resources.getIdentifier("exo_play_pause", "id", packageName)
+        val btn = if (id != 0) playerView.findViewById<View>(id) else null
+        val lp = loading.layoutParams ?: return
+        if (btn != null && btn.isShown && btn.width > 0 && playerLayer.width > 0) {
+            val size = maxOf(btn.width, btn.height) + dp(16)
+            if (lp.width != size) { lp.width = size; lp.height = size; loading.layoutParams = lp }
+            val b = IntArray(2); btn.getLocationInWindow(b)
+            val l = IntArray(2); playerLayer.getLocationInWindow(l)
+            loading.translationX = (b[0] - l[0] + btn.width / 2f) - playerLayer.width / 2f
+            loading.translationY = (b[1] - l[1] + btn.height / 2f) - playerLayer.height / 2f
+        } else {
+            val size = dp(52)
+            if (lp.width != size) { lp.width = size; lp.height = size; loading.layoutParams = lp }
+            loading.translationX = 0f
+            loading.translationY = 0f
+        }
+    }
+
     private fun applyEdgeInsets() {
         val dm = resources.displayMetrics
         val tvX = if (isTv) (dm.widthPixels * 0.045f).toInt() else 0
@@ -1994,6 +2026,7 @@ class MainActivity : ComponentActivity() {
             lp.bottomMargin = e.bottom + (if (e.useBottom) b else 0)
             e.v.layoutParams = lp
         }
+        loading.post { placeSpinner() }
     }
 
     private fun setFullscreen(on: Boolean) {
