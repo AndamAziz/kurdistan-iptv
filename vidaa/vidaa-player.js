@@ -40,13 +40,13 @@
 
   function lang() { return (W.lang === "ku" || W.lang === "ar") ? W.lang : "en" }
   var WORDS = {
-    en: { loading: "Loading…", buffering: "Buffering…", fail: "This stream cannot be played right now",
+    en: { loading: "Loading…", buffering: "Buffering…", fail: "This stream cannot be played right now", codec: "This TV cannot play the video format of this channel",
           again: "OK: try again · Back: close", live: "LIVE", exit: "Press Back again to exit", paused: "Paused",
           all: "All channels", phint: "◀ ▶ category · OK watch · Back close" },
-    ku: { loading: "بارکردن…", buffering: "چاوەڕێ بکە…", fail: "ئەم پەخشە ئێستا لێنادرێت",
+    ku: { loading: "بارکردن…", buffering: "چاوەڕێ بکە…", fail: "ئەم پەخشە ئێستا لێنادرێت", codec: "ئەم تیڤییە ناتوانێت جۆری ڤیدیۆی ئەم کەناڵە لێبدات",
           again: "OK: دووبارە · Back: داخستن", live: "ڕاستەوخۆ", exit: "بۆ دەرچوون جارێکی تر Back دابگرە", paused: "وەستێنراو",
           all: "هەموو کەناڵەکان", phint: "◀ ▶ پۆل · OK سەیرکردن · Back داخستن" },
-    ar: { loading: "جارٍ التحميل…", buffering: "جارٍ التخزين…", fail: "لا يمكن تشغيل هذا البث الآن",
+    ar: { loading: "جارٍ التحميل…", buffering: "جارٍ التخزين…", fail: "لا يمكن تشغيل هذا البث الآن", codec: "هذا التلفاز لا يدعم صيغة الفيديو لهذه القناة",
           again: "OK: إعادة · Back: إغلاق", live: "مباشر", exit: "اضغط رجوع مرة أخرى للخروج", paused: "متوقف",
           all: "كل القنوات", phint: "◀ ▶ الفئة · OK مشاهدة · Back إغلاق" }
   };
@@ -227,12 +227,42 @@
     try { return !!(W.mpegts && W.mpegts.isSupported() && W.mpegts.getFeatureList().mseLivePlayback) } catch (e) { return false }
   }
 
+  /* hls.js tuned for TVs: a slow processor and Wi-Fi, little memory for media */
+  var STALL_MS = 15000;
+  var CODEC_ERR = { manifestIncompatibleCodecsError: 1, bufferIncompatibleCodecsError: 1, bufferAddCodecError: 1 };
+  function hlsConfig(startMs) {
+    return {
+      startPosition: startMs > 0 && !P.live ? startMs / 1000 : -1,
+      enableWorker: true, lowLatencyMode: false,
+      /* start on a modest quality and let it climb: the first picture comes sooner */
+      startLevel: -1, testBandwidth: true,
+      capLevelToPlayerSize: true, capLevelOnFPSDrop: true,
+      /* a little further from the live edge: more room before it has to wait */
+      liveSyncDurationCount: 4, liveMaxLatencyDurationCount: 12, liveDurationInfinity: true,
+      maxBufferLength: 20, maxMaxBufferLength: 40, maxBufferSize: 30 * 1000 * 1000,
+      backBufferLength: 15, maxBufferHole: 1, nudgeMaxRetry: 6,
+      fragLoadingMaxRetry: 6, manifestLoadingMaxRetry: 3, levelLoadingMaxRetry: 4,
+      fragLoadingTimeOut: 20000, manifestLoadingTimeOut: 12000, levelLoadingTimeOut: 12000
+    };
+  }
+
   function videoOpen(it, startMs, gen) {
     var v = $("wopVid"), mine = function () { return gen === P.gen && P.on };
-    v.onwaiting = function () { if (mine() && !P.paused) status(w("buffering")) };
+    /* a live picture that waits too long is opened again from the live edge,
+       instead of "Buffering…" for ever */
+    var stall = 0;
+    function unstall() { if (stall) { clearTimeout(stall); stall = 0 } }
+    v.onwaiting = function () {
+      if (!mine() || P.paused) return;
+      status(w("buffering"));
+      if (P.live && !stall) stall = setTimeout(function () {
+        stall = 0;
+        if (mine() && v.readyState < 3) failed("stall");
+      }, STALL_MS);
+    };
     /* only a picture that really started counts as working again: a <video>
        also reports the time while it is emptied for the next try */
-    v.onplaying = function () { if (mine()) { status(""); P.tries = 0 } };
+    v.onplaying = function () { unstall(); if (mine()) { status(""); P.tries = 0 } };
     v.ontimeupdate = function () {
       if (!mine()) return;
       P.pos = v.currentTime * 1000; P.dur = isFinite(v.duration) ? v.duration * 1000 : 0;
@@ -250,12 +280,18 @@
     }
     /* HLS the TV cannot play itself: hls.js */
     if (t === "application/x-mpegURL" && !nativeHls(v) && W.Hls && W.Hls.isSupported()) {
-      var h = new W.Hls({ startPosition: startMs > 0 && !P.live ? startMs / 1000 : -1, enableWorker: true,
-                          lowLatencyMode: false, backBufferLength: 30 });
+      var h = new W.Hls(hlsConfig(startMs)), recovers = 0;
       ENG = h;
       h.on(W.Hls.Events.ERROR, function (ev, d) {
-        if (!mine() || !d || !d.fatal) return;
-        if (d.type === W.Hls.ErrorTypes.MEDIA_ERROR) { try { h.recoverMediaError(); return } catch (x) {} }
+        if (!mine() || !d) return;
+        /* a format this TV has no decoder for (HEVC on many sets): say so,
+           and do not go round trying again */
+        if (CODEC_ERR[d.details]) { unstall(); failed("hls " + d.details, true); return }
+        if (!d.fatal) return;
+        if (d.type === W.Hls.ErrorTypes.MEDIA_ERROR && recovers < 2) {
+          try { if (recovers++) h.swapAudioCodec(); h.recoverMediaError(); return } catch (x) {}
+        }
+        unstall();
         failed("hls " + d.details);
       });
       h.loadSource(it.u);
@@ -266,7 +302,12 @@
     /* MPEG-TS over Media Source: mpegts.js */
     if (t === "video/mp2t" && mseTs()) {
       var m = W.mpegts.createPlayer({ type: "mpegts", isLive: P.live, url: it.u },
-                                    { enableWorker: true, lazyLoad: false, liveBufferLatencyChasing: P.live });
+                                    { enableWorker: true, lazyLoad: false, enableStashBuffer: true,
+                                      /* a TV has little room for media: drop what was already shown */
+                                      autoCleanupSourceBuffer: true, autoCleanupMaxBackwardDuration: 30,
+                                      autoCleanupMinBackwardDuration: 15,
+                                      /* jumping to the live edge on a slow line makes it stop more */
+                                      liveBufferLatencyChasing: false });
       ENG = m;
       m.on(W.mpegts.Events.ERROR, function (type, detail) {
         if (!mine()) return;
@@ -276,7 +317,8 @@
           var i = P.i; setTimeout(function () { if (mine()) playAt(i) }, 0);
           return;
         }
-        failed("ts " + type + " " + detail);
+        unstall();
+        failed("ts " + type + " " + detail, /CodecUnsupported|FormatUnsupported/i.test(String(detail)));
       });
       m.attachMediaElement(v);
       m.load();
@@ -295,11 +337,11 @@
 
   /* a live channel that drops is picked up again, a little slower each time;
      a film that cannot start says so, and OK tries again */
-  function failed(why) {
+  function failed(why, codec) {
     /* HLS failed on a server we had moved to HLS: forget it, so the next try
        is the .ts address again */
-    if (P.viaHls) { var cur = P.list[P.i]; if (cur) delete HLS_HOSTS[hostOf(cur.u)]; P.viaHls = false }
-    if (P.live && P.tries < 3) {
+    if (P.viaHls && !codec) { var cur = P.list[P.i]; if (cur) delete HLS_HOSTS[hostOf(cur.u)]; P.viaHls = false }
+    if (P.live && !codec && P.tries < 3) {
       P.tries++;
       status(w("loading"));
       var gen = P.gen, i = P.i;
@@ -307,7 +349,7 @@
       return;
     }
     P.err = true;
-    status(w("fail"), w("again"));
+    status(w(codec ? "codec" : "fail"), w("again"));
     osd(true);
     try { console.warn("vidaa-player: cannot play", P.list[P.i] && P.list[P.i].u, why) } catch (e) {}
   }
