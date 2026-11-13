@@ -342,6 +342,104 @@
     if (f0 && /^http:\/\//i.test(String(p0[f0] || ""))) W.loadActive(true);
   } catch (e) {}
 
+  /* ============== 6. the rest of the remote, on the channel list ============== */
+  /* What a Hisense remote has beyond the arrows, used where the list is open
+     (the player already takes CH, numbers, INFO, Play/Pause and Back):
+       red     add / remove the highlighted channel from Favourites
+       green   the categories          yellow  search
+       blue    Settings                GUIDE / CH.LIST  back to the channel list
+       CH+ / CH-  a page of channels down / up
+       0-9     type a channel number: that channel is highlighted and opens */
+  var RK = {
+    red: [403, 112], green: [404, 113], yellow: [405, 114], blue: [406, 115],
+    guide: [458, 10070], chlist: [10073, 1002]
+  };
+  var RN = { red: /^(ColorF0Red|Red)$/, green: /^(ColorF1Green|Green)$/, yellow: /^(ColorF2Yellow|Yellow)$/,
+             blue: /^(ColorF3Blue|Blue)$/, guide: /^Guide$/, chlist: /^(ChannelList|LiveContent)$/ };
+  function which(e) {
+    for (var k in RK) if (RK[k].indexOf(e.keyCode) > -1 || (e.key && RN[k].test(e.key))) return k;
+    return "";
+  }
+  function playing() { try { return !!(W.KIPTV_VIDAA && KIPTV_VIDAA.state().on) } catch (e) { return false } }
+  function typing() { var a = document.activeElement; return !!(a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA")) }
+  function rows() { return document.querySelectorAll(".tvrow") }
+  function focusRow(r) { if (r) navFocus(r) }
+  function curRow() {
+    var a = document.activeElement;
+    return a && a.classList && a.classList.contains("tvrow") ? a : null;
+  }
+  function listBack() {
+    var go = function () { var r = rows(), c = curRow(); if (!c) focusRow(r.length ? r[0] : null) };
+    if (W.LAYERS && LAYERS.length) { try { layerBack(LAYERS.length) } catch (e) {} setTimeout(go, 120) }
+    else go();
+  }
+  var NUMS = { buf: "", t: null };
+  function numKey(d) {
+    NUMS.buf = (NUMS.buf + d).slice(0, 5);
+    try { showToast(NUMS.buf) } catch (e) {}
+    clearTimeout(NUMS.t);
+    NUMS.t = setTimeout(function () {
+      var n = parseInt(NUMS.buf, 10); NUMS.buf = "";
+      var r = rows();
+      /* rows are drawn a page at a time: ask for more until the number is there */
+      var tries = 0, find = function () {
+        r = rows();
+        if (n >= 1 && n <= r.length) { focusRow(r[n - 1]); r[n - 1].click(); return }
+        if (tries++ < 20 && typeof tvMore === "function" && r.length < (view ? view.length : 0)) { try { tvMore() } catch (e) {} setTimeout(find, 60) }
+      };
+      find();
+    }, 1200);
+  }
+  W.addEventListener("keydown", function (e) {
+    if (playing() || typing()) return;
+    if (W.LAYERS && LAYERS.indexOf && LAYERS.indexOf("settings") > -1 && !which(e)) return;
+    var k = e.keyCode, act = which(e), done = true;
+    if (act === "red") { var c = curRow(); if (c) longPress(c); else done = false }
+    else if (act === "green") { var oc = document.querySelector(".tvcat.on") || document.querySelector(".tvcat"); if (oc) navFocus(oc); else done = false }
+    else if (act === "yellow") { var s = document.querySelector(".tvsrch"); if (s) s.click(); else if (typeof toggleSearch === "function") toggleSearch() }
+    else if (act === "blue") openSettings();
+    else if (act === "guide" || act === "chlist") listBack();
+    else if ((k === 33 || k === 427 || k === 34 || k === 428) && curRow()) {
+      var r = rows(), i = Array.prototype.indexOf.call(r, curRow()), step = 8;
+      var to = (k === 33 || k === 427) ? i - step : i + step;
+      if (to >= r.length && typeof tvMore === "function") { try { tvMore() } catch (x) {} r = rows() }
+      focusRow(r[Math.max(0, Math.min(r.length - 1, to))]);
+    }
+    else if (((k >= 48 && k <= 57) || (k >= 96 && k <= 105)) && rows().length) numKey(k >= 96 ? k - 96 : k - 48);
+    else done = false;
+    if (done) { e.preventDefault(); e.stopImmediatePropagation() }
+  }, true);
+
+  /* a small key guide under the list, so the colours explain themselves */
+  var HINT = {
+    en: ["Favourite", "Categories", "Search", "Settings", "0-9 channel number"],
+    ku: ["دڵخواز", "پۆلەکان", "گەڕان", "ڕێکخستن", "0-9 ژمارەی کەناڵ"],
+    ar: ["المفضلة", "الفئات", "بحث", "الإعدادات", "0-9 رقم القناة"]
+  };
+  try {
+    var css = document.createElement("style");
+    css.textContent = "#vxHint{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:40;display:flex;gap:22px;" +
+      "padding:6px 16px;border-radius:999px;background:rgba(8,12,20,.78);color:#cbd5e1;font:600 15px/1.2 system-ui,sans-serif;pointer-events:none}" +
+      "#vxHint i{display:inline-block;width:14px;height:14px;border-radius:4px;margin:0 6px;vertical-align:-2px}" +
+      "html.wop-on #vxHint,html:not(.tv) #vxHint{display:none}";
+    document.head.appendChild(css);
+    var hint = document.createElement("div");
+    hint.id = "vxHint";
+    var drawHint = function () {
+      var h = HINT[t().dir === "rtl" ? (lang === "ar" ? "ar" : "ku") : "en"] || HINT.en;
+      hint.innerHTML = '<span><i style="background:#e5484d"></i>' + h[0] + '</span><span><i style="background:#30a46c"></i>' + h[1] +
+        '</span><span><i style="background:#f5d90a"></i>' + h[2] + '</span><span><i style="background:#3e63dd"></i>' + h[3] + '</span><span>' + h[4] + '</span>';
+      hint.style.display = (W.LAYERS && LAYERS.length) ? "none" : "";
+    };
+    document.body.appendChild(hint);
+    drawHint();
+    W.addEventListener("popstate", function () { setTimeout(drawHint, 0) });
+    var baseOpenS = W.openSettings;
+    W.openSettings = function () { var r = baseOpenS.apply(this, arguments); drawHint(); return r };
+    var baseApply = W.applyLang;
+    if (typeof baseApply === "function") W.applyLang = function () { var r = baseApply.apply(this, arguments); drawHint(); return r };
+  } catch (e) {}
+
   /* ======================= 4. clearer names ======================= */
   var NAMES = {
     en: { hNet: "Internet speed (Cloudflare)", hProv: "Your playlist's server", hLive: "Channel stream" },
