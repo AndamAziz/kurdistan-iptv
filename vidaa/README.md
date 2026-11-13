@@ -46,6 +46,13 @@ This takes the full `app/src/main/assets/channels.js` and writes
 `--channels` and stays a player only. Movies Online is in no VIDAA build: the
 TV player has no `embedOk()`.
 
+## Remote keys while a channel plays
+
+| Key | Action |
+|---|---|
+| Yellow | Quality: Auto → 720p → 480p (kept for the next time). A lower cap helps on a weak Wi-Fi. Only channels with several qualities can change. |
+| Blue | Details for a report: player, picture size, seconds buffered, qualities, network estimate, dropped frames. |
+
 ## How each stream plays
 
 | Stream | Played by |
