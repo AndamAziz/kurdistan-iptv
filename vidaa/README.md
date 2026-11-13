@@ -34,6 +34,18 @@ Writes `vidaa/build/` (the app's files) and
 `vidaa/dist/KURDISTAN-IPTV-VIDAA-1.0.320.zip` (the same files zipped, for an upload).
 The build stops if the empty Amazon channel list is not empty.
 
+For our own address (`tv.andam.uk`, used through red.app), build with the
+starting playlist **ANDAM IPTV**, as in the GitHub app:
+
+```bash
+node vidaa/build.js 1.0.338 --channels
+```
+
+This takes the full `app/src/main/assets/channels.js` and writes
+`KURDISTAN-IPTV-VIDAA-<v>-channels.zip`. The store upload is built without
+`--channels` and stays a player only. Movies Online is in no VIDAA build: the
+TV player has no `embedOk()`.
+
 ## How each stream plays
 
 | Stream | Played by |

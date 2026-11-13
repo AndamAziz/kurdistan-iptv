@@ -14,9 +14,15 @@
  * user adds their own playlist. Store reviewers refuse an app that streams
  * from third-party sources out of the box.
  *
+ * With --channels it takes the full app/src/main/assets/channels.js instead,
+ * so ANDAM IPTV is the starting playlist, as in the GitHub app. That is the
+ * copy for our own address (tv.andam.uk); the store upload stays bare. Movies
+ * Online is never in a VIDAA build: the TV player has no embedOk().
+ *
  * Writes:
  *   vidaa/build/                               the app's files, for a hosted URL
  *   vidaa/dist/KURDISTAN-IPTV-VIDAA-<v>.zip    the same files, for an upload
+ *                                              (-channels.zip with --channels)
  * Nothing outside vidaa/ is written. No packages to install: Node.js only.
  */
 const fs = require("fs");
@@ -28,11 +34,15 @@ const here = __dirname;
 const root = path.join(here, "..");
 const assets = path.join(root, "app", "src", "main", "assets");
 const bare = path.join(root, "app", "src", "amazon", "assets", "channels.js");
+const full = path.join(assets, "channels.js");
+const ARGS = process.argv.slice(2);
+const WITH_CHANNELS = ARGS.indexOf("--channels") >= 0;
+const VERSION_ARG = ARGS.filter(function (a) { return a.indexOf("--") !== 0 })[0];
 const out = path.join(here, "build");
 const dist = path.join(here, "dist");
 
 function versionNow() {
-  if (process.argv[2]) return process.argv[2];
+  if (VERSION_ARG) return VERSION_ARG;
   try { return "1.0." + String(execSync("git rev-list --count HEAD", { cwd: root })).trim() }
   catch (e) { return "1.0.0" }
 }
@@ -70,7 +80,7 @@ page = patch(page, "function updCheck(manual){\n", "function updCheck(manual){\n
 page = patch(page, '  h += setRowC("c-green", ICON.down, d.updCheck,', '  if(!window.KIPTV_NOUPD) h += setRowC("c-green", ICON.down, d.updCheck,', "the update row");
 fs.writeFileSync(path.join(out, "index.html"), page);
 
-fs.copyFileSync(bare, path.join(out, "channels.js"));
+fs.copyFileSync(WITH_CHANNELS ? full : bare, path.join(out, "channels.js"));
 fs.copyFileSync(path.join(assets, "welcome.mp3"), path.join(out, "welcome.mp3"));
 for (const name of ["vidaa-player.js", "vidaa-extras.js", "icon.png", "largeIcon.png", "splash.png"])
   fs.copyFileSync(path.join(here, name), path.join(out, name));
@@ -112,7 +122,7 @@ function walk(dir, pre) {
   return r;
 }
 fs.mkdirSync(dist, { recursive: true });
-const zipName = "KURDISTAN-IPTV-VIDAA-" + version + ".zip";
+const zipName = "KURDISTAN-IPTV-VIDAA-" + version + (WITH_CHANNELS ? "-channels" : "") + ".zip";
 fs.writeFileSync(path.join(dist, zipName), zip(walk(out, "")));
 
 console.log("vidaa/build ready - version " + version);
