@@ -41,11 +41,14 @@
   function lang() { return (W.lang === "ku" || W.lang === "ar") ? W.lang : "en" }
   var WORDS = {
     en: { loading: "Loading…", buffering: "Buffering…", fail: "This stream cannot be played right now",
-          again: "OK: try again · Back: close", live: "LIVE", exit: "Press Back again to exit", paused: "Paused" },
+          again: "OK: try again · Back: close", live: "LIVE", exit: "Press Back again to exit", paused: "Paused",
+          all: "All channels", phint: "◀ ▶ category · OK watch · Back close" },
     ku: { loading: "بارکردن…", buffering: "چاوەڕێ بکە…", fail: "ئەم پەخشە ئێستا لێنادرێت",
-          again: "OK: دووبارە · Back: داخستن", live: "ڕاستەوخۆ", exit: "بۆ دەرچوون جارێکی تر Back دابگرە", paused: "وەستێنراو" },
+          again: "OK: دووبارە · Back: داخستن", live: "ڕاستەوخۆ", exit: "بۆ دەرچوون جارێکی تر Back دابگرە", paused: "وەستێنراو",
+          all: "هەموو کەناڵەکان", phint: "◀ ▶ پۆل · OK سەیرکردن · Back داخستن" },
     ar: { loading: "جارٍ التحميل…", buffering: "جارٍ التخزين…", fail: "لا يمكن تشغيل هذا البث الآن",
-          again: "OK: إعادة · Back: إغلاق", live: "مباشر", exit: "اضغط رجوع مرة أخرى للخروج", paused: "متوقف" }
+          again: "OK: إعادة · Back: إغلاق", live: "مباشر", exit: "اضغط رجوع مرة أخرى للخروج", paused: "متوقف",
+          all: "كل القنوات", phint: "◀ ▶ الفئة · OK مشاهدة · Back إغلاق" }
   };
   function w(k) { return (WORDS[lang()] || WORDS.en)[k] }
 
@@ -86,7 +89,18 @@
     "#wop .wop-tm{display:flex;justify-content:space-between;font-size:26px;color:#dfe5ec;margin-top:14px}" +
     "#wop .wop-st{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:34px;font-weight:700;" +
     "padding:22px 40px;border-radius:18px;background:#0009;display:none;text-align:center;max-width:70%}" +
-    "#wop .wop-st.on{display:block}#wop .wop-st small{display:block;font-size:24px;font-weight:400;color:#c9d1dc;margin-top:12px}";
+    "#wop .wop-st.on{display:block}#wop .wop-st small{display:block;font-size:24px;font-weight:400;color:#c9d1dc;margin-top:12px}" +
+    /* the channel list over the picture */
+    "#wop.pn .wop-bar{opacity:0!important}#wopPn{position:absolute;top:0;bottom:0;left:0;width:620px;background:linear-gradient(90deg,#05080ef2 80%,#05080e00);" +
+    "padding:34px 40px 34px 34px;display:none}#wopPn.on{display:block}" +
+    "html[dir=rtl] #wopPn{left:auto;right:0;padding:34px 34px 34px 40px;background:linear-gradient(270deg,#05080ef2 80%,#05080e00)}" +
+    "#wopPn .vxg{display:flex;align-items:center;justify-content:space-between;font-size:30px;font-weight:800;color:#E8B33C;margin-bottom:6px}" +
+    "#wopPn .vxg span{font-size:26px;color:#8a95a5}#wopPn .vxh{font-size:20px;color:#8a95a5;margin-bottom:18px}" +
+    "#wopPn .vxr{display:flex;align-items:center;gap:16px;height:74px;padding:0 16px;border-radius:14px;margin-bottom:6px;color:#dfe5ec}" +
+    "#wopPn .vxr b{width:58px;font-size:22px;color:#8a95a5;font-weight:600;text-align:center}" +
+    "#wopPn .vxr img,#wopPn .vxr i{width:64px;height:48px;border-radius:8px;object-fit:contain;background:#ffffff14;flex:none}" +
+    "#wopPn .vxr em{font-style:normal;font-size:26px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}" +
+    "#wopPn .vxr.now em{color:#E8B33C}#wopPn .vxr.on{background:#E8B33C;color:#111}#wopPn .vxr.on b,#wopPn .vxr.on em{color:#111}";
 
   function build() {
     if (P.el) return P.el;
@@ -97,7 +111,7 @@
       '<div class="wop-num" id="wopNum"></div></div>' +
       '<div class="wop-bar wop-bot" id="wopBot"><div class="wop-prog"><i id="wopFill"></i></div>' +
       '<div class="wop-tm"><span id="wopPos"></span><span id="wopDur"></span></div></div>' +
-      '<div class="wop-st" id="wopSt"></div>';
+      '<div class="wop-st" id="wopSt"></div><div id="wopPn"></div>';
     D.body.appendChild(el);
     /* a pointer remote or a mouse: a click on the picture is OK */
     el.addEventListener("click", function () { if (P.err) { P.tries = 0; playAt(P.i) } else togglePause() });
@@ -335,6 +349,7 @@
 
   function close() {
     if (!P.on) return;
+    pnClose();
     savePos(true);
     P.on = false;
     stopAll();
@@ -396,9 +411,91 @@
     return -1;
   }
 
+  /* ---------------- the channel list over the picture ----------------
+     OK, GUIDE or CH.LIST while a channel plays: the list of channels opens
+     beside the picture, which keeps playing. Up / Down choose, CH+ / CH- a
+     page, Left / Right the category, OK watches it, Back closes the list. */
+  var ALL = [];                       /* every live channel, from setChannels */
+  var PN = { on: false, g: 0, i: 0, groups: [], list: [], t: null };
+  function pnGroups() {
+    var src = ALL.length ? ALL : P.list, vis = src;
+    try { if (W.catVisible) vis = W.catVisible(src) } catch (e) {}
+    var order = [], seen = {};
+    try { if (W.GROUPS && W.GROUPS.length) for (var a = 0; a < W.GROUPS.length; a++) { seen[W.GROUPS[a]] = 1; order.push(W.GROUPS[a]) } } catch (e) {}
+    for (var b = 0; b < vis.length; b++) { var g = vis[b].c || ""; if (g && !seen[g]) { seen[g] = 1; order.push(g) } }
+    var out = [{ name: w("all"), list: vis }];
+    for (var c = 0; c < order.length; c++) {
+      var name = order[c], l = [];
+      for (var d = 0; d < vis.length; d++) if (vis[d].c === name) l.push(vis[d]);
+      if (l.length) out.push({ name: name, list: l });
+    }
+    return out;
+  }
+  function pnUse(g, keepU) {
+    PN.g = (g + PN.groups.length) % PN.groups.length;
+    PN.list = PN.groups[PN.g].list;
+    PN.i = 0;
+    if (keepU) for (var i = 0; i < PN.list.length; i++) if (PN.list[i].u === keepU) { PN.i = i; break }
+  }
+  function esc(t) { return String(t == null ? "" : t).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] }) }
+  function pnDraw() {
+    var box = $("wopPn"); if (!box) return;
+    var cur = P.list[P.i], cu = cur && cur.u, n = PN.list.length, rows = 11;
+    var from = Math.max(0, Math.min(PN.i - 5, n - rows)), h = "";
+    for (var i = from; i < Math.min(n, from + rows); i++) {
+      var c = PN.list[i];
+      h += '<div class="vxr' + (i === PN.i ? " on" : "") + (c.u === cu ? " now" : "") + '"><b>' + (i + 1) + "</b>" +
+        (c.l ? '<img src="' + esc(c.l) + '" referrerpolicy="no-referrer" alt="">' : "<i></i>") + "<em>" + esc(c.n) + "</em></div>";
+    }
+    box.innerHTML = '<div class="vxg">' + esc(PN.groups[PN.g].name) + "<span>" + (n ? (PN.i + 1) + " / " + n : "") + "</span></div>" +
+      '<div class="vxh">' + w("phint") + "</div>" + h;
+  }
+  function pnAlive() { clearTimeout(PN.t); PN.t = setTimeout(pnClose, 15000) }
+  function pnOpen() {
+    if (!P.live) return false;
+    PN.groups = pnGroups();
+    var cur = P.list[P.i], g = 0, cg = cur && cur.c;
+    /* the player gets name and address only: its category is in the full list */
+    if (cur && !cg) for (var j = 0; j < ALL.length; j++) if (ALL[j].u === cur.u) { cg = ALL[j].c; break }
+    if (cg) for (var i = 1; i < PN.groups.length; i++) if (PN.groups[i].name === cg) { g = i; break }
+    pnUse(g, cur && cur.u);
+    PN.on = true; $("wopPn").className = "on"; osd(false); P.el.classList.add("pn"); pnDraw(); pnAlive();
+    return true;
+  }
+  function pnClose() { PN.on = false; clearTimeout(PN.t); var b = $("wopPn"); if (b) b.className = ""; if (P.el) P.el.classList.remove("pn") }
+  function pnKey(k) {
+    var rtl = D.documentElement.dir === "rtl", n = PN.list.length;
+    if (isBack(k) || k === 458 || k === 10073) pnClose();
+    else if (k === K.UP) PN.i = (PN.i - 1 + n) % n;
+    else if (k === K.DOWN) PN.i = (PN.i + 1) % n;
+    else if (isChUp(k)) PN.i = Math.max(0, PN.i - 10);
+    else if (isChDown(k)) PN.i = Math.min(n - 1, PN.i + 10);
+    else if (k === K.LEFT || k === K.RIGHT) pnUse(PN.g + (((k === K.RIGHT) !== rtl) ? 1 : -1), (P.list[P.i] || {}).u);
+    else if (k === K.ENTER) {
+      var pick = PN.list[PN.i]; pnClose();
+      if (!pick) return true;
+      var cur = P.list[P.i];
+      if (cur && cur.u === pick.u) { osd(true); return true }
+      /* the chosen category becomes the list CH+ / CH- step through */
+      prevI = -1; P.list = PN.list; P.tries = 0; playAt(PN.i);
+      return true;
+    }
+    else return false;
+    if (PN.on) { pnDraw(); pnAlive() }
+    return true;
+  }
+
   var lastBack = 0;
   D.addEventListener("keydown", function (e) {
     var k = e.keyCode;
+    if (P.on && PN.on) {
+      if (pnKey(k) || digitOf(k) < 0) { e.preventDefault(); e.stopImmediatePropagation(); return }
+    }
+    /* OK opens the list while a channel plays (on an error OK tries again);
+       GUIDE / CH.LIST open it always, so a channel that will not play can be left */
+    if (P.on && P.live && ((k === K.ENTER && !P.err) || k === 458 || k === 10073 || k === 1002) && pnOpen()) {
+      e.preventDefault(); e.stopImmediatePropagation(); return;
+    }
     if (P.on) {
       var used = true;
       if (isBack(k) || k === K.STOP) close();
@@ -450,7 +547,9 @@
     version: function () { return "1.0|" + BUILD },
     setLang: function () {},
     codecs: function () { return JSON.stringify({ hevc: true, hevc4k: true, ac3: true, eac3: true }) },
-    setChannels: function () {},
+    setChannels: function (json) {
+      try { var a = JSON.parse(json); if (a && a.length) ALL = a } catch (e) {}
+    },
     /* the page calls this with two arguments or three, as on Android */
     playList: function (json, index, startMs) {
       var list = [];
@@ -464,5 +563,6 @@
     openUrl: function (u) { try { if (W.showToast) W.showToast(String(u)) } catch (e) {} }
   };
   /* for the tests */
-  W.KIPTV_VIDAA = { state: function () { return { on: P.on, i: P.i, live: P.live, paused: P.paused, err: P.err, n: P.list.length } } };
+  W.KIPTV_VIDAA = { state: function () { return { on: P.on, i: P.i, live: P.live, paused: P.paused, err: P.err, n: P.list.length,
+    panel: PN.on, pg: PN.on ? PN.groups[PN.g].name : "", pi: PN.i, pn: PN.list.length, cur: (P.list[P.i] || {}).n || "" } } };
 })();
