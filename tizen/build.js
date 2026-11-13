@@ -46,6 +46,9 @@ page = patch(page, "<head>",
   '<script src="$WEBAPIS/webapis/webapis.js"></script>\n' +
   '<script src="tizen-player.js"></script>', "the Tizen scripts");
 page = patch(page, "function viaApp(u){\n", "function viaApp(u){\n  if(window.KIPTV_DIRECT) return u;\n", "direct requests");
+/* the MAC Portal requests too: on a TV there is no Android app to carry them,
+   so the page asks the portal itself (the MAC rides in the address) */
+page = patch(page, "  if(window.KIPTV_PROXY) u = window.KIPTV_PROXY + encodeURIComponent(url)", "  if(window.KIPTV_DIRECT) u = \"\";\n  else if(window.KIPTV_PROXY) u = window.KIPTV_PROXY + encodeURIComponent(url)", "direct MAC Portal requests");
 page = patch(page, "function updCheck(manual){\n", "function updCheck(manual){\n  if(window.KIPTV_NOUPD) return Promise.resolve(null);\n", "the quiet updater");
 page = patch(page, '  h += setRowC("c-green", ICON.down, d.updCheck,', '  if(!window.KIPTV_NOUPD) h += setRowC("c-green", ICON.down, d.updCheck,', "the update row");
 fs.writeFileSync(path.join(out, "index.html"), page);
