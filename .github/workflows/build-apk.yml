@@ -130,6 +130,14 @@ jobs:
         continue-on-error: true
         run: gradle assembleAmazonRelease --no-daemon --stacktrace
 
+      # Huawei AppGallery takes an APK too: the "huawei" build - the Play
+      # build's playlist and channels, nothing from Google inside (Huawei
+      # phones have no Google Play Services). If it fails it fails alone.
+      - name: Build the APK for Huawei
+        if: env.KEYSTORE_FILE != ''
+        continue-on-error: true
+        run: gradle assembleHuaweiRelease --no-daemon --stacktrace
+
       - name: Forget the key
         if: always()
         run: rm -f "$RUNNER_TEMP/kiptv.jks"
@@ -165,6 +173,28 @@ jobs:
         with:
           name: KURDISTAN-IPTV-Amazon-1.0-${{ github.run_number }}
           path: amazon-out/KURDISTAN-IPTV-Amazon-1.0-${{ github.run_number }}.apk
+          retention-days: 30
+
+      # The Huawei APK on its own, named for Huawei and for its version:
+      # KURDISTAN-IPTV-Huawei-1.0-<run>.apk
+      - name: Name the Huawei APK
+        id: huawei
+        continue-on-error: true
+        run: |
+          HW=$(ls app/build/outputs/apk/huawei/release/*.apk 2>/dev/null | head -1)
+          [ -n "$HW" ] || { echo "No Huawei APK was built."; exit 0; }
+          mkdir -p huawei-out
+          cp "$HW" "huawei-out/KURDISTAN-IPTV-Huawei-1.0-${GITHUB_RUN_NUMBER}.apk"
+          cp "$HW" "huawei-out/KURDISTAN-IPTV-Huawei.apk"
+          echo "found=yes" >> "$GITHUB_OUTPUT"
+
+      - name: Upload the Huawei APK
+        if: steps.huawei.outputs.found == 'yes'
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: KURDISTAN-IPTV-Huawei-1.0-${{ github.run_number }}
+          path: huawei-out/KURDISTAN-IPTV-Huawei-1.0-${{ github.run_number }}.apk
           retention-days: 30
 
       # R8 renames the release build's code. This file turns a release crash
@@ -278,6 +308,33 @@ jobs:
           gh release upload amazon "amazon-out/KURDISTAN-IPTV-Amazon-1.0-${GITHUB_RUN_NUMBER}.apk" \
             "amazon-out/KURDISTAN-IPTV-Amazon.apk" --repo "$RELEASE_REPO" --clobber
           echo "Amazon APK: https://github.com/$RELEASE_REPO/releases/download/amazon/KURDISTAN-IPTV-Amazon.apk"
+
+      # The Huawei APK, the same way: one pre-release tagged "huawei" whose
+      # files each build replaces, never "latest":
+      #   .../releases/download/huawei/KURDISTAN-IPTV-Huawei.apk
+      - name: Publish the Huawei APK
+        if: github.ref == 'refs/heads/main' && steps.huawei.outputs.found == 'yes'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          RELEASE_REPO: AndamAziz/kurdistan-iptv-releases
+        run: |
+          [ -n "$GH_TOKEN" ] || { echo "No RELEASE_TOKEN - nothing published."; exit 0; }
+          TITLE="KURDISTAN IPTV for Huawei AppGallery - 1.0 (${GITHUB_RUN_NUMBER})"
+          NOTES="Huawei AppGallery build only - not for Downloader.
+          Version 1.0, version code ${GITHUB_RUN_NUMBER}. The Google Play build's features, with nothing from Google inside.
+          Upload it in AppGallery Connect: My apps -> KURDISTAN IPTV -> Version information -> Software packages."
+          if gh release view huawei --repo "$RELEASE_REPO" >/dev/null 2>&1; then
+            gh release edit huawei --repo "$RELEASE_REPO" --title "$TITLE" --notes "$NOTES" --prerelease
+            for a in $(gh release view huawei --repo "$RELEASE_REPO" --json assets --jq '.assets[].name'); do
+              gh release delete-asset huawei "$a" --repo "$RELEASE_REPO" -y || true
+            done
+          else
+            gh release create huawei --repo "$RELEASE_REPO" --title "$TITLE" --notes "$NOTES" --prerelease --latest=false
+          fi
+          gh release upload huawei "huawei-out/KURDISTAN-IPTV-Huawei-1.0-${GITHUB_RUN_NUMBER}.apk" \
+            "huawei-out/KURDISTAN-IPTV-Huawei.apk" --repo "$RELEASE_REPO" --clobber
+          echo "Huawei APK: https://github.com/$RELEASE_REPO/releases/download/huawei/KURDISTAN-IPTV-Huawei.apk"
 
   # ---------------------------------------------------------------------------
   # The Windows app: the same page, carried by Electron, playing with mpv.

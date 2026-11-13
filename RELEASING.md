@@ -5,7 +5,7 @@ A checklist built from what went wrong before. Follow it for every new version.
 ## 1. Before merging a PR
 
 - [ ] CI is green on the PR, and the unit tests pass for all three flavours
-      (`direct`, `play`, `amazon`).
+      (`direct`, `play`, `amazon`, `huawei`).
 - [ ] `WHATSNEW.md` has a new first paragraph under `[en]`, `[ku]` and `[ar]`.
       The first English paragraphs (up to 500 characters) become the Google Play
       release notes, and the whole file becomes the GitHub release text.
@@ -35,6 +35,7 @@ A checklist built from what went wrong before. Follow it for every new version.
 | GitHub, Downloader, APKPure (phones, Android TV) | `KURDISTAN-IPTV.apk` (universal), `-arm64-v8a.apk`, `-armeabi-v7a.apk` | `https://github.com/AndamAziz/kurdistan-iptv-releases/releases/latest/download/<file>`: always the newest; Downloader codes 4669811, 5228492, 8865694 point here |
 | Windows | `KURDISTAN-IPTV-Setup.exe` | same address as above |
 | Amazon Appstore (Fire TV) | `KURDISTAN-IPTV-Amazon.apk` (no channels, no starting playlist) | `https://github.com/AndamAziz/kurdistan-iptv-releases/releases/download/amazon/KURDISTAN-IPTV-Amazon.apk`: always the newest Amazon build; never put it on Downloader |
+| Huawei AppGallery | `KURDISTAN-IPTV-Huawei.apk` (the Play build's playlist and channels, nothing from Google, no Movies Online) | `https://github.com/AndamAziz/kurdistan-iptv-releases/releases/download/huawei/KURDISTAN-IPTV-Huawei.apk`: always the newest Huawei build; never put it on Downloader |
 | Google Play | the bundle (`.aab`) | sent by CI only when asked (Actions → Build APK → Run workflow → send_to_play) |
 | Samsung / LG | `.wgt` / `.ipk` | built by hand (table below) |
 | VIDAA (Hisense) | `KURDISTAN-IPTV-VIDAA-<v>.zip` (player only, like Amazon) | `node vidaa/build.js <v>`; see `vidaa/README.md` |
@@ -54,6 +55,7 @@ sent with a bug blocks the next one until its test ends.
 | Store | File | Notes |
 |---|---|---|
 | Amazon | `KURDISTAN-IPTV-Amazon.apk` from the fixed Amazon address above (or the run's `KURDISTAN-IPTV-Amazon-1.0-<run>` artifact) | Check: versionCode = run number, cert SHA-256 `a1ae61bf…`, no `com/google/android/gms`, no install permission. Upload under **Upcoming Version → Replace** APK1. Category stays **Photo & Video → Video Player**. It must carry **no channels and no starting playlist** (its own `app/src/amazon/assets/channels.js`): Amazon refuses an app that streams from third-party sources out of the box. |
+| Huawei | `KURDISTAN-IPTV-Huawei.apk` from the fixed Huawei address above (or the run's `KURDISTAN-IPTV-Huawei-1.0-<run>` artifact) | Check: versionCode = run number, no `com/google/android/gms`, no `com/google/android/play/core`, no install permission. Upload in **AppGallery Connect → My apps → KURDISTAN IPTV → Version information → Software packages**. AppGallery updates it; the app never installs an APK itself. |
 | Samsung | `node tizen/build.js 1.0.<run>`, then sign with `tizen.bat package -t wgt -s KurdIPTV -- .` | Only when no model group is still in Testing. Choose **Optional** update and **Yes** to minor defects. Never choose Mandatory. |
 | LG | `node webos/build.js 1.0.<run>` and `RES=1280x720 node webos/build.js 1.0.<run>`, then `ares-package` | Upload both `.ipk` files (1920x1080 and 1280x720). This is not possible while QA is running. |
 

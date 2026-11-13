@@ -27,6 +27,11 @@ android {
                   Google Play Services or Google Play inside (Amazon refuses
                   those libraries, and a Fire TV has neither); the Appstore
                   updates it. app/src/nogms stands in for app/src/gms.
+         huawei - the APK for Huawei AppGallery. What the Play build has (the
+                  starting playlist and channels), but nothing from Google
+                  Play Services or Google Play inside: Huawei phones have
+                  neither, and AppGallery updates it. Like Amazon it takes
+                  app/src/nogms, and like Play it has no web player.
        Same applicationId, same key, same version number. */
     testOptions { unitTests.isIncludeAndroidResources = true }
 
@@ -35,6 +40,7 @@ android {
         create("direct") { dimension = "store" }
         create("play") { dimension = "store" }
         create("amazon") { dimension = "store" }
+        create("huawei") { dimension = "store" }
     }
 
     /* The Google parts (Chrome's network code, Google Play's update screen)
@@ -45,6 +51,11 @@ android {
         getByName("direct") { java.srcDir("src/gms/java") }
         getByName("play") { java.srcDir("src/gms/java") }
         getByName("amazon") {
+            java.srcDir("src/nogms/java")
+            java.srcDir("src/play/java")
+            resources.srcDir("src/play/resources")
+        }
+        getByName("huawei") {
             java.srcDir("src/nogms/java")
             java.srcDir("src/play/java")
             resources.srcDir("src/play/resources")
