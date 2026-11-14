@@ -78,9 +78,30 @@ page = patch(page, "</body>", '<script src="vidaa-extras.js"></script>\n</body>'
 page = patch(page, "  if(window.KIPTV_PROXY) u = window.KIPTV_PROXY + encodeURIComponent(url)", "  if(window.KIPTV_DIRECT) u = \"\";\n  else if(window.KIPTV_PROXY) u = window.KIPTV_PROXY + encodeURIComponent(url)", "direct MAC Portal requests");
 page = patch(page, "function updCheck(manual){\n", "function updCheck(manual){\n  if(window.KIPTV_NOUPD) return Promise.resolve(null);\n", "the quiet updater");
 page = patch(page, '  h += setRowC("c-green", ICON.down, d.updCheck,', '  if(!window.KIPTV_NOUPD) h += setRowC("c-green", ICON.down, d.updCheck,', "the update row");
+/* With --channels, ANDAM IPTV is the owner's own playlist and nothing else:
+   the playlist kept in a browser always takes today's address (a browser that
+   opened the TV page while it was a bare player kept ANDAM IPTV with no
+   address, and showed only the built-in channels for ever after) */
+if (WITH_CHANNELS) {
+  page = patch(page, "  if(!arr.some(function(p){ return p.id === DEFAULT_PLAYLIST.id })) arr.unshift(DEFAULT_PLAYLIST);\n  return arr;",
+    "  if(!arr.some(function(p){ return p.id === DEFAULT_PLAYLIST.id })) arr.unshift(DEFAULT_PLAYLIST);\n" +
+    "  arr.forEach(function(p){ if(p.id === DEFAULT_PLAYLIST.id){ p.type = \"m3u\"; p.url = DEFAULT_PLAYLIST.url } });\n  return arr;",
+    "ANDAM IPTV always on the owner's playlist");
+}
 fs.writeFileSync(path.join(out, "index.html"), page);
 
-fs.copyFileSync(WITH_CHANNELS ? full : bare, path.join(out, "channels.js"));
+/* With --channels: the owner's playlist address, and no built-in channels at
+   all, so ANDAM IPTV shows the playlist and never the app's backup list */
+if (WITH_CHANNELS) {
+  const m = /var DEFAULT_LIST_URL = "([^"]+)";/.exec(fs.readFileSync(full, "utf8"));
+  if (!m) { console.error("vidaa build: no DEFAULT_LIST_URL in " + full); process.exit(1); }
+  fs.writeFileSync(path.join(out, "channels.js"),
+    "/* KURDISTAN IPTV for VIDAA (tv.andam.uk): ANDAM IPTV is the owner's playlist only. */\n" +
+    "var DEFAULT_LIST_URL = " + JSON.stringify(m[1]) + ";\n" +
+    "var CHANNELS = [];\n");
+} else {
+  fs.copyFileSync(bare, path.join(out, "channels.js"));
+}
 fs.copyFileSync(path.join(assets, "welcome.mp3"), path.join(out, "welcome.mp3"));
 for (const name of ["vidaa-player.js", "vidaa-extras.js", "icon.png", "largeIcon.png", "splash.png"])
   fs.copyFileSync(path.join(here, name), path.join(out, name));
