@@ -15,6 +15,11 @@ goes to the `kiptv-admin` Supabase function with the owner's password.
   end date, or make it lifetime. The device limit is not changed from here.
 - **Devices**: every device on a code, when it was last seen and how many
   checks it made.
+- **Live**: the list fetches itself again every minute while the page is in
+  view (not while a time panel is open or a box is being typed in). The header
+  says when it was last updated and how many devices are online now (seen in
+  the last 30 minutes), with the same count on each code.
+- **History**: 30 days of one code, the devices of each day over its bar.
 
 The daily numbers come from the `kiptv_daily` table, written by `kiptv_check`
 (one row per code, per day in Kurdistan time, per device; kept for 60 days).
