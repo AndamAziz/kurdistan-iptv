@@ -108,7 +108,9 @@
   /* ======================== 2. M3U parsing ========================= */
   /* an attribute however it is written: any letter case, "x", 'x' or x */
   W.lastAttr = function (L, name) {
-    var re = new RegExp("(?:^|[\\s,])" + name.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&") +
+    /* an attribute may follow a space, a comma, or straight after the closing
+       quote of the one before (tvg-name="A"tvg-logo="..."group-title="...") */
+    var re = new RegExp("(?:^|[\\s,\"'])" + name.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&") +
       "\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)'|([^\\s,\"']+))", "gi");
     var m, v = "";
     while ((m = re.exec(L))) v = m[1] != null ? m[1] : (m[2] != null ? m[2] : (m[3] || ""));
