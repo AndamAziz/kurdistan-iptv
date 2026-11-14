@@ -708,6 +708,38 @@ html.tv .gcontact{margin-top:8px}
 html.tv .gc-lab{font-size:10px;gap:8px}
 html.tv .gc-row{margin-top:6px;gap:6px}
 html.tv .gc{flex-direction:row;gap:5px;padding:7px 4px;font-size:10px;border-radius:11px}
+/* the code screen fits every screen: it shrinks with the height, and scrolls
+   (never cuts) when a screen is shorter still */
+#gate{display:flex;flex-direction:column;align-items:center;overflow-x:hidden;overflow-y:auto;
+  -webkit-overflow-scrolling:touch;padding:max(18px,env(safe-area-inset-top)) 20px max(18px,env(safe-area-inset-bottom))}
+.gbox{margin:auto 0;width:min(360px,100%)}
+.glogo{width:clamp(78px,15vh,132px);height:clamp(60px,12.5vh,112px);margin-bottom:clamp(4px,1.2vh,10px)}
+.gbox h1{font-size:clamp(19px,3vh,24px);margin-bottom:clamp(6px,1.4vh,12px)}
+.gbox p{margin-bottom:clamp(12px,2.6vh,24px)}
+.pins{gap:clamp(6px,1.6vw,9px)}
+.pin{width:clamp(40px,12.6vw,50px);height:clamp(46px,7.4vh,60px)}
+.keys{max-width:282px;gap:clamp(7px,1.2vh,10px);margin-top:clamp(12px,2.6vh,24px)}
+.key{height:clamp(42px,6.6vh,56px)}
+.key.ghost{color:var(--text);opacity:.8}
+.gmsg{height:clamp(16px,2.4vh,24px);padding-top:clamp(4px,1.2vh,12px)}
+#gate .gbtn{margin-top:clamp(8px,1.4vh,14px);padding:clamp(12px,1.9vh,16px)}
+.gcontact{margin-top:clamp(12px,2.4vh,20px)}
+.gc-row{margin-top:clamp(8px,1.4vh,12px)}
+/* the three ways to reach us lie down into one line each: half the height */
+.gc{flex-direction:row;justify-content:center;gap:7px;padding:clamp(9px,1.5vh,12px) 6px;font-size:12px;border-radius:13px}
+.gc svg{width:17px;height:17px;flex:none}
+/* a wide screen (tablet, computer) gets a little more room */
+@media (min-width:700px) and (min-height:900px){
+  .gbox{width:440px}
+  .glogo{width:150px;height:126px}
+  .gbox h1{font-size:28px}
+  .gbox p{font-size:15px}
+  .pin{width:58px;height:70px;font-size:26px}
+  .keys{max-width:340px;gap:12px}
+  .key{height:64px;font-size:23px}
+  #gate .gbtn{padding:18px;font-size:17px}
+  .gc{font-size:13.5px;padding:14px 6px}
+}
 html.tv .gc svg{width:14px;height:14px}
 .shake{animation:shake .4s}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-9px)}75%{transform:translateX(9px)}}
@@ -8071,9 +8103,10 @@ function drawPins(){
 function keypadHTML(attr){
   var a = "data-" + (attr || "k"), html = "";
   for(var i = 1; i <= 9; i++) html += '<button class="key" '+a+'="'+i+'">'+i+'</button>';
-  return html + '<button class="key ghost" '+a+'="back" aria-label="back">'+KEY_BACK+'</button>'
+  /* the last row as on a phone: an empty place, 0, and delete on the right */
+  return html + '<button class="key hide" tabindex="-1"></button>'
               + '<button class="key" '+a+'="0">0</button>'
-              + '<button class="key hide" tabindex="-1"></button>';
+              + '<button class="key ghost" '+a+'="back" aria-label="back">'+KEY_BACK+'</button>';
 }
 function drawKeys(){
   var k = $("keys");

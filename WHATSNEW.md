@@ -1,4 +1,6 @@
 [en]
+The activation screen fits every screen: on a small phone the Activate button and the contact buttons are no longer cut off, the keypad has delete on the right of 0, and tablets get larger keys.
+
 GitHub build only: Movies Online plays again. VidAPI's public player now answers "403 invalid api token"; the first server is now the PLUSCHANNEL player (mv.andam.uk), which carries its own token.
 
 GitHub build only: Movies Online now has a Kurdish row (films and series made in Kurdish), "See all" on any row keeps loading as you scroll instead of stopping at 40 titles, and anime, which VidAPI does not carry, is left out.
@@ -91,6 +93,8 @@ top, fading into the page, the poster on its edge with the title, rating and
 genres beside it, and a full-width Play button underneath.
 
 [ku]
+شاشەی چالاککردن لە هەموو شاشەیەکدا جێی دەبێتەوە: لە مۆبایلی بچووکدا دوگمەی چالاککردن و دوگمەکانی پەیوەندی چیتر نابڕدرێن، دوگمەی سڕینەوە لە لای ڕاستی 0 ـە، و لە تابلێت دوگمەکان گەورەترن.
+
 تەنها ڤێرشنی GitHub: فیلم و زنجیرەی ئۆنلاین دووبارە کار دەکەن. پلەیەری گشتی VidAPI ئێستا «403 invalid api token» دەدات؛ سێرڤەری یەکەم ئێستا پلەیەری PLUSCHANNEL ە (mv.andam.uk) کە تۆکنی خۆی هەیە.
 
 تەنها ڤێرشنی GitHub: لە فیلم و زنجیرەی ئۆنلاین ڕیزێکی کوردی زیاد کرا، «بینینی هەموو» لە هەر ڕیزێک بە چوونە خوارەوە بەردەوام فیلمی زیاتر دێنێت لەبری ئەوەی لە 40 دا بوەستێت، و ئەنیمە لابرا چونکە VidAPI نییەتی.
@@ -177,6 +181,8 @@ z و x هەمان کار دەکەن.
 تەنیشتی، و دوگمەی Play بە پانی لە خوارەوە.
 
 [ar]
+شاشة التفعيل تناسب كل الشاشات: على الهاتف الصغير لم يعد زر التفعيل وأزرار التواصل مقطوعة، وزر الحذف أصبح على يمين 0، والأزرار أكبر على الأجهزة اللوحية.
+
 نسخة GitHub فقط: عادت أفلام ومسلسلات أونلاين للعمل. مشغّل VidAPI العام يرد الآن بـ«403 invalid api token»، والخادم الأول أصبح مشغّل PLUSCHANNEL (mv.andam.uk) الذي يحمل رمزه الخاص.
 
 نسخة GitHub فقط: صف كردي جديد في أفلام ومسلسلات أونلاين، و«عرض الكل» في أي صف يواصل التحميل أثناء التمرير بدل التوقف عند 40 عنواناً، وحُذف الأنمي لأن VidAPI لا يوفّره.
