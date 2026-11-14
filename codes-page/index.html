@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KURDISTAN IPTV Codes</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* A tool that lives beside the app it serves, so it wears the app's own
+   night palette on purpose - one committed look, painted explicitly. */
+:root{
+  color-scheme: dark;
+  --bg:#080B10; --bg2:#0D121A; --surface:#121926; --surface2:#182231;
+  --line:#1E2734; --line2:#2A3648;
+  --text:#EAF0F7; --muted:#8B97A6; --muted2:#5E6977;
+  --accent:#E63E46; --accent2:#FF6A5E;
+  --live:#3FBF7F; --soon:#E8A33D; --dead:#6B7787;
+  --r:14px;
+  direction: ltr;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:"Inter","Segoe UI",system-ui,-apple-system,sans-serif;
+  font-size:14.5px; line-height:1.6; direction:ltr;
+  padding-block:0; -webkit-text-size-adjust:100%;
+}
+h1,h2,h3{font-family:"Inter","Segoe UI",system-ui,sans-serif;margin:0;text-wrap:balance}
+.mono{font-family:"JetBrains Mono",ui-monospace,monospace;direction:ltr;font-variant-numeric:tabular-nums}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent2);outline-offset:2px;border-radius:6px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.wrap{max-width:1020px;margin:0 auto;padding:0 16px}
+
+/* ---------- the way in ---------- */
+#gate{min-height:100svh;display:grid;place-items:center;padding:32px 16px}
+#gate .box{width:100%;max-width:360px;text-align:center}
+.mark{width:96px;height:80px;margin:0 auto 18px;filter:drop-shadow(0 8px 26px rgba(230,62,70,.28))}
+#gate h1{font-size:19px;letter-spacing:.5px;font-weight:800}
+#gate h1 em{font-style:normal;color:var(--accent2)}
+#gate p{color:var(--muted);font-size:13px;margin:6px 0 22px}
+.field{display:block;width:100%;padding:14px;border-radius:var(--r);background:var(--surface);
+  border:1px solid var(--line);outline:none;text-align:center;letter-spacing:1px}
+.field:focus{border-color:rgba(230,62,70,.55)}
+.go{width:100%;margin-top:12px;padding:14px;border-radius:var(--r);font-weight:700;
+  background:linear-gradient(100deg,var(--accent),var(--accent2));color:#fff;
+  box-shadow:0 12px 26px rgba(230,62,70,.28)}
+.go:disabled{background:var(--surface2);color:var(--muted2);box-shadow:none;cursor:default}
+.err{min-height:22px;padding-top:10px;color:#FF8A8A;font-size:12.5px;font-weight:600}
+
+/* ---------- the tool ---------- */
+#app{display:none}
+#app.on{display:block}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:rgba(8,11,16,.92);
+  backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:12px;padding-block:12px}
+.top .m{width:34px;height:28px;flex:none}
+.top h2{font-size:15.5px;font-weight:800;flex:1;min-width:0}
+.top h2 s{display:block;text-decoration:none;font-size:11.5px;font-weight:600;color:var(--muted2);
+  font-family:"Inter",sans-serif}
+.ghost{padding:8px 12px;border-radius:10px;border:1px solid var(--line);color:var(--muted);
+  font-size:12.5px;font-weight:700;background:var(--surface)}
+.ghost:hover{background:var(--surface2);color:var(--text)}
+
+section{padding-block:22px}
+.lede{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+.lede h3{font-size:13px;font-weight:800;letter-spacing:1px;color:var(--muted)}
+.lede span{font-size:12px;color:var(--muted2)}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px}
+.row2{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end}
+@media (max-width:620px){.row2{grid-template-columns:1fr}}
+label{display:block;font-size:11.5px;font-weight:700;color:var(--muted2);margin-bottom:7px}
+.inp{width:100%;padding:12px 14px;border-radius:12px;background:var(--bg2);border:1px solid var(--line);
+  outline:none}
+.inp:focus{border-color:rgba(230,62,70,.5)}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}
+.chip{padding:8px 13px;border-radius:999px;border:1px solid var(--line);background:var(--bg2);
+  color:var(--muted);font-size:12.5px;font-weight:700}
+.chip[aria-pressed="true"]{border-color:transparent;color:#fff;
+  background:linear-gradient(100deg,var(--accent),var(--accent2))}
+.make{margin-top:16px;padding:13px 22px;border-radius:12px;font-weight:800;
+  background:linear-gradient(100deg,var(--accent),var(--accent2));color:#fff}
+.make:disabled{background:var(--surface2);color:var(--muted2);cursor:default}
+
+/* the new code, the one thing on the page worth shouting about */
+#made{margin-top:16px;display:none;align-items:center;gap:14px;flex-wrap:wrap;
+  padding:16px 18px;border-radius:16px;border:1px solid rgba(230,62,70,.45);
+  background:linear-gradient(100deg,rgba(230,62,70,.14),rgba(255,106,94,.05))}
+#made.on{display:flex}
+#made b{font-size:34px;font-weight:700;letter-spacing:6px;flex:1;min-width:150px}
+#made i{font-style:normal;font-size:12px;color:var(--muted);display:block;letter-spacing:0;
+  font-family:"Inter",sans-serif}
+
+/* ---------- the codes ---------- */
+.tools{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:12px}
+.tools .inp{flex:1;min-width:170px;padding:10px 13px}
+.list{display:flex;flex-direction:column;gap:9px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+  padding:13px 15px;display:grid;gap:10px;
+  grid-template-columns:auto 1fr auto;align-items:center}
+.card.dim{opacity:.55}
+.card .code{font-size:19px;font-weight:700;letter-spacing:3px;cursor:pointer;border-bottom:1px dashed var(--line2)}
+.card .who{min-width:0}
+.card .who b{display:block;font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .who s{display:block;text-decoration:none;font-size:11.5px;color:var(--muted2);margin-top:2px}
+.pill{font-size:10.5px;font-weight:800;padding:4px 9px;border-radius:7px;white-space:nowrap}
+.pill.live{background:rgba(63,191,127,.14);color:var(--live)}
+.pill.soon{background:rgba(232,163,61,.15);color:var(--soon)}
+.pill.dead{background:var(--surface2);color:var(--dead)}
+.acts{grid-column:1/-1;display:flex;gap:7px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:10px}
+.acts button{padding:7px 11px;border-radius:9px;border:1px solid var(--line);background:var(--bg2);
+  font-size:12px;font-weight:700;color:var(--muted)}
+.acts button:hover{color:var(--text);background:var(--surface2)}
+.acts .danger{color:#FF8A8A}
+.acts .yes{color:#fff;background:rgba(230,62,70,.75);border-color:transparent}
+.empty{text-align:center;color:var(--muted2);padding:40px 10px;font-size:13px}
+
+.foot{border-top:1px solid var(--line);margin-top:26px}
+.foot .wrap{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding-block:18px;
+  font-size:12px;color:var(--muted2)}
+.foot .wrap span{flex:1;min-width:120px}
+
+#toast{position:fixed;inset-inline:0;bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:20;
+  display:flex;justify-content:center;pointer-events:none;opacity:0;transition:opacity .2s}
+#toast.on{opacity:1}
+#toast b{background:var(--surface2);border:1px solid var(--line2);padding:10px 18px;border-radius:999px;
+  font-size:12.5px;font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,.55)}
+
+/* ---------- v2 ---------- */
+.stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px;padding-top:18px}
+@media (max-width:980px){.stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:560px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;text-align:start;cursor:pointer}
+.stat[aria-pressed="true"]{border-color:rgba(230,62,70,.6)}
+.stat b{display:block;font-size:22px;font-weight:800;font-family:"Inter",sans-serif}
+.stat s{display:block;text-decoration:none;font-size:11.5px;color:var(--muted);font-weight:700}
+.stat.live b{color:var(--live)} .stat.soon b{color:var(--soon)} .stat.dead b{color:var(--dead)}
+.sub{font-size:11.5px;font-weight:700;color:var(--muted2);margin:14px 0 0}
+.share{display:flex;gap:7px;flex-wrap:wrap}
+.share a,.share button{padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);
+  font-size:12.5px;font-weight:700;color:var(--text);text-decoration:none}
+.share .wa{background:#1f7a4d;border-color:transparent}
+.share .tg{background:#1f6fa8;border-color:transparent}
+.sort{padding:10px 12px;border-radius:12px;background:var(--bg2);border:1px solid var(--line);color:var(--text)}
+.tag{font-size:10px;font-weight:800;padding:3px 7px;border-radius:6px;margin-inline-start:6px;vertical-align:middle}
+.tag.rev{background:rgba(66,133,244,.18);color:#8AB4F8}
+.tag.inf{background:rgba(63,191,127,.14);color:var(--live)}
+.card.soon{border-color:rgba(232,163,61,.45)}
+.act{grid-column:1/-1;display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted2)}
+.act b{color:var(--text);font-size:13.5px;font-weight:800;margin-right:3px}
+.act .hot b{color:#4ADE80}
+.spark{display:flex;align-items:flex-end;gap:2px;height:26px;padding:0 2px}
+.spark i{display:block;width:7px;min-height:2px;border-radius:2px 2px 0 0;background:rgba(255,255,255,.14)}
+.spark i.on{background:linear-gradient(180deg,#FFB547,#F07A1C)}
+.spark i.now{outline:1px solid rgba(255,255,255,.55);outline-offset:1px}
+.acts .minus{color:#FFB547}
+.acts .dt{padding:6px 9px;border-radius:9px;border:1px solid var(--line);background:var(--bg2);color:var(--text);font:inherit;font-size:12.5px;color-scheme:dark}
+.acts .sep{width:1px;align-self:stretch;background:var(--line);margin:0 3px}
+.devs{grid-column:1/-1;display:flex;flex-direction:column;gap:6px;background:var(--bg2);border:1px solid var(--line);
+  border-radius:12px;padding:10px}
+.devs .d{display:flex;gap:10px;align-items:center;font-size:12px;color:var(--muted)}
+.devs .d span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.devs .d button{padding:5px 9px;border-radius:8px;border:1px solid var(--line);font-size:11.5px;font-weight:700;color:#FF8A8A}
+.confirm{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12px;color:#FF8A8A}
+.confirm .inp{width:130px;padding:7px 10px;text-align:center}
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="box">
+    <div class="mark"><svg viewBox="0 0 100 100" width="100%" height="100%"><defs> <linearGradient id="fgF1" x1="0" y1="0" x2="0" y2="1"> <stop offset="0%" stop-color="#ED2024"/><stop offset="33.33%" stop-color="#ED2024"/> <stop offset="33.33%" stop-color="#FFFFFF"/><stop offset="66.66%" stop-color="#FFFFFF"/> <stop offset="66.66%" stop-color="#2AA14B"/><stop offset="100%" stop-color="#2AA14B"/></linearGradient> <linearGradient id="gdF1" x1="0" y1="0" x2="1" y2="1"> <stop offset="0%" stop-color="#FFD84D"/><stop offset="100%" stop-color="#F0A81C"/></linearGradient> <linearGradient id="bgF1" x1="0" y1="0" x2="1" y2="1"> <stop offset="0%" stop-color="#1A2330"/><stop offset="100%" stop-color="#090D13"/></linearGradient></defs> <rect width="100" height="100" rx="26" fill="url(#bgF1)"/> <rect width="100" height="100" rx="26" fill="none" stroke="rgba(255,255,255,.10)"/> <g transform="translate(50,50) scale(.86) translate(-50,-50)"><path d="M 81.27 87.69 C 80.83 87.81 77.87 87.71 77.54 87.69 C 77.20 87.66 77.10 87.70 76.79 87.39 C 76.48 87.08 73.82 84.29 73.43 83.58 C 73.05 82.87 72.06 78.53 71.64 77.91 C 71.22 77.29 68.33 75.77 67.84 75.30 C 67.34 74.82 65.34 71.89 65.00 71.57 C 64.66 71.24 63.73 71.00 63.36 70.97 C 62.99 70.94 60.43 71.18 60.07 71.12 C 59.72 71.06 58.81 70.32 58.66 70.15 C 58.51 69.98 58.10 69.13 58.06 68.81 C 58.01 68.48 58.01 66.20 58.06 65.82 C 58.10 65.44 58.62 63.99 58.66 63.73 C 58.69 63.47 58.60 62.63 58.51 62.39 C 58.42 62.14 57.61 60.65 57.46 60.45 C 57.31 60.24 56.65 59.71 56.49 59.63 C 56.33 59.54 55.52 59.33 55.30 59.33 C 55.07 59.33 53.90 59.37 53.51 59.63 C 53.12 59.88 50.59 62.57 50.07 62.76 C 49.56 62.95 47.30 62.19 46.64 62.16 C 45.98 62.14 41.79 62.49 41.27 62.46 C 40.74 62.44 39.92 62.04 39.63 61.87 C 39.34 61.69 37.60 60.28 37.39 60.07 C 37.18 59.87 37.12 59.37 36.87 59.10 C 36.61 58.84 34.39 56.96 34.03 56.57 C 33.67 56.17 32.29 54.06 32.01 53.81 C 31.74 53.55 30.89 53.23 30.37 53.21 C 29.86 53.19 25.79 53.32 25.15 53.51 C 24.51 53.70 22.21 55.54 21.87 55.75 C 21.52 55.95 20.76 56.17 20.52 56.19 C 20.29 56.22 19.03 56.12 18.73 56.04 C 18.43 55.97 16.78 55.21 16.49 55.15 C 16.20 55.09 15.18 55.22 14.85 55.30 C 14.53 55.38 12.54 56.13 12.16 56.19 C 11.78 56.26 10.15 56.25 9.78 56.19 C 9.41 56.14 7.52 55.48 7.24 55.45 C 6.96 55.41 6.24 55.61 6.04 55.75 C 5.85 55.88 4.96 57.06 4.70 57.24 C 4.44 57.42 2.85 58.07 2.61 58.13 C 2.38 58.20 1.72 58.17 1.57 58.13 C 1.42 58.10 0.66 57.86 0.60 57.61 C 0.54 57.36 0.79 55.12 0.75 54.78 C 0.70 54.43 0.06 53.24 0.00 52.99 C -0.06 52.73 -0.03 51.54 0.00 51.34 C 0.03 51.14 0.13 50.71 0.45 50.30 C 0.76 49.88 3.64 46.38 4.18 45.82 C 4.72 45.26 7.24 43.35 7.61 42.84 C 7.98 42.32 8.82 39.56 9.10 38.96 C 9.38 38.35 10.83 35.54 11.34 34.78 C 11.86 34.01 15.60 29.60 15.97 28.81 C 16.34 28.01 16.13 24.68 16.27 24.18 C 16.41 23.68 17.52 22.39 17.84 22.16 C 18.15 21.93 20.10 21.20 20.52 21.12 C 20.95 21.04 22.91 21.03 23.51 21.12 C 24.10 21.21 27.68 22.26 28.43 22.31 C 29.18 22.37 32.63 21.90 33.51 21.87 C 34.38 21.83 39.46 21.90 40.07 21.87 C 40.69 21.83 41.39 21.56 41.72 21.42 C 42.04 21.27 43.96 20.03 44.40 19.93 C 44.85 19.82 47.35 20.09 47.69 20.07 C 48.02 20.06 48.63 19.96 48.88 19.78 C 49.13 19.59 50.78 18.03 51.04 17.61 C 51.31 17.19 52.07 14.58 52.39 14.18 C 52.71 13.78 54.92 12.45 55.30 12.31 C 55.67 12.17 56.89 12.21 57.39 12.31 C 57.89 12.42 61.54 13.40 61.94 13.73 C 62.34 14.06 62.52 16.37 62.69 16.72 C 62.85 17.06 63.90 17.96 64.18 18.36 C 64.46 18.76 66.17 21.74 66.42 22.09 C 66.67 22.44 67.31 22.95 67.54 23.06 C 67.77 23.17 69.27 23.42 69.48 23.51 C 69.68 23.59 70.19 23.96 70.30 24.18 C 70.40 24.40 70.69 26.00 70.90 26.42 C 71.10 26.83 72.69 29.33 72.99 29.70 C 73.28 30.07 74.59 31.12 74.78 31.34 C 74.97 31.57 75.47 32.34 75.52 32.69 C 75.58 33.03 75.62 35.43 75.52 35.97 C 75.42 36.51 74.29 39.31 74.18 39.85 C 74.07 40.39 73.99 42.75 74.03 43.13 C 74.07 43.51 74.71 44.65 74.78 44.93 C 74.84 45.21 74.81 46.50 74.93 46.87 C 75.04 47.24 76.10 49.57 76.27 49.85 C 76.44 50.14 77.08 50.59 77.24 50.67 C 77.40 50.76 78.14 50.98 78.43 50.97 C 78.72 50.96 80.72 50.32 81.12 50.52 C 81.52 50.72 83.41 53.33 83.81 53.66 C 84.20 53.98 85.93 54.55 86.34 54.85 C 86.76 55.15 88.78 57.45 89.33 57.69 C 89.88 57.92 93.17 57.59 93.66 57.99 C 94.14 58.38 95.59 62.55 95.82 62.99 C 96.06 63.42 96.61 63.72 96.79 63.81 C 96.98 63.89 98.04 63.89 98.28 64.10 C 98.52 64.32 99.87 66.31 100.00 66.72 C 100.13 67.12 100.12 69.17 100.00 69.55 C 99.88 69.93 98.50 71.53 98.36 71.79 C 98.21 72.05 98.06 72.76 98.06 72.99 C 98.06 73.21 98.27 74.54 98.36 74.78 C 98.45 75.01 99.18 75.88 99.25 76.12 C 99.33 76.35 99.45 77.61 99.40 77.91 C 99.36 78.21 99.13 79.95 98.66 80.15 C 98.18 80.35 93.57 80.40 93.06 80.52 C 92.54 80.65 91.92 81.56 91.79 81.79 C 91.66 82.02 91.51 83.29 91.34 83.58 C 91.18 83.88 89.87 85.55 89.63 85.75 C 89.39 85.94 88.60 86.17 88.13 86.19 C 87.66 86.22 83.87 85.93 83.36 86.04 C 82.84 86.16 81.71 87.56 81.27 87.69 Z" fill="url(#fgF1)"/> <path d="M 49.38 42.25 L 49.99 33.95 L 50.60 42.25 Z M 51.41 42.38 L 54.44 34.62 L 52.58 42.74 Z M 53.32 43.09 L 58.50 36.57 L 54.33 43.78 Z M 54.93 44.34 L 61.80 39.64 L 55.69 45.30 Z M 56.10 46.00 L 64.06 43.54 L 56.55 47.14 Z M 56.73 47.94 L 65.06 47.93 L 56.82 49.16 Z M 56.76 49.98 L 64.72 52.42 L 56.49 51.17 Z M 56.19 51.93 L 63.08 56.62 L 55.58 52.99 Z M 55.07 53.63 L 60.27 60.14 L 54.17 54.47 Z M 53.49 54.93 L 56.55 62.67 L 52.39 55.46 Z M 51.61 55.70 L 52.24 64.00 L 50.40 55.88 Z M 49.58 55.88 L 47.74 64.00 L 48.37 55.70 Z M 47.59 55.46 L 43.43 62.67 L 46.49 54.93 Z M 45.81 54.47 L 39.71 60.14 L 44.91 53.63 Z M 44.40 52.99 L 36.90 56.62 L 43.79 51.93 Z M 43.49 51.17 L 35.26 52.42 L 43.22 49.98 Z M 43.16 49.16 L 34.92 47.93 L 43.25 47.94 Z M 43.43 47.14 L 35.92 43.54 L 43.88 46.00 Z M 44.29 45.30 L 38.18 39.64 L 45.05 44.34 Z M 45.65 43.78 L 41.48 36.57 L 46.66 43.09 Z M 47.40 42.74 L 45.54 34.62 L 48.57 42.38 Z" fill="url(#gdF1)"/><circle cx="49.99" cy="49.06" r="7.23" fill="url(#gdF1)"/> <path d="M 81.27 87.69 C 80.83 87.81 77.87 87.71 77.54 87.69 C 77.20 87.66 77.10 87.70 76.79 87.39 C 76.48 87.08 73.82 84.29 73.43 83.58 C 73.05 82.87 72.06 78.53 71.64 77.91 C 71.22 77.29 68.33 75.77 67.84 75.30 C 67.34 74.82 65.34 71.89 65.00 71.57 C 64.66 71.24 63.73 71.00 63.36 70.97 C 62.99 70.94 60.43 71.18 60.07 71.12 C 59.72 71.06 58.81 70.32 58.66 70.15 C 58.51 69.98 58.10 69.13 58.06 68.81 C 58.01 68.48 58.01 66.20 58.06 65.82 C 58.10 65.44 58.62 63.99 58.66 63.73 C 58.69 63.47 58.60 62.63 58.51 62.39 C 58.42 62.14 57.61 60.65 57.46 60.45 C 57.31 60.24 56.65 59.71 56.49 59.63 C 56.33 59.54 55.52 59.33 55.30 59.33 C 55.07 59.33 53.90 59.37 53.51 59.63 C 53.12 59.88 50.59 62.57 50.07 62.76 C 49.56 62.95 47.30 62.19 46.64 62.16 C 45.98 62.14 41.79 62.49 41.27 62.46 C 40.74 62.44 39.92 62.04 39.63 61.87 C 39.34 61.69 37.60 60.28 37.39 60.07 C 37.18 59.87 37.12 59.37 36.87 59.10 C 36.61 58.84 34.39 56.96 34.03 56.57 C 33.67 56.17 32.29 54.06 32.01 53.81 C 31.74 53.55 30.89 53.23 30.37 53.21 C 29.86 53.19 25.79 53.32 25.15 53.51 C 24.51 53.70 22.21 55.54 21.87 55.75 C 21.52 55.95 20.76 56.17 20.52 56.19 C 20.29 56.22 19.03 56.12 18.73 56.04 C 18.43 55.97 16.78 55.21 16.49 55.15 C 16.20 55.09 15.18 55.22 14.85 55.30 C 14.53 55.38 12.54 56.13 12.16 56.19 C 11.78 56.26 10.15 56.25 9.78 56.19 C 9.41 56.14 7.52 55.48 7.24 55.45 C 6.96 55.41 6.24 55.61 6.04 55.75 C 5.85 55.88 4.96 57.06 4.70 57.24 C 4.44 57.42 2.85 58.07 2.61 58.13 C 2.38 58.20 1.72 58.17 1.57 58.13 C 1.42 58.10 0.66 57.86 0.60 57.61 C 0.54 57.36 0.79 55.12 0.75 54.78 C 0.70 54.43 0.06 53.24 0.00 52.99 C -0.06 52.73 -0.03 51.54 0.00 51.34 C 0.03 51.14 0.13 50.71 0.45 50.30 C 0.76 49.88 3.64 46.38 4.18 45.82 C 4.72 45.26 7.24 43.35 7.61 42.84 C 7.98 42.32 8.82 39.56 9.10 38.96 C 9.38 38.35 10.83 35.54 11.34 34.78 C 11.86 34.01 15.60 29.60 15.97 28.81 C 16.34 28.01 16.13 24.68 16.27 24.18 C 16.41 23.68 17.52 22.39 17.84 22.16 C 18.15 21.93 20.10 21.20 20.52 21.12 C 20.95 21.04 22.91 21.03 23.51 21.12 C 24.10 21.21 27.68 22.26 28.43 22.31 C 29.18 22.37 32.63 21.90 33.51 21.87 C 34.38 21.83 39.46 21.90 40.07 21.87 C 40.69 21.83 41.39 21.56 41.72 21.42 C 42.04 21.27 43.96 20.03 44.40 19.93 C 44.85 19.82 47.35 20.09 47.69 20.07 C 48.02 20.06 48.63 19.96 48.88 19.78 C 49.13 19.59 50.78 18.03 51.04 17.61 C 51.31 17.19 52.07 14.58 52.39 14.18 C 52.71 13.78 54.92 12.45 55.30 12.31 C 55.67 12.17 56.89 12.21 57.39 12.31 C 57.89 12.42 61.54 13.40 61.94 13.73 C 62.34 14.06 62.52 16.37 62.69 16.72 C 62.85 17.06 63.90 17.96 64.18 18.36 C 64.46 18.76 66.17 21.74 66.42 22.09 C 66.67 22.44 67.31 22.95 67.54 23.06 C 67.77 23.17 69.27 23.42 69.48 23.51 C 69.68 23.59 70.19 23.96 70.30 24.18 C 70.40 24.40 70.69 26.00 70.90 26.42 C 71.10 26.83 72.69 29.33 72.99 29.70 C 73.28 30.07 74.59 31.12 74.78 31.34 C 74.97 31.57 75.47 32.34 75.52 32.69 C 75.58 33.03 75.62 35.43 75.52 35.97 C 75.42 36.51 74.29 39.31 74.18 39.85 C 74.07 40.39 73.99 42.75 74.03 43.13 C 74.07 43.51 74.71 44.65 74.78 44.93 C 74.84 45.21 74.81 46.50 74.93 46.87 C 75.04 47.24 76.10 49.57 76.27 49.85 C 76.44 50.14 77.08 50.59 77.24 50.67 C 77.40 50.76 78.14 50.98 78.43 50.97 C 78.72 50.96 80.72 50.32 81.12 50.52 C 81.52 50.72 83.41 53.33 83.81 53.66 C 84.20 53.98 85.93 54.55 86.34 54.85 C 86.76 55.15 88.78 57.45 89.33 57.69 C 89.88 57.92 93.17 57.59 93.66 57.99 C 94.14 58.38 95.59 62.55 95.82 62.99 C 96.06 63.42 96.61 63.72 96.79 63.81 C 96.98 63.89 98.04 63.89 98.28 64.10 C 98.52 64.32 99.87 66.31 100.00 66.72 C 100.13 67.12 100.12 69.17 100.00 69.55 C 99.88 69.93 98.50 71.53 98.36 71.79 C 98.21 72.05 98.06 72.76 98.06 72.99 C 98.06 73.21 98.27 74.54 98.36 74.78 C 98.45 75.01 99.18 75.88 99.25 76.12 C 99.33 76.35 99.45 77.61 99.40 77.91 C 99.36 78.21 99.13 79.95 98.66 80.15 C 98.18 80.35 93.57 80.40 93.06 80.52 C 92.54 80.65 91.92 81.56 91.79 81.79 C 91.66 82.02 91.51 83.29 91.34 83.58 C 91.18 83.88 89.87 85.55 89.63 85.75 C 89.39 85.94 88.60 86.17 88.13 86.19 C 87.66 86.22 83.87 85.93 83.36 86.04 C 82.84 86.16 81.71 87.56 81.27 87.69 Z" fill="none" stroke="rgba(0,0,0,.35)" stroke-width=".8"/></g></svg></div>
+    <h1>KURDISTAN <em>IPTV</em></h1>
+    <p>Activation codes</p>
+    <input id="pw" class="field mono" type="password" autocomplete="current-password" placeholder="••••••••••" aria-label="Password">
+    <button id="enter" class="go">Sign in</button>
+    <div id="gerr" class="err" role="status"></div>
+  </div>
+</div>
+
+<div id="app">
+  <header class="top">
+    <div class="wrap">
+      <div class="m"><svg viewBox="0 0 100 100" width="100%" height="100%"><defs> <linearGradient id="fgF9" x1="0" y1="0" x2="0" y2="1"> <stop offset="0%" stop-color="#ED2024"/><stop offset="33.33%" stop-color="#ED2024"/> <stop offset="33.33%" stop-color="#FFFFFF"/><stop offset="66.66%" stop-color="#FFFFFF"/> <stop offset="66.66%" stop-color="#2AA14B"/><stop offset="100%" stop-color="#2AA14B"/></linearGradient> <linearGradient id="gdF9" x1="0" y1="0" x2="1" y2="1"> <stop offset="0%" stop-color="#FFD84D"/><stop offset="100%" stop-color="#F0A81C"/></linearGradient> <linearGradient id="bgF9" x1="0" y1="0" x2="1" y2="1"> <stop offset="0%" stop-color="#1A2330"/><stop offset="100%" stop-color="#090D13"/></linearGradient></defs> <rect width="100" height="100" rx="26" fill="url(#bgF9)"/> <rect width="100" height="100" rx="26" fill="none" stroke="rgba(255,255,255,.10)"/> <g transform="translate(50,50) scale(.86) translate(-50,-50)"><path d="M 81.27 87.69 C 80.83 87.81 77.87 87.71 77.54 87.69 C 77.20 87.66 77.10 87.70 76.79 87.39 C 76.48 87.08 73.82 84.29 73.43 83.58 C 73.05 82.87 72.06 78.53 71.64 77.91 C 71.22 77.29 68.33 75.77 67.84 75.30 C 67.34 74.82 65.34 71.89 65.00 71.57 C 64.66 71.24 63.73 71.00 63.36 70.97 C 62.99 70.94 60.43 71.18 60.07 71.12 C 59.72 71.06 58.81 70.32 58.66 70.15 C 58.51 69.98 58.10 69.13 58.06 68.81 C 58.01 68.48 58.01 66.20 58.06 65.82 C 58.10 65.44 58.62 63.99 58.66 63.73 C 58.69 63.47 58.60 62.63 58.51 62.39 C 58.42 62.14 57.61 60.65 57.46 60.45 C 57.31 60.24 56.65 59.71 56.49 59.63 C 56.33 59.54 55.52 59.33 55.30 59.33 C 55.07 59.33 53.90 59.37 53.51 59.63 C 53.12 59.88 50.59 62.57 50.07 62.76 C 49.56 62.95 47.30 62.19 46.64 62.16 C 45.98 62.14 41.79 62.49 41.27 62.46 C 40.74 62.44 39.92 62.04 39.63 61.87 C 39.34 61.69 37.60 60.28 37.39 60.07 C 37.18 59.87 37.12 59.37 36.87 59.10 C 36.61 58.84 34.39 56.96 34.03 56.57 C 33.67 56.17 32.29 54.06 32.01 53.81 C 31.74 53.55 30.89 53.23 30.37 53.21 C 29.86 53.19 25.79 53.32 25.15 53.51 C 24.51 53.70 22.21 55.54 21.87 55.75 C 21.52 55.95 20.76 56.17 20.52 56.19 C 20.29 56.22 19.03 56.12 18.73 56.04 C 18.43 55.97 16.78 55.21 16.49 55.15 C 16.20 55.09 15.18 55.22 14.85 55.30 C 14.53 55.38 12.54 56.13 12.16 56.19 C 11.78 56.26 10.15 56.25 9.78 56.19 C 9.41 56.14 7.52 55.48 7.24 55.45 C 6.96 55.41 6.24 55.61 6.04 55.75 C 5.85 55.88 4.96 57.06 4.70 57.24 C 4.44 57.42 2.85 58.07 2.61 58.13 C 2.38 58.20 1.72 58.17 1.57 58.13 C 1.42 58.10 0.66 57.86 0.60 57.61 C 0.54 57.36 0.79 55.12 0.75 54.78 C 0.70 54.43 0.06 53.24 0.00 52.99 C -0.06 52.73 -0.03 51.54 0.00 51.34 C 0.03 51.14 0.13 50.71 0.45 50.30 C 0.76 49.88 3.64 46.38 4.18 45.82 C 4.72 45.26 7.24 43.35 7.61 42.84 C 7.98 42.32 8.82 39.56 9.10 38.96 C 9.38 38.35 10.83 35.54 11.34 34.78 C 11.86 34.01 15.60 29.60 15.97 28.81 C 16.34 28.01 16.13 24.68 16.27 24.18 C 16.41 23.68 17.52 22.39 17.84 22.16 C 18.15 21.93 20.10 21.20 20.52 21.12 C 20.95 21.04 22.91 21.03 23.51 21.12 C 24.10 21.21 27.68 22.26 28.43 22.31 C 29.18 22.37 32.63 21.90 33.51 21.87 C 34.38 21.83 39.46 21.90 40.07 21.87 C 40.69 21.83 41.39 21.56 41.72 21.42 C 42.04 21.27 43.96 20.03 44.40 19.93 C 44.85 19.82 47.35 20.09 47.69 20.07 C 48.02 20.06 48.63 19.96 48.88 19.78 C 49.13 19.59 50.78 18.03 51.04 17.61 C 51.31 17.19 52.07 14.58 52.39 14.18 C 52.71 13.78 54.92 12.45 55.30 12.31 C 55.67 12.17 56.89 12.21 57.39 12.31 C 57.89 12.42 61.54 13.40 61.94 13.73 C 62.34 14.06 62.52 16.37 62.69 16.72 C 62.85 17.06 63.90 17.96 64.18 18.36 C 64.46 18.76 66.17 21.74 66.42 22.09 C 66.67 22.44 67.31 22.95 67.54 23.06 C 67.77 23.17 69.27 23.42 69.48 23.51 C 69.68 23.59 70.19 23.96 70.30 24.18 C 70.40 24.40 70.69 26.00 70.90 26.42 C 71.10 26.83 72.69 29.33 72.99 29.70 C 73.28 30.07 74.59 31.12 74.78 31.34 C 74.97 31.57 75.47 32.34 75.52 32.69 C 75.58 33.03 75.62 35.43 75.52 35.97 C 75.42 36.51 74.29 39.31 74.18 39.85 C 74.07 40.39 73.99 42.75 74.03 43.13 C 74.07 43.51 74.71 44.65 74.78 44.93 C 74.84 45.21 74.81 46.50 74.93 46.87 C 75.04 47.24 76.10 49.57 76.27 49.85 C 76.44 50.14 77.08 50.59 77.24 50.67 C 77.40 50.76 78.14 50.98 78.43 50.97 C 78.72 50.96 80.72 50.32 81.12 50.52 C 81.52 50.72 83.41 53.33 83.81 53.66 C 84.20 53.98 85.93 54.55 86.34 54.85 C 86.76 55.15 88.78 57.45 89.33 57.69 C 89.88 57.92 93.17 57.59 93.66 57.99 C 94.14 58.38 95.59 62.55 95.82 62.99 C 96.06 63.42 96.61 63.72 96.79 63.81 C 96.98 63.89 98.04 63.89 98.28 64.10 C 98.52 64.32 99.87 66.31 100.00 66.72 C 100.13 67.12 100.12 69.17 100.00 69.55 C 99.88 69.93 98.50 71.53 98.36 71.79 C 98.21 72.05 98.06 72.76 98.06 72.99 C 98.06 73.21 98.27 74.54 98.36 74.78 C 98.45 75.01 99.18 75.88 99.25 76.12 C 99.33 76.35 99.45 77.61 99.40 77.91 C 99.36 78.21 99.13 79.95 98.66 80.15 C 98.18 80.35 93.57 80.40 93.06 80.52 C 92.54 80.65 91.92 81.56 91.79 81.79 C 91.66 82.02 91.51 83.29 91.34 83.58 C 91.18 83.88 89.87 85.55 89.63 85.75 C 89.39 85.94 88.60 86.17 88.13 86.19 C 87.66 86.22 83.87 85.93 83.36 86.04 C 82.84 86.16 81.71 87.56 81.27 87.69 Z" fill="url(#fgF9)"/> <path d="M 49.38 42.25 L 49.99 33.95 L 50.60 42.25 Z M 51.41 42.38 L 54.44 34.62 L 52.58 42.74 Z M 53.32 43.09 L 58.50 36.57 L 54.33 43.78 Z M 54.93 44.34 L 61.80 39.64 L 55.69 45.30 Z M 56.10 46.00 L 64.06 43.54 L 56.55 47.14 Z M 56.73 47.94 L 65.06 47.93 L 56.82 49.16 Z M 56.76 49.98 L 64.72 52.42 L 56.49 51.17 Z M 56.19 51.93 L 63.08 56.62 L 55.58 52.99 Z M 55.07 53.63 L 60.27 60.14 L 54.17 54.47 Z M 53.49 54.93 L 56.55 62.67 L 52.39 55.46 Z M 51.61 55.70 L 52.24 64.00 L 50.40 55.88 Z M 49.58 55.88 L 47.74 64.00 L 48.37 55.70 Z M 47.59 55.46 L 43.43 62.67 L 46.49 54.93 Z M 45.81 54.47 L 39.71 60.14 L 44.91 53.63 Z M 44.40 52.99 L 36.90 56.62 L 43.79 51.93 Z M 43.49 51.17 L 35.26 52.42 L 43.22 49.98 Z M 43.16 49.16 L 34.92 47.93 L 43.25 47.94 Z M 43.43 47.14 L 35.92 43.54 L 43.88 46.00 Z M 44.29 45.30 L 38.18 39.64 L 45.05 44.34 Z M 45.65 43.78 L 41.48 36.57 L 46.66 43.09 Z M 47.40 42.74 L 45.54 34.62 L 48.57 42.38 Z" fill="url(#gdF9)"/><circle cx="49.99" cy="49.06" r="7.23" fill="url(#gdF9)"/> <path d="M 81.27 87.69 C 80.83 87.81 77.87 87.71 77.54 87.69 C 77.20 87.66 77.10 87.70 76.79 87.39 C 76.48 87.08 73.82 84.29 73.43 83.58 C 73.05 82.87 72.06 78.53 71.64 77.91 C 71.22 77.29 68.33 75.77 67.84 75.30 C 67.34 74.82 65.34 71.89 65.00 71.57 C 64.66 71.24 63.73 71.00 63.36 70.97 C 62.99 70.94 60.43 71.18 60.07 71.12 C 59.72 71.06 58.81 70.32 58.66 70.15 C 58.51 69.98 58.10 69.13 58.06 68.81 C 58.01 68.48 58.01 66.20 58.06 65.82 C 58.10 65.44 58.62 63.99 58.66 63.73 C 58.69 63.47 58.60 62.63 58.51 62.39 C 58.42 62.14 57.61 60.65 57.46 60.45 C 57.31 60.24 56.65 59.71 56.49 59.63 C 56.33 59.54 55.52 59.33 55.30 59.33 C 55.07 59.33 53.90 59.37 53.51 59.63 C 53.12 59.88 50.59 62.57 50.07 62.76 C 49.56 62.95 47.30 62.19 46.64 62.16 C 45.98 62.14 41.79 62.49 41.27 62.46 C 40.74 62.44 39.92 62.04 39.63 61.87 C 39.34 61.69 37.60 60.28 37.39 60.07 C 37.18 59.87 37.12 59.37 36.87 59.10 C 36.61 58.84 34.39 56.96 34.03 56.57 C 33.67 56.17 32.29 54.06 32.01 53.81 C 31.74 53.55 30.89 53.23 30.37 53.21 C 29.86 53.19 25.79 53.32 25.15 53.51 C 24.51 53.70 22.21 55.54 21.87 55.75 C 21.52 55.95 20.76 56.17 20.52 56.19 C 20.29 56.22 19.03 56.12 18.73 56.04 C 18.43 55.97 16.78 55.21 16.49 55.15 C 16.20 55.09 15.18 55.22 14.85 55.30 C 14.53 55.38 12.54 56.13 12.16 56.19 C 11.78 56.26 10.15 56.25 9.78 56.19 C 9.41 56.14 7.52 55.48 7.24 55.45 C 6.96 55.41 6.24 55.61 6.04 55.75 C 5.85 55.88 4.96 57.06 4.70 57.24 C 4.44 57.42 2.85 58.07 2.61 58.13 C 2.38 58.20 1.72 58.17 1.57 58.13 C 1.42 58.10 0.66 57.86 0.60 57.61 C 0.54 57.36 0.79 55.12 0.75 54.78 C 0.70 54.43 0.06 53.24 0.00 52.99 C -0.06 52.73 -0.03 51.54 0.00 51.34 C 0.03 51.14 0.13 50.71 0.45 50.30 C 0.76 49.88 3.64 46.38 4.18 45.82 C 4.72 45.26 7.24 43.35 7.61 42.84 C 7.98 42.32 8.82 39.56 9.10 38.96 C 9.38 38.35 10.83 35.54 11.34 34.78 C 11.86 34.01 15.60 29.60 15.97 28.81 C 16.34 28.01 16.13 24.68 16.27 24.18 C 16.41 23.68 17.52 22.39 17.84 22.16 C 18.15 21.93 20.10 21.20 20.52 21.12 C 20.95 21.04 22.91 21.03 23.51 21.12 C 24.10 21.21 27.68 22.26 28.43 22.31 C 29.18 22.37 32.63 21.90 33.51 21.87 C 34.38 21.83 39.46 21.90 40.07 21.87 C 40.69 21.83 41.39 21.56 41.72 21.42 C 42.04 21.27 43.96 20.03 44.40 19.93 C 44.85 19.82 47.35 20.09 47.69 20.07 C 48.02 20.06 48.63 19.96 48.88 19.78 C 49.13 19.59 50.78 18.03 51.04 17.61 C 51.31 17.19 52.07 14.58 52.39 14.18 C 52.71 13.78 54.92 12.45 55.30 12.31 C 55.67 12.17 56.89 12.21 57.39 12.31 C 57.89 12.42 61.54 13.40 61.94 13.73 C 62.34 14.06 62.52 16.37 62.69 16.72 C 62.85 17.06 63.90 17.96 64.18 18.36 C 64.46 18.76 66.17 21.74 66.42 22.09 C 66.67 22.44 67.31 22.95 67.54 23.06 C 67.77 23.17 69.27 23.42 69.48 23.51 C 69.68 23.59 70.19 23.96 70.30 24.18 C 70.40 24.40 70.69 26.00 70.90 26.42 C 71.10 26.83 72.69 29.33 72.99 29.70 C 73.28 30.07 74.59 31.12 74.78 31.34 C 74.97 31.57 75.47 32.34 75.52 32.69 C 75.58 33.03 75.62 35.43 75.52 35.97 C 75.42 36.51 74.29 39.31 74.18 39.85 C 74.07 40.39 73.99 42.75 74.03 43.13 C 74.07 43.51 74.71 44.65 74.78 44.93 C 74.84 45.21 74.81 46.50 74.93 46.87 C 75.04 47.24 76.10 49.57 76.27 49.85 C 76.44 50.14 77.08 50.59 77.24 50.67 C 77.40 50.76 78.14 50.98 78.43 50.97 C 78.72 50.96 80.72 50.32 81.12 50.52 C 81.52 50.72 83.41 53.33 83.81 53.66 C 84.20 53.98 85.93 54.55 86.34 54.85 C 86.76 55.15 88.78 57.45 89.33 57.69 C 89.88 57.92 93.17 57.59 93.66 57.99 C 94.14 58.38 95.59 62.55 95.82 62.99 C 96.06 63.42 96.61 63.72 96.79 63.81 C 96.98 63.89 98.04 63.89 98.28 64.10 C 98.52 64.32 99.87 66.31 100.00 66.72 C 100.13 67.12 100.12 69.17 100.00 69.55 C 99.88 69.93 98.50 71.53 98.36 71.79 C 98.21 72.05 98.06 72.76 98.06 72.99 C 98.06 73.21 98.27 74.54 98.36 74.78 C 98.45 75.01 99.18 75.88 99.25 76.12 C 99.33 76.35 99.45 77.61 99.40 77.91 C 99.36 78.21 99.13 79.95 98.66 80.15 C 98.18 80.35 93.57 80.40 93.06 80.52 C 92.54 80.65 91.92 81.56 91.79 81.79 C 91.66 82.02 91.51 83.29 91.34 83.58 C 91.18 83.88 89.87 85.55 89.63 85.75 C 89.39 85.94 88.60 86.17 88.13 86.19 C 87.66 86.22 83.87 85.93 83.36 86.04 C 82.84 86.16 81.71 87.56 81.27 87.69 Z" fill="none" stroke="rgba(0,0,0,.35)" stroke-width=".8"/></g></svg></div>
+      <h2>Codes<s id="count">…</s></h2>
+      <button class="ghost" id="reload">Refresh</button>
+      <button class="ghost" id="lock">Lock</button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="stats" id="stats" role="group" aria-label="Filter">
+      <button class="stat" data-f="all" aria-pressed="true"><b id="nAll">0</b><s>All codes</s></button>
+      <button class="stat live" data-f="live" aria-pressed="false"><b id="nLive">0</b><s>Active</s></button>
+      <button class="stat soon" data-f="soon" aria-pressed="false"><b id="nSoon">0</b><s>Expiring in 7 days</s></button>
+      <button class="stat dead" data-f="dead" aria-pressed="false"><b id="nDead">0</b><s>Expired / off</s></button>
+      <button class="stat" data-f="today" aria-pressed="false"><b id="nToday">0</b><s>Codes used today</s></button>
+      <button class="stat" data-f="today" aria-pressed="false"><b id="nDevT">0</b><s>Devices today</s></button>
+    </div>
+
+    <section>
+      <div class="lede"><h3>NEW CODE</h3><span>Choose a name, duration and number of devices</span></div>
+      <div class="panel">
+        <div class="row2">
+          <div>
+            <label for="label">Customer name</label>
+            <input id="label" class="inp" placeholder="e.g. Ahmad — 0750 123 4567" autocomplete="off" maxlength="60">
+          </div>
+          <button id="make" class="make">Create code</button>
+        </div>
+        <p class="sub">Duration</p>
+        <div class="chips" id="days" role="group" aria-label="Duration">
+          <button class="chip" data-d="30" aria-pressed="true">1 month</button>
+          <button class="chip" data-d="90" aria-pressed="false">3 months</button>
+          <button class="chip" data-d="180" aria-pressed="false">6 months</button>
+          <button class="chip" data-d="365" aria-pressed="false">1 year</button>
+          <button class="chip" data-d="0" aria-pressed="false">Lifetime</button>
+        </div>
+        <p class="sub">Devices</p>
+        <div class="chips" id="devsel" role="group" aria-label="Devices">
+          <button class="chip" data-n="1" aria-pressed="false">1</button>
+          <button class="chip" data-n="2" aria-pressed="true">2</button>
+          <button class="chip" data-n="3" aria-pressed="false">3</button>
+          <button class="chip" data-n="5" aria-pressed="false">5</button>
+          <button class="chip" data-n="10" aria-pressed="false">10</button>
+          <button class="chip" data-n="100" aria-pressed="false">Unlimited</button>
+        </div>
+        <div id="made" role="status">
+          <b class="mono" id="madeCode">000000</b>
+          <div style="flex:1;min-width:180px"><i id="madeWho"></i>
+            <div class="share" style="margin-top:8px">
+              <button id="copyMade">Copy code</button>
+              <button id="copyMsg">Copy message</button>
+              <a class="wa" id="waMade" target="_blank" rel="noopener">WhatsApp</a>
+              <a class="tg" id="tgMade" target="_blank" rel="noopener">Telegram</a>
+            </div>
+          </div>
+        </div>
+        <div id="merr" class="err"></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="lede"><h3>ALL CODES</h3><span id="sum"></span></div>
+      <div class="tools">
+        <input id="q" class="inp" placeholder="Search by code or name" autocomplete="off" aria-label="Search">
+        <select id="sort" class="sort" aria-label="Sort">
+          <option value="new">Newest</option>
+          <option value="end">Expiring soonest</option>
+          <option value="seen">Last used</option>
+          <option value="today">Most used today</option>
+          <option value="week">Most used this week</option>
+        </select>
+      </div>
+      <div class="list" id="list"><div class="empty">…</div></div>
+    </section>
+  </div>
+
+  <footer class="foot">
+    <div class="wrap">
+      <span>Your master code lives in the app and is not shown here. The panel locks itself after 30 minutes of inactivity.</span>
+      <button class="ghost" id="chpw">Change password</button>
+    </div>
+  </footer>
+</div>
+
+<div id="toast"><b id="toastText"></b></div>
+<script>
+var API = "https://dbmxnhsnipbpycmdmmer.supabase.co/functions/v1/kiptv-admin";
+var APP_LINK = "https://play.google.com/store/apps/details?id=com.kurdistan.iptv";
+var PASS = "", ROWS = [], DAYS = 30, DEVN = 2, FILTER = "all";
+var ASK = "", LIM = "", ADD = "", OPEN = "", DEVS = {}, LAST = { code: "", label: "", days: 30, n: 2 };
+var IDLE_MS = 30 * 60 * 1000, IDLE_T = null;
+
+/* ---------- small helpers ---------- */
+function $(id){ return document.getElementById(id) }
+/* the password stays only in this tab (sessionStorage) - never on the disk */
+function store(k, v){ try{ v === null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v) }catch(e){} }
+function stored(k){ try{ return sessionStorage.getItem(k) || "" }catch(e){ return "" } }
+try{ localStorage.removeItem("kiptv_pw") }catch(e){}   /* the old page kept it on the disk */
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
+  return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c] }) }
+
+var TOAST_T = null;
+function toast(msg){
+  $("toastText").textContent = msg;
+  $("toast").classList.add("on");
+  clearTimeout(TOAST_T);
+  TOAST_T = setTimeout(function(){ $("toast").classList.remove("on") }, 2200);
+}
+function copy(text, what){
+  var done = function(){ toast(what || ("Copied: " + text)) };
+  try{ navigator.clipboard.writeText(text).then(done, function(){ select(text, what) }) }
+  catch(e){ select(text, what) }
+}
+function select(text, what){
+  var n = document.createElement("textarea");
+  n.value = text; n.style.position = "fixed"; n.style.opacity = "0";
+  document.body.appendChild(n); n.select();
+  try{ document.execCommand("copy"); toast(what || ("Copied: " + text)) }
+  catch(e){ toast("Could not copy") }
+  document.body.removeChild(n);
+}
+
+function call(body){
+  body.pass = PASS;
+  return fetch(API, { method: "POST", headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify(body) })
+    .then(function(r){ return r.json().catch(function(){ return { ok:false, reason:"net" } }) })
+    .catch(function(){ return { ok: false, reason: "net" } })
+    .then(function(r){ if(r && r.reason === "auth" && $("app").classList.contains("on")) lock("Please sign in again"); return r });
+}
+function why(r){
+  var x = r && r.reason;
+  return x === "auth"  ? "Wrong password"
+       : x === "net"   ? "Could not connect. Check your internet"
+       : x === "short" ? "The password must be at least 8 characters"
+       : x === "full"  ? "Could not find a free code"
+       : "Something went wrong, please try again";
+}
+
+/* ---------- dates, in the words the owner uses ---------- */
+function num(n){ return String(n) }
+function day(iso){
+  if(!iso) return "";
+  var d = new Date(iso);
+  if(isNaN(d)) return "";
+  var p = function(x){ return (x < 10 ? "0" : "") + x };
+  return num(d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()));
+}
+function left(iso){ return iso ? Math.ceil((Date.parse(iso) - Date.now()) / 86400000) : null }
+function seen(iso){
+  if(!iso) return "never used";
+  var h = Math.floor((Date.now() - Date.parse(iso)) / 3600000);
+  if(h < 1) return "active now";
+  if(h < 24) return h + (h === 1 ? " hour ago" : " hours ago");
+  var dd = Math.floor(h / 24); return dd + (dd === 1 ? " day ago" : " days ago");
+}
+function unlimited(x){ return (x.max_devices || 2) >= 100 }
+function review(x){ return /google|review/i.test(String(x.label || "")) }
+function plural(n, w){ return n + " " + w + (n === 1 ? "" : "s") }
+function durText(days){ return days ? (days % 365 === 0 ? plural(days / 365, "year") : days % 30 === 0 ? plural(days / 30, "month") : plural(days, "day")) : "Lifetime" }
+
+/* the message that goes to the customer */
+function message(code, days, until){
+  return "KURDISTAN IPTV activation code: " + code + "\n"
+       + (until ? "Valid until: " + day(until) : "Duration: " + durText(days)) + "\n"
+       + "Get the app: " + APP_LINK;
+}
+
+/* ---------- the way in, and the way out ---------- */
+function signIn(pass){
+  PASS = pass;
+  $("gerr").textContent = "";
+  $("enter").disabled = true;
+  $("enter").textContent = "Please wait…";
+  return call({ do: "list" }).then(function(r){
+    $("enter").disabled = false;
+    $("enter").textContent = "Sign in";
+    if(!r.ok){ PASS = ""; $("gerr").textContent = why(r); return false }
+    store("kiptv_pw", pass);
+    $("gate").style.display = "none";
+    $("app").classList.add("on");
+    put(r.rows || []);
+    awake();
+    return true;
+  });
+}
+function lock(msg){
+  store("kiptv_pw", null); PASS = "";
+  clearTimeout(IDLE_T);
+  $("app").classList.remove("on");
+  $("gate").style.display = "grid";
+  $("pw").value = ""; $("gerr").textContent = msg || ""; $("pw").focus();
+}
+function awake(){
+  clearTimeout(IDLE_T);
+  if(PASS) IDLE_T = setTimeout(function(){ lock("Locked after inactivity") }, IDLE_MS);
+}
+["click", "keydown", "touchstart"].forEach(function(ev){ document.addEventListener(ev, awake, { passive: true }) });
+$("enter").addEventListener("click", function(){ if($("pw").value) signIn($("pw").value) });
+$("pw").addEventListener("keydown", function(e){ if(e.key === "Enter" && $("pw").value) signIn($("pw").value) });
+$("lock").addEventListener("click", function(){ lock() });
+
+/* ---------- making a code ---------- */
+function pick(group, attr, set){
+  $(group).addEventListener("click", function(e){
+    var b = e.target.closest(".chip");
+    if(!b) return;
+    set(+b.getAttribute(attr));
+    [].forEach.call(this.querySelectorAll(".chip"), function(c){ c.setAttribute("aria-pressed", c === b ? "true" : "false") });
+  });
+}
+pick("days", "data-d", function(v){ DAYS = v });
+pick("devsel", "data-n", function(v){ DEVN = v });
+
+$("make").addEventListener("click", function(){
+  var label = $("label").value.trim();
+  $("merr").textContent = "";
+  $("make").disabled = true;
+  $("make").textContent = "Please wait…";
+  var days = DAYS, n = DEVN;
+  /* the code and its machine limit are made together, in one step; the
+     server says back which limit it saved, and only that counts as done */
+  call({ do: "new", label: label, days: days, max: n }).then(function(r){
+    if(!r.ok || !r.code || +r.max === n) return r;
+    /* an older server ignores max: set it now, and say so if that fails */
+    return call({ do: "limit", code: r.code, max: n }).then(function(x){
+      return x && x.ok && +x.max === n ? r : { ok: false, reason: "limit", code: r.code };
+    });
+  }).then(function(r){
+    $("make").disabled = false;
+    $("make").textContent = "Create code";
+    if(r.reason === "limit"){ $("merr").textContent = "The device limit was not saved — check the code in the list (" + r.code + ")"; load(); return }
+    if(!r.ok || !r.code){ $("merr").textContent = why(r); return }
+    LAST = { code: r.code, label: label, days: days, n: n };
+    $("madeCode").textContent = r.code;
+    $("madeWho").textContent = (label || "No name") + " · " + durText(days) + " · "
+      + (n >= 100 ? "unlimited devices" : plural(n, "device"));
+    var msg = encodeURIComponent(message(r.code, days));
+    $("waMade").href = "https://wa.me/?text=" + msg;
+    $("tgMade").href = "https://t.me/share/url?url=" + encodeURIComponent(APP_LINK) + "&text=" + msg;
+    $("made").classList.add("on");
+    $("label").value = "";
+    copy(r.code);
+    load();
+  });
+});
+$("copyMade").addEventListener("click", function(){ copy(LAST.code) });
+$("copyMsg").addEventListener("click", function(){ copy(message(LAST.code, LAST.days), "Message copied") });
+
+/* ---------- the list ---------- */
+function load(){
+  return call({ do: "list" }).then(function(r){
+    if(!r.ok){ toast(why(r)); return }
+    put(r.rows || []);
+  });
+}
+function state(x){
+  if(!x.active) return "off";
+  var d = left(x.expires_at);
+  if(d !== null && d <= 0) return "over";
+  if(d !== null && d <= 7) return "soon";
+  return "live";
+}
+function today(x){ return x.today != null ? x.today > 0 : (x.last_seen && Date.now() - Date.parse(x.last_seen) < 86400000) }
+function put(rows){
+  ROWS = rows;
+  var c = { live: 0, soon: 0, dead: 0, today: 0, devt: 0 };
+  rows.forEach(function(x){
+    var s = state(x);
+    if(s === "live" || s === "soon") c.live++;
+    if(s === "soon") c.soon++;
+    if(s === "over" || s === "off") c.dead++;
+    if(today(x)) c.today++;
+    c.devt += +x.today || 0;
+  });
+  $("nAll").textContent = num(rows.length); $("nLive").textContent = num(c.live);
+  $("nSoon").textContent = num(c.soon); $("nDead").textContent = num(c.dead); $("nToday").textContent = num(c.today); $("nDevT").textContent = num(c.devt);
+  $("count").textContent = rows.length + " codes · " + c.live + " active";
+  draw();
+}
+$("stats").addEventListener("click", function(e){
+  var b = e.target.closest(".stat");
+  if(!b) return;
+  FILTER = b.getAttribute("data-f");
+  [].forEach.call(this.querySelectorAll(".stat"), function(c){ c.setAttribute("aria-pressed", c === b ? "true" : "false") });
+  draw();
+});
+
+function draw(){
+  var q = $("q").value.trim().toLowerCase(), sort = $("sort").value;
+  var rows = ROWS.filter(function(x){
+    var s = state(x);
+    if(FILTER === "live" && !(s === "live" || s === "soon")) return false;
+    if(FILTER === "soon" && s !== "soon") return false;
+    if(FILTER === "dead" && !(s === "over" || s === "off")) return false;
+    if(FILTER === "today" && !today(x)) return false;
+    return !q || x.code.indexOf(q) > -1 || String(x.label || "").toLowerCase().indexOf(q) > -1;
+  });
+  var t = function(v, far){ return v ? Date.parse(v) : far };
+  if(sort === "end") rows.sort(function(a, b){ return t(a.expires_at, 9e15) - t(b.expires_at, 9e15) });
+  else if(sort === "seen") rows.sort(function(a, b){ return t(b.last_seen, 0) - t(a.last_seen, 0) });
+  else if(sort === "today") rows.sort(function(a, b){ return (b.today || 0) - (a.today || 0) || (b.week || 0) - (a.week || 0) });
+  else if(sort === "week") rows.sort(function(a, b){ return (b.week || 0) - (a.week || 0) || (b.today || 0) - (a.today || 0) });
+  else rows.sort(function(a, b){ return t(b.created_at, 0) - t(a.created_at, 0) });
+  $("sum").textContent = rows.length === ROWS.length ? "" : rows.length + " of " + ROWS.length;
+  if(!rows.length){
+    $("list").innerHTML = '<div class="empty">' + (ROWS.length ? "Nothing found" : "No codes yet") + "</div>";
+    return;
+  }
+  $("list").innerHTML = rows.map(card).join("");
+}
+
+/* the last 14 days as small bars: how many machines used the code each day */
+function activity(x){
+  var sp = x.spark || [], max = 0, i, h = "";
+  for(i = 0; i < sp.length; i++) max = Math.max(max, +sp[i] || 0);
+  for(i = 0; i < sp.length; i++){
+    var v = +sp[i] || 0, d = new Date(Date.now() - (sp.length - 1 - i) * 86400000);
+    h += '<i class="' + (v ? "on" : "") + (i === sp.length - 1 ? " now" : "") + '" style="height:' + (v ? 4 + Math.round(22 * v / max) : 2) + 'px"'
+       + ' title="' + day(d.toISOString()) + ": " + plural(v, "device") + '"></i>';
+  }
+  return '<div class="act"><span class="spark" aria-label="Devices per day, last 14 days">' + h + "</span>"
+    + '<span class="' + (x.today ? "hot" : "") + '"><b>' + (x.today || 0) + "</b>today</span>"
+    + "<span><b>" + (x.week || 0) + "</b>this week</span>"
+    + "<span><b>" + (x.devices || 0) + "</b>devices in all</span></div>";
+}
+
+function card(x){
+  var s = state(x), d = left(x.expires_at), inf = unlimited(x), rev = review(x);
+  var pill = s === "live" ? '<span class="pill live">Active</span>'
+           : s === "soon" ? '<span class="pill soon">' + plural(d, "day") + " left</span>"
+           : s === "over" ? '<span class="pill dead">Expired</span>'
+           :                '<span class="pill dead">Off</span>';
+  var when = x.expires_at ? (s === "over" ? "expired " : "until ") + day(x.expires_at) : "lifetime";
+  var devs = inf ? "unlimited devices" : (x.devices || 0) + "/" + (x.max_devices || 2) + " devices";
+  var h = '<article class="card' + (s === "soon" ? " soon" : s === "live" ? "" : " dim") + '">'
+    + '<button class="code mono" data-copy="' + x.code + '" title="Copy">' + x.code + "</button>"
+    + '<div class="who"><b>' + esc(x.label || "No name")
+    +   (rev ? '<span class="tag rev">Google Review</span>' : "")
+    +   (inf ? '<span class="tag inf">∞</span>' : "") + "</b>"
+    +   "<s>" + when + " · " + devs + " · " + seen(x.last_seen) + "</s></div>"
+    + pill + activity(x) + '<div class="acts">';
+  if(ASK === x.code){
+    h += rev
+      ? '<div class="confirm">This is the Google review code. Type the code to delete it:'
+        + '<input class="inp mono" id="askIn" inputmode="numeric" maxlength="6" placeholder="' + x.code + '">'
+        + '<button class="yes" data-del="' + x.code + '" data-strict="1">Delete</button><button data-no="1">Cancel</button></div>'
+      : '<button class="yes" data-del="' + x.code + '">Yes, delete</button><button data-no="1">Cancel</button>';
+  } else {
+    h += '<button data-addm="' + x.code + '">+ Time</button>';
+    if(ADD === x.code){
+      h += [30, 90, 180, 365].map(function(n){
+        return '<button data-add="' + x.code + '" data-days="' + n + '">+ ' + durText(n) + "</button>" }).join("");
+      h += '<span class="sep"></span>' + [7, 30].map(function(n){
+        return '<button class="minus" data-add="' + x.code + '" data-days="-' + n + '">− ' + durText(n) + "</button>" }).join("");
+      h += '<span class="sep"></span><input class="dt" type="date" id="dt' + x.code + '" value="' + day(x.expires_at) + '" aria-label="End date">'
+         + '<button data-setd="' + x.code + '">Set date</button>'
+         + '<button data-life="' + x.code + '">Lifetime</button>';
+    }
+    h += '<button data-flip="' + x.code + '" data-on="' + (x.active ? "0" : "1") + '">' + (x.active ? "Turn off" : "Turn on") + "</button>"
+;
+    if((x.devices || 0) > 0) h += '<button data-devs="' + x.code + '">Devices (' + x.devices + ")</button>";
+    h += '<button data-share="' + x.code + '">Share</button>'
+       + '<button class="danger" data-ask="' + x.code + '">Delete</button>';
+  }
+  h += "</div>";
+  if(OPEN === x.code){
+    var list = DEVS[x.code];
+    h += '<div class="devs">' + (!list ? "…" : !list.length ? "No devices"
+      : list.map(function(v){
+          return '<div class="d"><span class="mono">' + esc(v.device) + "</span><i>" + seen(v.last_seen) + (v.checks ? " · " + plural(v.checks, "check") : "") + "</i>"
+               + '<button data-forget="' + x.code + '" data-dev="' + esc(v.device) + '">Remove</button></div>' }).join("")
+        + '<div class="d"><span></span><button data-reset="' + x.code + '">Remove all</button></div>')
+      + "</div>";
+  }
+  return h + "</article>";
+}
+
+$("q").addEventListener("input", draw);
+$("sort").addEventListener("change", draw);
+$("reload").addEventListener("click", function(){ load().then(function(){ toast("Refreshed") }) });
+
+function after(r, ok){ toast(r.ok ? ok : why(r)); return load() }
+function openDevs(code){
+  OPEN = code; DEVS[code] = null; draw();
+  call({ do: "devices", code: code }).then(function(r){
+    DEVS[code] = r.ok ? (r.devices || []) : [];
+    if(!r.ok) toast(why(r));
+    draw();
+  });
+}
+
+$("list").addEventListener("click", function(e){
+  var b = e.target.closest("button");
+  if(!b) return;
+  var v, row = function(c){ return ROWS.filter(function(x){ return x.code === c })[0] };
+  if((v = b.getAttribute("data-copy"))){ copy(v); return }
+  if((v = b.getAttribute("data-ask"))){ ASK = v; draw(); var i = $("askIn"); if(i) i.focus(); return }
+  if(b.getAttribute("data-no")){ ASK = ""; draw(); return }
+  if((v = b.getAttribute("data-del"))){
+    if(b.getAttribute("data-strict") && ($("askIn") || {}).value !== v){ toast("Type the code exactly"); return }
+    ASK = "";
+    call({ do: "delete", code: v }).then(function(r){ after(r, "Deleted") });
+    return;
+  }
+  if((v = b.getAttribute("data-addm"))){ ADD = (ADD === v ? "" : v); LIM = ""; draw(); return }
+  if((v = b.getAttribute("data-add"))){
+    var n = +b.getAttribute("data-days"); ADD = "";
+    call({ do: "extend", code: v, days: n }).then(function(r){ after(r, n > 0 ? durText(n) + " added" : durText(-n) + " taken off") });
+    return;
+  }
+  if((v = b.getAttribute("data-setd"))){
+    var dv = ($("dt" + v) || {}).value || "";
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(dv)){ toast("Choose a date first"); return }
+    ADD = "";
+    call({ do: "setdate", code: v, until: dv }).then(function(r){ after(r, "Ends on " + dv) });
+    return;
+  }
+  if((v = b.getAttribute("data-life"))){
+    ADD = "";
+    call({ do: "setdate", code: v, until: null }).then(function(r){ after(r, "Lifetime — no end date") });
+    return;
+  }
+  if((v = b.getAttribute("data-lim"))){ LIM = (LIM === v ? "" : v); ADD = ""; draw(); return }
+  if((v = b.getAttribute("data-setlim"))){
+    LIM = "";
+    call({ do: "limit", code: v, max: +b.getAttribute("data-n") }).then(function(r){ after(r, "Limit changed") });
+    return;
+  }
+  if((v = b.getAttribute("data-devs"))){ if(OPEN === v){ OPEN = ""; draw() } else openDevs(v); return }
+  if((v = b.getAttribute("data-forget"))){
+    var dev = b.getAttribute("data-dev");
+    call({ do: "forget", code: v, device: dev }).then(function(r){
+      toast(r.ok ? "Device removed" : why(r)); load().then(function(){ openDevs(v) });
+    });
+    return;
+  }
+  if((v = b.getAttribute("data-reset"))){
+    call({ do: "reset", code: v }).then(function(r){ OPEN = ""; after(r, "All devices removed") });
+    return;
+  }
+  if((v = b.getAttribute("data-share"))){
+    var x = row(v) || {};
+    copy(message(v, 0, x.expires_at), "Message copied — paste it in WhatsApp or Telegram");
+    return;
+  }
+  if((v = b.getAttribute("data-flip"))){
+    call({ do: "toggle", code: v, active: b.getAttribute("data-on") === "1" }).then(function(r){ after(r, "Updated") });
+  }
+});
+
+/* ---------- the owner's own password ---------- */
+$("chpw").addEventListener("click", function(){
+  var box = $("chpw").parentNode;
+  if(box.querySelector(".pwbox")) return;
+  var d = document.createElement("div");
+  d.className = "pwbox";
+  d.style.cssText = "display:flex;gap:8px;flex-wrap:wrap;width:100%;margin-top:10px";
+  d.innerHTML = '<input class="inp" id="npw" type="password" autocomplete="new-password" placeholder="New password (8+ characters)" style="flex:1;min-width:190px">'
+              + '<input class="inp" id="npw2" type="password" autocomplete="new-password" placeholder="Repeat" style="flex:1;min-width:150px">'
+              + '<button class="ghost" id="npwGo">Save</button>';
+  box.appendChild(d);
+  $("npw").focus();
+  $("npwGo").addEventListener("click", function(){
+    var v = $("npw").value;
+    if(v.length < 8){ toast("At least 8 characters"); return }
+    if(v !== $("npw2").value){ toast("The two passwords do not match"); return }
+    call({ do: "pass", next: v }).then(function(r){
+      if(!r.ok){ toast(why(r)); return }
+      PASS = v; store("kiptv_pw", v);
+      d.remove();
+      toast("Password changed");
+    });
+  });
+});
+
+/* ---------- start ---------- */
+(function start(){
+  document.documentElement.dir = "ltr";
+  var saved = stored("kiptv_pw");
+  if(saved) signIn(saved).then(function(good){ if(!good) $("pw").focus() });
+  else $("pw").focus();
+})();
+</script>
+
+</body>
+</html>
