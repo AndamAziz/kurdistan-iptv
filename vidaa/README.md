@@ -41,10 +41,17 @@ starting playlist **ANDAM IPTV**, as in the GitHub app:
 node vidaa/build.js 1.0.338 --channels
 ```
 
-This takes the full `app/src/main/assets/channels.js` and writes
+This takes the playlist address from `app/src/main/assets/channels.js`
+(`DEFAULT_LIST_URL`, the owner's own playlist) and writes
 `KURDISTAN-IPTV-VIDAA-<v>-channels.zip`. The store upload is built without
 `--channels` and stays a player only. Movies Online is in no VIDAA build: the
 TV player has no `embedOk()`.
+
+With `--channels` the built-in backup channels are left out (`CHANNELS = []`),
+so ANDAM IPTV shows the owner's playlist only. The ANDAM IPTV entry kept in a
+browser always takes the current playlist address: a browser that opened the
+page while it was a bare player had kept it with no address, and stayed on the
+backup channels.
 
 ## Remote keys while a channel plays
 
