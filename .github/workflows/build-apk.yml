@@ -2,6 +2,18 @@ name: Build APK
 
 on:
   push:
+    # Only a change to the apps makes a new version. The TV builds (VIDAA,
+    # webOS, Tizen) are built on their own, the codes page lives on the server,
+    # and notes and docs change no app - a push of only those builds nothing.
+    paths-ignore:
+      - "codes-page/**"
+      - "vidaa/**"
+      - "webos/**"
+      - "tizen/**"
+      - "docs/**"
+      - "**/README.md"
+      - "README_KU.md"
+      - "RELEASING.md"
   # Actions -> Build APK -> Run workflow. Tick "send_to_play" to also send this
   # build to Google Play; a push never does, because every new upload cancels
   # the review already under way there and starts it again.
