@@ -157,6 +157,20 @@ label{display:block;font-size:11.5px;font-weight:700;color:var(--muted2);margin-
 .spark i.on{background:linear-gradient(180deg,#FFB547,#F07A1C)}
 .spark i.now{outline:1px solid rgba(255,255,255,.55);outline-offset:1px}
 .acts .minus{color:#FFB547}
+.act .on{color:#4ADE80}.act .on b{color:#4ADE80}
+.act .dot,.upd .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#4ADE80;margin-right:6px;
+  box-shadow:0 0 0 0 rgba(74,222,128,.6);animation:pulse 1.8s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(74,222,128,.55)}70%{box-shadow:0 0 0 7px rgba(74,222,128,0)}100%{box-shadow:0 0 0 0 rgba(74,222,128,0)}}
+.upd{display:inline-flex;align-items:center;gap:0;margin-left:8px;font-size:11.5px;color:var(--muted2)}
+.hist{grid-column:1/-1;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.hist .bars{display:flex;align-items:flex-end;gap:3px;height:90px}
+.hist .bars div{flex:1;min-width:4px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%}
+.hist .bars i{display:block;width:100%;min-height:2px;border-radius:3px 3px 0 0;background:rgba(255,255,255,.12)}
+.hist .bars i.on{background:linear-gradient(180deg,#FFB547,#F07A1C)}
+.hist .bars span{font-size:9.5px;color:var(--muted2);margin-bottom:2px;line-height:1}
+.hist .axis{display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted2);margin-top:6px}
+.hist .sum{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted2);margin-bottom:10px}
+.hist .sum b{color:var(--text);font-size:13.5px;margin-right:3px}
 .acts .dt{padding:6px 9px;border-radius:9px;border:1px solid var(--line);background:var(--bg2);color:var(--text);font:inherit;font-size:12.5px;color-scheme:dark}
 .acts .sep{width:1px;align-self:stretch;background:var(--line);margin:0 3px}
 .devs{grid-column:1/-1;display:flex;flex-direction:column;gap:6px;background:var(--bg2);border:1px solid var(--line);
@@ -272,6 +286,7 @@ label{display:block;font-size:11.5px;font-weight:700;color:var(--muted2);margin-
 var API = "https://dbmxnhsnipbpycmdmmer.supabase.co/functions/v1/kiptv-admin";
 var APP_LINK = "https://play.google.com/store/apps/details?id=com.kurdistan.iptv";
 var PASS = "", ROWS = [], DAYS = 30, DEVN = 2, FILTER = "all";
+var HOPEN = "", HIST = {}, LASTUP = 0;
 var ASK = "", LIM = "", ADD = "", OPEN = "", DEVS = {}, LAST = { code: "", label: "", days: 30, n: 2 };
 var IDLE_MS = 30 * 60 * 1000, IDLE_T = null;
 
@@ -448,8 +463,8 @@ function state(x){
 }
 function today(x){ return x.today != null ? x.today > 0 : (x.last_seen && Date.now() - Date.parse(x.last_seen) < 86400000) }
 function put(rows){
-  ROWS = rows;
-  var c = { live: 0, soon: 0, dead: 0, today: 0, devt: 0 };
+  ROWS = rows; LASTUP = Date.now();
+  var c = { live: 0, soon: 0, dead: 0, today: 0, devt: 0, now: 0 };
   rows.forEach(function(x){
     var s = state(x);
     if(s === "live" || s === "soon") c.live++;
@@ -457,10 +472,13 @@ function put(rows){
     if(s === "over" || s === "off") c.dead++;
     if(today(x)) c.today++;
     c.devt += +x.today || 0;
+    c.now += +x.now30 || 0;
   });
   $("nAll").textContent = num(rows.length); $("nLive").textContent = num(c.live);
   $("nSoon").textContent = num(c.soon); $("nDead").textContent = num(c.dead); $("nToday").textContent = num(c.today); $("nDevT").textContent = num(c.devt);
-  $("count").textContent = rows.length + " codes · " + c.live + " active";
+  var t = new Date(LASTUP), hm = (t.getHours() < 10 ? "0" : "") + t.getHours() + ":" + (t.getMinutes() < 10 ? "0" : "") + t.getMinutes();
+  $("count").innerHTML = esc(rows.length + " codes · " + c.live + " active")
+    + '<span class="upd">' + (c.now ? '<i class="dot"></i>' + esc(c.now + " online now · ") : "") + "updated " + hm + "</span>";
   draw();
 }
 $("stats").addEventListener("click", function(e){
@@ -505,9 +523,28 @@ function activity(x){
        + ' title="' + day(d.toISOString()) + ": " + plural(v, "device") + '"></i>';
   }
   return '<div class="act"><span class="spark" aria-label="Devices per day, last 14 days">' + h + "</span>"
+    + (x.now30 ? '<span class="on"><i class="dot"></i><b>' + x.now30 + "</b>online now</span>" : "")
     + '<span class="' + (x.today ? "hot" : "") + '"><b>' + (x.today || 0) + "</b>today</span>"
     + "<span><b>" + (x.week || 0) + "</b>this week</span>"
     + "<span><b>" + (x.devices || 0) + "</b>devices in all</span></div>";
+}
+
+/* 30 days of one code: devices each day, the number over each bar */
+function history(list){
+  if(!list) return '<div class="hist">…</div>';
+  var max = 0, tot = 0, chk = 0, best = 0, bars = "";
+  list.forEach(function(d){ max = Math.max(max, d.devices); tot += d.devices; chk += d.checks; best = Math.max(best, d.devices) });
+  list.forEach(function(d){
+    bars += '<div title="' + d.day + ": " + plural(d.devices, "device") + " · " + plural(d.checks, "check") + '">'
+          + (d.devices ? "<span>" + d.devices + "</span>" : "")
+          + '<i class="' + (d.devices ? "on" : "") + '" style="height:' + (d.devices ? 6 + Math.round(70 * d.devices / max) : 2) + 'px"></i></div>';
+  });
+  var used = list.filter(function(d){ return d.devices > 0 }).length;
+  return '<div class="hist"><div class="sum"><span><b>' + used + "</b>of 30 days used</span>"
+    + "<span><b>" + best + "</b>most devices in a day</span><span><b>" + chk + "</b>checks</span></div>"
+    + '<div class="bars">' + bars + "</div>"
+    + '<div class="axis"><span>' + (list[0] ? list[0].day.slice(5) : "") + "</span><span>"
+    + (list[15] ? list[15].day.slice(5) : "") + "</span><span>today</span></div></div>";
 }
 
 function card(x){
@@ -545,10 +582,12 @@ function card(x){
     h += '<button data-flip="' + x.code + '" data-on="' + (x.active ? "0" : "1") + '">' + (x.active ? "Turn off" : "Turn on") + "</button>"
 ;
     if((x.devices || 0) > 0) h += '<button data-devs="' + x.code + '">Devices (' + x.devices + ")</button>";
+    h += '<button data-hist="' + x.code + '">History</button>';
     h += '<button data-share="' + x.code + '">Share</button>'
        + '<button class="danger" data-ask="' + x.code + '">Delete</button>';
   }
   h += "</div>";
+  if(HOPEN === x.code) h += history(HIST[x.code]);
   if(OPEN === x.code){
     var list = DEVS[x.code];
     h += '<div class="devs">' + (!list ? "…" : !list.length ? "No devices"
@@ -612,6 +651,12 @@ $("list").addEventListener("click", function(e){
     call({ do: "limit", code: v, max: +b.getAttribute("data-n") }).then(function(r){ after(r, "Limit changed") });
     return;
   }
+  if((v = b.getAttribute("data-hist"))){
+    if(HOPEN === v){ HOPEN = ""; draw(); return }
+    HOPEN = v; HIST[v] = null; draw();
+    call({ do: "history", code: v }).then(function(r){ HIST[v] = r.ok ? (r.days || []) : []; if(!r.ok) toast(why(r)); draw() });
+    return;
+  }
   if((v = b.getAttribute("data-devs"))){ if(OPEN === v){ OPEN = ""; draw() } else openDevs(v); return }
   if((v = b.getAttribute("data-forget"))){
     var dev = b.getAttribute("data-dev");
@@ -657,6 +702,23 @@ $("chpw").addEventListener("click", function(){
       toast("Password changed");
     });
   });
+});
+
+/* ---------- live: the list fetches itself again every minute ---------- */
+setInterval(function(){
+  if(!PASS || document.visibilityState !== "visible") return;
+  if(ADD || ASK) return;                                  /* a panel is open: leave it alone */
+  var a = document.activeElement;
+  if(a && (a.tagName === "INPUT" || a.tagName === "SELECT") && a.id !== "q") return;
+  call({ do: "list" }).then(function(r){
+    if(!r.ok) return;
+    put(r.rows || []);
+    if(OPEN) call({ do: "devices", code: OPEN }).then(function(d){ if(d.ok){ DEVS[OPEN] = d.devices || []; draw() } });
+    if(HOPEN) call({ do: "history", code: HOPEN }).then(function(h){ if(h.ok){ HIST[HOPEN] = h.days || []; draw() } });
+  });
+}, 60000);
+document.addEventListener("visibilitychange", function(){
+  if(document.visibilityState === "visible" && PASS && Date.now() - LASTUP > 60000) load();
 });
 
 /* ---------- start ---------- */
