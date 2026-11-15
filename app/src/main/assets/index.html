@@ -2952,9 +2952,11 @@ function stkSeriesInfo(p, sid, sItem){
    player (EmbedActivity), never a browser or a new tab. Only the GitHub build
    has that player; everywhere else this playlist is not offered at all.
    Live TV in this playlist is the app's own channel list. */
-/* the owner's own site first: it carries the VidAPI token the player now asks
-   for (vaplayer.ru on its own answers "403 invalid api token") */
-var VID_HOSTS = ["mv.andam.uk", "vaplayer.ru", "vidsrc.sh", "vidapi.site"];
+/* the servers in the order the owner chose: Server 1 is vidsrc.sh. The
+   owner's own site (mv.andam.uk, which carries the VidAPI token the player
+   asks for) is Server 3; every title is offered on all four, so a server
+   that does not answer is one tap away from the next */
+var VID_HOSTS = ["vidsrc.sh", "vaplayer.ru", "mv.andam.uk", "vidapi.site"];
 var VID_PAGES = 2;                 /* pages of 20 per row */
 var VIDX = {};                     /* every title shown, by its address (films) or "s"+sid (series) */
 
