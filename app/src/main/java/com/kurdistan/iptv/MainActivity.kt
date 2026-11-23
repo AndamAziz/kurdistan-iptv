@@ -894,6 +894,29 @@ class MainActivity : ComponentActivity() {
         return b.build()
     }
 
+    /**
+     * Put [item] at [i] in place of what is there. Media3 keeps an item's
+     * MediaSource when only the container changes (canUpdateMediaItem looks at
+     * the address, not at the MIME type), so the same address asked for as
+     * HLS after it failed as a plain file was played as a plain file again,
+     * and the fallback never really tried another container: a playlist named
+     * ".txt" never played. A different container for the same address gets a
+     * fresh queue - every other item stays exactly as it was - so a new
+     * MediaSource is built for it. Anything else is replaced as before.
+     */
+    private fun putItem(p: ExoPlayer, i: Int, item: MediaItem) {
+        val cur = try { p.getMediaItemAt(i).localConfiguration } catch (e: Exception) { null }
+        val next = item.localConfiguration
+        if (cur == null || next == null || cur.uri != next.uri || cur.mimeType == next.mimeType) {
+            p.replaceMediaItem(i, item)
+            return
+        }
+        val list = (0 until p.mediaItemCount).map { if (it == i) item else p.getMediaItemAt(it) }
+        /* a film that was asked to start further in keeps that place */
+        val at = if (p.currentMediaItemIndex == i) p.currentPosition.coerceAtLeast(0L) else 0L
+        p.setMediaItems(list, i, at)
+    }
+
     /** the player's current item, rebuilt with the subtitle files it now has, from the same place */
     private fun reloadItem(i: Int, selectCode: String?) {
         val p = player ?: return
@@ -1271,6 +1294,9 @@ class MainActivity : ComponentActivity() {
         return when {
             path.contains(".mpd") -> MimeTypes.APPLICATION_MPD
             path.contains(".m3u8") || path.endsWith(".m3u") -> MimeTypes.APPLICATION_M3U8
+            /* a playlist served as text (".../master.txt"): a .txt is never a
+               video, and as a stream it is HLS - as VLC reads it */
+            path.endsWith(".txt") -> MimeTypes.APPLICATION_M3U8
             /* .ts, .mkv, .mp4, .avi ... the extractors read these themselves */
             path.endsWith(".ts") || full.contains("extension=ts") -> null
             path.endsWith(".mp4") || path.endsWith(".mkv") || path.endsWith(".avi") ||
@@ -1361,7 +1387,7 @@ class MainActivity : ComponentActivity() {
                 plan = listOf(found.mime) + ORDER.filter { it != found.mime }
                 try {
                     val p = player ?: return@runOnUiThread
-                    p.replaceMediaItem(index, mediaItem(index, found.url, found.mime))
+                    putItem(p, index, mediaItem(index, found.url, found.mime))
                     p.prepare()
                     p.playWhenReady = true
                 } catch (e: Exception) { showError(fallbackCode) }
@@ -1405,7 +1431,7 @@ class MainActivity : ComponentActivity() {
         playerView.post {
             if (dead) return@post
             try {
-                p.replaceMediaItem(i, item)
+                putItem(p, i, item)
                 p.prepare()
                 p.playWhenReady = true
             } catch (e: Exception) { showError("RETRY_FAILED") }
@@ -1599,7 +1625,7 @@ class MainActivity : ComponentActivity() {
                             playerView.post {
                                 if (dead) return@post
                                 try {
-                                    p.replaceMediaItem(i, item)
+                                    putItem(p, i, item)
                                     p.prepare()
                                     p.playWhenReady = true
                                 } catch (e: Exception) { showError(error.errorCodeName) }
