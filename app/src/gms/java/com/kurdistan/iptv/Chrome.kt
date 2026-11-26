@@ -18,25 +18,36 @@ import java.util.concurrent.Executors
  */
 internal class Chrome(private val context: Context) {
     private val exec = Executors.newFixedThreadPool(4)
-    @Volatile private var tried = false
+    @Volatile private var tries = 0
+    @Volatile private var lastTry = 0L
     @Volatile private var engine: CronetEngine? = null
 
-    /* built once, the first time a way needs it, off the main thread */
+    /* built the first time a way needs it, off the main thread. Play Services' Cronet is now
+       fetched when the first stream starts, so it may still be on its way then: a failed build
+       is tried again a little later, three times at most */
     private fun engine(): CronetEngine? {
-        if (tried) return engine
+        engine?.let { return it }
         synchronized(this) {
-            if (!tried) {
-                engine = try {
-                    CronetUtil.buildCronetEngine(context.applicationContext, null, true)
-                } catch (e: Throwable) { null }
-                tried = true
-            }
+            engine?.let { return it }
+            val now = android.os.SystemClock.elapsedRealtime()
+            if (tries >= 3 || (tries > 0 && now - lastTry < 5000L)) return null
+            tries++
+            lastTry = now
+            engine = try {
+                CronetUtil.buildCronetEngine(context.applicationContext, null, true)
+            } catch (e: Throwable) { null }
+            return engine
         }
-        return engine
     }
 
-    init {
-        /* ask Play Services for its Cronet early, so it is ready when needed */
+    /* Play Services is asked for its Cronet the first time something is played, not while the
+       app opens: at start the page's WebView talks to Play Services too, and on a phone whose Play
+       Services answer slowly the two together held the screen still ("app not responding") */
+    @Volatile private var installAsked = false
+
+    private fun askInstall() {
+        if (installAsked) return
+        installAsked = true
         try {
             com.google.android.gms.net.CronetProviderInstaller.installProvider(context.applicationContext)
         } catch (e: Throwable) { }
@@ -44,8 +55,10 @@ internal class Chrome(private val context: Context) {
 
     /** whether the Chrome ways can be offered on this device at all */
     val ok: Boolean get() = try {
-        com.google.android.gms.common.GoogleApiAvailability.getInstance()
+        val yes = com.google.android.gms.common.GoogleApiAvailability.getInstance()
             .isGooglePlayServicesAvailable(context) == com.google.android.gms.common.ConnectionResult.SUCCESS
+        if (yes) askInstall()
+        yes
     } catch (e: Throwable) { false }
 
     /** the player's source through Chrome, or null when it cannot be built */

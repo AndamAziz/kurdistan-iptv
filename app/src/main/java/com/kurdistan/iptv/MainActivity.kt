@@ -193,6 +193,57 @@ class MainActivity : ComponentActivity() {
     private val subErr = HashMap<String, String>()
     /** address -> the page's reason when it could not tell what can be had ("id": the title is not known) */
     private val subWhy = HashMap<String, String>()
+
+    /* While the player covers it, the page is GONE, and Chromium holds back a hidden page's
+       timers (after a few minutes to one wake-up a minute). A subtitle asked for from inside the
+       player - above all the Kurdish one, translated piece by piece with a short wait between
+       pieces - then crawled or seemed never to start, while the same tap on the film's page
+       worked at once. While the player waits on the page for subtitles, the page is kept shown
+       UNDER the player: the player layer is opaque and on top, and the page takes no touch and
+       no remote focus while the player is open. job -> when it stops waiting for it. */
+    private val pageJobs = HashMap<String, Long>()
+    /** how long the page is kept awake for one subtitle after its last sign of life */
+    private val SUB_JOB_MS = 10 * 60 * 1000L
+    private val pageTimer = Handler(Looper.getMainLooper())
+    private var webFocusable = true
+    private var webFocusableTouch = true
+    private var webDescFocus = ViewGroup.FOCUS_BEFORE_DESCENDANTS
+
+    private fun wakePage(job: String, maxMs: Long) {
+        pageJobs[job] = SystemClock.elapsedRealtime() + maxMs
+        pageTimer.postDelayed({ pageDone(job, onlyIfDue = true) }, maxMs + 50)
+        if (playerLayer.visibility == View.VISIBLE && webView.visibility != View.VISIBLE) {
+            webView.isFocusable = false
+            webView.isFocusableInTouchMode = false
+            webView.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
+            webView.visibility = View.VISIBLE
+        }
+    }
+
+    private fun pageDone(job: String, onlyIfDue: Boolean = false) {
+        if (onlyIfDue) {
+            val until = pageJobs[job] ?: return
+            if (SystemClock.elapsedRealtime() < until) return
+        }
+        if (pageJobs.remove(job) == null) return
+        if (pageJobs.isEmpty() && playerLayer.visibility == View.VISIBLE) webView.visibility = View.GONE
+    }
+
+    /** the page as it was before it was kept awake under the player */
+    private fun pageFocusBack() {
+        pageJobs.clear()
+        webView.descendantFocusability = webDescFocus
+        webView.isFocusable = webFocusable
+        webView.isFocusableInTouchMode = webFocusableTouch
+    }
+
+    /* A finger is on the screen. The settings list is drawn again whenever a subtitle moves on
+       (every percent), when the page answers, when the tracks change: a row taken away between
+       the finger going down and coming up never gets its tap, so a language seemed not to answer.
+       While a finger is down the list is only marked to be drawn again, and is drawn when it lifts. */
+    private var fingerDown = false
+    private var panelStale = false
+
     private val SUB_ROWS = listOf("ku-ai", "en", "ar", "fa", "tr", "fr", "de", "es")
     private var refs: List<String?> = emptyList()
     private var curUa: String? = null
@@ -316,6 +367,11 @@ class MainActivity : ComponentActivity() {
 
         webView = findViewById(R.id.webView)
         playerLayer = findViewById(R.id.playerLayer)
+        /* the page kept awake under the player (wakePage) takes no touch while the player is open */
+        webFocusable = webView.isFocusable
+        webFocusableTouch = webView.isFocusableInTouchMode
+        webDescFocus = webView.descendantFocusability
+        webView.setOnTouchListener { _, _ -> playerLayer.visibility == View.VISIBLE }
         playerView = findViewById(R.id.playerView)
         loading = findViewById(R.id.loading)
         errorBox = findViewById(R.id.errorBox)
@@ -760,6 +816,7 @@ class MainActivity : ComponentActivity() {
                     subInfoByUrl[url] = out
                     subWhy[url] = why
                     subInfoAt[url] = System.currentTimeMillis()
+                    pageDone("info:$url")
                     if (panelOn()) fillPanel()
                 }
             } catch (e: Exception) { /* ignore malformed input */ }
@@ -769,6 +826,7 @@ class MainActivity : ComponentActivity() {
         fun subProgress(url: String, lang: String, pct: Int) {
             runOnUiThread {
                 subBusy["$url|$lang"] = pct
+                wakePage("sub:$url|$lang", SUB_JOB_MS)
                 if (panelOn()) fillPanel()
             }
         }
@@ -783,6 +841,7 @@ class MainActivity : ComponentActivity() {
         fun subFail(url: String, lang: String, message: String) {
             runOnUiThread {
                 subBusy.remove("$url|$lang")
+                pageDone("sub:$url|$lang")
                 subErr["$url|$lang"] = message.take(140)
                 showHint(message.take(90))
                 if (panelOn()) fillPanel()
@@ -943,6 +1002,7 @@ class MainActivity : ComponentActivity() {
     /** a subtitle file the page has made or found: it joins the stream's list and is shown */
     private fun onSubReady(url: String, lang: String, code: String, label: String, path: String) {
         subBusy.remove("$url|$lang")
+        pageDone("sub:$url|$lang")
         if (!File(path).isFile) { if (panelOn()) fillPanel(); return }
         val old = subsByUrl[url] ?: emptyList()
         val i = urls.indexOf(url)
@@ -993,6 +1053,7 @@ class MainActivity : ComponentActivity() {
 
     private fun askSubInfo(u: String) {
         if (u.isBlank()) return
+        wakePage("info:$u", 30000L)
         js("window.kiptvSubInfo&&kiptvSubInfo(" + JSONObject.quote(u) + ")")
     }
 
@@ -1000,11 +1061,13 @@ class MainActivity : ComponentActivity() {
         val key = "$u|$lang"
         subBusy[key] = 0
         subErr.remove(key)
+        wakePage("sub:$key", SUB_JOB_MS)
         /* if the page never answers (it is asleep, or it failed before it could say so), the row says so
            and can be tried again - a tap must never look like nothing happened */
-        handler.postDelayed({
+        pageTimer.postDelayed({
             if (subBusy[key] == 0) {
                 subBusy.remove(key)
+                pageDone("sub:$key")
                 subErr[key] = tx("subSilent")
                 if (panelOn()) fillPanel()
             }
@@ -1016,6 +1079,8 @@ class MainActivity : ComponentActivity() {
     /** a film or an episode has started: the page gets the language last chosen, if it is not on it yet */
     private fun askSubAuto(u: String?) {
         if (u.isNullOrBlank() || !isVod(u)) return
+        /* the page may start a subtitle now; its first progress keeps it awake for as long as it takes */
+        wakePage("auto:$u", 30000L)
         js("window.kiptvSubAuto&&kiptvSubAuto(" + JSONObject.quote(u) + ")")
     }
 
@@ -1461,7 +1526,13 @@ class MainActivity : ComponentActivity() {
         curRef = r.getOrNull(index)
 
         playerLayer.visibility = View.VISIBLE
-        webView.visibility = View.GONE
+        /* hidden, unless it is still making a subtitle (it is then kept awake under the player) */
+        if (pageJobs.isEmpty()) webView.visibility = View.GONE
+        else {
+            webView.isFocusable = false
+            webView.isFocusableInTouchMode = false
+            webView.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
+        }
         errorBox.visibility = View.GONE
         loading.visibility = View.VISIBLE
         /* a phone turns sideways for the picture; a TV or a big screen is left alone */
@@ -1934,6 +2005,7 @@ class MainActivity : ComponentActivity() {
         errorBox.visibility = View.GONE
         loading.visibility = View.GONE
         topBar.visibility = View.VISIBLE
+        pageFocusBack()
         webView.visibility = View.VISIBLE
         webView.requestFocus()                /* the remote works in the page again */
 
@@ -3100,8 +3172,15 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    /** what the stream offers right now, in three short lists */
+    /** the settings list drawn again - later, when the finger lifts, if one is on the screen now */
     private fun fillPanel() {
+        if (fingerDown && panelOn()) { panelStale = true; return }
+        fillPanelNow()
+    }
+
+    /** what the stream offers right now, in three short lists */
+    private fun fillPanelNow() {
+        panelStale = false
         val box = panelBox
         val focusKey = panelBox.findFocus()?.tag
         box.removeAllViews()
@@ -3515,6 +3594,14 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        when (ev.actionMasked) {
+            MotionEvent.ACTION_DOWN -> fingerDown = true
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                fingerDown = false
+                /* after the tap itself has run (it is posted on lift), the list catches up */
+                if (panelStale) pageTimer.postDelayed({ if (panelStale && !fingerDown && panelOn()) fillPanelNow() }, 60L)
+            }
+        }
         if (::playerLayer.isInitialized && playerLayer.visibility == View.VISIBLE) armAutoHide()
         if (!swipeAllowed()) {
             if (::swipe.isInitialized && ev.actionMasked == MotionEvent.ACTION_DOWN) swipe.end()
