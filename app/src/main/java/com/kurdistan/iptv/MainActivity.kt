@@ -961,19 +961,32 @@ class MainActivity : ComponentActivity() {
      * and the fallback never really tried another container: a playlist named
      * ".txt" never played. A different container for the same address gets a
      * fresh queue - every other item stays exactly as it was - so a new
-     * MediaSource is built for it. Anything else is replaced as before.
+     * MediaSource is built for it.
+     *
+     * The same holds for subtitle files: an HLS or DASH item takes new subtitle
+     * files in place too (only a plain file looks at the cache key), so a
+     * subtitle made while an HLS film played was on the item but never shown
+     * until the film was opened again. Changed subtitle files get a fresh
+     * entry as well. Anything else is replaced as before.
      */
     private fun putItem(p: ExoPlayer, i: Int, item: MediaItem) {
         val cur = try { p.getMediaItemAt(i).localConfiguration } catch (e: Exception) { null }
         val next = item.localConfiguration
-        if (cur == null || next == null || cur.uri != next.uri || cur.mimeType == next.mimeType) {
+        val sameSubs = cur != null && next != null && cur.subtitleConfigurations == next.subtitleConfigurations &&
+            cur.customCacheKey == next.customCacheKey
+        if (cur == null || next == null || cur.uri != next.uri || (cur.mimeType == next.mimeType && sameSubs)) {
             p.replaceMediaItem(i, item)
             return
         }
+        if (p.currentMediaItemIndex != i) {
+            /* a later episode: taken out and put back, so what is playing now is not touched */
+            p.removeMediaItem(i)
+            p.addMediaItem(i, item)
+            return
+        }
         val list = (0 until p.mediaItemCount).map { if (it == i) item else p.getMediaItemAt(it) }
-        /* a film that was asked to start further in keeps that place */
-        val at = if (p.currentMediaItemIndex == i) p.currentPosition.coerceAtLeast(0L) else 0L
-        p.setMediaItems(list, i, at)
+        /* the film keeps its place */
+        p.setMediaItems(list, i, p.currentPosition.coerceAtLeast(0L))
     }
 
     /** the player's current item, rebuilt with the subtitle files it now has, from the same place */
@@ -992,7 +1005,7 @@ class MainActivity : ComponentActivity() {
                 prefs().edit().putString("textLang", selectCode).apply()
             }
             qualityPinned = false           /* a rebuilt item forgets a pinned quality */
-            p.replaceMediaItem(i, mediaItem(i, cur.uri.toString(), cur.mimeType))
+            putItem(p, i, mediaItem(i, cur.uri.toString(), cur.mimeType))
             p.seekTo(i, pos)
             p.prepare()
             p.playWhenReady = play
@@ -1020,7 +1033,7 @@ class MainActivity : ComponentActivity() {
             else try {
                 /* a later episode: its item is rebuilt now, so the file is there when it starts */
                 val cur = p.getMediaItemAt(i).localConfiguration
-                if (cur != null) p.replaceMediaItem(i, mediaItem(i, cur.uri.toString(), cur.mimeType))
+                if (cur != null) putItem(p, i, mediaItem(i, cur.uri.toString(), cur.mimeType))
             } catch (e: Exception) { }
         }
         if (panelOn()) playerView.post { if (panelOn()) fillPanel() }
