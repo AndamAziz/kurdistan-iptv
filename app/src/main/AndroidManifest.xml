@@ -20,6 +20,16 @@
         android:banner="@drawable/tv_banner"
         android:theme="@style/Theme.KurdistanIPTV"
         android:supportsRtl="true">
+        <!-- The app's WebView shows only the app's own page (and, in EmbedActivity, a short list
+             of allowed players with pop-ups blocked). Without these, WebView reaches Google Play
+             Services for usage reporting and Safe Browsing on the main thread's behalf; on a phone
+             whose Play Services answer slowly that held the app still ("app not responding"). -->
+        <meta-data
+            android:name="android.webkit.WebView.MetricsOptOut"
+            android:value="true"/>
+        <meta-data
+            android:name="android.webkit.WebView.EnableSafeBrowsing"
+            android:value="false"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"
