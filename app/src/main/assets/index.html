@@ -3271,13 +3271,50 @@ function markNew(list, sec){
     had = {};
     for(var i = 0; i + FP_W <= prev.length; i += FP_W) had[prev.substr(i, FP_W)] = 1;
   }
-  var buf = [];
+  var buf = [], fresh = [];
   for(var j = 0; j < list.length; j++){
     var fp = fingerprint(list[j]);
     buf.push(fp);
-    if(had && !had[fp]) list[j].nw = 1;
+    if(had && !had[fp]) fresh.push(fp);
   }
   try{ lsSet(key, buf.join("")) }catch(e){}   /* out of room: just never new */
+  newKeep(sec, fresh);
+  return newApply(list, sec);
+}
+
+/* "New" used to last one load only: the next time the list was fetched (the
+   next time the app opened) the same items were already "seen", and the banner
+   forgot them. What arrived is now remembered with the day it arrived and
+   stays new for NEW_DAYS - also on the cached list shown at start. Only the
+   newcomers are kept (at most NEW_MAX), so this stays small. */
+var NEW_DAYS = 7, NEW_MAX = 400;
+function newDay(){ return Math.floor(Date.now() / 86400000) }
+function newStore(sec){
+  var o = null;
+  try{ o = JSON.parse(lsGet("kiptv_newat_" + activeId() + "_" + sec, "{}")) }catch(e){}
+  return (o && typeof o === "object") ? o : {};
+}
+function newKeep(sec, fps){
+  var o = newStore(sec), today = newDay(), k, keys;
+  for(var i = 0; i < fps.length; i++) if(!o[fps[i]]) o[fps[i]] = today;
+  for(k in o) if(today - o[k] >= NEW_DAYS) delete o[k];
+  keys = Object.keys(o);
+  if(keys.length > NEW_MAX){
+    keys.sort(function(a, b){ return o[b] - o[a] });
+    keys.slice(NEW_MAX).forEach(function(x){ delete o[x] });
+  }
+  try{ lsSet("kiptv_newat_" + activeId() + "_" + sec, JSON.stringify(o)) }catch(e){}
+}
+/* marks what is still new on a list (fresh from the provider, or the cached copy) */
+function newApply(list, sec){
+  if(!list || !list.length) return list || [];
+  var o = newStore(sec), today = newDay(), any = false, k;
+  for(k in o){ any = true; break }
+  if(!any) return list;
+  for(var j = 0; j < list.length; j++){
+    var d = o[fingerprint(list[j])];
+    if(d !== undefined && today - d < NEW_DAYS){ list[j].nw = 1; list[j].nwd = d }
+  }
   return list;
 }
 
@@ -3970,34 +4007,87 @@ var PLAY_TRI = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentCol
 var CHEV = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
 
 /* The banner follows the section the person is in - live channels, films or
-   series - and always starts from different items. */
+   series. What the provider (or the owner, in a playlist) added in the last
+   NEW_DAYS comes first, newest first, and keeps coming back: each turn of the
+   banner shows the next of them, so a long batch of new items is shown in
+   full, a few at a time. The rest of the banner is different every turn: one
+   per group first, nothing shown again until everything has been, and never
+   the same channel, film or series twice (the same thing listed under several
+   groups, in HD and SD, or with another address is one thing). */
+var HERO_NEW = 4;                 /* at most this many new items in one turn, when there are others too */
+var heroSeen = {}, heroNewAt = 0, heroSec = "";
+
+/* what makes two entries the same thing: the film's own TMDB number, else its name
+   without quality marks, codecs, brackets and punctuation */
+function heroSame(c){
+  if(c._hk !== undefined) return c._hk;
+  var P = parseVodName(c.n || "", "movie");
+  var k;
+  if(P.tmdbId) k = "t" + P.tmdbId;
+  else {
+    var n = (P.titleEn || P.displayName || c.n || "").toLowerCase();
+    /* "Romántico" and "Romantico" are one name (no normalize on very old TV browsers: skipped) */
+    try{ n = n.normalize("NFD").replace(/[\u0300-\u036f]/g, "") }catch(e){}
+    n = n
+      .replace(/[\(\[\{][^\)\]\}]*[\)\]\}]/g, " ")
+      .replace(/(^|[\s._\-|:])(?:uhd|fhd|hd|sd|hq|lq|4k|8k|2k|1080p?|720p?|480p?|360p?|h\.?26[45]|hevc|x26[45]|backup|bk|raw|multi)(?=$|[\s._\-|:])/g, " ")
+      .replace(/^\s*[a-z]{2,3}\s*[:|]\s*/, "")                                /* "KU: Kurdsat" */
+      /* spaces and ASCII marks only: Kurdish and Arabic letters stay (no \p{} - old TV browsers) */
+      .replace(/[\s!-\/:-@\[-`{-~\u00b7\u2022\u2013\u2014]+/g, "");
+    k = "n" + (n || (c.u || ""));
+  }
+  try{ c._hk = k }catch(e){}
+  return k;
+}
+
 function heroPicks(){
   var pool = catVisible(items());
   if(!pool.length) return [];
-  var withArt = pool.filter(function(c){ return c.l });
-  var src = withArt.length >= HERO_N ? withArt : pool;
+  if(heroSec !== SECTION + "|" + activeId()){ heroSec = SECTION + "|" + activeId(); heroSeen = {}; heroNewAt = 0 }
 
-  var out = [], usedGroup = {}, seen = {};
-  var key = function(c){ return c.sid ? "s" + c.sid : (c.u || c.n) };
+  /* one entry per thing: the first with a picture wins */
+  var byKey = {}, uniq = [], i, c, k;
+  for(i = 0; i < pool.length; i++){
+    c = pool[i]; k = heroSame(c);
+    if(byKey[k] === undefined){ byKey[k] = uniq.length; uniq.push(c) }
+    else if(!uniq[byKey[k]].l && c.l) uniq[byKey[k]] = c;
+    else if(c.nw && !uniq[byKey[k]].nw) uniq[byKey[k]] = c;
+  }
+  var withArt = uniq.filter(function(x){ return x.l });
+  var src = withArt.length >= HERO_N ? withArt : uniq;
 
-  /* What the provider has just added leads the banner - that is what someone
-     opening the app wants to find. Providers add to the end of a list, so the
-     end is where the newest tend to be. When nothing is new, not one line of
-     this runs and the banner fills exactly as it always did. */
-  for(var k = src.length - 1; k >= 0 && out.length < HERO_N; k--){
-    var fc = src[k];
-    if(!fc.nw || seen[key(fc)]) continue;
-    seen[key(fc)] = 1; usedGroup[fc.c] = 1; out.push(fc);
+  var out = [], usedGroup = {}, taken = {}, usedArt = {};
+  var take = function(x){ var kk = heroSame(x); taken[kk] = 1; heroSeen[kk] = 1; usedGroup[x.c] = 1; if(x.l) usedArt[x.l] = 1; out.push(x) };
+  /* one picture once a turn: "Action Germany", "Action Italy" ... with one logo look the same */
+  var sameArt = function(x){ return x.l && usedArt[x.l] };
+
+  /* the new ones, newest first (providers add to the end of a list); each turn the next few */
+  var fresh = src.filter(function(x){ return x.nw }).reverse();
+  fresh.sort(function(a, b){ return (b.nwd || 0) - (a.nwd || 0) });
+  if(fresh.length){
+    var room = fresh.length >= src.length - 1 ? HERO_N : Math.min(HERO_NEW, HERO_N);
+    if(heroNewAt >= fresh.length) heroNewAt = 0;
+    for(i = 0; i < fresh.length && out.length < room; i++){
+      c = fresh[(heroNewAt + i) % fresh.length];
+      if(!taken[heroSame(c)] && !sameArt(c)) take(c);
+    }
+    heroNewAt = (heroNewAt + out.length) % fresh.length;
   }
 
-  /* a fresh starting point on every visit, so the banner is never the same */
+  /* everything else: not shown yet this visit, one per group first, from a fresh place each time */
+  var notYet = function(x){ return !taken[heroSame(x)] && !heroSeen[heroSame(x)] };
+  if(!src.some(function(x){ return !x.nw && notYet(x) })){
+    /* all of it has been shown: start over, keeping only what is on screen now */
+    heroSeen = {}; for(k in taken) heroSeen[k] = 1;
+  }
   var start = Math.floor(Math.random() * src.length);
-  for(var pass = 0; pass < 2 && out.length < HERO_N; pass++)
-    for(var i = 0; i < src.length && out.length < HERO_N; i++){
-      var c = src[(start + i) % src.length];
-      if(seen[key(c)]) continue;
-      if(pass === 0 && usedGroup[c.c]) continue;   /* one per group first */
-      seen[key(c)] = 1; usedGroup[c.c] = 1; out.push(c);
+  for(var pass = 0; pass < 3 && out.length < HERO_N; pass++)
+    for(i = 0; i < src.length && out.length < HERO_N; i++){
+      c = src[(start + i) % src.length];
+      if(taken[heroSame(c)]) continue;
+      if(pass < 2 && (heroSeen[heroSame(c)] || sameArt(c))) continue;   /* the last pass may repeat, when the list is small */
+      if(pass === 0 && usedGroup[c.c]) continue;        /* one per group first */
+      take(c);
     }
   return out;
 }
@@ -4091,21 +4181,41 @@ function heroGo(i){
   }
 }
 
-/* the user touched it - stop rotating, pick up again after a pause */
+/* the user touched it - stop rotating, pick up again after a pause, from where it is */
 function heroPause(){
   heroStop();
-  heroHold = setTimeout(heroStart, HERO_MS * 2);
+  heroHold = setTimeout(function(){ heroStart(true) }, HERO_MS * 2);
 }
 
-function heroStart(){
+/* After a full turn the banner takes a new set: the next new items and others
+   not shown yet. Not while the remote's highlight is on it. */
+function heroRefill(){
+  var box = $("heroBox");
+  if(!box) return false;
+  if(box.contains(document.activeElement)) return false;
+  var list = heroPicks();
+  if(list.length < 2) return false;
+  var wrap = box.parentNode, tmp = document.createElement("div");
+  tmp.innerHTML = heroHTML(list);
+  var fresh = tmp.firstChild;
+  if(!fresh || !wrap.parentNode) return false;
+  wrap.parentNode.replaceChild(fresh, wrap);
+  heroI = 0;
+  return true;
+}
+
+function heroStart(keep){
   heroStop();
   var box = $("heroBox");
   if(!box || box.getElementsByClassName("hero").length < 2) return;
-  heroI = 0;
+  if(!keep) heroI = 0;
   heroTimer = setInterval(function(){
-    if(!$("heroBox")){ heroStop(); return }         /* the view changed */
+    var b = $("heroBox");
+    if(!b){ heroStop(); return }                     /* the view changed */
     if(document.hidden) return;                      /* app in the background */
     if($("detail").classList.contains("on")) return; /* a detail page is open */
+    var n = b.getElementsByClassName("hero").length;
+    if(heroI + 1 >= n && heroRefill()) return;       /* a full turn: a new set */
     heroGo(heroI + 1);
   }, HERO_MS);
 }
@@ -8330,7 +8440,7 @@ function viaApp(u){
    so comparing against them would call the whole playlist new the first time
    it is really fetched. */
 function setData(list, fromProvider){
-  CH = fromProvider ? markNew(list, "live") : list;
+  CH = fromProvider ? markNew(list, "live") : newApply(list, "live");
   if(fromProvider) statsNote("live", CH);
   epgReset(); buildGroups(); renderChips(); render();
 }
